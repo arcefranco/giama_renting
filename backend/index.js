@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import generalesRouter from "./src/routes/generalesRoutes";
-import vehiculosRouter from "./src/routes/vehiculosRoutes";
-import loginRouter from "./src/routes/loginRoutes";
+import vehiculosRouter from "./src/routes/vehiculosRoutes.js";
+import generalesRouter from "./src/routes/generalesRoutes.js";
+import loginRouter from "./src/routes/loginRoutes.js";
 
 dotenv.config();
 const app = express();

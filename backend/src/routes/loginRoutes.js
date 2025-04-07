@@ -3,7 +3,7 @@ import {
   createPass,
   createUsuario,
   logIn,
-} from "../controllers/loginController";
+} from "../controllers/loginController.js";
 const loginRouter = Router();
 
 loginRouter.use((req, res, next) => {

@@ -9,17 +9,21 @@ dotenv.config();
 const { sign } = pkg;
 
 export const createUsuario = async (req, res) => {
-  const { nombre, email } = req.body;
+  const { login, email } = req.body;
 
-  if (!nombre || !email) {
+  if (!login || !email) {
     return res.send({ status: false, message: "Faltan campos" });
   }
   try {
-    await PA_Usados.query("INSERT INTO usuarios (nombre, email) VALUES (?,?)", {
-      replacements: [nombre, email],
-      type: QueryTypes.INSERT,
-    });
+    await giama_renting.query(
+      "INSERT INTO usuarios (login, email) VALUES (?,?)",
+      {
+        replacements: [login, email],
+        type: QueryTypes.INSERT,
+      }
+    );
   } catch (error) {
+    console.log(error);
     return res.send({
       status: false,
       message: `error al insertar en base de datos: ${error}`,
@@ -49,7 +53,7 @@ export const createPass = async (req, res) => {
   const { password, token } = req.body;
   let hashPass = await bcrypt.hash(password, 10);
   try {
-    await PA_Usados.query(
+    await giama_renting.query(
       "UPDATE usuarios SET password  = ?, newUser = 0 WHERE email = ?",
       {
         replacements: [hashPass, pkg.decode(token)?.email],

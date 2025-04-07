@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getProveedoresGPS } from "../controllers/generalesController";
+import { getProveedoresGPS } from "../controllers/generalesController.js";
 
 const generalesRouter = Router();
 
