@@ -12,3 +12,5 @@ generalesRouter.use((req, res, next) => {
 });
 
 generalesRouter.get("/proveedoresGps", getProveedoresGPS);
+
+export default generalesRouter;

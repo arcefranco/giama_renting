@@ -13,3 +13,5 @@ vehiculosRouter.use((req, res, next) => {
 
 vehiculosRouter.get("/vehiculo", getVehiculos);
 vehiculosRouter.post("/vehiculos", postVehiculo);
+
+export default vehiculosRouter;

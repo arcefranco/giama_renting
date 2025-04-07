@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import generalesRouter from "./src/routes/generalesRoutes";
+import vehiculosRouter from "./src/routes/vehiculosRoutes";
+import loginRouter from "./src/routes/loginRoutes";
 
 dotenv.config();
 const app = express();
@@ -19,3 +22,7 @@ app.listen(process.env.PORT, (error) => {
 app.get("/", (req, res) => {
   return res.send("API giama_renting");
 });
+
+app.use("/login", loginRouter);
+app.use("/generales", generalesRouter);
+app.use("/vehiculos", vehiculosRouter);
