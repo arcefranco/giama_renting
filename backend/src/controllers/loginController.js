@@ -73,7 +73,7 @@ export const createPass = async (req, res) => {
 
 export const logIn = async (req, res) => {
   const { email, password } = req.body;
-  let roles;
+  /*   let roles; */
   let user;
   try {
     user = await giama_renting.query("SELECT * FROM usuarios WHERE email = ?", {
@@ -81,6 +81,7 @@ export const logIn = async (req, res) => {
       type: QueryTypes.SELECT,
     });
   } catch (error) {
+    console.log(error);
     return res.send({
       status: false,
       message: JSON.stringify(error),
@@ -93,7 +94,7 @@ export const logIn = async (req, res) => {
         {
           user: user[0].email,
           password: user[0].password,
-          roles: roles.map((item) => item.codigo),
+          /*           roles: roles.map((item) => item.codigo), */
           id: user[0].id,
         },
         process.env.SECRET,
@@ -108,7 +109,7 @@ export const logIn = async (req, res) => {
       return res.send({
         status: true,
         username: user[0].email,
-        roles: roles?.map((item) => item.codigo),
+        /*         roles: roles?.map((item) => item.codigo), */
       });
     } else {
       throw "Email o contraseña incorrecta";
