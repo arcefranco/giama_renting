@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Amazon';
-  src: url('./fonts/Amazon Ember Thin.ttf') format('truetype');
+  src: url('./fonts/AmazonThin.ttf') format('truetype');
 }
 
 :root {
@@ -9,7 +9,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: rgb(0, 0, 0);
   background-color: #ffffffdd;
 
   font-synthesis: none;
@@ -20,7 +20,6 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
   text-decoration: inherit;
 }
 a:hover {
@@ -34,7 +33,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
-
+h1 h2 h3 {
+  font-family: 'Amazon', sans-serif;
+}
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
@@ -70,4 +71,12 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+html, body, #root {
+  height: 100%;
+  color: black;
+  min-width: -webkit-fill-available;
+  margin: 0;
+  padding: 0;
+  font-family: 'Amazon', sans-serif;
 }
