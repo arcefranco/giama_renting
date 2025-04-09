@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./Header.module.css"
+import axios from "axios";
 
 const menuItems = [
   {
@@ -31,6 +32,13 @@ const menuItems = [
 ];
 
 const Header = () => {
+const handleLogout = async () => {
+        await axios.get(import.meta.env.VITE_REACT_APP_HOST + "login/logout", {
+          withCredentials: true,
+        });
+        localStorage.removeItem("username");
+        window.location.replace("/");
+      };
   return (
     <header className={styles.header}>
       <div className={styles.logo}>Giama Renting</div>
@@ -71,7 +79,7 @@ const Header = () => {
 
       <div className={styles.userSection}>
         <span>Hola, Usuario</span>
-        <button className={styles.logoutBtn}>Salir</button>
+        <button className={styles.logoutBtn} onClick={handleLogout}>Salir</button>
       </div>
     </header>
   );
