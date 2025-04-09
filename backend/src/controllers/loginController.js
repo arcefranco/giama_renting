@@ -121,3 +121,27 @@ export const logIn = async (req, res) => {
     });
   }
 };
+
+export const validarToken = (req, res) => {
+  const token = req.cookies.authToken;
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ status: false, message: "Token no proporcionado" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET);
+    return res.status(200).json({ status: true, user: decoded.user });
+  } catch (error) {
+    return res
+      .status(403)
+      .json({ status: false, message: "Token inválido o expirado" });
+  }
+};
+
+export const logOut = (req, res) => {
+  res.clearCookie("authToken");
+  return res.status(200).json({ status: true, message: "Sesión cerrada" });
+};
