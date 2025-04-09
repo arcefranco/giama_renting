@@ -4,7 +4,7 @@
     display: grid;
     grid-template-columns: 1fr 0.4fr 1fr; /* Tres columnas: formulario, título, SVG */
     grid-template-rows: auto 1fr; /* Fila superior para el título y luego el contenido */
-    background: linear-gradient(to bottom, #fef9e1, #e5d0ac8a);
+    background: linear-gradient(to bottom, #fef9e1, #ffcf7c85);
     overflow: hidden;
     position: relative;
   }
@@ -44,16 +44,7 @@
     z-index: 1;
     position: relative;
   }
-  .title::after {
-    content: '';
-    position: absolute;
-    justify-self: anchor-center;
-    bottom: -2px;
-    left: 0;
-    width: 70%;
-    height: 0.5px;
-    background-color: rgba(180, 180, 180, 0.523);
-  }
+
   
   .loginForm {
     grid-column: 1 / 2;
@@ -71,7 +62,7 @@
     justify-self: right;
     z-index: 1;
     position: relative;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 122, 122, 0.033);
   }
   .svg {
     grid-column: 3 / 4;   /* Última columna para el SVG */
