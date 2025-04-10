@@ -52,7 +52,7 @@ useEffect(() => {
     <div className={`${styles.elipse} ${styles.elipseSuperiorIzquierda}`}></div>
     <div className={`${styles.elipse} ${styles.elipseInferiorDerecha}`}></div>
     <h1 className={styles.title}>Giama Renting</h1>
-    <div className={styles.loginForm}>
+    <form className={styles.loginForm}>
         <div className={styles.formHeader}>Iniciar sesión</div>
         <div className={styles.formContent}>
         <div className={styles.inputWrapper}>
@@ -95,7 +95,7 @@ useEffect(() => {
           <button className={styles.buttonDisabled}>Ingresar</button>
           }
         </div>
-      </div>
+      </form>
     <div className={styles.svg}><img src={Car} alt="" /></div>
   </div>
   )

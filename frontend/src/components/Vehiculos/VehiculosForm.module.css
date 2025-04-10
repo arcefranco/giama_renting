@@ -1,0 +1,102 @@
+.container{
+    display: flex;
+    flex-direction: column;
+    margin: 40px auto;
+    margin-right: 1rem;
+    margin-left: 1rem;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+.container h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #800000;
+    text-align: left;
+  }
+.form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    justify-items: center;
+}
+
+.inputContainer{
+    display: flex;
+    flex-direction: column;
+    width: 10rem;
+    height: 5rem;
+    margin: .5rem;
+    padding: .5rem;
+}
+
+.inputContainer input[type="text"] {
+    border: none;
+    border-bottom: 2px solid #800000; /* bordó */
+    padding: 8px;
+    outline: none;
+    width: 100%;
+    background-color: transparent;
+  }
+  
+  .inputContainer input[type="text"]:focus {
+    border-bottom: 2px solid #a52a2a; /* más intenso al focus */
+  }
+  .inputContainer select {
+    border: none;
+    border-bottom: 2px solid #800000;
+    padding: 8px;
+    outline: none;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    width: 100%;
+    cursor: pointer;
+  }
+  .inputContainer select:focus {
+    border-bottom: 2px solid #a52a2a;
+  }
+
+  .inputContainer input[type="file"] {
+    border: none;
+    padding: 8px 0;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    background-color: transparent;
+    cursor: pointer;
+  }
+  
+  .inputContainer input[type="file"]::-webkit-file-upload-button {
+    background-color: #800000;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .inputContainer input[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #a52a2a;
+  }
+  .sendBtn {
+    width: 4rem;
+    height: 2rem;
+    align-self: center;
+    margin-top: 20px;
+    background-color: #800000;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .sendBtn:hover {
+    background-color: #a52a2a;
+  }

@@ -7,9 +7,9 @@ const menuItems = [
     title: "Vehículos",
     submenus: [
       {
-        title: "Por tipo",
+        title: "Logística",
         items: [
-          { label: "Autos", to: "/vehiculos/autos" },
+          { label: "Formulario de ingreso", to: "/vehiculos" },
           { label: "Camionetas", to: "/vehiculos/camionetas" }
         ]
       },
@@ -39,6 +39,8 @@ const handleLogout = async () => {
         localStorage.removeItem("username");
         window.location.replace("/");
       };
+const username = JSON.parse(localStorage.getItem("username")); // ej: "farce@giama.com.ar"
+const nombreUsuario = username?.split("@")[0];
   return (
     <header className={styles.header}>
       <div className={styles.logo}>Giama Renting</div>
@@ -78,7 +80,7 @@ const handleLogout = async () => {
       </nav>
 
       <div className={styles.userSection}>
-        <span>Hola, Usuario</span>
+        <span>Hola, {nombreUsuario}</span>
         <button className={styles.logoutBtn} onClick={handleLogout}>Salir</button>
       </div>
     </header>
