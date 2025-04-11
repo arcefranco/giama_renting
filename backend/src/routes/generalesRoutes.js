@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getProveedoresGPS } from "../controllers/generalesController.js";
+import {
+  getProveedoresGPS,
+  getModelos,
+} from "../controllers/generalesController.js";
 
 const generalesRouter = Router();
 
@@ -11,6 +14,7 @@ generalesRouter.use((req, res, next) => {
   next();
 });
 
+generalesRouter.get("/modelos", getModelos);
 generalesRouter.get("/proveedoresGps", getProveedoresGPS);
 
 export default generalesRouter;

@@ -3,6 +3,7 @@ import {
   getVehiculos,
   postVehiculo,
 } from "../controllers/vehiculosController.js";
+import { upload } from "../middlewares/upload.js";
 
 const vehiculosRouter = Router();
 
@@ -13,8 +14,7 @@ vehiculosRouter.use((req, res, next) => {
   );
   next();
 });
-
-vehiculosRouter.get("/vehiculo", getVehiculos);
-vehiculosRouter.post("/vehiculos", postVehiculo);
+vehiculosRouter.get("/getVehiculos", getVehiculos);
+vehiculosRouter.post("/postVehiculo", upload.array("images"), postVehiculo);
 
 export default vehiculosRouter;
