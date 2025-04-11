@@ -56,6 +56,22 @@
     width: 100%;
     cursor: pointer;
   }
+  .inputContainer input[type="number"] {
+    border-bottom: 2px solid #a52a2a;
+  }
+
+  .inputContainer input[type="number"] {
+    border: none;
+    border-bottom: 2px solid #800000;
+    padding: 8px;
+    outline: none;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    width: 100%;
+    cursor: pointer;
+  }
   .inputContainer select:focus {
     border-bottom: 2px solid #a52a2a;
   }
