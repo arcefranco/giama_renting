@@ -43,11 +43,12 @@ export const postVehiculo = async (req, res) => {
     return res.send(error);
   }
 
+  let insertId;
   try {
-    await giama_renting.query(
+    const result = await giama_renting.query(
       `INSERT INTO vehiculos (modelo, precio_inicial, dominio, nro_chasis, nro_motor,
-        kilometros_iniciales, proveedor_gps, nro_serie_gps, dispositivo_peaje, meses_amortizacion, color) VALUES
-        (?,?,?,?,?,?,?,?,?,?,?)`,
+        kilometros_iniciales, proveedor_gps, nro_serie_gps, dispositivo_peaje, meses_amortizacion, color)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -65,12 +66,13 @@ export const postVehiculo = async (req, res) => {
         ],
       }
     );
+    insertId = result[0]; // este es el id insertado
   } catch (error) {
     console.log(error);
     return res.send(error);
   }
   const files = req.files;
-  const folderPath = `giama_renting/vehiculos/${dominio}`;
+  const folderPath = `giama_renting/vehiculos/${insertId}`;
 
   for (const file of files) {
     const key = `${folderPath}/${uuidv4()}_${file.originalname}`;
