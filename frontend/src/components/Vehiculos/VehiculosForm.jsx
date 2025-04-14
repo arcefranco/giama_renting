@@ -2,8 +2,10 @@ import React, {useState, useEffect} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
 import { getModelos, getProveedoresGPS } from '../../reducers/Generales/generalesSlice'
-import { postVehiculo } from '../../reducers/Vehiculos/vehiculosSlice'
+import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
+import { Oval } from 'react-loader-spinner'; // podés elegir cualquier otro
+import "react-loader-spinner"; // estilos
 
 const VehiculosForm = () => {
 const dispatch = useDispatch()
@@ -91,6 +93,21 @@ useEffect(() => {
 
       <div className={styles.container}>
       <ToastContainer /> 
+      {isLoading && (
+      <div className={styles.spinnerOverlay}>
+    <Oval
+      height={60}
+      width={60}
+      color="#800020" // bordó como tu header
+      visible={true}
+      ariaLabel='oval-loading'
+      secondaryColor="#ccc"
+      strokeWidth={3}
+      strokeWidthSecondary={3}
+      />
+      <p className={styles.loadingText}>Ingresando vehículo...</p>
+  </div>
+)}
         <h2>Formulario de ingreso de vehiculos</h2>
         <form action="" enctype="multipart/form-data" className={styles.form}>
         <div className={styles.inputContainer}>
@@ -162,7 +179,13 @@ useEffect(() => {
         <input lang='es' type="file" name='images' multiple/>
         </div>
         </form>
-        <button className={styles.sendBtn} onClick={handleSubmit}>Enviar</button>
+        <button 
+        className={styles.sendBtn} 
+        onClick={handleSubmit}
+        disabled={!form.modelo}
+        >
+          Enviar
+        </button>
       </div>
     </div>
   )

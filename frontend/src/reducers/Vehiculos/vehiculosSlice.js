@@ -70,7 +70,7 @@ export const vehiculosSlice = createSlice({
     });
     builder.addCase(postVehiculo.rejected, (state, action) => {
       state.isLoading = false;
-      state.isError = action.payload.status;
+      state.isError = true;
       state.message = action.payload.message;
     });
   },
