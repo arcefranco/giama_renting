@@ -1,12 +1,10 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
 import { getModelos, getProveedoresGPS } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
-import { Oval } from 'react-loader-spinner'; // podés elegir cualquier otro
-import "react-loader-spinner"; // estilos
-
+import { ClipLoader } from "react-spinners";
 const VehiculosForm = () => {
 const dispatch = useDispatch()
   useEffect(() => {
@@ -32,6 +30,15 @@ const dispatch = useDispatch()
 
   const {modelos, proveedoresGPS} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
+  const [imagenes, setImagenes] = useState([]);
+  const fileInputRef = useRef(null);
+
+const handleFileClick = () => {
+  fileInputRef.current.click();
+};
+const eliminarImagen = (index) => {
+  setImagenes((prev) => prev.filter((_, i) => i !== index));
+};
 
 useEffect(() => {
 
@@ -58,6 +65,20 @@ useEffect(() => {
         progress: undefined,
         theme: "colored",
         })
+        dispatch(reset())
+        setFormData({
+          modelo: '',
+          dominio: '',
+          nro_chasis: '',
+          nro_motor: '',
+          kilometros: '',
+          proveedor_gps: '',
+          nro_serie_gps: '',
+          dispositivo: '',
+          meses_amortizacion: '',
+          color: ''
+        })
+        setImagenes([])
     }
 
   }, [isError, isSuccess]) 
@@ -69,21 +90,25 @@ useEffect(() => {
        [name]: value,
      }); 
   };
-
+  const handleFileChange = (e) => {
+    const nuevosArchivos = Array.from(e.target.files);
+    setImagenes((prev) => [...prev, ...nuevosArchivos]);
+  
+    // Limpiá el value del input para permitir volver a subir el mismo archivo si se desea
+    e.target.value = null;
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-  
-    // Agregás todos los campos del formulario
-    for (const key in form) {
-      formData.append(key, form[key]);
-    }
+    // Agregás los campos normales
+    Object.entries(form).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
   
     // Agregás las imágenes
-    const files = document.querySelector('input[type="file"]').files;
-    for (let i = 0; i < files.length; i++) {
-      formData.append("images", files[i]);
-    }
+    imagenes.forEach((img) => {
+      formData.append("images", img);
+    });
   
     dispatch(postVehiculo(formData))
   }
@@ -94,18 +119,13 @@ useEffect(() => {
       <div className={styles.container}>
       <ToastContainer /> 
       {isLoading && (
-      <div className={styles.spinnerOverlay}>
-    <Oval
-      height={60}
-      width={60}
-      color="#800020" // bordó como tu header
-      visible={true}
-      ariaLabel='oval-loading'
-      secondaryColor="#ccc"
-      strokeWidth={3}
-      strokeWidthSecondary={3}
-      />
-      <p className={styles.loadingText}>Ingresando vehículo...</p>
+  <div className={styles.spinnerOverlay}>
+    <ClipLoader
+      size={60}
+      color="#800020" // bordó
+      loading={true}
+    />
+    <p className={styles.loadingText}>Ingresando vehículo...</p>
   </div>
 )}
         <h2>Formulario de ingreso de vehiculos</h2>
@@ -129,7 +149,7 @@ useEffect(() => {
         </div>
         <div className={styles.inputContainer}>
           <span>Nro. Chasis</span>
-          <input type="number" name='nro_chasis' value={form["nro_chasis"]}
+          <input type="text" name='nro_chasis' value={form["nro_chasis"]}
           onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
@@ -175,9 +195,25 @@ useEffect(() => {
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
-        <span>Cargar imagenes</span>
-        <input lang='es' type="file" name='images' multiple/>
-        </div>
+        <span>Cargar imágenes</span>
+        <button type="button" style={{width: "9rem"}} className={styles.sendBtn} onClick={handleFileClick}>Seleccionar imágenes</button>
+        <input
+        type="file"
+        ref={fileInputRef}
+        multiple
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+        />
+
+        <div className={styles.previewContainer}>
+        {imagenes.map((archivo, index) => (
+        <div key={index} className={styles.previewItem}>
+        <span>{archivo.name}</span>
+        <button type="button" onClick={() => eliminarImagen(index)}>Eliminar</button>
+      </div>
+    ))}
+  </div>
+</div>
         </form>
         <button 
         className={styles.sendBtn} 

@@ -12,11 +12,15 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.1",
     "axios": "^1.8.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-loader-spinner": "^6.1.6",
+    "cldr-data": "^36.0.2",
+    "devextreme": "^22.2.5",
+    "devextreme-react": "^22.2.5",
+    "globalize": "^1.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.4.1",
+    "react-spinners": "^0.16.1",
     "react-toastify": "^11.0.5"
   },
   "devDependencies": {
@@ -29,5 +33,10 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
     "vite": "^6.2.0"
+  },
+  "overrides": {
+    "react-loader-spinner": {
+      "react": "^19.0.0"
+    }
   }
 }

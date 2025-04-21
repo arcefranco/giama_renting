@@ -3,8 +3,8 @@
     height: 100vh;
     display: grid;
     grid-template-columns: 1fr 0.4fr 1fr; /* Tres columnas: formulario, título, SVG */
-    grid-template-rows: auto 1fr; /* Fila superior para el título y luego el contenido */
-    background: linear-gradient(to bottom, #fef9e1, #ffcf7c85);
+    grid-template-rows: .5fr 1fr; /* Fila superior para el título y luego el contenido */
+    background: linear-gradient(to bottom, #fef9e1, #ffecccd4);
     overflow: hidden;
     position: relative;
   }
@@ -14,7 +14,7 @@
     height: 41.25rem;
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(to bottom, #9b4343a2, #6d232317);
+    background: linear-gradient(to bottom, #9e4e4ea2, #6d232317);
     pointer-events: none;
     z-index: 0
   

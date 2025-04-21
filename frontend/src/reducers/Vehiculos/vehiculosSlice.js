@@ -65,12 +65,14 @@ export const vehiculosSlice = createSlice({
     });
     builder.addCase(postVehiculo.fulfilled, (state, action) => {
       state.isLoading = false;
+      state.isError = false;
       state.isSuccess = action.payload.status;
       state.message = action.payload.message;
     });
     builder.addCase(postVehiculo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
+      state.isSuccess = false;
       state.message = action.payload.message;
     });
   },

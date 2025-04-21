@@ -4,7 +4,7 @@ import tick from '../../assets/tick.png';
 import cross from '../../assets/cross.png';
 import Eye from '../../assets/Eye.svg';
 import EyeHidden from '../../assets/Eye-Hidden.svg';
-import Car from "../../assets/Vector.svg"
+import Car from "../../assets/Vector.png"
 import { logIn } from '../../reducers/Login/loginSlice'; 
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
@@ -51,7 +51,7 @@ useEffect(() => {
     <ToastContainer /> 
     <div className={`${styles.elipse} ${styles.elipseSuperiorIzquierda}`}></div>
     <div className={`${styles.elipse} ${styles.elipseInferiorDerecha}`}></div>
-    <h1 className={styles.title}>Giama Renting</h1>
+    <h1 className={styles.title}></h1>
     <form className={styles.loginForm}>
         <div className={styles.formHeader}>Iniciar sesión</div>
         <div className={styles.formContent}>
@@ -96,7 +96,7 @@ useEffect(() => {
           }
         </div>
       </form>
-    <div className={styles.svg}><img src={Car} alt="" /></div>
+    <div className={styles.svg}><img src={Car} style={{width: "17rem"}} alt="" /></div>
   </div>
   )
 }

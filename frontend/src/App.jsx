@@ -5,6 +5,8 @@ import Login from './components/Login/Login'
 import MainLayout from './layouts/MainLayout';
 import Home from './components/Home/Home';
 import ProtectedRoute from './ProtectedRoute';
+import ReporteVehiculos from './components/Vehiculos/ReporteVehiculos';
+import ImagenesVehiculo from './components/Vehiculos/ImagenesVehiculo';
 import './App.css'
 
 function App() {
@@ -21,6 +23,8 @@ function App() {
     <Route element={<MainLayout />}>
     <Route path="/home" element={<Home />} />
     <Route path="/vehiculos" element={<VehiculosForm />} />
+    <Route path="/vehiculosReporte" element={<ReporteVehiculos />} />
+    <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo/>}/>
     </Route>
   </Route>
     </Routes>
