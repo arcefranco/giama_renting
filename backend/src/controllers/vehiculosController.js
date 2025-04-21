@@ -2,13 +2,35 @@ import { QueryTypes } from "sequelize";
 import { giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const getVehiculos = async (req, res) => {
   try {
     const resultado = await giama_renting.query("SELECT * FROM vehiculos", {
       type: QueryTypes.SELECT,
     });
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+
+export const getVehiculosById = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
     return res.send(resultado);
   } catch (error) {
     return res.send(error);
@@ -93,4 +115,50 @@ export const postVehiculo = async (req, res) => {
     status: true,
     message: "El vehículo ha sido cargado con éxito",
   });
+};
+
+export const getImagenesVehiculos = async (req, res) => {
+  const { id } = req.params;
+  const prefix = `giama_renting/vehiculos/${id}/`;
+  const s3 = new S3Client({
+    region: "us-west-2",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: "giama-bucket",
+      Prefix: prefix,
+    });
+
+    const data = await s3.send(command);
+
+    if (!data.Contents) return res.json([]);
+
+    const archivos = await Promise.all(
+      data.Contents.map(async (file) => {
+        const url = await getSignedUrl(
+          s3,
+          new GetObjectCommand({
+            Bucket: "giama-bucket",
+            Key: file.Key,
+          }),
+          { expiresIn: 3600 }
+        ); // 1 hora
+
+        return {
+          key: file.Key,
+          url,
+          lastModified: file.LastModified,
+        };
+      })
+    );
+
+    res.json(archivos);
+  } catch (error) {
+    console.error("Error al obtener imágenes del vehículo:", error);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
 };

@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   getVehiculos,
   postVehiculo,
+  getImagenesVehiculos,
+  getVehiculosById,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 
@@ -15,6 +17,8 @@ vehiculosRouter.use((req, res, next) => {
   next();
 });
 vehiculosRouter.get("/getVehiculos", getVehiculos);
+vehiculosRouter.post("/getVehiculosById", getVehiculosById);
 vehiculosRouter.post("/postVehiculo", upload.array("images"), postVehiculo);
+vehiculosRouter.get("/getImagenesVehiculos/:id", getImagenesVehiculos);
 
 export default vehiculosRouter;
