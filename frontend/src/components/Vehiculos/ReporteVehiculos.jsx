@@ -46,6 +46,16 @@ const renderImagenesCell = (data) => {
       </button>
     );
   };
+const renderModificarCell = (data) => {
+    return (
+      <button
+        onClick={() => window.open(`/vehiculos/actualizar/${data.data.id}`, '_blank')}
+        style={{ color: '#1976d2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        Modificar
+      </button>
+    );
+  };
 return (
 <div className={styles.container}>
     <h2>Reporte de vehículos ingresados</h2>
@@ -86,6 +96,7 @@ return (
         <Column dataField="meses_amortizacion" width={75} caption="Amortización (Meses)" />
         <Column dataField="color" caption="Color" width={75} />
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
+        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
       </DataGrid>
     </div>
 )

@@ -4,6 +4,7 @@ import vehiculosService from "./vehiculosService.js";
 
 const initialState = {
   vehiculos: [],
+  vehiculo: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -22,10 +23,34 @@ export const getVehiculos = createAsyncThunk(
   }
 );
 
+export const getVehiculosById = createAsyncThunk(
+  "getVehiculosById",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getVehiculosById(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const postVehiculo = createAsyncThunk(
   "postVehiculo",
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.postVehiculo(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const updateVehiculo = createAsyncThunk(
+  "updateVehiculo",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.updateVehiculo(data);
     if (result.hasOwnProperty("status") && result.status) {
       return result;
     } else {
@@ -60,6 +85,20 @@ export const vehiculosSlice = createSlice({
       state.isError = action.payload.status;
       state.message = action.payload.message;
     });
+    builder.addCase(getVehiculosById.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getVehiculosById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.vehiculo = action.payload;
+    });
+    builder.addCase(getVehiculosById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
     builder.addCase(postVehiculo.pending, (state) => {
       state.isLoading = true;
     });
@@ -70,6 +109,21 @@ export const vehiculosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(postVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(updateVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateVehiculo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
