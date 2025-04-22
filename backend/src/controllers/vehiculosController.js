@@ -162,3 +162,49 @@ export const getImagenesVehiculos = async (req, res) => {
     res.status(500).json({ error: "Error al obtener las imágenes" });
   }
 };
+
+export const updateVehiculo = async (req, res) => {
+  const {
+    id,
+    modelo,
+    dominio,
+    nro_chasis,
+    nro_motor,
+    kilometros,
+    proveedor_gps,
+    nro_serie_gps,
+    dispositivo,
+    meses_amortizacion,
+    color,
+  } = req.body;
+  try {
+    await giama_renting.query(
+      `UPDATE vehiculos SET modelo = ?, dominio = ?, nro_chasis = ?, nro_motor = ?,
+        kilometros_iniciales = ?, proveedor_gps = ?, nro_serie_gps = ?, dispositivo_peaje = ?, meses_amortizacion = ?, color = ? 
+        WHERE id = ?`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          modelo,
+          dominio,
+          nro_chasis,
+          nro_motor,
+          kilometros,
+          proveedor_gps,
+          nro_serie_gps,
+          dispositivo,
+          meses_amortizacion,
+          color,
+          id,
+        ],
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  return res.send({
+    status: true,
+    message: "El vehículo ha sido actualizado con éxito",
+  });
+};

@@ -4,6 +4,7 @@ import {
   postVehiculo,
   getImagenesVehiculos,
   getVehiculosById,
+  updateVehiculo,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 
@@ -20,5 +21,6 @@ vehiculosRouter.get("/getVehiculos", getVehiculos);
 vehiculosRouter.post("/getVehiculosById", getVehiculosById);
 vehiculosRouter.post("/postVehiculo", upload.array("images"), postVehiculo);
 vehiculosRouter.get("/getImagenesVehiculos/:id", getImagenesVehiculos);
+vehiculosRouter.post("/updateVehiculo", updateVehiculo);
 
 export default vehiculosRouter;
