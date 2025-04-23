@@ -13,22 +13,22 @@ const menuItems = [
           { label: "Reporte vehículos", to: "/vehiculosReporte" }
         ]
       },
-      {
+/*       {
         title: "Por marca",
         items: [
           { label: "Ford", to: "/vehiculos/ford" },
           { label: "Chevrolet", to: "/vehiculos/chevrolet" }
         ]
-      }
+      } */
     ]
   },
-  {
+/*   {
     title: "Clientes",
     items: [
       { label: "Listado", to: "/clientes/listado" },
       { label: "Nuevo Cliente", to: "/clientes/nuevo" }
     ]
-  }
+  } */
 ];
 
 const Header = () => {

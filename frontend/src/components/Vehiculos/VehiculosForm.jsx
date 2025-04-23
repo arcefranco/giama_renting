@@ -53,6 +53,7 @@ useEffect(() => {
         progress: undefined,
         theme: "colored",
         })
+        dispatch(reset())
     }
     if(isSuccess){
       toast.success(message, {
@@ -181,7 +182,7 @@ useEffect(() => {
         </div>
         <div className={styles.inputContainer}>
         <span>Dispositivo Peaje</span>
-        <input type="text" name='dispositivo' value={form["dispositivo"]}
+        <input type="number" name='dispositivo' value={form["dispositivo"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
@@ -194,25 +195,31 @@ useEffect(() => {
         <input type="text" name='color' value={form["color"]}
         onChange={handleChange} />
         </div>
-        <div className={styles.inputContainer}>
-        <span>Cargar imágenes</span>
-        <button type="button" style={{width: "9rem"}} className={styles.sendBtn} onClick={handleFileClick}>Seleccionar imágenes</button>
-        <input
-        type="file"
-        ref={fileInputRef}
-        multiple
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-        />
+        <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>
+  <span>Cargar imágenes</span>
+  <button type="button" style={{ width: "9rem" }} className={styles.sendBtn} onClick={handleFileClick}>
+    Seleccionar imágenes
+  </button>
+  <input
+    type="file"
+    ref={fileInputRef}
+    multiple
+    style={{ display: "none" }}
+    onChange={handleFileChange}
+  />
+</div>
 
-        <div className={styles.previewContainer}>
-        {imagenes.map((archivo, index) => (
-        <div key={index} className={styles.previewItem}>
-        <span>{archivo.name}</span>
-        <button type="button" onClick={() => eliminarImagen(index)}>Eliminar</button>
-      </div>
-    ))}
-  </div>
+<div className={styles.previewGrid} style={{ gridColumn: "span 1" }}>
+  {imagenes.map((archivo, index) => (
+    <div key={index} className={styles.thumbnailWrapper}>
+      <img
+        src={URL.createObjectURL(archivo)}
+        alt={`preview-${index}`}
+        className={styles.thumbnail}
+      />
+      <button type="button" className={styles.removeBtn} onClick={() => eliminarImagen(index)}>×</button>
+    </div>
+  ))}
 </div>
         </form>
         <button 
