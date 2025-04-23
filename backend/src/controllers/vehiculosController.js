@@ -2,6 +2,7 @@ import { QueryTypes } from "sequelize";
 import { giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
+
 import {
   PutObjectCommand,
   S3Client,
@@ -9,6 +10,7 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { handleSqlError } from "../../helpers/handleSqlError.js";
 
 export const getVehiculos = async (req, res) => {
   try {
@@ -91,7 +93,12 @@ export const postVehiculo = async (req, res) => {
     insertId = result[0]; // este es el id insertado
   } catch (error) {
     console.log(error);
-    return res.send(error);
+    const { status, body } = handleSqlError(
+      error,
+      "vehículo",
+      "dominio/nro_chasis/nro_motor"
+    );
+    return res.send(body);
   }
   const files = req.files;
   const folderPath = `giama_renting/vehiculos/${insertId}`;
