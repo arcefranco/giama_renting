@@ -68,7 +68,28 @@ const updateVehiculo = async (form) => {
       throw response.data;
     }
   } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/postVehiculo");
+    return ServiceErrorHandler(error, "vehiculos/updateVehiculo");
+  }
+};
+const eliminarImagenes = async (key) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/eliminarImagenes",
+      key,
+      {
+        headers:
+          key instanceof FormData ? {} : { "Content-Type": "application/json" },
+        withCredentials: true,
+      }
+    );
+    if (response.data.hasOwnProperty("status") && response.data.status) {
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "vehiculos/eliminarImagenes");
   }
 };
 const vehiculosService = {
@@ -76,5 +97,6 @@ const vehiculosService = {
   getVehiculosById,
   postVehiculo,
   updateVehiculo,
+  eliminarImagenes,
 };
 export default vehiculosService;

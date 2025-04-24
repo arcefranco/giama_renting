@@ -1,5 +1,4 @@
 .container {
-    width: 100vw;
     height: 100vh;
     display: grid;
     grid-template-columns: 1fr 0.4fr 1fr; /* Tres columnas: formulario, título, SVG */

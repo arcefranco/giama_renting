@@ -6,6 +6,7 @@ import { getModelos, getProveedoresGPS } from '../../reducers/Generales/generale
 import styles from "./ReporteVehiculos.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
+import { ClipLoader } from "react-spinners";
 const ReporteVehiculos = () => {
 const dispatch = useDispatch();
 useEffect(() => {
@@ -26,8 +27,12 @@ const {
 } = useSelector((state) => state.vehiculosReducer)
 const {modelos, proveedoresGPS} = useSelector(state => state.generalesReducer)
 const getNombreModelo = (id) => {
-  const modelo = modelos.find((m) => m.id === id);
+  const modelo = modelos.find((m) => m.id === id); 
   return modelo ? modelo.nombre : id;
+};
+
+const handleActualizar = () => {
+  dispatch(getVehiculos())
 };
 
 const getNombreProveedorGPS = (id) => {
@@ -58,7 +63,20 @@ const renderModificarCell = (data) => {
   };
 return (
 <div className={styles.container}>
+{isLoading && (
+    <div className={styles.spinnerOverlay}>
+    <ClipLoader
+      size={60}
+      color="#800020" // bordó
+      loading={true}
+    />
+      <span className={styles.loadingText}>Cargando vehículos...</span>
+    </div>
+  )}
     <h2>Reporte de vehículos ingresados</h2>
+    <button onClick={handleActualizar} className={styles.refreshButton}>
+    🔄 Actualizar reporte
+    </button>
       <DataGrid
         className={styles.dataGrid}
         dataSource={vehiculos || []}

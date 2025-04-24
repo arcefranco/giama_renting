@@ -59,6 +59,17 @@ export const updateVehiculo = createAsyncThunk(
   }
 );
 
+export const eliminarImagenes = createAsyncThunk(
+  "eliminarImagenes",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.eliminarImagenes(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
 export const vehiculosSlice = createSlice({
   name: "vehiculos",
   initialState,
@@ -124,6 +135,21 @@ export const vehiculosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(updateVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(eliminarImagenes.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(eliminarImagenes.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(eliminarImagenes.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
