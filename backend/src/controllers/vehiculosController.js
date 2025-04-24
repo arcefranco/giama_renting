@@ -8,9 +8,11 @@ import {
   S3Client,
   ListObjectsV2Command,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { handleSqlError } from "../../helpers/handleSqlError.js";
+import { getTodayDate } from "../../helpers/getTodayDate.js";
 
 export const getVehiculos = async (req, res) => {
   try {
@@ -70,13 +72,14 @@ export const postVehiculo = async (req, res) => {
   let insertId;
   try {
     const result = await giama_renting.query(
-      `INSERT INTO vehiculos (modelo, precio_inicial, dominio, nro_chasis, nro_motor,
+      `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, nro_chasis, nro_motor,
         kilometros_iniciales, proveedor_gps, nro_serie_gps, dispositivo_peaje, meses_amortizacion, color)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
           modelo,
+          getTodayDate(),
           precio_inicial,
           dominio,
           nro_chasis,
@@ -167,6 +170,30 @@ export const getImagenesVehiculos = async (req, res) => {
   } catch (error) {
     console.error("Error al obtener imágenes del vehículo:", error);
     res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
+};
+
+export const eliminarImagenes = async (req, res) => {
+  console.log("Key recibido:", req.body.key);
+  const { key } = req.body;
+
+  const params = {
+    Bucket: "giama-bucket",
+    Key: key,
+  };
+
+  try {
+    const command = new DeleteObjectCommand(params);
+    await s3.send(command);
+
+    return res
+      .status(200)
+      .json({ status: true, message: "Imagen eliminada con éxito" });
+  } catch (error) {
+    console.error("Error al eliminar imagen:", error);
+    return res
+      .status(500)
+      .json({ status: false, message: "Error al eliminar imagen" });
   }
 };
 
