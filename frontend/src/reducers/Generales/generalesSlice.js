@@ -94,6 +94,10 @@ export const generalesSlice = createSlice({
       state.message = "";
       state.modelos = [];
       state.proveedoresGPS = [];
+      state.provincias = [];
+      state.tipos_documento = [];
+      state.tipos_responsable = [];
+      state.tipos_sexo = [];
     },
   },
   extraReducers: (builder) => {

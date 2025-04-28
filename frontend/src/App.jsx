@@ -10,6 +10,7 @@ import ImagenesVehiculo from './components/Vehiculos/ImagenesVehiculo';
 import UpdateVehiculo from './components/Vehiculos/UpdateVehiculo/UpdateVehiculo';
 import './App.css'
 import ClientesForm from './components/Clientes/ClientesForm';
+import ReporteClientes from './components/Clientes/ReporteClientes';
 
 function App() {
 
@@ -29,6 +30,7 @@ function App() {
     <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo/>}/>
     <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo/>}/>
     <Route path="/clientes" element={<ClientesForm/>}/>
+    <Route path='/clientesReporte' element={<ReporteClientes/>}/>
     </Route>
   </Route>
     </Routes>

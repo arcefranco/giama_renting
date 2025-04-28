@@ -26,9 +26,12 @@ const postCliente = async (form) => {
     return ServiceErrorHandler(error, "clientes/postCliente");
   }
 };
-
+const getClientes = async () => {
+  return getFunction("clientes/getClientes");
+};
 const clientesService = {
   postCliente,
+  getClientes,
 };
 
 export default clientesService;

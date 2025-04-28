@@ -26,6 +26,7 @@ const menuItems = [
     title: "Clientes",
     items: [
       { label: "Formulario clientes", to: "/clientes" },
+      { label: "Reporte clientes", to: "/clientesReporte" },
     ]
   } 
 ];

@@ -22,6 +22,18 @@ export const postCliente = createAsyncThunk(
   }
 );
 
+export const getClientes = createAsyncThunk(
+  "getClientes",
+  async (data, { rejectWithValue }) => {
+    const result = await clientesService.getClientes();
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const clientesSlice = createSlice({
   name: "clientes",
   initialState,
@@ -46,6 +58,17 @@ export const clientesSlice = createSlice({
       state.isLoading = false;
       state.isError = action.payload.status;
       state.message = action.payload.message;
+    });
+    builder.addCase(getClientes.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getClientes.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.clientes = action.payload;
+    });
+    builder.addCase(getClientes.rejected, (state, action) => {
+      state.isLoading = false;
+      state.clientes = [];
     });
   },
 });
