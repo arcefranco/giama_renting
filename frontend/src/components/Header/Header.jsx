@@ -22,13 +22,12 @@ const menuItems = [
       } */
     ]
   },
-/*   {
+   {
     title: "Clientes",
     items: [
-      { label: "Listado", to: "/clientes/listado" },
-      { label: "Nuevo Cliente", to: "/clientes/nuevo" }
+      { label: "Formulario clientes", to: "/clientes" },
     ]
-  } */
+  } 
 ];
 
 const Header = () => {

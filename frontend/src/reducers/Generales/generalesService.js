@@ -8,8 +8,28 @@ const getProveedoresGPS = async () => {
   return getFunction("generales/proveedoresGps");
 };
 
+const getProvincias = async () => {
+  return getFunction("generales/provincias");
+};
+
+const getTiposDocumento = async () => {
+  return getFunction("generales/tipos_documento");
+};
+
+const getTiposResponsable = async () => {
+  return getFunction("generales/tipos_responsable");
+};
+
+const getTiposSexo = async () => {
+  return getFunction("generales/tipos_sexo");
+};
+
 const generalesService = {
   getModelos,
   getProveedoresGPS,
+  getProvincias,
+  getTiposDocumento,
+  getTiposResponsable,
+  getTiposSexo,
 };
 export default generalesService;

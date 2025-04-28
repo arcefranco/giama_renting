@@ -24,3 +24,53 @@ export const getModelos = async (req, res) => {
     return res.send(error);
   }
 };
+
+export const getTiposDocumento = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM tipos_documentos",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+
+export const getTiposResponsable = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM tipos_responsable",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+
+export const getTiposSexo = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM tipos_sexo", {
+      type: QueryTypes.SELECT,
+    });
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+
+export const getProvincias = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM provincias", {
+      type: QueryTypes.SELECT,
+    });
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
