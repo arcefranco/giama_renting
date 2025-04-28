@@ -98,3 +98,14 @@ export const postCliente = async (req, res) => {
   }
   return res.send({ status: true, message: "Cliente creado con éxito" });
 };
+
+export const getClientes = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM clientes", {
+      type: QueryTypes.SELECT,
+    });
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
