@@ -12,6 +12,7 @@ import './App.css'
 import ClientesForm from './components/Clientes/ClientesForm';
 import ReporteClientes from './components/Clientes/ReporteClientes';
 import ImagenesClientes from './components/Clientes/ImagenesClientes';
+import UpdateCliente from './components/Clientes/UpdateCliente';
 
 function App() {
 
@@ -33,6 +34,7 @@ function App() {
     <Route path="/clientes" element={<ClientesForm/>}/>
     <Route path='/clientesReporte' element={<ReporteClientes/>}/>
     <Route path='/clientes/imagenes/:id' element={<ImagenesClientes/>}/>
+    <Route path='/clientes/actualizar/:id' element={<UpdateCliente/>}/>
     </Route>
   </Route>
     </Routes>

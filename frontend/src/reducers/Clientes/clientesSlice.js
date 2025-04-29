@@ -35,7 +35,7 @@ export const getClientes = createAsyncThunk(
   }
 );
 
-export const getClientessById = createAsyncThunk(
+export const getClientesById = createAsyncThunk(
   "getClientessById",
   async (data, { rejectWithValue }) => {
     const result = await clientesService.getClientesById(data);
@@ -50,6 +50,18 @@ export const eliminarImagenes = createAsyncThunk(
   "eliminarImagenes",
   async (data, { rejectWithValue }) => {
     const result = await clientesService.eliminarImagenes(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const updateCliente = createAsyncThunk(
+  "updateCliente",
+  async (data, { rejectWithValue }) => {
+    const result = await clientesService.updateCliente(data);
     if (result.hasOwnProperty("status") && result.status) {
       return result;
     } else {
@@ -94,16 +106,16 @@ export const clientesSlice = createSlice({
       state.isLoading = false;
       state.clientes = [];
     });
-    builder.addCase(getClientessById.pending, (state) => {
+    builder.addCase(getClientesById.pending, (state) => {
       state.isLoading = true;
     });
-    builder.addCase(getClientessById.fulfilled, (state, action) => {
+    builder.addCase(getClientesById.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = action.payload.status;
       state.message = action.payload.message;
       state.cliente = action.payload;
     });
-    builder.addCase(getClientessById.rejected, (state, action) => {
+    builder.addCase(getClientesById.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = action.payload.status;
       state.message = action.payload.message;
@@ -118,6 +130,21 @@ export const clientesSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(eliminarImagenes.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateCliente.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(updateCliente.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateCliente.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

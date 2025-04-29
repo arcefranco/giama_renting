@@ -71,11 +71,35 @@ const eliminarImagenes = async (key) => {
     return ServiceErrorHandler(error, "clientes/eliminarImagenes");
   }
 };
+const updateCliente = async (form) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "clientes/updateCliente",
+      form,
+      {
+        headers:
+          form instanceof FormData
+            ? {}
+            : { "Content-Type": "application/json" },
+        withCredentials: true,
+      }
+    );
+    if (response.data.hasOwnProperty("status") && response.data.status) {
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "clientes/updateCliente");
+  }
+};
 const clientesService = {
   postCliente,
   getClientes,
   eliminarImagenes,
   getClientesById,
+  updateCliente,
 };
 
 export default clientesService;
