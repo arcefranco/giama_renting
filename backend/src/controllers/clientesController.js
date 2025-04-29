@@ -199,3 +199,73 @@ export const eliminarImagenes = async (req, res) => {
       .json({ status: false, message: "Error al eliminar imagen" });
   }
 };
+export const updateCliente = async (req, res) => {
+  const {
+    id,
+    nombre,
+    apellido,
+    razon_social,
+    fecha_nacimiento,
+    nacionalidad,
+    tipo_contribuyente,
+    tipo_documento,
+    nro_documento,
+    doc_expedido_por,
+    licencia,
+    lic_expedida_por,
+    fecha_vencimiento,
+    direccion,
+    nro_direccion,
+    piso,
+    depto,
+    codigo_postal,
+    provincia,
+    ciudad,
+    celular,
+    mail,
+    notas,
+  } = req.body;
+  try {
+    await giama_renting.query(
+      `UPDATE clientes SET nombre = ?, apellido = ?, razon_social = ?, fecha_nacimiento = ?, nacionalidad = ?, tipo_contribuyente = ?,
+        tipo_documento = ?, nro_documento = ?, doc_expedido_por = ?, licencia = ?, lic_expedida_por = ?, fecha_vencimiento_licencia = ?, direccion = ?,
+        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, celular = ?, mail = ?, notas = ?
+        WHERE id = ?`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          nombre,
+          apellido,
+          razon_social,
+          fecha_nacimiento,
+          nacionalidad,
+          tipo_contribuyente,
+          tipo_documento,
+          nro_documento,
+          doc_expedido_por,
+          licencia,
+          lic_expedida_por,
+          fecha_vencimiento,
+          direccion,
+          nro_direccion,
+          piso,
+          depto,
+          codigo_postal,
+          provincia,
+          ciudad,
+          celular,
+          mail,
+          notas,
+          id,
+        ],
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  return res.send({
+    status: true,
+    message: "El cliente ha sido actualizado con éxito",
+  });
+};
