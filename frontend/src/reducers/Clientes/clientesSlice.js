@@ -4,6 +4,7 @@ import clientesService from "./clientesService";
 
 const initialState = {
   clientes: [],
+  cliente: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -27,6 +28,29 @@ export const getClientes = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     const result = await clientesService.getClientes();
     if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getClientessById = createAsyncThunk(
+  "getClientessById",
+  async (data, { rejectWithValue }) => {
+    const result = await clientesService.getClientesById(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+export const eliminarImagenes = createAsyncThunk(
+  "eliminarImagenes",
+  async (data, { rejectWithValue }) => {
+    const result = await clientesService.eliminarImagenes(data);
+    if (result.hasOwnProperty("status") && result.status) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -69,6 +93,35 @@ export const clientesSlice = createSlice({
     builder.addCase(getClientes.rejected, (state, action) => {
       state.isLoading = false;
       state.clientes = [];
+    });
+    builder.addCase(getClientessById.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getClientessById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.cliente = action.payload;
+    });
+    builder.addCase(getClientessById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(eliminarImagenes.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(eliminarImagenes.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(eliminarImagenes.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
   },
 });

@@ -116,7 +116,7 @@ return (
         <Column dataField="nacionalidad" caption="Nacionalidad" width={90} />
         <Column dataField="tipo_contribuyente" caption="Tipo responsable"
         cellRender={({ data }) => getTipoResponsableCell(data["tipo_contribuyente"])}
-        width={125}/>
+        width={140}/>
         <Column dataField="tipo_documento" 
         cellRender={({ data }) => getTipoDocumento(data["tipo_documento"])}
         caption="Tipo documento" width={90} />
@@ -135,10 +135,10 @@ return (
         <Column dataField="provincia" caption="Provincia"
         cellRender={({ data }) => getProvinciasCell(data["provincia"])} 
         width={100}/>
-        <Column dataField="ciudad" caption="Ciudad" width={90}/>
+        <Column dataField="ciudad" caption="Ciudad" width={110}/>
         <Column dataField="celular" caption="Celular" width={90}/>
         <Column dataField="mail" caption="Mail" width={90}/>
-        <Column dataField="notas" caption="Notas" width={90} />
+        <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
       </DataGrid>
