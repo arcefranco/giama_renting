@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { upload } from "../middlewares/upload.js";
-import { getClientes, postCliente } from "../controllers/clientesController.js";
+import {
+  getClientes,
+  postCliente,
+  getClientesById,
+  getImagenesClientes,
+  eliminarImagenes,
+} from "../controllers/clientesController.js";
 const clientesRouter = Router();
 clientesRouter.use((req, res, next) => {
   res.header(
@@ -11,5 +17,7 @@ clientesRouter.use((req, res, next) => {
 });
 clientesRouter.post("/postCliente", upload.array("images"), postCliente);
 clientesRouter.get("/getClientes", getClientes);
-
+clientesRouter.post("/getclientesById", getClientesById);
+clientesRouter.get("/getImagenesclientes/:id", getImagenesClientes);
+clientesRouter.post("/eliminarImagenes", eliminarImagenes);
 export default clientesRouter;

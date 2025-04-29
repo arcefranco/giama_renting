@@ -4,7 +4,13 @@ import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
 import { handleSqlError } from "../../helpers/handleSqlError.js";
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const postCliente = async (req, res) => {
@@ -107,5 +113,89 @@ export const getClientes = async (req, res) => {
     return res.send(resultado);
   } catch (error) {
     return res.send(error);
+  }
+};
+
+export const getClientesById = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+export const getImagenesClientes = async (req, res) => {
+  const { id } = req.params;
+  const prefix = `giama_renting/clientes/${id}/`;
+  const s3 = new S3Client({
+    region: "us-west-2",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: "giama-bucket",
+      Prefix: prefix,
+    });
+
+    const data = await s3.send(command);
+
+    if (!data.Contents) return res.json([]);
+
+    const archivos = await Promise.all(
+      data.Contents.map(async (file) => {
+        const url = await getSignedUrl(
+          s3,
+          new GetObjectCommand({
+            Bucket: "giama-bucket",
+            Key: file.Key,
+          }),
+          { expiresIn: 3600 }
+        ); // 1 hora
+
+        return {
+          key: file.Key,
+          url,
+          lastModified: file.LastModified,
+        };
+      })
+    );
+
+    res.json(archivos);
+  } catch (error) {
+    console.error("Error al obtener imágenes del cliente:", error);
+    res.status(500).json({ error: "Error al obtener las imágenes" });
+  }
+};
+export const eliminarImagenes = async (req, res) => {
+  console.log("Key recibido:", req.body.key);
+  const { key } = req.body;
+
+  const params = {
+    Bucket: "giama-bucket",
+    Key: key,
+  };
+
+  try {
+    const command = new DeleteObjectCommand(params);
+    await s3.send(command);
+
+    return res
+      .status(200)
+      .json({ status: true, message: "Imagen eliminada con éxito" });
+  } catch (error) {
+    console.error("Error al eliminar imagen:", error);
+    return res
+      .status(500)
+      .json({ status: false, message: "Error al eliminar imagen" });
   }
 };
