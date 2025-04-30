@@ -36,7 +36,6 @@ const handleActualizar = () => {
 };
 
 const getNombreProveedorGPS = (id) => {
-  console.log(id)
   const proveedor = proveedoresGPS.find((p) => p.id == id);
   return proveedor ? proveedor.nombre : '';
 };
@@ -50,7 +49,7 @@ const renderImagenesCell = (data) => {
         Ver
       </button>
     );
-  };
+};
 const renderModificarCell = (data) => {
     return (
       <button
@@ -60,7 +59,16 @@ const renderModificarCell = (data) => {
         Modificar
       </button>
     );
-  };
+};
+const renderEstado = (data) => {
+  if(data.data.proveedor_gps !== 0 /* || null */ && 
+    data.data.nro_serie_gps !== 0 /* || null */ &&
+    data.data.calcomania !== 0){
+      return <span className={styles.spanPreparado}>Preparado</span>
+  }else{
+    return <span className={styles.spanNoPreparado}>Sin preparar</span>
+  }
+}
 return (
 <div className={styles.container}>
 {isLoading && (
@@ -93,7 +101,7 @@ return (
         <Export enabled={true} allowExportSelectedData={true} />
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
-
+        <Column dataField="id" caption="Estado" cellRender={renderEstado} width={130} />
         <Column dataField="id" caption="ID" width={50} />
         <Column dataField="modelo" width={75} caption="Modelo" 
         cellRender={({ data }) => getNombreModelo(data.modelo)}/>
@@ -113,6 +121,14 @@ return (
         <Column dataField="dispositivo_peaje" caption="Peaje" />
         <Column dataField="meses_amortizacion" width={75} caption="Amortización (Meses)" />
         <Column dataField="color" caption="Color" width={75} />
+        <Column dataField="calcomania" caption="Calcomanía" width={75} 
+        cellRender={({ data }) => {
+          if(data["calcomania"] === 1){
+            return "Sí"
+          }else{
+            return "No"
+          }
+        }}/>
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
       </DataGrid>

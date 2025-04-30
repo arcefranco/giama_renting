@@ -23,7 +23,8 @@ const UpdateVehiculo = () => {
     nro_serie_gps: '',
     dispositivo: '',
     meses_amortizacion: '',
-    color: ''
+    color: '',
+    calcomania: 0
   });
 
   useEffect(() => {
@@ -44,7 +45,8 @@ const UpdateVehiculo = () => {
         nro_serie_gps: vehiculo[0].nro_serie_gps || '',
         dispositivo: vehiculo[0].dispositivo_peaje || '',
         meses_amortizacion: vehiculo[0].meses_amortizacion || '',
-        color: vehiculo[0].color || ''
+        color: vehiculo[0].color || '',
+        calcomania: vehiculo[0].calcomania || 0 
       });
     }
   }, [vehiculo]);
@@ -64,6 +66,14 @@ const UpdateVehiculo = () => {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleCheckChange = (e) => {
+    const { name, checked } = e.target;
+    setForm(prevForm => ({
+      ...prevForm,
+      [name]: checked ? 1 : 0
+    }));
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const body = { ...form, id: id };
@@ -78,7 +88,8 @@ const UpdateVehiculo = () => {
         nro_serie_gps: '',
         dispositivo: '',
         meses_amortizacion: '',
-        color: ''
+        color: '',
+        calcomania: 0
       })
   };
 
@@ -94,6 +105,8 @@ const UpdateVehiculo = () => {
         )}
         <h2>Modificar datos del vehículo</h2>
         <form className={styles.form}>
+        <fieldset className={styles.fieldSet}>
+        <legend>Datos generales del vehículo</legend>
           <div className={styles.inputContainer}>
             <span>Modelo</span>
             <select name="modelo" value={form.modelo} onChange={handleChange}>
@@ -125,6 +138,23 @@ const UpdateVehiculo = () => {
           </div>
 
           <div className={styles.inputContainer}>
+            <span>Dispositivo Peaje</span>
+            <input type="text" name="dispositivo" value={form.dispositivo} onChange={handleChange} />
+          </div>
+
+          <div className={styles.inputContainer}>
+            <span>Meses amortización</span>
+            <input type="number" name="meses_amortizacion" value={form.meses_amortizacion} onChange={handleChange} />
+          </div>
+
+          <div className={styles.inputContainer}>
+            <span>Color</span>
+            <input type="text" name="color" value={form.color} onChange={handleChange} />
+          </div>
+          </fieldset>
+          <fieldset className={styles.fieldSet}>
+          <legend>Preparación del vehículo</legend>
+          <div className={styles.inputContainer}>
             <span>Proveedor GPS</span>
             <select name="proveedor_gps" value={form.proveedor_gps} onChange={handleChange}>
               <option value="">Seleccione un proveedor</option>
@@ -140,19 +170,15 @@ const UpdateVehiculo = () => {
           </div>
 
           <div className={styles.inputContainer}>
-            <span>Dispositivo Peaje</span>
-            <input type="text" name="dispositivo" value={form.dispositivo} onChange={handleChange} />
+            <span>Calcomanía</span>
+            {
+              vehiculo && vehiculo[0]?.calcomania === 1 ?
+              <input type="checkbox" name="calcomania" checked value={form.calcomania} onChange={handleCheckChange} />
+              :
+              <input type="checkbox" name="calcomania" value={form.calcomania} onChange={handleCheckChange} />
+            }
           </div>
-
-          <div className={styles.inputContainer}>
-            <span>Meses amortización</span>
-            <input type="number" name="meses_amortizacion" value={form.meses_amortizacion} onChange={handleChange} />
-          </div>
-
-          <div className={styles.inputContainer}>
-            <span>Color</span>
-            <input type="text" name="color" value={form.color} onChange={handleChange} />
-          </div>
+          </fieldset>
         </form>
 
         <button

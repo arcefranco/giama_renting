@@ -16,12 +16,15 @@
     color: #800000;
     text-align: left;
   }
-.form {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    justify-items: center;
-}
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    max-height: 70vh; 
+    overflow-y: auto;
+    position: relative;
+  }
 
 .inputContainer{
     display: flex;
@@ -44,6 +47,11 @@
   .inputContainer input[type="text"]:focus {
     border-bottom: 2px solid #a52a2a; /* más intenso al focus */
   }
+
+  .inputContainer input[type="checkbox"] {
+    align-self: self-start;
+  }
+  
   .inputContainer select {
     border: none;
     border-bottom: 2px solid #800000;
@@ -109,4 +117,14 @@
     font-size: 16px;
     color: #800020;
     font-weight: bold;
+  }
+  .fieldSet{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 2rem;
+    margin: 1rem;
+    border-color: #800000;
+  }
+  .fieldSet legend {
+    color: #800000;
   }

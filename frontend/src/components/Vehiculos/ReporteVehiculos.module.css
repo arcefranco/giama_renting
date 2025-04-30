@@ -48,3 +48,13 @@
     color: #800020;
     font-weight: bold;
   }
+
+  .spanPreparado {
+    padding: .5rem;
+    background: #ffa809a1;
+  }
+
+  .spanNoPreparado {
+    padding: .5rem;
+    background: #ff0909a1;
+  }

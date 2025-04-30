@@ -70,7 +70,8 @@ const handleEliminarImagen = async (key) => {
         )}
       {cliente && (
         <h2 style={{fontSize: "xx-large"}}>
-        N° documento: {cliente[0].nro_documento}
+        {cliente[0]["nombre"] ? cliente[0]["nombre"] + " " + cliente[0]["apellido"] : cliente[0]["razon_social"]}
+
         </h2>
       )}
 

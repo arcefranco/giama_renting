@@ -163,7 +163,7 @@ useEffect(() => {
         <input type="number" name='kilometros' value={form["kilometros"]}
         onChange={handleChange} />
         </div>
-        <div className={styles.inputContainer}>
+{/*     <div className={styles.inputContainer}>
         <span>Proveedor GPS</span>
         <select name="proveedor_gps" value={form["proveedor_gps"]}
         onChange={handleChange} id="">
@@ -174,12 +174,12 @@ useEffect(() => {
               })
             }
         </select>
-        </div>
-        <div className={styles.inputContainer}>
+        </div> */}
+{/*     <div className={styles.inputContainer}>
         <span>Nro. Serie GPS</span>
         <input type="number" name='nro_serie_gps' value={form["nro_serie_gps"]}
         onChange={handleChange} />
-        </div>
+        </div> */}
         <div className={styles.inputContainer}>
         <span>Dispositivo Peaje</span>
         <input type="number" name='dispositivo' value={form["dispositivo"]}
