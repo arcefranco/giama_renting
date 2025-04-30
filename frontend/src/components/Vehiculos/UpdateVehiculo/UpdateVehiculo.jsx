@@ -15,7 +15,6 @@ const UpdateVehiculo = () => {
 
   const [form, setForm] = useState({
     modelo: '',
-    dominio: '',
     nro_chasis: '',
     nro_motor: '',
     kilometros: '',
@@ -24,7 +23,8 @@ const UpdateVehiculo = () => {
     dispositivo: '',
     meses_amortizacion: '',
     color: '',
-    calcomania: 0
+    calcomania: 0,
+    gnc: 0
   });
 
   useEffect(() => {
@@ -37,7 +37,6 @@ const UpdateVehiculo = () => {
     if (vehiculo) {
       setForm({
         modelo: vehiculo[0].modelo || '',
-        dominio: vehiculo[0].dominio || '',
         nro_chasis: vehiculo[0].nro_chasis || '',
         nro_motor: vehiculo[0].nro_motor || '',
         kilometros: vehiculo[0].kilometros_iniciales || '',
@@ -46,7 +45,8 @@ const UpdateVehiculo = () => {
         dispositivo: vehiculo[0].dispositivo_peaje || '',
         meses_amortizacion: vehiculo[0].meses_amortizacion || '',
         color: vehiculo[0].color || '',
-        calcomania: vehiculo[0].calcomania || 0 
+        calcomania: vehiculo[0].calcomania || 0,
+        gnc: vehiculo[0].gnc || 0 
       });
     }
   }, [vehiculo]);
@@ -89,7 +89,8 @@ const UpdateVehiculo = () => {
         dispositivo: '',
         meses_amortizacion: '',
         color: '',
-        calcomania: 0
+        calcomania: 0,
+        gnc: 0
       })
   };
 
@@ -103,7 +104,7 @@ const UpdateVehiculo = () => {
             <p className={styles.loadingText}>Actualizando vehículo...</p>
           </div>
         )}
-        <h2>Modificar datos del vehículo</h2>
+        <h2>Modificar datos del vehículo: {vehiculo[0]["dominio"]}</h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>
         <legend>Datos generales del vehículo</legend>
@@ -115,11 +116,6 @@ const UpdateVehiculo = () => {
                 <option key={m.id} value={m.id}>{m.nombre}</option>
               ))}
             </select>
-          </div>
-
-          <div className={styles.inputContainer}>
-            <span>Dominio</span>
-            <input type="text" name="dominio" value={form.dominio} onChange={handleChange} />
           </div>
 
           <div className={styles.inputContainer}>
@@ -176,6 +172,16 @@ const UpdateVehiculo = () => {
               <input type="checkbox" name="calcomania" checked value={form.calcomania} onChange={handleCheckChange} />
               :
               <input type="checkbox" name="calcomania" value={form.calcomania} onChange={handleCheckChange} />
+            }
+          </div>
+
+          <div className={styles.inputContainer}>
+            <span>GNC</span>
+            {
+              vehiculo && vehiculo[0]?.gnc === 1 ?
+              <input type="checkbox" name="gnc" checked value={form.gnc} onChange={handleCheckChange} />
+              :
+              <input type="checkbox" name="gnc" value={form.gnc} onChange={handleCheckChange} />
             }
           </div>
           </fieldset>

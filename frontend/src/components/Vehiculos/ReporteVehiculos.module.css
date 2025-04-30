@@ -6,7 +6,7 @@
   }
   
   .dataGrid {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'IBM' sans-serif;
     border-radius: 6px;
     border: 1px solid #ccc;
     font-size: 12px;
@@ -50,11 +50,28 @@
   }
 
   .spanPreparado {
-    padding: .5rem;
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 4rem;
+    height: 1rem;
+    padding: 3px 6px;
     background: #ffa809a1;
   }
 
   .spanNoPreparado {
-    padding: .5rem;
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 4rem;
+    height: 1rem;
+    padding: 3px 6px;
+    color: #ffff;
     background: #ff0909a1;
   }

@@ -63,7 +63,8 @@ const renderModificarCell = (data) => {
 const renderEstado = (data) => {
   if(data.data.proveedor_gps !== 0 /* || null */ && 
     data.data.nro_serie_gps !== 0 /* || null */ &&
-    data.data.calcomania !== 0){
+    data.data.calcomania !== 0 &&
+    data.data.gnc !== 0){
       return <span className={styles.spanPreparado}>Preparado</span>
   }else{
     return <span className={styles.spanNoPreparado}>Sin preparar</span>
@@ -87,6 +88,7 @@ return (
     </button>
       <DataGrid
         className={styles.dataGrid}
+        style={{fontFamily: "IBM"}}
         dataSource={vehiculos || []}
         showBorders={true}
         rowAlternationEnabled={true}
@@ -124,6 +126,14 @@ return (
         <Column dataField="calcomania" caption="Calcomanía" width={75} 
         cellRender={({ data }) => {
           if(data["calcomania"] === 1){
+            return "Sí"
+          }else{
+            return "No"
+          }
+        }}/>
+        <Column dataField="gnc" caption="GNC" width={75} 
+        cellRender={({ data }) => {
+          if(data["gnc"] === 1){
             return "Sí"
           }else{
             return "No"

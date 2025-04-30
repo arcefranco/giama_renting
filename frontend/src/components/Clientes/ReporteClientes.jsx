@@ -95,6 +95,7 @@ return (
         className={styles.dataGrid}
         dataSource={clientes || []}
         showBorders={true}
+        style={{fontFamily: "IBM"}}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}

@@ -2,9 +2,12 @@
   font-family: 'Amazon';
   src: url('./fonts/AmazonLight.ttf') format('truetype');
 }
-
+@font-face {
+  font-family: 'IBM';
+  src: url('./fonts/IBM.ttf') format('truetype');
+}
 :root {
-  font-family: 'Amazon' sans-serif;
+/*   font-family: 'Amazon' sans-serif; */
   line-height: 1.5;
   font-weight: 400;
   color: rgb(0, 0, 0);
