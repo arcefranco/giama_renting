@@ -40,6 +40,7 @@ export const getVehiculosById = async (req, res) => {
     return res.send(error);
   }
 };
+
 export const postVehiculo = async (req, res) => {
   const {
     modelo,
@@ -48,25 +49,11 @@ export const postVehiculo = async (req, res) => {
     nro_motor,
     kilometros,
     dispositivo,
+    costo,
     meses_amortizacion,
     color,
   } = req.body;
   console.log(req.body);
-  let precio_inicial;
-  try {
-    const result = await giama_renting.query(
-      "SELECT precio FROM precios_modelos WHERE modelo = ?",
-      {
-        type: QueryTypes.SELECT,
-        replacements: [modelo],
-      }
-    );
-
-    precio_inicial = result.length ? result[0].precio : null;
-  } catch (error) {
-    return res.send(error);
-  }
-
   let insertId;
   try {
     const result = await giama_renting.query(
@@ -78,7 +65,7 @@ export const postVehiculo = async (req, res) => {
         replacements: [
           modelo,
           getTodayDate(),
-          precio_inicial,
+          costo,
           dominio,
           nro_chasis,
           nro_motor,
