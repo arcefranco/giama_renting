@@ -23,6 +23,7 @@ const dispatch = useDispatch()
     kilometros: '',
     proveedor_gps: '',
     nro_serie_gps: '',
+    costo: '',
     dispositivo: '',
     meses_amortizacion: '',
     color: ''
@@ -74,6 +75,7 @@ useEffect(() => {
           nro_motor: '',
           kilometros: '',
           proveedor_gps: '',
+          costo: '',
           nro_serie_gps: '',
           dispositivo: '',
           meses_amortizacion: '',
@@ -84,21 +86,21 @@ useEffect(() => {
 
   }, [isError, isSuccess]) 
 
-  const handleChange = (e) => {
+const handleChange = (e) => {
     const { name, value } = e.target;
       setFormData({
        ...form,
        [name]: value,
      }); 
-  };
-  const handleFileChange = (e) => {
+};
+const handleFileChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
     setImagenes((prev) => [...prev, ...nuevosArchivos]);
   
     // Limpiá el value del input para permitir volver a subir el mismo archivo si se desea
     e.target.value = null;
-  };
-  const handleSubmit = async (e) => {
+};
+const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     // Agregás los campos normales
@@ -112,7 +114,7 @@ useEffect(() => {
     });
   
     dispatch(postVehiculo(formData))
-  }
+}
 
   return (
     <div>
@@ -180,6 +182,11 @@ useEffect(() => {
         <input type="number" name='nro_serie_gps' value={form["nro_serie_gps"]}
         onChange={handleChange} />
         </div> */}
+        <div className={styles.inputContainer}>
+        <span>Costo neto del vehículo</span>
+        <input type="number" name='costo' value={form["costo"]}
+        onChange={handleChange} />
+        </div>
         <div className={styles.inputContainer}>
         <span>Dispositivo Peaje</span>
         <input type="number" name='dispositivo' value={form["dispositivo"]}

@@ -104,7 +104,7 @@ const UpdateVehiculo = () => {
             <p className={styles.loadingText}>Actualizando vehículo...</p>
           </div>
         )}
-        <h2>Modificar datos del vehículo: {vehiculo[0]["dominio"]}</h2>
+        <h2>Modificar datos del vehículo: {vehiculo && vehiculo[0]["dominio"]}</h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>
         <legend>Datos generales del vehículo</legend>
