@@ -52,14 +52,15 @@ export const postVehiculo = async (req, res) => {
     costo,
     meses_amortizacion,
     color,
+    sucursal,
   } = req.body;
   console.log(req.body);
   let insertId;
   try {
     const result = await giama_renting.query(
       `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, nro_chasis, nro_motor,
-        kilometros_iniciales, dispositivo_peaje, meses_amortizacion, color)
-        VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        kilometros_iniciales, dispositivo_peaje, meses_amortizacion, color, sucursal)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -73,6 +74,7 @@ export const postVehiculo = async (req, res) => {
           dispositivo,
           meses_amortizacion,
           color,
+          sucursal,
         ],
       }
     );
@@ -194,6 +196,7 @@ export const updateVehiculo = async (req, res) => {
     color,
     calcomania,
     gnc,
+    sucursal,
   } = req.body;
   let vehiculoAnterior;
   let fechaDePreparacion;
@@ -236,7 +239,7 @@ export const updateVehiculo = async (req, res) => {
     await giama_renting.query(
       `UPDATE vehiculos SET modelo = ?, nro_chasis = ?, nro_motor = ?,
         kilometros_iniciales = ?, proveedor_gps = ?, nro_serie_gps = ?, dispositivo_peaje = ?, meses_amortizacion = ?, color = ?,
-        calcomania = ?, gnc = ?, fecha_preparacion = ?
+        calcomania = ?, gnc = ?, fecha_preparacion = ?, sucursal = ?
         WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
@@ -253,6 +256,7 @@ export const updateVehiculo = async (req, res) => {
           calcomania,
           gnc,
           fechaDePreparacion,
+          sucursal,
           id,
         ],
       }

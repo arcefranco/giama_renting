@@ -74,3 +74,14 @@ export const getProvincias = async (req, res) => {
     return res.send(error);
   }
 };
+
+export const getSucursales = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM sucursales", {
+      type: QueryTypes.SELECT,
+    });
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
