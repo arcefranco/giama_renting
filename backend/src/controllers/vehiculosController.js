@@ -195,11 +195,48 @@ export const updateVehiculo = async (req, res) => {
     calcomania,
     gnc,
   } = req.body;
+  let vehiculoAnterior;
+  let fechaDePreparacion;
+  const estaPreparado = (vehiculo) => {
+    return (
+      vehiculo.proveedor_gps !== null &&
+      vehiculo.nro_serie_gps !== null &&
+      vehiculo.calcomania === 1 &&
+      vehiculo.gnc === 1
+    );
+  };
+  const vehiculoNuevo = {
+    proveedor_gps: proveedor_gps,
+    nro_serie_gps: nro_serie_gps,
+    calcomania: calcomania,
+    gnc: gnc,
+  };
+
+  try {
+    vehiculoAnterior = await giama_renting.query(
+      "SELECT * FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+  } catch (error) {
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  const preparadoAntes = estaPreparado(vehiculoAnterior[0]);
+  const preparadoAhora = estaPreparado(vehiculoNuevo);
+  if (preparadoAntes && !preparadoAhora) {
+    fechaDePreparacion = null;
+  } else if (!preparadoAntes && preparadoAhora) {
+    fechaDePreparacion = getTodayDate();
+  } else {
+    fechaDePreparacion = vehiculoAnterior.fecha_preparacion;
+  }
   try {
     await giama_renting.query(
       `UPDATE vehiculos SET modelo = ?, nro_chasis = ?, nro_motor = ?,
         kilometros_iniciales = ?, proveedor_gps = ?, nro_serie_gps = ?, dispositivo_peaje = ?, meses_amortizacion = ?, color = ?,
-        calcomania = ?, gnc = ?
+        calcomania = ?, gnc = ?, fecha_preparacion = ?
         WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
@@ -215,6 +252,7 @@ export const updateVehiculo = async (req, res) => {
           color,
           calcomania,
           gnc,
+          fechaDePreparacion,
           id,
         ],
       }
