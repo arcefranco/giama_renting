@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
-import { getModelos, getProveedoresGPS } from '../../reducers/Generales/generalesSlice'
+import { getModelos, getSucursales } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
@@ -10,7 +10,7 @@ const dispatch = useDispatch()
   useEffect(() => {
     Promise.all([
       dispatch(getModelos()),
-      dispatch(getProveedoresGPS())
+      dispatch(getSucursales())
     ])
   }, [])
   
@@ -26,10 +26,11 @@ const dispatch = useDispatch()
     costo: '',
     dispositivo: '',
     meses_amortizacion: '',
-    color: ''
+    color: '',
+    sucursal: ''
   })
 
-  const {modelos, proveedoresGPS} = useSelector((state) => state.generalesReducer)
+  const {modelos, sucursales} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
@@ -201,6 +202,15 @@ const handleSubmit = async (e) => {
         <span>Color</span>
         <input type="text" name='color' value={form["color"]}
         onChange={handleChange} />
+        </div>
+        <div className={styles.inputContainer}>
+          <span>Sucursal</span>
+          <select name="sucursal" value={form.sucursal} onChange={handleChange}>
+            <option value="">Seleccione una sucursal</option>
+            {sucursales.map((m) => (
+              <option key={m.id} value={m.id}>{m.nombre}</option>
+            ))}
+          </select>
         </div>
         <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>
   <span>Cargar imágenes</span>

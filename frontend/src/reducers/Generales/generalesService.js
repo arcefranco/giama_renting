@@ -23,6 +23,9 @@ const getTiposResponsable = async () => {
 const getTiposSexo = async () => {
   return getFunction("generales/tipos_sexo");
 };
+const getSucursales = async () => {
+  return getFunction("generales/sucursales");
+};
 
 const generalesService = {
   getModelos,
@@ -31,5 +34,6 @@ const generalesService = {
   getTiposDocumento,
   getTiposResponsable,
   getTiposSexo,
+  getSucursales,
 };
 export default generalesService;

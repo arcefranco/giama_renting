@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { getModelos, getProveedoresGPS } from '../../../reducers/Generales/generalesSlice';
+import { getModelos, getProveedoresGPS, getSucursales } from '../../../reducers/Generales/generalesSlice';
 import { getVehiculosById, updateVehiculo, reset } from '../../../reducers/Vehiculos/vehiculosSlice';
 import styles from './UpdateVehiculo.module.css';
 import { ToastContainer, toast } from 'react-toastify';
@@ -10,7 +10,7 @@ import { ClipLoader } from "react-spinners";
 const UpdateVehiculo = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { modelos, proveedoresGPS } = useSelector(state => state.generalesReducer);
+  const { modelos, proveedoresGPS, sucursales } = useSelector(state => state.generalesReducer);
   const { vehiculo, isError, isSuccess, isLoading, message } = useSelector(state => state.vehiculosReducer);
 
   const [form, setForm] = useState({
@@ -24,12 +24,14 @@ const UpdateVehiculo = () => {
     meses_amortizacion: '',
     color: '',
     calcomania: 0,
-    gnc: 0
+    gnc: 0,
+    sucursal: ''
   });
 
   useEffect(() => {
     dispatch(getModelos());
     dispatch(getProveedoresGPS());
+    dispatch(getSucursales())
     dispatch(getVehiculosById({id: id}));
   }, [id]);
 
@@ -146,6 +148,15 @@ const UpdateVehiculo = () => {
           <div className={styles.inputContainer}>
             <span>Color</span>
             <input type="text" name="color" value={form.color} onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Sucursal</span>
+            <select name="sucursal" value={form.sucursal} onChange={handleChange}>
+              <option value="">Seleccione una sucursal</option>
+              {sucursales.map((m) => (
+                <option key={m.id} value={m.id}>{m.nombre}</option>
+              ))}
+            </select>
           </div>
           </fieldset>
           <fieldset className={styles.fieldSet}>

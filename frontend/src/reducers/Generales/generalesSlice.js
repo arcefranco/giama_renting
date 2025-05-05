@@ -9,6 +9,7 @@ const initialState = {
   tipos_documento: [],
   tipos_responsable: [],
   tipos_sexo: [],
+  sucursales: [],
 };
 
 export const getModelos = createAsyncThunk(
@@ -75,6 +76,18 @@ export const getTiposSexo = createAsyncThunk(
   "getTiposSexo",
   async (data, { rejectWithValue }) => {
     const result = await generalesService.getTiposSexo();
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getSucursales = createAsyncThunk(
+  "getSucursales",
+  async (data, { rejectWithValue }) => {
+    const result = await generalesService.getSucursales();
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -184,6 +197,20 @@ export const generalesSlice = createSlice({
       state.isError = true;
       state.message = action.payload;
       state.tipos_sexo = null;
+    });
+    builder.addCase(getSucursales.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getSucursales.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.sucursales = action.payload;
+    });
+    builder.addCase(getSucursales.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload;
+      state.sucursales = null;
     });
   },
 });

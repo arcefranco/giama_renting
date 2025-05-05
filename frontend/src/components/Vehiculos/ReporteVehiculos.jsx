@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import DataGrid, {Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
-import { getModelos, getProveedoresGPS } from '../../reducers/Generales/generalesSlice';
+import { getModelos, getProveedoresGPS , getSucursales} from '../../reducers/Generales/generalesSlice';
 import styles from "./ReporteVehiculos.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
@@ -25,7 +25,7 @@ const {
     isSuccess,
     isLoading
 } = useSelector((state) => state.vehiculosReducer)
-const {modelos, proveedoresGPS} = useSelector(state => state.generalesReducer)
+const {modelos, proveedoresGPS, sucursales} = useSelector(state => state.generalesReducer)
 const getNombreModelo = (id) => {
   const modelo = modelos.find((m) => m.id === id); 
   return modelo ? modelo.nombre : id;
@@ -38,8 +38,10 @@ const handleActualizar = () => {
 const getNombreProveedorGPS = (id) => {
   const proveedor = proveedoresGPS.find((p) => p.id == id);
   return proveedor ? proveedor.nombre : '';
+};const getNombreSucursales = (id) => {
+  const sucursal = sucursales.find((p) => p.id == id);
+  return sucursal ? sucursal.nombre : '';
 };
-
 const renderImagenesCell = (data) => {
     return (
       <button
@@ -72,7 +74,7 @@ const renderEstado = (data) => {
 }
 const renderFecha = (data) => {
   if(data.value){
-    let fechaSplit = data.value.split("-")
+    let fechaSplit = data.value?.split("-")
     return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
   }else{
     return ""
@@ -131,6 +133,7 @@ return (
         <Column dataField="dispositivo_peaje" caption="Peaje" />
         <Column dataField="meses_amortizacion" width={75} caption="Amortización (Meses)" />
         <Column dataField="color" caption="Color" width={75} />
+        <Column dataField="sucursal" caption="Sucursal" cellRender={({ data }) => getNombreSucursales(data.sucursal)}/>
         <Column dataField="calcomania" caption="Calcomanía" width={75} 
         cellRender={({ data }) => {
           if(data["calcomania"] === 1){
