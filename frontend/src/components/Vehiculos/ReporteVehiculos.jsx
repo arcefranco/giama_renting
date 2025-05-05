@@ -70,6 +70,14 @@ const renderEstado = (data) => {
     return <span className={styles.spanNoPreparado}>Sin preparar</span>
   }
 }
+const renderFecha = (data) => {
+  if(data.value){
+    let fechaSplit = data.value.split("-")
+    return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
+  }else{
+    return ""
+  }
+}
 return (
 <div className={styles.container}>
 {isLoading && (
@@ -139,6 +147,7 @@ return (
             return "No"
           }
         }}/>
+        <Column dataField="fecha_preparacion" caption="Fecha de preparación" cellRender={renderFecha}/>
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
       </DataGrid>

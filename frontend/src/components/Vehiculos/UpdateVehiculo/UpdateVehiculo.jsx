@@ -167,22 +167,22 @@ const UpdateVehiculo = () => {
 
           <div className={styles.inputContainer}>
             <span>Calcomanía</span>
-            {
-              vehiculo && vehiculo[0]?.calcomania === 1 ?
-              <input type="checkbox" name="calcomania" checked value={form.calcomania} onChange={handleCheckChange} />
-              :
-              <input type="checkbox" name="calcomania" value={form.calcomania} onChange={handleCheckChange} />
-            }
+            <input
+            type="checkbox"
+            name="calcomania"
+            checked={form.calcomania === 1}
+            onChange={handleCheckChange}
+            />
           </div>
 
           <div className={styles.inputContainer}>
             <span>GNC</span>
-            {
-              vehiculo && vehiculo[0]?.gnc === 1 ?
-              <input type="checkbox" name="gnc" checked value={form.gnc} onChange={handleCheckChange} />
-              :
-              <input type="checkbox" name="gnc" value={form.gnc} onChange={handleCheckChange} />
-            }
+            <input
+            type="checkbox"
+            name="gnc"
+            checked={form.gnc === 1}
+            onChange={handleCheckChange}
+            />
           </div>
           </fieldset>
         </form>
