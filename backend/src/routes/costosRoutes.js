@@ -1,7 +1,11 @@
 import { Router } from "express";
 import {
+  deleteConceptosCostos,
+  getConceptosCostos,
+  getConceptosCostosById,
   getCuentasContables,
   postConceptoCostos,
+  updateConceptoCostos,
 } from "../controllers/costosController.js";
 const costosRouter = Router();
 
@@ -15,4 +19,8 @@ costosRouter.use((req, res, next) => {
 
 costosRouter.get("/cuentasContables", getCuentasContables);
 costosRouter.post("/concepto", postConceptoCostos);
+costosRouter.get("/concepto", getConceptosCostos);
+costosRouter.post("/getConceptosCostosById", getConceptosCostosById);
+costosRouter.post("/updateConcepto", updateConceptoCostos);
+costosRouter.post("/deleteConcepto", deleteConceptosCostos);
 export default costosRouter;
