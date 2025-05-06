@@ -28,7 +28,13 @@ const menuItems = [
       { label: "Formulario clientes", to: "/clientes" },
       { label: "Reporte clientes", to: "/clientesReporte" },
     ]
-  } 
+  },
+  {
+   title: "Costos",
+   items: [
+     { label: "Alta costos", to: "/costos/alta" },
+   ]
+ }  
 ];
 
 const Header = () => {
