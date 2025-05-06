@@ -33,6 +33,7 @@ const menuItems = [
    title: "Costos",
    items: [
      { label: "Alta costos", to: "/costos/alta" },
+     { label: "Conceptos de costos", to: "/costos/conceptos" },
    ]
  }  
 ];

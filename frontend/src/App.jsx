@@ -14,6 +14,8 @@ import ReporteClientes from './components/Clientes/ReporteClientes';
 import ImagenesClientes from './components/Clientes/ImagenesClientes';
 import UpdateCliente from './components/Clientes/UpdateCliente';
 import AltaCostos from './components/Costos/AltaCostos';
+import ReporteConceptos from './components/Costos/ReporteConceptos';
+import UpdateConcepto from './components/Costos/UpdateConcepto';
 
 function App() {
 
@@ -37,6 +39,8 @@ function App() {
     <Route path='/clientes/imagenes/:id' element={<ImagenesClientes/>}/>
     <Route path='/clientes/actualizar/:id' element={<UpdateCliente/>}/>
     <Route path='/costos/alta' element={<AltaCostos/>}/>
+    <Route path='/costos/conceptos' element={<ReporteConceptos/>}/>
+    <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
     </Route>
   </Route>
     </Routes>
