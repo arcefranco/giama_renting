@@ -14,3 +14,16 @@ export const giama_renting = new Sequelize(
     },
   }
 );
+
+export const pa7_giama_renting = new Sequelize(
+  "pa7_giama_renting",
+  process.env.DB_USERNAME,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: "mysql",
+    dialectOptions: {
+      multipleStatements: true,
+    },
+  }
+);
