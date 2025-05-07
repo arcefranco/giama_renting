@@ -108,7 +108,8 @@ const handleSubmit = async (e) => {
             </div>
             </form>
             <button 
-            className={styles.sendBtn} onClick={handleSubmit}>
+            className={styles.sendBtn} onClick={handleSubmit} 
+            disabled={!form["cuenta_contable"] || !form["nombre"]}>
               Enviar
             </button>
           </div>
