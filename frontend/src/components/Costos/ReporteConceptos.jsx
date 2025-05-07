@@ -13,6 +13,7 @@ const dispatch = useDispatch();
 useEffect(() => {
     Promise.all([
         dispatch(getConceptosCostos()),
+        dispatch(getCuentasContables()),
         locale('es')
     ])
 
