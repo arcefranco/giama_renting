@@ -90,21 +90,21 @@ const handleSubmit = async (e) => {
             <h2>Alta de conceptos de costos</h2>
             <form action="" enctype="multipart/form-data" className={styles.form}>
             <div className={styles.inputContainer}>
+                <span>Concepto</span>
+                <input type="text" name='nombre' value={form["nombre"]} 
+              onChange={handleChange}/>
+            </div>
+            <div className={styles.inputContainer}>
               <span>Cuenta contable</span>
               <select name="cuenta_contable"  value={form["cuenta_contable"]} 
               onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione un modelo"}</option>
+                <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
                 {
                   cuentasContables?.length && cuentasContables?.map(e => {
                     return <option key={e.Codigo} value={e.Codigo}>{e.Codigo} - {e.Nombre}</option>
                   })
                 }
               </select>
-            </div>
-            <div className={styles.inputContainer}>
-                <span>Concepto</span>
-                <input type="text" name='nombre' value={form["nombre"]} 
-              onChange={handleChange}/>
             </div>
             </form>
             <button 

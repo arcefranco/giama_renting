@@ -48,7 +48,8 @@ const UpdateVehiculo = () => {
         meses_amortizacion: vehiculo[0].meses_amortizacion || '',
         color: vehiculo[0].color || '',
         calcomania: vehiculo[0].calcomania || 0,
-        gnc: vehiculo[0].gnc || 0 
+        gnc: vehiculo[0].gnc || 0,
+        sucursal: vehiculo[0].sucursal || ''
       });
     }
   }, [vehiculo]);

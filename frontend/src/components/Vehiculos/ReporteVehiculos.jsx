@@ -14,6 +14,7 @@ useEffect(() => {
         dispatch(getVehiculos()),
         dispatch(getModelos()),
         dispatch(getProveedoresGPS()),
+        dispatch(getSucursales()),
         locale('es')
     ])
 

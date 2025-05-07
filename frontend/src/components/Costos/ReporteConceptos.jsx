@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import DataGrid, {Column} from "devextreme-react/data-grid"
-import { deleteConcepto, getConceptosCostos, reset } from '../../reducers/Costos/costosSlice.js';
+import { deleteConcepto, getConceptosCostos, reset, getCuentasContables } from '../../reducers/Costos/costosSlice.js';
 import styles from "./ReporteConceptos.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
@@ -17,7 +17,7 @@ useEffect(() => {
     ])
 
 }, [])
-const {isError, isSuccess, isLoading, message, conceptos} = useSelector((state) => state.costosReducer)
+const {isError, isSuccess, isLoading, message, conceptos, cuentasContables} = useSelector((state) => state.costosReducer)
 useEffect(() => {
 
     if(isError){
@@ -47,7 +47,8 @@ useEffect(() => {
           dispatch(reset())
       }
   
-}, [isError, isSuccess]) 
+}, [isError, isSuccess])
+
 const handleActualizar = ( ) => {
   dispatch(getConceptosCostos())
 }
@@ -61,6 +62,10 @@ const renderModificarCell = (data) => {
       </button>
     );
 };
+
+const renderCuentaContable = (data) => {
+  return `${data.data.cuenta_contable} - ${cuentasContables.find(e => e.Codigo == data.data.cuenta_contable)?.Nombre}`
+}
 
 const handleDeleteClick = (id) => {
 Swal.fire({
@@ -113,8 +118,8 @@ return (
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}>
-        <Column dataField="nombre" caption="Nombre" alignment="center" />
-        <Column dataField="cuenta_contable" caption="Cuenta contable" alignment="center" />
+        <Column dataField="nombre" caption="Nombre" alignment="left" />
+        <Column dataField="cuenta_contable" caption="Cuenta contable" alignment="center" cellRender={renderCuentaContable}/>
         <Column dataField="cuenta_secundaria" caption="Cuenta secundaria" alignment="center" />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
