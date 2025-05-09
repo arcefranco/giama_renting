@@ -5,6 +5,7 @@ import {
   getConceptosCostosById,
   getCuentasContables,
   postConceptoCostos,
+  postCostos_Ingresos,
   updateConceptoCostos,
 } from "../controllers/costosController.js";
 const costosRouter = Router();
@@ -23,4 +24,5 @@ costosRouter.get("/concepto", getConceptosCostos);
 costosRouter.post("/getConceptosCostosById", getConceptosCostosById);
 costosRouter.post("/updateConcepto", updateConceptoCostos);
 costosRouter.post("/deleteConcepto", deleteConceptosCostos);
+costosRouter.post("/costos_ingresos", postCostos_Ingresos);
 export default costosRouter;
