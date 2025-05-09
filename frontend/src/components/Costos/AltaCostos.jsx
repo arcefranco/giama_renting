@@ -17,7 +17,8 @@ const {isError, isSuccess, isLoading, message, cuentasContables} = useSelector((
 const [form, setForm] = useState({
     nombre: '',
     cuenta_contable: '',
-    cuenta_secundaria: ''
+    cuenta_secundaria: '',
+    ingreso_egreso: ''
 })
 useEffect(() => {
 
@@ -49,7 +50,8 @@ useEffect(() => {
         setForm({
             nombre: '',
             cuenta_contable: '',
-            cuenta_secundaria: ''
+            cuenta_secundaria: '',
+            ingreso_egreso: ''
         })
     }
 
@@ -75,7 +77,8 @@ const handleSubmit = async (e) => {
     dispatch(postConceptoCostos(form))
 } 
   return (
-    <div>      <div className={styles.container}>
+    <div>
+      <div className={styles.container}>
           <ToastContainer /> 
           {isLoading && (
       <div className={styles.spinnerOverlay}>
@@ -106,10 +109,33 @@ const handleSubmit = async (e) => {
                 }
               </select>
             </div>
+            <div className={styles.inputContainer}>
+            <span>Tipo</span>
+            <label>
+              <input
+                type="radio"
+                name="ingreso_egreso"
+                value="I"
+                checked={form.ingreso_egreso === "I"}
+                onChange={handleChange}
+              />
+              Ingreso
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="ingreso_egreso"
+                value="E"
+                checked={form.ingreso_egreso === "E"}
+                onChange={handleChange}
+              />
+              Egreso
+            </label>
+          </div>
             </form>
             <button 
             className={styles.sendBtn} onClick={handleSubmit} 
-            disabled={!form["cuenta_contable"] || !form["nombre"]}>
+            disabled={!form["cuenta_contable"] || !form["nombre"]  || !form["ingreso_egreso"]}>
               Enviar
             </button>
           </div>

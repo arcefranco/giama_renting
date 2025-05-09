@@ -83,6 +83,18 @@ export const getConceptosCostosById = createAsyncThunk(
   }
 );
 
+export const postCostos_Ingresos = createAsyncThunk(
+  "postCostos_Ingresos",
+  async (data, { rejectWithValue }) => {
+    const result = await costosService.postCostos_Ingresos(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const costosSlice = createSlice({
   name: "costos",
   initialState,
@@ -182,6 +194,21 @@ export const costosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
+    });
+    builder.addCase(postCostos_Ingresos.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postCostos_Ingresos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postCostos_Ingresos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
   },
 });

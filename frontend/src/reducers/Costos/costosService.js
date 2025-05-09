@@ -38,6 +38,9 @@ const deleteConceptosCostos = async (form) => {
 const getConceptosCostos = async () => {
   return getFunction("costos/concepto");
 };
+const postCostos_Ingresos = async (form) => {
+  return postFunction("costos/costos_ingresos", form);
+};
 
 const costosService = {
   getCuentasContables,
@@ -46,5 +49,6 @@ const costosService = {
   getConceptosCostos,
   getConceptosCostosById,
   deleteConceptosCostos,
+  postCostos_Ingresos,
 };
 export default costosService;
