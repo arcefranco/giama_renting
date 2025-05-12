@@ -3,6 +3,7 @@ import {
   deleteConceptosCostos,
   getConceptosCostos,
   getConceptosCostosById,
+  getCostosIngresosByIdVehiculo,
   getCuentasContables,
   postConceptoCostos,
   postCostos_Ingresos,
@@ -25,4 +26,8 @@ costosRouter.post("/getConceptosCostosById", getConceptosCostosById);
 costosRouter.post("/updateConcepto", updateConceptoCostos);
 costosRouter.post("/deleteConcepto", deleteConceptosCostos);
 costosRouter.post("/costos_ingresos", postCostos_Ingresos);
+costosRouter.post(
+  "/costos_ingresos_id_vehiculo",
+  getCostosIngresosByIdVehiculo
+);
 export default costosRouter;

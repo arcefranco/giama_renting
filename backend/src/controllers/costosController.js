@@ -120,6 +120,22 @@ export const updateConceptoCostos = async (req, res) => {
 };
 //CONCEPTOS
 
+export const getCostosIngresosByIdVehiculo = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM costos_ingresos WHERE id_vehiculo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+
 const asiento_costos_ingresos = async (
   //FUNCION AUXILIAR
   Fecha,
@@ -129,12 +145,14 @@ const asiento_costos_ingresos = async (
   importe_total,
   observacion,
   comprobante,
+  ingreso_egreso,
   transaction
 ) => {
   let cuentaIC21;
   let cuentaTOTC;
   let NroAsiento;
-
+  const dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
+  const dhTotal = ingreso_egreso === "I" ? "D" : "H";
   //OBTENGO NUMEROS DE CUENTA IC21 Y TOTC
   try {
     const result = await giama_renting.query(
@@ -185,7 +203,7 @@ const asiento_costos_ingresos = async (
           Fecha,
           NroAsiento,
           Cuenta,
-          "D",
+          dhNetoEIva,
           importe_neto,
           observacion,
           comprobante,
@@ -208,7 +226,7 @@ const asiento_costos_ingresos = async (
           Fecha,
           NroAsiento,
           cuentaIC21,
-          "D",
+          dhNetoEIva,
           importe_iva,
           observacion,
           comprobante,
@@ -230,7 +248,7 @@ const asiento_costos_ingresos = async (
           Fecha,
           NroAsiento,
           cuentaTOTC,
-          "H",
+          dhTotal,
           importe_total,
           observacion,
           comprobante,
@@ -267,6 +285,25 @@ export const postCostos_Ingresos = async (req, res) => {
   } = req.body;
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
+  let ingreso_egreso;
+  //SEGUN LA CUENTA, OBTENGO SI ES INGRESO O EGRESO
+  try {
+    const result = await giama_renting.query(
+      `SELECT ingreso_egreso FROM conceptos_costos WHERE cuenta_contable = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [cuenta],
+      }
+    );
+    ingreso_egreso = result[0]["ingreso_egreso"];
+  } catch (error) {
+    console.log(error);
+    throw "Error al buscar cuenta contable";
+  }
+  const factor = ingreso_egreso === "E" ? -1 : 1;
+  const importeNetoFinal = importe_neto * factor;
+  const importeIvaFinal = importe_iva * factor;
+  const importeTotalFinal = importe_total * factor;
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
@@ -279,9 +316,9 @@ export const postCostos_Ingresos = async (req, res) => {
           fecha,
           id_concepto,
           comprobante,
-          importe_neto,
-          importe_iva,
-          importe_total,
+          importeNetoFinal,
+          importeIvaFinal,
+          importeTotalFinal,
           observacion,
         ],
         transaction: transaction_costos_ingresos,
@@ -302,6 +339,7 @@ export const postCostos_Ingresos = async (req, res) => {
       importe_total,
       observacion,
       comprobante,
+      ingreso_egreso,
       transaction_asientos
     );
   } catch (error) {
