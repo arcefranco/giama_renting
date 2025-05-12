@@ -6,6 +6,7 @@ const initialState = {
   cuentasContables: [],
   conceptos: [],
   concepto: [],
+  costos_ingresos_vehiculo: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -88,6 +89,19 @@ export const postCostos_Ingresos = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     const result = await costosService.postCostos_Ingresos(data);
     if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getCostosIngresosByIdVehiculo = createAsyncThunk(
+  "getCostosIngresosByIdVehiculo",
+  async (data, { rejectWithValue }) => {
+    const result = await costosService.getCostosIngresosByIdVehiculo(data);
+    console.log(result);
+    if (Array.isArray(result)) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -209,6 +223,24 @@ export const costosSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
+    });
+    builder.addCase(getCostosIngresosByIdVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(
+      getCostosIngresosByIdVehiculo.fulfilled,
+      (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        state.message = action.payload.message;
+        state.costos_ingresos_vehiculo = action.payload;
+      }
+    );
+    builder.addCase(getCostosIngresosByIdVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
     });
   },
 });

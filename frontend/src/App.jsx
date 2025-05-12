@@ -16,6 +16,7 @@ import UpdateCliente from './components/Clientes/UpdateCliente';
 import AltaCostos from './components/Costos/AltaCostos';
 import ReporteConceptos from './components/Costos/ReporteConceptos';
 import UpdateConcepto from './components/Costos/UpdateConcepto';
+import IngresosEgresos from './components/Costos/IngresosEgresos';
 
 function App() {
 
@@ -41,6 +42,7 @@ function App() {
     <Route path='/costos/alta' element={<AltaCostos/>}/>
     <Route path='/costos/conceptos' element={<ReporteConceptos/>}/>
     <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
+    <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
     </Route>
   </Route>
     </Routes>

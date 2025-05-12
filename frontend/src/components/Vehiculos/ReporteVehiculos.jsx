@@ -63,6 +63,16 @@ const renderModificarCell = (data) => {
       </button>
     );
 };
+const renderCostosCell = (data) => {
+    return (
+      <button
+        onClick={() => window.open(`/costos/ingresos_egresos/${data.data.id}`, '_blank')}
+        style={{ color: '#1976d2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        Costos
+      </button>
+    );
+};
 const renderEstado = (data) => {
   if(data.data.proveedor_gps !== 0 /* || null */ && 
     data.data.nro_serie_gps !== 0 /* || null */ &&
@@ -154,6 +164,7 @@ return (
         <Column dataField="fecha_preparacion" caption="Fecha de preparación" cellRender={renderFecha}/>
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
+        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
       </DataGrid>
     </div>
 )

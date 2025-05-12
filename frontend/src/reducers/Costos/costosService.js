@@ -42,6 +42,29 @@ const postCostos_Ingresos = async (form) => {
   return postFunction("costos/costos_ingresos", form);
 };
 
+const getCostosIngresosByIdVehiculo = async (id, header = {}) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST +
+        "costos/costos_ingresos_id_vehiculo",
+      id,
+      {
+        ...header,
+        withCredentials: true,
+      }
+    );
+    if (Array.isArray(response.data)) {
+      console.log("response: ", response);
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "costos/getConceptosCostosById");
+  }
+};
+
 const costosService = {
   getCuentasContables,
   postConceptoCostos,
@@ -50,5 +73,6 @@ const costosService = {
   getConceptosCostosById,
   deleteConceptosCostos,
   postCostos_Ingresos,
+  getCostosIngresosByIdVehiculo,
 };
 export default costosService;
