@@ -109,7 +109,7 @@ return (
     </button>
       <DataGrid
         className={styles.dataGrid}
-        style={{fontFamily: "IBM"}}
+        style={{fontFamily: "IBM", fontSize: "12px"}}
         dataSource={vehiculos || []}
         showBorders={true}
         rowAlternationEnabled={true}
@@ -128,8 +128,8 @@ return (
         <Column dataField="id" caption="ID" width={50} />
         <Column dataField="modelo" width={75} caption="Modelo" 
         cellRender={({ data }) => getNombreModelo(data.modelo)}/>
-        <Column dataField="fecha_ingreso" width={85} caption="Ingreso" dataType="date" />
-        <Column dataField="precio_inicial" caption="Precio Inicial" width={100} format="currency" />
+        <Column dataField="fecha_ingreso" width={85} caption="Ingreso" dataType="date" alignment="center"/>
+        <Column dataField="precio_inicial" caption="Precio Inicial" alignment="right" width={100} format="currency" />
         <Column dataField="dominio" caption="Dominio" />
         <Column dataField="nro_chasis" caption="Nro. Chasis" />
         <Column dataField="nro_motor" caption="Nro. Motor" />
@@ -161,7 +161,7 @@ return (
             return "No"
           }
         }}/>
-        <Column dataField="fecha_preparacion" caption="Fecha de preparación" cellRender={renderFecha}/>
+        <Column dataField="fecha_preparacion" caption="Fecha de preparación" alignment="center" cellRender={renderFecha}/>
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />

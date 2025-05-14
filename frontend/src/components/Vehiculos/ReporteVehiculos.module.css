@@ -6,10 +6,10 @@
   }
   
   .dataGrid {
-    font-family: 'IBM' sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     border-radius: 6px;
     border: 1px solid #ccc;
-    font-size: 12px;
+    font-size: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
 

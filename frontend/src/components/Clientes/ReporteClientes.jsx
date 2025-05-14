@@ -106,14 +106,13 @@ return (
         <Export enabled={true} allowExportSelectedData={true} />
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
-        <Column dataField="id" caption="ID" width={40} />
-        <Column dataField="nombre" caption="Nombre" width={85}/>
+        <Column dataField="id" caption="ID" width={60} />
+        <Column dataField="nombre" caption="Nombre" width={110}/>
         <Column dataField="apellido" caption="Apellido" width={85}/>
         <Column dataField="razon_social" caption="Razón social" width={85} />
-        <Column dataField="fecha_nacimiento"
+        <Column dataField="fecha_nacimiento" alignment="center" 
         cellRender={renderFecha}
-        caption="
-         de nacimiento" width={90}/>
+        caption="Nacimiento" width={110}/>
         <Column dataField="nacionalidad" caption="Nacionalidad" width={90} />
         <Column dataField="tipo_contribuyente" caption="Tipo responsable"
         cellRender={({ data }) => getTipoResponsableCell(data["tipo_contribuyente"])}
@@ -126,8 +125,8 @@ return (
         <Column dataField="licencia" caption="Licencia" width={90}/>
         <Column dataField="lic_expedida_por" caption="Lic. exp. por" width={90}/>
         <Column dataField="fecha_vencimiento_licencia"
-        cellRender={renderFecha}
-        caption="Fecha de vencimiento (licencia)" width={90} />
+        cellRender={renderFecha} alignment="center"
+        caption="Vencimiento (licencia)" width={120} />
         <Column dataField="direccion" caption="Dirección" width={90}/>
         <Column dataField="nro_direccion" caption="Nro. dirección" width={90}/>
         <Column dataField="piso" caption="Piso" width={60}/>

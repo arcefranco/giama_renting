@@ -4,8 +4,7 @@ import { getCostosIngresosByIdVehiculo, getConceptosCostos, postCostos_Ingresos,
 import {getVehiculosById} from '../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
-import DataGrid, {Column, Paging, Pager, Summary, TotalItem} from "devextreme-react/data-grid"
-
+import DataGrid, {Column, Scrolling, Summary, TotalItem} from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css"
@@ -110,6 +109,13 @@ const handleChange = (e) => {
      "cuenta": conceptos.find(e => e.id == value)?.cuenta_contable,
    }); 
   }
+    else if(value && name === "importe_iva"){
+      setForm({
+     ...form,
+     [name]: value,
+     "importe_total": parseFloat(value) + parseFloat(form["importe_neto"])
+   }); 
+  }
   else{
     setForm({
      ...form,
@@ -122,10 +128,9 @@ const handleChange = (e) => {
 const handleSubmit = () => {
   dispatch(postCostos_Ingresos(form))
 }
-
-const customizeTotal = (data) => {
-  console.log("this is data: ", data)
-return <span style={{fontWeight: "bold"}}>{data.valueText}</span>
+const renderFecha = (data) => {
+  let fechaSplit = data.value.split("-")
+  return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
 }
 return (
 <div className={styles.container}>
@@ -147,26 +152,28 @@ return (
     </button>
       <DataGrid
         className={styles.dataGrid}
-        ref={gridRef}
         dataSource={costos_ingresos_vehiculo || []}
         showBorders={true}
         style={{fontFamily: "IBM"}}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
+        scrolling={true}
+        height={300}
+        
         columnAutoWidth={true}>
-        <Paging defaultPageSize={5} />
-        <Pager showPageSizeSelector={false} allowedPageSizes={[5]} showInfo={false} />
-        <Column dataField="fecha" caption="Fecha"/>
+        <Scrolling mode="standard"/>
+        <Column dataField="fecha" sortOrder="desc" cellRender={renderFecha} alignment="center" caption="Fecha"/>
         <Column dataField="comprobante" caption="Comprobante"/>
-        <Column dataField="importe_neto" caption="Importe Neto"/>
-        <Column dataField="importe_iva" caption="IVA"/>
-        <Column dataField="importe_total" caption="Total"/>
+        <Column dataField="importe_neto" alignment="right" caption="Importe Neto"/>
+        <Column dataField="importe_iva" alignment="right" caption="IVA"/>
+        <Column dataField="importe_total" alignment="right" caption="Total"/>
         <Column dataField="observacion" caption="Observación"/>
          <Summary>
     <TotalItem
       column="importe_neto"
       summaryType="sum"
       displayFormat="{0}"
+      alignment="right"
       valueFormat="#,##0.00"
       showInColumn="importe_neto"
       
@@ -174,6 +181,7 @@ return (
     <TotalItem
       column="importe_iva"
       summaryType="sum"
+      alignment="right"
       displayFormat="{0}"
       valueFormat="#,##0.00"
       showInColumn="importe_iva"
@@ -181,6 +189,7 @@ return (
     <TotalItem
       column="importe_total"
       summaryType="sum"
+      alignment="right"
       displayFormat="TOTAL: {0}"
       valueFormat="#,##0.00"
       showInColumn="importe_total"
@@ -208,7 +217,8 @@ return (
       </div>
       <div className={styles.inputContainer}>
           <span>IVA</span>
-          <input type="number" name='importe_iva' value={form["importe_iva"]} disabled/>
+          <input type="number" name='importe_iva' value={form["importe_iva"]} 
+          onChange={handleChange}/>
       </div>
       <div className={styles.inputContainer}>
           <span>Total</span>
@@ -216,12 +226,12 @@ return (
       </div>
       <div className={styles.inputContainer}>
           <span>Observacion</span>
-          <input type="text" name='observacion' value={form["observacion"]} 
+          <textarea type="text" name='observacion' value={form["observacion"]} 
         onChange={handleChange}/>
       </div>
       <div className={styles.inputContainer}>
         <span>Concepto</span>
-        <select name="id_concepto"  value={form["id_concepto"]} 
+        <select name="id_concepto" style={{width: "130%"}}  value={form["id_concepto"]} 
         onChange={handleChange} id="">
           <option value={""} disabled selected>{"Seleccione un concepto"}</option>
           {
