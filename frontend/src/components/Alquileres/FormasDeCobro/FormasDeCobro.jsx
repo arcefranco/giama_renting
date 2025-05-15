@@ -1,25 +1,24 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
+import { getCuentasContables } from '../../../reducers/Costos/costosSlice'
+import {postFormaCobro, reset} from '../../../reducers/Alquileres/alquileresSlice'
 import { ClipLoader } from "react-spinners";
-import styles from "./AltaCostos.module.css"
-import { getCuentasContables, postConceptoCostos, reset } from '../../reducers/Costos/costosSlice'
+import styles from "./FormasDeCobro.module.css"
 
-const AltaCostos = () => {
+const FormasDeCobro = () => {
 const dispatch = useDispatch()
-    useEffect(() => {
-    Promise.all([
-        dispatch(getCuentasContables()),
-    ])
-}, [])
-
-const {isError, isSuccess, isLoading, message, cuentasContables} = useSelector((state) => state.costosReducer)
+const {isError, isSuccess, isLoading, message} = useSelector((state) => state.alquileresReducer)
+const {cuentasContables} = useSelector((state) => state.costosReducer)
 const [form, setForm] = useState({
     nombre: '',
     cuenta_contable: '',
-    cuenta_secundaria: '',
-    ingreso_egreso: ''
 })
+useEffect(() => {
+Promise.all([
+    dispatch(getCuentasContables())
+])
+}, [])
 useEffect(() => {
 
   if(isError){
@@ -50,31 +49,20 @@ useEffect(() => {
         setForm({
             nombre: '',
             cuenta_contable: '',
-            cuenta_secundaria: '',
-            ingreso_egreso: ''
         })
     }
 
-  }, [isError, isSuccess]) 
+}, [isError, isSuccess]) 
 const handleChange = (e) => {
-    const { name, value } = e.target;
-    if(name === "cuenta_contable"){
-        setForm({
-            ...form,
-            "cuenta_contable": value,
-            "cuenta_secundaria": cuentasContables?.find(e => e.Codigo == value)?.CuentaSecundaria
-        })
-    }else{
-        setForm({
-         ...form,
-         [name]: value,
-       }); 
-
-    }
-};
+const { name, value } = e.target;
+setForm({
+    ...form,
+    [name]: value,
+}); 
+}
 const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(postConceptoCostos(form))
+    dispatch(postFormaCobro(form))
 } 
   return (
     <div>
@@ -90,10 +78,10 @@ const handleSubmit = async (e) => {
         <p className={styles.loadingText}>Cargando...</p>
       </div>
     )}
-            <h2>Alta de conceptos de costos</h2>
+            <h2>Alta de formas de cobro</h2>
             <form action="" enctype="multipart/form-data" className={styles.form}>
             <div className={styles.inputContainer}>
-                <span>Concepto</span>
+                <span>Nombre</span>
                 <input type="text" name='nombre' value={form["nombre"]} 
               onChange={handleChange}/>
             </div>
@@ -109,38 +97,15 @@ const handleSubmit = async (e) => {
                 }
               </select>
             </div>
-            <div className={styles.inputContainer}>
-            <span>Tipo</span>
-            <label>
-              <input
-                type="radio"
-                name="ingreso_egreso"
-                value="I"
-                checked={form.ingreso_egreso === "I"}
-                onChange={handleChange}
-              />
-              Ingreso
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="ingreso_egreso"
-                value="E"
-                checked={form.ingreso_egreso === "E"}
-                onChange={handleChange}
-              />
-              Egreso
-            </label>
-          </div>
             </form>
             <button 
             className={styles.sendBtn} onClick={handleSubmit} 
-            disabled={!form["cuenta_contable"] || !form["nombre"]  || !form["ingreso_egreso"]}>
+            disabled={!form["cuenta_contable"] || !form["nombre"]}>
               Enviar
             </button>
       </div>
-</div>
+    </div>
   )
 }
 
-export default AltaCostos
+export default FormasDeCobro

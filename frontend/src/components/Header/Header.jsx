@@ -35,7 +35,13 @@ const menuItems = [
      { label: "Alta costos", to: "/costos/alta" },
      { label: "Conceptos de costos", to: "/costos/conceptos" },
    ]
- }  
+ },
+  {
+   title: "Alquileres",
+   items: [
+     { label: "Ingreso formas de cobro", to: "/alquileres/formasDeCobro" },
+   ]
+ }
 ];
 
 const Header = () => {
