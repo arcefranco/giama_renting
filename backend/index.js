@@ -7,6 +7,7 @@ import generalesRouter from "./src/routes/generalesRoutes.js";
 import loginRouter from "./src/routes/loginRoutes.js";
 import clientesRouter from "./src/routes/clientesRoutes.js";
 import costosRouter from "./src/routes/costosRoutes.js";
+import alquileresRouter from "./src/routes/alquileresRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -30,3 +31,4 @@ app.use("/generales", generalesRouter);
 app.use("/vehiculos", vehiculosRouter);
 app.use("/clientes", clientesRouter);
 app.use("/costos", costosRouter);
+app.use("/alquileres", alquileresRouter);
