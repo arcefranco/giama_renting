@@ -39,6 +39,7 @@ const menuItems = [
   {
    title: "Alquileres",
    items: [
+    { label: "Ingreso alquileres", to: "/alquileres" },
      { label: "Ingreso formas de cobro", to: "/alquileres/formasDeCobro" },
    ]
  }

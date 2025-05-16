@@ -32,6 +32,18 @@ export const postAlquiler = createAsyncThunk(
     }
   }
 );
+export const getFormasDeCobro = createAsyncThunk(
+  "getFormasDeCobro",
+  async (data, { rejectWithValue }) => {
+    const result = await alquileresService.getFormasDeCobro();
+    console.log(result);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
 export const alquileresSlice = createSlice({
   name: "alquileres",
   initialState,
@@ -54,7 +66,7 @@ export const alquileresSlice = createSlice({
     });
     builder.addCase(postAlquiler.rejected, (state, action) => {
       state.isLoading = false;
-      state.isError = action.payload.status;
+      state.isError = true;
       state.message = action.payload.message;
     });
     builder.addCase(postFormaCobro.pending, (state) => {
@@ -62,13 +74,26 @@ export const alquileresSlice = createSlice({
     });
     builder.addCase(postFormaCobro.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isSuccess = action.payload.status;
+      state.isSuccess = true;
       state.message = action.payload.message;
     });
     builder.addCase(postFormaCobro.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = action.payload.status;
       state.message = action.payload.message;
+    });
+    builder.addCase(getFormasDeCobro.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getFormasDeCobro.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.formasDeCobro = action.payload;
+    });
+    builder.addCase(getFormasDeCobro.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.message = action.payload;
     });
   },
 });
