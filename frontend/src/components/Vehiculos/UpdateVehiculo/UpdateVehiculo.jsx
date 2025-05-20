@@ -6,6 +6,7 @@ import { getVehiculosById, updateVehiculo, reset } from '../../../reducers/Vehic
 import styles from './UpdateVehiculo.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
+import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
 
 const UpdateVehiculo = () => {
   const { id } = useParams();
@@ -107,7 +108,7 @@ const UpdateVehiculo = () => {
             <p className={styles.loadingText}>Actualizando vehículo...</p>
           </div>
         )}
-        <h2>Modificar datos del vehículo: {vehiculo && vehiculo[0]["dominio"]}</h2>
+        <h2>Modificar datos del vehículo: {vehiculo && vehiculo[0]["dominio"]} {getEstadoVehiculoSpan(vehiculo)}</h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>
         <legend>Datos generales del vehículo</legend>

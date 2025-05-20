@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import DataGrid, {Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
@@ -27,19 +27,48 @@ const {
     isLoading
 } = useSelector((state) => state.vehiculosReducer)
 const {modelos, proveedoresGPS, sucursales} = useSelector(state => state.generalesReducer)
+const [vehiculosConEstado, setVehiculosConEstado] = useState(null)
+
+useEffect(() => {
+if(vehiculos){
+  setVehiculosConEstado(vehiculos?.map(v => {
+  let estado = "";
+
+  if (v.fecha_venta) {
+    estado = "Vendido";
+  } else if (v.vehiculo_alquilado === 1) {
+    estado = "Alquilado";
+  } else if (
+    v.proveedor_gps !== 0 &&
+    v.nro_serie_gps !== 0 &&
+    v.calcomania !== 0 &&
+    v.gnc !== 0
+  ) {
+    estado = "Preparado";
+  } else {
+    estado = "Sin preparar";
+  }
+
+  return {
+    ...v,
+    estado,
+  };
+}))
+}
+}, [vehiculos])
+
 const getNombreModelo = (id) => {
   const modelo = modelos.find((m) => m.id === id); 
   return modelo ? modelo.nombre : id;
 };
-
 const handleActualizar = () => {
   dispatch(getVehiculos())
 };
-
 const getNombreProveedorGPS = (id) => {
   const proveedor = proveedoresGPS.find((p) => p.id == id);
   return proveedor ? proveedor.nombre : '';
-};const getNombreSucursales = (id) => {
+};
+const getNombreSucursales = (id) => {
   const sucursal = sucursales.find((p) => p.id == id);
   return sucursal ? sucursal.nombre : '';
 };
@@ -73,22 +102,17 @@ const renderCostosCell = (data) => {
       </button>
     );
 };
-const renderEstado = (data) => {
-  if(data.data.fecha_venta){
-    return <span className={styles.spanVendido}>Vendido</span>
-  }
-  else if(data.data.vehiculo_alquilado === 1){
-    return <span className={styles.spanAlquilado}>Alquilado</span>
-  }
-  else if(data.data.proveedor_gps !== 0 /* || null */ && 
-    data.data.nro_serie_gps !== 0 /* || null */ &&
-    data.data.calcomania !== 0 &&
-    data.data.gnc !== 0){
-    return <span className={styles.spanPreparado}>Preparado</span>
-  }else{
-    return <span className={styles.spanNoPreparado}>Sin preparar</span>
-  }
-}
+const renderAlquilerCell = (data) => {
+    return (
+      <button
+        onClick={() => window.open(`/alquileres/${data.data.id}`, '_blank')}
+        style={{ color: '#1976d2', fontSize: "11px" ,
+          textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        Alquilar
+      </button>
+    );
+};
 const renderFecha = (data) => {
   if(data.value){
     let fechaSplit = data.value?.split("-")
@@ -116,7 +140,7 @@ return (
       <DataGrid
         className={styles.dataGrid}
         style={{fontFamily: "IBM", fontSize: "12px"}}
-        dataSource={vehiculos || []}
+        dataSource={vehiculosConEstado || []}
         showBorders={true}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
@@ -130,7 +154,23 @@ return (
         <Export enabled={true} allowExportSelectedData={true} />
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
-        <Column dataField="id" caption="Estado" cellRender={renderEstado} width={130} />
+        <Column
+          dataField="estado"
+          caption="Estado actual"
+          width={130}
+          cellRender={({ data }) => {
+            switch (data.estado) {
+              case "Vendido":
+                return <span className={styles.spanVendido}>Vendido</span>;
+              case "Alquilado":
+                return <span className={styles.spanAlquilado}>Alquilado</span>;
+              case "Preparado":
+                return <span className={styles.spanPreparado}>Preparado</span>;
+              default:
+                return <span className={styles.spanNoPreparado}>Sin preparar</span>;
+            }
+          }}
+        />
         <Column dataField="id" caption="ID" width={50} />
         <Column dataField="modelo" width={75} caption="Modelo" 
         cellRender={({ data }) => getNombreModelo(data.modelo)}/>
@@ -171,6 +211,7 @@ return (
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
+        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderAlquilerCell} />
       </DataGrid>
     </div>
 )

@@ -46,6 +46,7 @@ function App() {
     <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
     <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
     <Route path='/alquileres' element={<AlquileresForm/>}/>
+    <Route path='/alquileres/:id'element={<AlquileresForm key={location.pathname}/>}/>
     <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
     </Route>
   </Route>

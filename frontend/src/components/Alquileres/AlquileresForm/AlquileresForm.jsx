@@ -1,4 +1,5 @@
-import React, {useState, useEffect, useRef} from 'react'
+import React, {useState, useEffect, useMemo} from 'react'
+import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
@@ -17,6 +18,7 @@ import Select from 'react-select';
 
 const AlquileresForm = () => {
 const dispatch = useDispatch()
+const {id} = useParams()
 const {isError, isSuccess, isLoading, 
   message, formasDeCobro, alquileresVehiculo} = useSelector((state) => state.alquileresReducer)
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
@@ -100,6 +102,7 @@ if([form["id_vehiculo"]]){
 useEffect(() => { //filtro el array obtenido a la fecha de hoy
   setAlquileresVigentes(alquileresVehiculo.filter(a => new Date(a.fecha_hasta) >= hoy))
 }, [alquileresVehiculo])
+
 const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
   alquileres?.map(a => ({
     start: new Date(a.fecha_desde),
@@ -129,6 +132,7 @@ const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e =
     )
   };
 });
+
 const customStyles = {
   container: (provided) => ({
     ...provided,
@@ -196,17 +200,25 @@ const handleSubmit = async (e) => {
                 <div className={styles.inputContainer}>
                   <span>Vehículo</span>
                   <Select
-                  options={opcionesVehiculos}
-                  onChange={(option) => {
-                  setForm((prevForm) => ({
-                     ...prevForm,
-                      id_vehiculo: option?.value || "", // asegurás que se borre si se deselecciona
-                      fecha_desde: "",
-                      fecha_hasta: ""
-                    }));
-                  }}
-                  placeholder="Seleccione un vehículo"
-                  styles={customStyles}
+                    options={opcionesVehiculos}
+                    value={ id ?
+                      opcionesVehiculos.find(
+                        (opt) => String(opt.value) === id
+                      ) : 
+                      opcionesVehiculos.find(
+                        (opt) => String(opt.value) === String(form.id_vehiculo)
+                      ) || null
+                    }
+                    onChange={(option) => {
+                      setForm((prevForm) => ({
+                        ...prevForm,
+                        id_vehiculo: option?.value || "",
+                        fecha_desde: "",
+                        fecha_hasta: "",
+                      }));
+                    }}
+                    placeholder="Seleccione un vehículo"
+                    styles={customStyles}
                   />
                 </div>
                 <div className={styles.inputContainer}>

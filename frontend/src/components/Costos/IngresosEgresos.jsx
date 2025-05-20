@@ -10,6 +10,7 @@ import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css"
 import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
+import { getEstadoVehiculoSpan } from '../../utils/getEstadoVehiculoSpan';
 
 
 const IngresosEgresos = () => {  
@@ -146,7 +147,10 @@ return (
     </div>
   )}
     <h2>Ingresos y egresos del vehículo</h2>
-    <h2>Patente: {vehiculo && vehiculo[0]["dominio"]} Modelo: {vehiculo && modelos && modelos.find(e => e.id === vehiculo[0]["modelo"])?.nombre}</h2>
+    <h2> {vehiculo && vehiculo[0]["dominio"]} - {vehiculo && modelos && modelos.find(e => e.id === vehiculo[0]["modelo"])?.nombre} -
+      {getEstadoVehiculoSpan(vehiculo)}
+      
+      </h2>
     <button onClick={handleActualizar} className={styles.refreshButton}>
     🔄 Actualizar
     </button>

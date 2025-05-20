@@ -8,6 +8,7 @@ import { eliminarImagenes, reset } from '../../reducers/Vehiculos/vehiculosSlice
 import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
+import { getEstadoVehiculoSpan } from '../../utils/getEstadoVehiculoSpan';
 
 
 
@@ -70,10 +71,10 @@ const ImagenesVehiculo = () => {
             <ClipLoader size={60} color="#800020" loading={true} />
             <p className={styles.loadingText}>Eliminando imagen...</p>
           </div>
-        )}
+        )} 
       {vehiculo && (
         <h2 style={{fontSize: "xx-large"}}>
-          {vehiculo[0].dominio} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color}
+          {vehiculo[0].dominio} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {getEstadoVehiculoSpan(vehiculo)}
         </h2>
       )}
 
