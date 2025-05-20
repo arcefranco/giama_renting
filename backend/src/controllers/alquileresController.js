@@ -34,7 +34,9 @@ export const postFormaCobro = async (req, res) => {
 
 export const postAlquiler = async (req, res) => {
   const {
-    //no incluye fecha_cobro porque falta confirmacion de cobro
+    //datos del cliente para el concepto:
+    apellido_cliente,
+    //no incluye fecha_cobro, hasta ahora se coloca fecha de hoy
     id_vehiculo,
     id_cliente,
     fecha_desde,
@@ -45,15 +47,70 @@ export const postAlquiler = async (req, res) => {
     id_forma_cobro,
     cuenta_contable_forma_cobro,
   } = req.body;
+  let alquileresVigentes;
   let NroAsiento;
   let cuentaIC21;
   let cuentaALQU;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde} hasta: ${fecha_hasta}`;
+  //buscar si el vehiculo está vendido
+  try {
+    const result = await giama_renting.query(
+      "SELECT fecha_venta FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
+    if (result[0]["fecha_venta"]) {
+      return res.send({
+        status: false,
+        message: "El vehículo se encuentra vendido",
+      });
+    }
+  } catch (error) {
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
+  try {
+    const result = await giama_renting.query(
+      "SELECT fecha_desde, fecha_hasta FROM alquileres WHERE id_vehiculo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
+    alquileresVigentes = result;
+    const parseDate = (str) => new Date(str);
+    const nuevaDesde = parseDate(fecha_desde);
+    const nuevaHasta = parseDate(fecha_hasta);
+
+    // Recorremos los alquileres existentes y verificamos si se superponen
+    const hayConflicto = alquileresVigentes?.some(
+      ({ fecha_desde, fecha_hasta }) => {
+        const desdeExistente = parseDate(fecha_desde);
+        const hastaExistente = parseDate(fecha_hasta);
+
+        return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
+      }
+    );
+
+    if (hayConflicto) {
+      return res.send({
+        status: false,
+        message:
+          "El vehículo ya está alquilado en alguna de las fechas seleccionadas.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
   //OBTENGO NUMEROS DE CUENTA IC21 Y ALQU
   try {
     const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
+      `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
       {
         type: QueryTypes.SELECT,
       }
@@ -89,8 +146,6 @@ export const postAlquiler = async (req, res) => {
   } catch (error) {
     throw `Error al obtener número de asiento: ${error}`;
   }
-  console.log("cuentaIC21: ", cuentaIC21);
-  console.log("cuentaALQU: ", cuentaALQU);
   try {
     await giama_renting.query(
       `INSERT INTO alquileres 
@@ -101,7 +156,8 @@ export const postAlquiler = async (req, res) => {
     importe_neto,
     importe_iva,
     importe_total,
-    id_forma_cobro) VALUES (?,?,?,?,?,?,?,?)`,
+    id_forma_cobro,
+    fecha_cobro) VALUES (?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -113,6 +169,7 @@ export const postAlquiler = async (req, res) => {
           importe_iva,
           importe_total,
           id_forma_cobro,
+          getTodayDate(),
         ],
         transaction: transaction_giama_renting,
       }
@@ -126,7 +183,7 @@ export const postAlquiler = async (req, res) => {
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe) VALUES (?,?,?,?,?)`,
+      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -135,8 +192,8 @@ export const postAlquiler = async (req, res) => {
           cuenta_contable_forma_cobro,
           "D",
           importe_total,
-          /*           observacion,
-          comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
+          concepto,
+          /* comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
         ],
         transaction: transaction_pa7_giama_renting,
       }
@@ -151,7 +208,7 @@ export const postAlquiler = async (req, res) => {
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe) VALUES (?,?,?,?,?)`,
+      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -160,8 +217,8 @@ export const postAlquiler = async (req, res) => {
           cuentaALQU,
           "H",
           importe_neto,
-          /*           observacion,
-          comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
+          concepto,
+          /* comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
         ],
         transaction: transaction_pa7_giama_renting,
       }
@@ -176,7 +233,7 @@ export const postAlquiler = async (req, res) => {
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe) VALUES (?,?,?,?,?)`,
+      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -185,8 +242,8 @@ export const postAlquiler = async (req, res) => {
           cuentaIC21,
           "H",
           importe_iva,
-          /*observacion,
-          comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
+          concepto,
+          /*comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
         ],
         transaction: transaction_pa7_giama_renting,
       }
@@ -200,4 +257,20 @@ export const postAlquiler = async (req, res) => {
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
   return res.send({ status: true, message: "Alquiler ingresado con éxito" });
+};
+
+export const getAlquileresByIdVehiculo = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const result = await giama_renting.query(
+      "SELECT * FROM alquileres WHERE id_vehiculo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    return res.send(result);
+  } catch (error) {
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
 };

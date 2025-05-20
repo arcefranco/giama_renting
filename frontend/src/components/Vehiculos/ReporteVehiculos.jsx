@@ -47,7 +47,7 @@ const renderImagenesCell = (data) => {
     return (
       <button
         onClick={() => window.open(`/vehiculos/imagenes/${data.data.id}`, '_blank')}
-        style={{ color: '#1976d2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+        style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Ver
       </button>
@@ -57,7 +57,7 @@ const renderModificarCell = (data) => {
     return (
       <button
         onClick={() => window.open(`/vehiculos/actualizar/${data.data.id}`, '_blank')}
-        style={{ color: '#1976d2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+        style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Modificar
       </button>
@@ -67,18 +67,24 @@ const renderCostosCell = (data) => {
     return (
       <button
         onClick={() => window.open(`/costos/ingresos_egresos/${data.data.id}`, '_blank')}
-        style={{ color: '#1976d2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+        style={{ color: '#1976d2', fontSize: "11px" ,textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Costos
       </button>
     );
 };
 const renderEstado = (data) => {
-  if(data.data.proveedor_gps !== 0 /* || null */ && 
+  if(data.data.fecha_venta){
+    return <span className={styles.spanVendido}>Vendido</span>
+  }
+  else if(data.data.vehiculo_alquilado === 1){
+    return <span className={styles.spanAlquilado}>Alquilado</span>
+  }
+  else if(data.data.proveedor_gps !== 0 /* || null */ && 
     data.data.nro_serie_gps !== 0 /* || null */ &&
     data.data.calcomania !== 0 &&
     data.data.gnc !== 0){
-      return <span className={styles.spanPreparado}>Preparado</span>
+    return <span className={styles.spanPreparado}>Preparado</span>
   }else{
     return <span className={styles.spanNoPreparado}>Sin preparar</span>
   }

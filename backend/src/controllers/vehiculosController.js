@@ -16,9 +16,16 @@ import { getTodayDate } from "../../helpers/getTodayDate.js";
 
 export const getVehiculos = async (req, res) => {
   try {
-    const resultado = await giama_renting.query("SELECT * FROM vehiculos", {
-      type: QueryTypes.SELECT,
-    });
+    const resultado = await giama_renting.query(
+      `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado
+FROM vehiculos
+LEFT JOIN 
+(SELECT alquileres.id_vehiculo FROM alquileres WHERE NOW() BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
+AS alq ON vehiculos.id = alq.id_vehiculo`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
     return res.send(resultado);
   } catch (error) {
     return res.send(error);

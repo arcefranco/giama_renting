@@ -4,6 +4,7 @@ import alquileresService from "./alquileresService.js";
 
 const initialState = {
   formasDeCobro: [],
+  alquileresVehiculo: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -37,6 +38,17 @@ export const getFormasDeCobro = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     const result = await alquileresService.getFormasDeCobro();
     console.log(result);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+export const getAlquileresByIdVehiculo = createAsyncThunk(
+  "getAlquileresByIdVehiculo",
+  async (data, { rejectWithValue }) => {
+    const result = await alquileresService.getAlquileresByIdVehiculo(data);
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -91,6 +103,19 @@ export const alquileresSlice = createSlice({
       state.formasDeCobro = action.payload;
     });
     builder.addCase(getFormasDeCobro.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.message = action.payload;
+    });
+    builder.addCase(getAlquileresByIdVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAlquileresByIdVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.alquileresVehiculo = action.payload;
+    });
+    builder.addCase(getAlquileresByIdVehiculo.rejected, (state, action) => {
       state.isLoading = false;
       state.isSuccess = false;
       state.message = action.payload;

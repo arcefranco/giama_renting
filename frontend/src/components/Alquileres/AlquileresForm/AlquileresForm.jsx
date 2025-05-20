@@ -2,19 +2,35 @@ import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
-import {getFormasDeCobro, reset, postAlquiler} from '../../../reducers/Alquileres/alquileresSlice.js'
+import {getFormasDeCobro, reset, 
+  postAlquiler, getAlquileresByIdVehiculo} from '../../../reducers/Alquileres/alquileresSlice.js'
 import {getVehiculos} from '../../../reducers/Vehiculos/vehiculosSlice.js'
 import {getClientes} from '../../../reducers/Clientes/clientesSlice.js'
 import { ClipLoader } from "react-spinners";
 import styles from "./AlquileresForm.module.css"
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import es from "date-fns/locale/es"; 
+import { addDays } from 'date-fns';
+import Select from 'react-select';
 
 const AlquileresForm = () => {
 const dispatch = useDispatch()
-const {isError, isSuccess, isLoading, message, formasDeCobro} = useSelector((state) => state.alquileresReducer)
+const {isError, isSuccess, isLoading, 
+  message, formasDeCobro, alquileresVehiculo} = useSelector((state) => state.alquileresReducer)
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
+const getToday = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // elimina horas
+  return today;
+};
+registerLocale("es", es);
+const hoy = getToday();
 const [form, setForm] = useState({
+    apellido_cliente: '',
     id_vehiculo: '',
     id_cliente: '',
     fecha_desde: '',
@@ -25,6 +41,7 @@ const [form, setForm] = useState({
     id_forma_cobro: '',
     cuenta_contable_forma_cobro: ''
 })
+const [alquileresVigentes, setAlquileresVigentes] = useState(null)
 useEffect(() => {
 Promise.all([
     dispatch(getVehiculos()),
@@ -60,12 +77,64 @@ useEffect(() => {
         })
         dispatch(reset())
         setForm({
-            nombre: '',
-            cuenta_contable: '',
+        id_vehiculo: '',
+        id_cliente: '',
+        fecha_desde: '',
+        fecha_hasta: '',
+        importe_neto: '',
+        importe_iva: '',
+        importe_total: '',
+        id_forma_cobro: '',
+        cuenta_contable_forma_cobro: ''
         })
     }
 
 }, [isError, isSuccess]) 
+
+useEffect(() => { //obtengo alquileres del vehiculo seleccionado
+if([form["id_vehiculo"]]){
+  dispatch(getAlquileresByIdVehiculo({id: form["id_vehiculo"]}))
+}
+}, [form["id_vehiculo"]])
+
+useEffect(() => { //filtro el array obtenido a la fecha de hoy
+  setAlquileresVigentes(alquileresVehiculo.filter(a => new Date(a.fecha_hasta) >= hoy))
+}, [alquileresVehiculo])
+const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
+  alquileres?.map(a => ({
+    start: new Date(a.fecha_desde),
+    end: addDays(new Date(a.fecha_hasta), 1),
+}));
+const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e => {
+  const preparado = e.proveedor_gps && e.nro_serie_gps && e.calcomania && e.gnc;
+  const alquiladoHoy = e.vehiculo_alquilado
+
+
+  let estado;
+  if (preparado && alquiladoHoy) {
+    estado = <span className={styles.spanAlquilado}>Alquilado</span>;
+  } else if (preparado && !alquiladoHoy) {
+    estado = <span className={styles.spanPreparado}>Preparado</span>;
+  } else {
+    estado = <span className={styles.spanNoPreparado}>Sin preparar</span>;
+  }
+
+  return {
+    value: e.id,
+    label: (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <span>{e.dominio} - {modelos.find(m => m.id == e.modelo)?.nombre}</span>
+        {estado}
+      </div>
+    )
+  };
+});
+const customStyles = {
+  container: (provided) => ({
+    ...provided,
+    width: '16rem'
+  })
+};
 const handleChange = (e) => {
 const { name, value } = e.target;
 if(value && name === "importe_neto"){
@@ -90,6 +159,13 @@ else if(value && name === "id_forma_cobro"){
      "cuenta_contable_forma_cobro": formasDeCobro.find(e => e.id == value)?.cuenta_contable
    }); 
 }
+else if(value && name === "id_cliente"){
+      setForm({
+     ...form,
+     [name]: value,
+     "apellido_cliente": clientes.find(e => e.id == value)?.apellido
+   }); 
+}
 else{
     setForm({
      ...form,
@@ -103,7 +179,6 @@ const handleSubmit = async (e) => {
     dispatch(postAlquiler(form))
 } 
   return (
-    <div> 
         <div className={styles.container}>
             <ToastContainer /> 
               {isLoading && (
@@ -119,6 +194,22 @@ const handleSubmit = async (e) => {
                 <h2>Alta de alquiler</h2>
                 <form action="" enctype="multipart/form-data" className={styles.form}>
                 <div className={styles.inputContainer}>
+                  <span>Vehículo</span>
+                  <Select
+                  options={opcionesVehiculos}
+                  onChange={(option) => {
+                  setForm((prevForm) => ({
+                     ...prevForm,
+                      id_vehiculo: option?.value || "", // asegurás que se borre si se deselecciona
+                      fecha_desde: "",
+                      fecha_hasta: ""
+                    }));
+                  }}
+                  placeholder="Seleccione un vehículo"
+                  styles={customStyles}
+                  />
+                </div>
+                <div className={styles.inputContainer}>
                   <span>Clientes</span>
                   <select name="id_cliente"  value={form["id_cliente"]} 
                   onChange={handleChange} id="">
@@ -130,29 +221,30 @@ const handleSubmit = async (e) => {
                     }
                   </select>
                 </div>
-                <div className={styles.inputContainer}>
-                  <span>Vehículo</span>
-                  <select name="id_vehiculo"  value={form["id_vehiculo"]} 
-                  onChange={handleChange} id="">
-                    <option value={""} disabled selected>{"Seleccione un vehículo"}</option>
-                    {
-                      vehiculos?.length && vehiculos?.map(e => {
-                        return <option key={e.id} value={e.id}>{e.dominio} - {modelos.find(m => m.id == e.modelo)?.nombre} - {
-                            e.proveedor_gps && e.nro_serie_gps && e.calcomania && e.gnc ? "PREPARADO" : "SIN PREPARAR"
-                        }</option>
-                      })
-                    }
-                  </select>
-                </div>
+
                 <div className={styles.inputContainer}>
                     <span>Fecha desde</span>
-                    <input type="date" name='fecha_desde' value={form["fecha_desde"]} 
-                  onChange={handleChange}/>
+                    <DatePicker
+                      dateFormat="dd/MM/yyyy"
+                      selected={form.fecha_desde}
+                      onChange={(date) => setForm(prev => ({ ...prev, fecha_desde: date }))}
+                      excludeDateIntervals={obtenerRangosOcupados(alquileresVigentes)}
+                      minDate={getToday()}
+                      placeholderText="Seleccione una fecha"
+                      locale="es"
+                    />
                 </div>
                 <div className={styles.inputContainer}>
                     <span>Fecha hasta</span>
-                    <input type="date" name='fecha_hasta' value={form["fecha_hasta"]} 
-                  onChange={handleChange}/>
+                    <DatePicker
+                      dateFormat="dd/MM/yyyy"
+                      selected={form.fecha_hasta}
+                      onChange={(date) => setForm(prev => ({ ...prev, fecha_hasta: date }))}
+                      excludeDateIntervals={obtenerRangosOcupados(alquileresVigentes)}
+                      minDate={form.fecha_desde || getToday()}
+                      placeholderText="Seleccione una fecha"
+                      locale="es"
+                    />
                 </div>
                 <div className={styles.inputContainer}>
                     <span>Importe neto</span>
@@ -190,7 +282,7 @@ const handleSubmit = async (e) => {
                     !form["importe_total"] || !form["id_forma_cobro"]}>
                   Enviar
                 </button>
-          </div></div>
+        </div>
   )
 }
 

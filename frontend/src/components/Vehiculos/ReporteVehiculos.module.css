@@ -75,3 +75,31 @@
     color: #ffff;
     background: #ff0909a1;
   }
+
+  .spanAlquilado {
+  display: flex;
+  justify-self: center;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  border-radius: 4px;
+  width: 4rem;
+  height: 1rem;
+  padding: 3px 6px;
+  color: #fff;
+  background: #6f8babb0;
+}
+
+  .spanVendido {
+  display: flex;
+  justify-self: center;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  border-radius: 4px;
+  width: 4rem;
+  height: 1rem;
+  padding: 3px 6px;
+  color: #fff;
+  background: #6fd66ab0;
+}
