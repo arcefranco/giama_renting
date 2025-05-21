@@ -7,6 +7,7 @@ import {
   getCuentasContables,
   postConceptoCostos,
   postCostos_Ingresos,
+  prorrateoIE,
   updateConceptoCostos,
 } from "../controllers/costosController.js";
 const costosRouter = Router();
@@ -30,4 +31,5 @@ costosRouter.post(
   "/costos_ingresos_id_vehiculo",
   getCostosIngresosByIdVehiculo
 );
+costosRouter.post("/prorrateoIE", prorrateoIE);
 export default costosRouter;

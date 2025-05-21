@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useMemo} from 'react'
-import { useParams } from 'react-router-dom';
+import { useParams} from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
@@ -15,6 +15,7 @@ import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
 import { addDays } from 'date-fns';
 import Select from 'react-select';
+import add from '../../../assets/add.png'
 
 const AlquileresForm = () => {
 const dispatch = useDispatch()
@@ -221,19 +222,27 @@ const handleSubmit = async (e) => {
                     styles={customStyles}
                   />
                 </div>
-                <div className={styles.inputContainer}>
+                <div className={styles.inputWrapper}>
                   <span>Clientes</span>
-                  <select name="id_cliente"  value={form["id_cliente"]} 
-                  onChange={handleChange} id="">
-                    <option value={""} disabled selected>{"Seleccione un cliente"}</option>
-                    {
-                      clientes?.length && clientes?.map(e => {
-                    return <option key={e.id} value={e.id}>{e.nro_documento} - {e.nombre} {e.apellido}</option>
-                      })
-                    }
-                  </select>
+                  <div className={styles.selectWithIcon}>
+                    <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
+                      <option value={""} disabled selected>{"Seleccione un cliente"}</option>
+                      {
+                        clientes?.length && clientes.map(e => (
+                          <option key={e.id} value={e.id}>
+                            {e.nro_documento} - {e.nombre} {e.apellido}
+                          </option>
+                        ))
+                      }
+                    </select>
+                    <img
+                      src={add}
+                      alt="Añadir cliente"
+                      className={styles.addIcon}
+                      onClick={() => window.open('/clientes', '_blank')}
+                    />
+                  </div>
                 </div>
-
                 <div className={styles.inputContainer}>
                     <span>Fecha desde</span>
                     <DatePicker

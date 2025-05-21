@@ -19,6 +19,7 @@ import UpdateConcepto from './components/Costos/UpdateConcepto';
 import IngresosEgresos from './components/Costos/IngresosEgresos';
 import FormasDeCobro from './components/Alquileres/FormasDeCobro/FormasDeCobro';
 import AlquileresForm from './components/Alquileres/AlquileresForm/AlquileresForm';
+import ProrrateoIE from './components/Costos/ProrrateoIE';
 
 function App() {
 
@@ -45,6 +46,7 @@ function App() {
     <Route path='/costos/conceptos' element={<ReporteConceptos/>}/>
     <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
     <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
+    <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
     <Route path='/alquileres' element={<AlquileresForm/>}/>
     <Route path='/alquileres/:id'element={<AlquileresForm key={location.pathname}/>}/>
     <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>

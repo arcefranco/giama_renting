@@ -65,6 +65,10 @@ const getCostosIngresosByIdVehiculo = async (id, header = {}) => {
   }
 };
 
+const prorrateoIE = async (form) => {
+  return postFunction("costos/prorrateoIE", form);
+};
+
 const costosService = {
   getCuentasContables,
   postConceptoCostos,
@@ -74,5 +78,6 @@ const costosService = {
   deleteConceptosCostos,
   postCostos_Ingresos,
   getCostosIngresosByIdVehiculo,
+  prorrateoIE,
 };
 export default costosService;

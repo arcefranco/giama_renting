@@ -135,7 +135,7 @@ export const getCostosIngresosByIdVehiculo = async (req, res) => {
     return res.send(error);
   }
 };
-
+//FUNCION AUXILIAR
 const asiento_costos_ingresos = async (
   //FUNCION AUXILIAR
   Fecha,
@@ -269,24 +269,22 @@ const asiento_costos_ingresos = async (
   );
   return;
 };
-
-export const postCostos_Ingresos = async (req, res) => {
-  const {
-    id_vehiculo,
-    fecha,
-    id_concepto,
-    comprobante,
-    importe_neto,
-    importe_iva,
-    importe_total,
-    observacion,
-    /*objetos del asiento*/
-    cuenta,
-  } = req.body;
+//FUNCION AUXILIAR
+async function registrarCostoIngresoIndividual({
+  id_vehiculo,
+  fecha,
+  id_concepto,
+  comprobante,
+  importe_neto,
+  importe_iva,
+  importe_total,
+  observacion,
+  cuenta,
+}) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
   let ingreso_egreso;
-  //SEGUN LA CUENTA, OBTENGO SI ES INGRESO O EGRESO
+
   try {
     const result = await giama_renting.query(
       `SELECT ingreso_egreso FROM conceptos_costos WHERE cuenta_contable = ?`,
@@ -300,15 +298,17 @@ export const postCostos_Ingresos = async (req, res) => {
     console.log(error);
     throw "Error al buscar cuenta contable";
   }
+
   const factor = ingreso_egreso === "E" ? -1 : 1;
   const importeNetoFinal = importe_neto * factor;
   const importeIvaFinal = importe_iva * factor;
   const importeTotalFinal = importe_total * factor;
+
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
-    (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva,
-    importe_total, observacion) VALUES (?,?,?,?,?,?,?,?)`,
+      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva,
+      importe_total, observacion) VALUES (?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -324,13 +324,7 @@ export const postCostos_Ingresos = async (req, res) => {
         transaction: transaction_costos_ingresos,
       }
     );
-  } catch (error) {
-    console.log(error);
-    transaction_costos_ingresos.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  /*este proceso se llama UNA vez porque hace los 3 asientos */
-  try {
+
     await asiento_costos_ingresos(
       fecha,
       cuenta,
@@ -342,12 +336,71 @@ export const postCostos_Ingresos = async (req, res) => {
       ingreso_egreso,
       transaction_asientos
     );
+
+    await transaction_costos_ingresos.commit();
+    await transaction_asientos.commit();
   } catch (error) {
-    transaction_costos_ingresos.rollback();
-    transaction_asientos.rollback();
-    return res.send({ status: false, message: error });
+    await transaction_costos_ingresos.rollback();
+    await transaction_asientos.rollback();
+    throw error;
   }
-  transaction_costos_ingresos.commit();
-  transaction_asientos.commit();
-  return res.send({ status: true, message: "Ingresado correctamente" });
+}
+
+export const postCostos_Ingresos = async (req, res) => {
+  try {
+    await registrarCostoIngresoIndividual(req.body);
+    return res.send({ status: true, message: "Ingresado correctamente" });
+  } catch (error) {
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+};
+
+export const prorrateoIE = async (req, res) => {
+  const {
+    arrayVehiculos,
+    fecha,
+    id_concepto,
+    comprobante,
+    importe_neto,
+    importe_iva,
+    importe_total,
+    observacion,
+    cuenta,
+  } = req.body;
+
+  if (!arrayVehiculos?.length) {
+    return res.send({
+      status: false,
+      message: "No hay vehículos seleccionados",
+    });
+  }
+
+  const cantidad = arrayVehiculos.length;
+
+  const netoDividido = importe_neto / cantidad;
+  const ivaDividido = importe_iva / cantidad;
+  const totalDividido = importe_total / cantidad;
+
+  for (const id_vehiculo of arrayVehiculos) {
+    try {
+      await registrarCostoIngresoIndividual({
+        id_vehiculo,
+        fecha,
+        id_concepto,
+        comprobante,
+        importe_neto: netoDividido,
+        importe_iva: ivaDividido,
+        importe_total: totalDividido,
+        observacion,
+        cuenta,
+      });
+    } catch (error) {
+      return res.send({ status: false, message: JSON.stringify(error) });
+    }
+  }
+
+  return res.send({
+    status: true,
+    message: "Se prorratearon los costos/ingresos correctamente",
+  });
 };

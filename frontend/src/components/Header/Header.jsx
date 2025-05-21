@@ -34,6 +34,7 @@ const menuItems = [
    items: [
      { label: "Alta costos", to: "/costos/alta" },
      { label: "Conceptos de costos", to: "/costos/conceptos" },
+     { label: "Prorrateo Ingresos/Egresos", to: "/costos/prorrateoIE" },
    ]
  },
   {

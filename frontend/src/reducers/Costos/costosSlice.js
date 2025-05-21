@@ -109,6 +109,18 @@ export const getCostosIngresosByIdVehiculo = createAsyncThunk(
   }
 );
 
+export const prorrateoIE = createAsyncThunk(
+  "prorrateoIE",
+  async (data, { rejectWithValue }) => {
+    const result = await costosService.prorrateoIE(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const costosSlice = createSlice({
   name: "costos",
   initialState,
@@ -241,6 +253,21 @@ export const costosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
+    });
+    builder.addCase(prorrateoIE.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(prorrateoIE.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(prorrateoIE.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
   },
 });
