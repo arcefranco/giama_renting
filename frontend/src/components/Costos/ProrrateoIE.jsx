@@ -124,7 +124,7 @@ const [busquedaColumna, setBusquedaColumna] = useState({
 const clasificarVehiculos = (vehiculos) => {
     const vehiculosFiltrados = vehiculos?.filter(v => //FILTRO GENERAL
   v["dominio"]?.toLowerCase().includes(busquedaGeneral.toLowerCase()) ||
-  v["id"]?.toString().includes(busquedaGeneral) ||
+/*   v["id"]?.toString().includes(busquedaGeneral) || DOMINIO PROVISORIO PROX */
   modelos.find(e => e.id === v["modelo"])?.nombre.toLowerCase().includes(busquedaGeneral.toLowerCase()) 
 );
   const sinPreparar = vehiculosFiltrados.filter(v => (v.proveedor_gps == 0 || //FILTRO POR CATEGORIA
@@ -139,10 +139,20 @@ const clasificarVehiculos = (vehiculos) => {
   const vendidos = vehiculosFiltrados.filter(v => v.fecha_venta);
   return { sinPreparar, preparados, alquilados, vendidos };
 };
+const ordenarPorDominio = (a, b) => {
+  if (a.dominio < b.dominio) {
+    return -1; // a viene antes que b
+  }
+  if (a.dominio > b.dominio) {
+    return 1; // a viene después que b
+  }
+  return 0; // a y b son iguales
+};
 const categorias = clasificarVehiculos(vehiculos);
 const filtrarVehiculos = (vehiculos, filtro) => {
-  return vehiculos.filter((v) =>
-    `${v.id} -  ${v.dominio || ''} - ${v.modelo}`.toLowerCase().includes(filtro.toLowerCase())
+  return vehiculos.sort(ordenarPorDominio).filter((v) =>
+  /* PROX DOMINIO PROVISORIO ${v.id} -  */  
+  `${v.dominio || ''} - ${v.modelo}`.toLowerCase().includes(filtro.toLowerCase())
   );
 };
 const toggleSeleccion = (id) => {
@@ -194,15 +204,17 @@ const todosSeleccionados = () => {
         )}
         <h2>Prorrateo Ingresos/Egresos</h2>
 <div className={styles.generalControls}>
+  <div>
   <input
     type="checkbox"
     onChange={(e) => toggleSeleccionTotal(e.target.checked)}
     checked={todosSeleccionados()}
   />
   <span>Seleccionar todos</span>
+  </div>
   <input
     type="text"
-    placeholder="Buscar en todos"
+    placeholder="Buscar"
     value={busquedaGeneral}
     onChange={(e) => setBusquedaGeneral(e.target.value)}
   />
@@ -239,7 +251,7 @@ const todosSeleccionados = () => {
               onChange={() => toggleSeleccion(vehiculo.id)}
             />
             <span>
-                {vehiculo.id} - {vehiculo.dominio || "sin dominio"} - {modelos.find(e=> e.id == vehiculo.modelo)?.nombre}
+            {vehiculo.dominio || "sin dominio"} - {modelos.find(e=> e.id == vehiculo.modelo)?.nombre}
             </span>
           </div>
         ))}
@@ -247,6 +259,7 @@ const todosSeleccionados = () => {
     </div>
   ))}
 </div>
+<h4>Vehiculos seleccionados: {form["arrayVehiculos"]?.length}</h4>
               <div className={styles.formContainer}>
               <form action="" enctype="multipart/form-data" className={styles.form}>
               <div className={styles.inputContainer}>

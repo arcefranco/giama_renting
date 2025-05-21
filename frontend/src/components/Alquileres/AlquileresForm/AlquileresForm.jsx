@@ -34,7 +34,7 @@ registerLocale("es", es);
 const hoy = getToday();
 const [form, setForm] = useState({
     apellido_cliente: '',
-    id_vehiculo: '',
+    id_vehiculo: id ? id : "",
     id_cliente: '',
     fecha_desde: '',
     fecha_hasta: '',
@@ -202,6 +202,7 @@ const handleSubmit = async (e) => {
                   <span>Vehículo</span>
                   <Select
                     options={opcionesVehiculos}
+                    isDisabled={id ? true : false}
                     value={ id ?
                       opcionesVehiculos.find(
                         (opt) => String(opt.value) === id

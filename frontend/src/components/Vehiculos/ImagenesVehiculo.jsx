@@ -73,7 +73,7 @@ const ImagenesVehiculo = () => {
           </div>
         )} 
       {vehiculo && (
-        <h2 style={{fontSize: "xx-large"}}>
+        <h2 style={{display: "flex", alignItems: "center", fontSize: "xx-large"}}>
           {vehiculo[0].dominio} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {getEstadoVehiculoSpan(vehiculo)}
         </h2>
       )}
