@@ -26,20 +26,21 @@ const nombresMeses = [
   "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
 ];
 const generarPeriodos = () => {
-  const inicio = new Date(2024, 0); // enero 2024
   const hoy = new Date();
+  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 2); // dos meses adelante
+  const inicio = new Date(2024, 0); // enero 2024
   const periodos = [];
 
-  while (inicio <= hoy) {
+  while (fin >= inicio) {
     periodos.push({
-      mes: inicio.getMonth() + 1, // 1 a 12
-      anio: inicio.getFullYear(),
-      nombreMes: nombresMeses[inicio.getMonth()]
+      mes: fin.getMonth() + 1,
+      anio: fin.getFullYear(),
+      nombreMes: nombresMeses[fin.getMonth()]
     });
-    inicio.setMonth(inicio.getMonth() + 1);
+    fin.setMonth(fin.getMonth() - 1);
   }
 
-  return periodos.reverse(); // Más recientes primero
+  return periodos;
 };
 const periodos = generarPeriodos();
 
@@ -53,15 +54,17 @@ useEffect(() => {
   const filas = [];
 
   if (fichaAlquileres?.length) {
-    fichaAlquileres.forEach((a, i) => {
-      filas.push({
-        concepto: `Alquiler (${a.dias_en_mes} días)`,
-        importe: parseFloat(a.importe_neto).toFixed(2)
-      });
-      filas.push({
-        concepto: `IVA`,
-        importe: parseFloat(a.importe_iva).toFixed(2)
-      });
+    const totalDias = fichaAlquileres.reduce((acc, a) => acc + a.dias_en_mes, 0);
+    const totalNeto = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
+    const totalIva = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_iva), 0);
+
+    filas.push({
+      concepto: `Alquiler (${totalDias} días)`,
+      importe: totalNeto
+    });
+    filas.push({
+      concepto: `IVA`,
+      importe: totalIva
     });
   }
 
@@ -69,10 +72,11 @@ useEffect(() => {
     fichaCostos.forEach(c => {
       filas.push({
         concepto: c.nombre,
-        importe: parseFloat(c["SUM(costos_ingresos.importe_neto)"]).toFixed(2)
+        importe: parseFloat(c["SUM(costos_ingresos.importe_neto)"])
       });
     });
   }
+
   setFilas(filas);
   setTotalImporte(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0))
 }, [fichaAlquileres, fichaCostos])
@@ -119,18 +123,37 @@ useEffect(() => {
         <th>Importe</th>
       </tr>
     </thead>
-    <tbody>
-      {filas?.map((fila, i) => (
-        <tr key={i}>
-          <td>{fila.concepto}</td>
-          <td>${fila.importe}</td>
-        </tr>
-      ))}
-    </tbody>
+<tbody>
+  {filas?.map((fila, i) => {
+    const esPositivo = fila.importe >= 0;
+    const estilo = {
+      color: esPositivo ? "green" : "red",
+      fontWeight: 500
+    };
+    const importeFormateado = esPositivo
+      ? fila.importe.toFixed(2)
+      : `(${Math.abs(fila.importe).toFixed(2)})`;
+
+    return (
+      <tr key={i}>
+        <td>{fila.concepto}</td>
+        <td style={estilo}>{importeFormateado}</td>
+      </tr>
+    );
+  })}
+</tbody>
   </table>
 </div>
 <div className={styles.totalResumen}>
-  <strong>Total: </strong> ${totalImporte?.toFixed(2)}
+  <strong>Total: </strong>
+  <span style={{
+    color: totalImporte >= 0 ? 'green' : 'red',
+    fontWeight: 600
+  }}>
+    {totalImporte >= 0
+      ? totalImporte.toFixed(2)
+      : `(${Math.abs(totalImporte).toFixed(2)})`}
+  </span>
 </div>
     </div>
     </div>
