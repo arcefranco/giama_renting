@@ -7,6 +7,7 @@ import {
   getTiposResponsable,
   getTiposSexo,
   getSucursales,
+  getPreciosModelos,
 } from "../controllers/generalesController.js";
 
 const generalesRouter = Router();
@@ -26,5 +27,5 @@ generalesRouter.get("/tipos_documento", getTiposDocumento);
 generalesRouter.get("/tipos_responsable", getTiposResponsable);
 generalesRouter.get("/tipos_sexo", getTiposSexo);
 generalesRouter.get("/sucursales", getSucursales);
-
+generalesRouter.get("/precios_modelos", getPreciosModelos);
 export default generalesRouter;
