@@ -151,7 +151,7 @@ useEffect(() => {
     fontWeight: 600
   }}>
     {totalImporte >= 0
-      ? totalImporte.toFixed(2)
+      ? totalImporte?.toFixed(2)
       : `(${Math.abs(totalImporte).toFixed(2)})`}
   </span>
 </div>
