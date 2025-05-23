@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
-import { getModelos, getSucursales } from '../../reducers/Generales/generalesSlice'
+import { getModelos, getSucursales, getPreciosModelos } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
@@ -10,7 +10,8 @@ const dispatch = useDispatch()
   useEffect(() => {
     Promise.all([
       dispatch(getModelos()),
-      dispatch(getSucursales())
+      dispatch(getSucursales()),
+      dispatch(getPreciosModelos())
     ])
   }, [])
   
@@ -27,10 +28,12 @@ const dispatch = useDispatch()
     dispositivo: '',
     meses_amortizacion: '',
     color: '',
-    sucursal: ''
+    sucursal: '',
+    nro_factura_compra: ''
+    
   })
 
-  const {modelos, sucursales} = useSelector((state) => state.generalesReducer)
+  const {modelos, sucursales, preciosModelos} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
@@ -80,19 +83,31 @@ useEffect(() => {
           nro_serie_gps: '',
           dispositivo: '',
           meses_amortizacion: '',
-          color: ''
+          color: '',
+          sucursal: '',
+          nro_factura_compra: ''
         })
         setImagenes([])
     }
 
-  }, [isError, isSuccess]) 
+}, [isError, isSuccess]) 
+
 
 const handleChange = (e) => {
-    const { name, value } = e.target;
-      setFormData({
-       ...form,
-       [name]: value,
-     }); 
+const { name, value } = e.target;
+if(name === "modelo"){
+  setFormData({
+    ...form,
+    [name]: value,
+     "costo": preciosModelos?.find(e => e.modelo == value)?.precio
+  })
+}else{
+  setFormData({
+    ...form,
+    [name]: value,
+  }); 
+
+}
 };
 const handleFileChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
@@ -189,6 +204,11 @@ const handleSubmit = async (e) => {
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
+        <span>Nro. Factura compra</span>
+        <input type="text" name='nro_factura_compra' value={form["nro_factura_compra"]}
+        onChange={handleChange} />
+        </div>
+        <div className={styles.inputContainer}>
         <span>Dispositivo Peaje</span>
         <input type="number" name='dispositivo' value={form["dispositivo"]}
         onChange={handleChange} />
@@ -212,7 +232,8 @@ const handleSubmit = async (e) => {
             ))}
           </select>
         </div>
-        <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>
+        <div></div>
+  <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>
   <span>Cargar imágenes</span>
   <button type="button" style={{ width: "9rem" }} className={styles.sendBtn} onClick={handleFileClick}>
     Seleccionar imágenes

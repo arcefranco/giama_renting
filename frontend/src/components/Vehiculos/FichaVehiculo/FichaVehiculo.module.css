@@ -69,3 +69,8 @@
   text-align: right;
   padding-right: 1rem;
 }
+
+.importeAlignRight {
+  text-align: right;
+  text-align-last: right;
+}

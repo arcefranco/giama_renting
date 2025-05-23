@@ -26,6 +26,9 @@ const getTiposSexo = async () => {
 const getSucursales = async () => {
   return getFunction("generales/sucursales");
 };
+const getPreciosModelos = async () => {
+  return getFunction("generales/precios_modelos");
+};
 
 const generalesService = {
   getModelos,
@@ -35,5 +38,6 @@ const generalesService = {
   getTiposResponsable,
   getTiposSexo,
   getSucursales,
+  getPreciosModelos,
 };
 export default generalesService;

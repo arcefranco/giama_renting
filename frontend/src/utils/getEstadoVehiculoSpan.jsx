@@ -17,17 +17,17 @@ export const getEstadoVehiculoSpan = (vehiculo) => {
         Vendido
       </span>
     );
-  }else
+  }
 
-  if (vehiculo?.vehiculo_alquilado === 1) {
+   else if (vehiculo?.vehiculo_alquilado === 1) {
     return (
       <span style={{ ...baseStyle, background: "#6f8babb0", color: "#fff" }}>
         Alquilado
       </span>
     );
-  }else
+  }
 
-  if (
+  else if (
     vehiculo?.proveedor_gps !== 0 &&
     vehiculo?.nro_serie_gps !== 0 &&
     vehiculo?.calcomania !== 0 &&
@@ -37,10 +37,12 @@ export const getEstadoVehiculoSpan = (vehiculo) => {
       <span style={{ ...baseStyle, background: "#ffa809a1" }}>Preparado</span>
     );
   }
-else
+else {
   return (
     <span style={{ ...baseStyle, background: "#ff0909a1", color: "#fff" }}>
       Sin preparar
     </span>
   );
+  
+}
 };

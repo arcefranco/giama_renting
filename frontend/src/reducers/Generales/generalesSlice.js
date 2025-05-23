@@ -10,6 +10,7 @@ const initialState = {
   tipos_responsable: [],
   tipos_sexo: [],
   sucursales: [],
+  preciosModelos: [],
 };
 
 export const getModelos = createAsyncThunk(
@@ -88,6 +89,17 @@ export const getSucursales = createAsyncThunk(
   "getSucursales",
   async (data, { rejectWithValue }) => {
     const result = await generalesService.getSucursales();
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+export const getPreciosModelos = createAsyncThunk(
+  "getPreciosModelos",
+  async (data, { rejectWithValue }) => {
+    const result = await generalesService.getPreciosModelos();
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -211,6 +223,20 @@ export const generalesSlice = createSlice({
       state.isError = true;
       state.message = action.payload;
       state.sucursales = null;
+    });
+    builder.addCase(getPreciosModelos.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getPreciosModelos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.preciosModelos = action.payload;
+    });
+    builder.addCase(getPreciosModelos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload;
+      state.preciosModelos = null;
     });
   },
 });

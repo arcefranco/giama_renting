@@ -109,7 +109,7 @@ const UpdateVehiculo = () => {
           </div>
         )}
         <h2 style={{display: "flex", alignItems: "center"}}>
-          Modificar datos del vehículo: {vehiculo && vehiculo[0]["dominio"]} {getEstadoVehiculoSpan(vehiculo)}
+          Modificar datos del vehículo: {vehiculo && vehiculo[0]["dominio"]} {vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
         </h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>
@@ -136,7 +136,7 @@ const UpdateVehiculo = () => {
 
           <div className={styles.inputContainer}>
             <span>Kilómetros</span>
-            <input type="number" name="kilometros" value={form.kilometros} onChange={handleChange} />
+            <input type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
           </div>
 
           <div className={styles.inputContainer}>

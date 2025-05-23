@@ -56,16 +56,16 @@ useEffect(() => {
   if (fichaAlquileres?.length) {
     const totalDias = fichaAlquileres.reduce((acc, a) => acc + a.dias_en_mes, 0);
     const totalNeto = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
-    const totalIva = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_iva), 0);
+/*  const totalIva = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_iva), 0); */
 
     filas.push({
       concepto: `Alquiler (${totalDias} días)`,
       importe: totalNeto
     });
-    filas.push({
+/*  filas.push({
       concepto: `IVA`,
       importe: totalIva
-    });
+    }); */
   }
 
   if (fichaCostos?.length) {
@@ -116,13 +116,18 @@ useEffect(() => {
     ))}
   </select>
   <div className={styles.fichaWrapper}>
+  <span style={{
+    "float": "right",
+    "margin": "2px",
+    "font-size": "11px"
+  }}>* Valores netos de IVA</span>
   <table className={styles.fichaTabla}>
-    <thead>
-      <tr>
-        <th>Concepto</th>
-        <th>Importe</th>
-      </tr>
-    </thead>
+<thead>
+  <tr>
+    <th>Concepto</th>
+    <th className={styles.importeAlignRight}>Importe</th>
+  </tr>
+</thead>
 <tbody>
   {filas?.map((fila, i) => {
     const esPositivo = fila.importe >= 0;
@@ -131,13 +136,13 @@ useEffect(() => {
       fontWeight: 500
     };
     const importeFormateado = esPositivo
-      ? fila.importe.toFixed(2)
-      : `(${Math.abs(fila.importe).toFixed(2)})`;
+      ? fila.importe.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : `(${Math.abs(fila.importe).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
 
     return (
       <tr key={i}>
         <td>{fila.concepto}</td>
-        <td style={estilo}>{importeFormateado}</td>
+        <td className={styles.importeAlignRight} style={estilo}>{importeFormateado}</td>
       </tr>
     );
   })}
@@ -151,8 +156,8 @@ useEffect(() => {
     fontWeight: 600
   }}>
     {totalImporte >= 0
-      ? totalImporte?.toFixed(2)
-      : `(${Math.abs(totalImporte).toFixed(2)})`}
+      ? totalImporte?.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : `(${Math.abs(totalImporte).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
   </span>
 </div>
     </div>

@@ -78,7 +78,7 @@ const renderImagenesCell = (data) => {
         onClick={() => window.open(`/vehiculos/imagenes/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        Ver
+        Imagenes
       </button>
     );
 };
@@ -219,7 +219,7 @@ return (
           }
         }}/>
         <Column dataField="fecha_preparacion" caption="Fecha de preparación" alignment="center" cellRender={renderFecha}/>
-        <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
+        <Column dataField="id"  width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderAlquilerCell} />
