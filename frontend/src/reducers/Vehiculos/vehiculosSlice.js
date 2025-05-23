@@ -4,6 +4,8 @@ import vehiculosService from "./vehiculosService.js";
 
 const initialState = {
   vehiculos: [],
+  fichaCostos: null,
+  fichaAlquileres: null,
   vehiculo: null,
   isError: false,
   isSuccess: false,
@@ -70,6 +72,31 @@ export const eliminarImagenes = createAsyncThunk(
     }
   }
 );
+
+export const getCostosPeriodo = createAsyncThunk(
+  "getCostosPeriodo",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getCostosPeriodo(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getAlquileresPeriodo = createAsyncThunk(
+  "getAlquileresPeriodo",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getAlquileresPeriodo(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const vehiculosSlice = createSlice({
   name: "vehiculos",
   initialState,
@@ -153,6 +180,34 @@ export const vehiculosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getCostosPeriodo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getCostosPeriodo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.fichaCostos = action.payload;
+    });
+    builder.addCase(getCostosPeriodo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getAlquileresPeriodo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAlquileresPeriodo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.fichaAlquileres = action.payload;
+    });
+    builder.addCase(getAlquileresPeriodo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
       state.message = action.payload.message;
     });
   },
