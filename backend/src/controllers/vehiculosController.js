@@ -352,9 +352,10 @@ export const getAlquileresPeriodo = async (req, res) => {
     try {
       const alquileres = await giama_renting.query(
         `
-        SELECT * from alquileres`,
+        SELECT * from alquileres WHERE id_vehiculo = ?`,
         {
           type: QueryTypes.SELECT,
+          replacements: [id_vehiculo],
         }
       );
       return res.send(
