@@ -89,7 +89,7 @@ useEffect(() => {
         vehiculo?.length &&
     <h2 style={{display: "flex", alignItems: "center"}}>
     {vehiculo[0]?.dominio} - {modelos.find(e => e.id === vehiculo[0]?.modelo)?.nombre}{" "}
-      - {vehiculo[0]?.color} - {vehiculo && getEstadoVehiculoSpan(vehiculo)}</h2>
+      - {vehiculo[0]?.color} - {vehiculo && getEstadoVehiculoSpan(vehiculo[0])}</h2>
     }
     <div className={styles.select}>
     <span>Período: </span>

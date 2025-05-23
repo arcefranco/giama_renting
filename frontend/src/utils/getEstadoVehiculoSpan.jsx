@@ -17,7 +17,7 @@ export const getEstadoVehiculoSpan = (vehiculo) => {
         Vendido
       </span>
     );
-  }
+  }else
 
   if (vehiculo?.vehiculo_alquilado === 1) {
     return (
@@ -25,7 +25,7 @@ export const getEstadoVehiculoSpan = (vehiculo) => {
         Alquilado
       </span>
     );
-  }
+  }else
 
   if (
     vehiculo?.proveedor_gps !== 0 &&
@@ -37,7 +37,7 @@ export const getEstadoVehiculoSpan = (vehiculo) => {
       <span style={{ ...baseStyle, background: "#ffa809a1" }}>Preparado</span>
     );
   }
-
+else
   return (
     <span style={{ ...baseStyle, background: "#ff0909a1", color: "#fff" }}>
       Sin preparar
