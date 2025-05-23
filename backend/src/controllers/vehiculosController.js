@@ -13,6 +13,8 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { handleSqlError } from "../../helpers/handleSqlError.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { normalizarFecha } from "../../helpers/normalizarFecha.js";
+import { diferenciaDias } from "../../helpers/diferenciaDias.js";
 
 export const getVehiculos = async (req, res) => {
   try {
@@ -276,4 +278,169 @@ export const updateVehiculo = async (req, res) => {
     status: true,
     message: "El vehículo ha sido actualizado con éxito",
   });
+};
+
+export const getCostosPeriodo = async (req, res) => {
+  const { mes, anio, id_vehiculo } = req.body;
+  if (!id_vehiculo) {
+    return res.send({ status: false, message: "No hay vehículo especificado" });
+  }
+
+  if (!mes && !anio) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
+        SUM(costos_ingresos.importe_neto)
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id_vehiculo],
+        }
+      );
+      return res.send(result);
+    } catch (error) {
+      console.log(error);
+      return res.send({
+        status: false,
+        message: "Hubo un error al obtener la ficha de costos del vehículo",
+      });
+    }
+  } else if (mes && anio) {
+    try {
+      const result = await giama_renting.query(
+        `
+        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, SUM(costos_ingresos.importe_neto)
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id_vehiculo, anio, mes],
+        }
+      );
+      return res.send(result);
+    } catch (error) {
+      console.log(error);
+      return res.send({
+        status: false,
+        message: "Hubo un error al obtener la ficha de costos del vehículo",
+      });
+    }
+  }
+};
+
+export const getAlquileresPeriodo = async (req, res) => {
+  const { id_vehiculo, mes, anio } = req.body;
+  // Paso 1: Definir rango del mes buscado
+  const inicioMes = new Date(anio, mes - 1, 1); // Ej: 2025-02-01 si mes=3
+  const finMes = new Date(anio, mes, 0); // Último día del mes, ej: 2025-02-28 si mes=3
+  console.log("inicioMes: ", inicioMes);
+  console.log("finMes: ", finMes);
+  if (!mes || !anio) {
+    try {
+      const alquileres = await giama_renting.query(
+        `
+        SELECT * from alquileres`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      return res.send(
+        alquileres.map((e) => {
+          const fechaDesde = normalizarFecha(e.fecha_desde);
+          const fechaHasta = normalizarFecha(e.fecha_hasta);
+          const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
+          return {
+            importe_neto: e.importe_neto,
+            importe_iva: e.importe_iva,
+            dias_en_mes: diasEnMes,
+          };
+        })
+      );
+    } catch (error) {
+      return res.send({
+        status: false,
+        message: "Hubo un error al buscar los alquileres",
+      });
+    }
+  } else {
+    try {
+      // Paso 2: Traer alquileres que se superpongan con el mes buscado
+      const alquileres = await giama_renting.query(
+        `
+        SELECT * FROM alquileres
+        WHERE id_vehiculo = ?
+          AND fecha_desde <= ?
+          AND fecha_hasta >= ?
+      `,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [
+            id_vehiculo,
+            finMes.toISOString().split("T")[0],
+            inicioMes.toISOString().split("T")[0],
+          ],
+        }
+      );
+
+      const resultados = alquileres.map((alquiler) => {
+        console.log("alquiler.fecha_desde: ", alquiler.fecha_desde);
+        console.log("alquiler.fecha_hasta: ", alquiler.fecha_hasta);
+        const fechaDesde = normalizarFecha(alquiler.fecha_desde);
+        const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
+
+        console.log("fechaDesde: ", fechaDesde);
+        console.log("fechaHasta: ", fechaHasta);
+
+        // Paso 3: Calcular el rango real de intersección con el mes
+        const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
+
+        const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
+
+        console.log("inicioPeriodo: ", inicioPeriodo);
+        console.log("finPeriodo: ", finPeriodo);
+
+        const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
+        const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
+
+        console.log("diasTotales: ", diasTotales);
+        console.log("diasEnMes: ", diasEnMes);
+
+        // Paso 4: Calcular importes proporcionales
+        const importe_neto = (alquiler.importe_neto / diasTotales) * diasEnMes;
+        const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
+
+        console.log("importe_neto_mes: ", importe_neto);
+        console.log("importe_iva_mes: ", importe_iva);
+
+        return {
+          id_alquiler: alquiler.id_alquiler,
+          fecha_desde: alquiler.fecha_desde,
+          fecha_hasta: alquiler.fecha_hasta,
+          dias_en_mes: diasEnMes,
+          importe_neto: importe_neto,
+          importe_iva: importe_iva,
+        };
+      });
+      const total = resultados.reduce(
+        (acc, curr) => {
+          acc.importe_neto_total += curr.importe_neto_mes;
+          acc.importe_iva_total += curr.importe_iva_mes;
+          return acc;
+        },
+        { importe_neto_total: 0, importe_iva_total: 0 }
+      );
+      res.json(resultados);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error al obtener alquileres" });
+    }
+  }
 };

@@ -6,6 +6,8 @@ import {
   getVehiculosById,
   updateVehiculo,
   eliminarImagenes,
+  getCostosPeriodo,
+  getAlquileresPeriodo,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 
@@ -24,5 +26,7 @@ vehiculosRouter.post("/postVehiculo", upload.array("images"), postVehiculo);
 vehiculosRouter.get("/getImagenesVehiculos/:id", getImagenesVehiculos);
 vehiculosRouter.post("/eliminarImagenes", eliminarImagenes);
 vehiculosRouter.post("/updateVehiculo", updateVehiculo);
+vehiculosRouter.post("/getCostosPeriodo", getCostosPeriodo);
+vehiculosRouter.post("/getAlquileresPeriodo", getAlquileresPeriodo);
 
 export default vehiculosRouter;
