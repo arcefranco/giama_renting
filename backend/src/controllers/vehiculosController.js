@@ -38,7 +38,12 @@ export const getVehiculosById = async (req, res) => {
   const { id } = req.body;
   try {
     const resultado = await giama_renting.query(
-      "SELECT * FROM vehiculos WHERE id = ?",
+      `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado
+      FROM vehiculos
+      LEFT JOIN 
+      (SELECT alquileres.id_vehiculo FROM alquileres WHERE NOW() BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
+      AS alq ON vehiculos.id = alq.id_vehiculo
+      WHERE id = ?`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
