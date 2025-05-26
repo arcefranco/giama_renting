@@ -452,3 +452,216 @@ export const getAlquileresPeriodo = async (req, res) => {
     }
   }
 };
+
+export const getAllCostosPeriodo = async (req, res) => {
+  const { mes, anio } = req.body;
+  let arrayAllCostos = [];
+  let arrayAllIds = [];
+  try {
+    let result = await giama_renting.query("SELECT id FROM vehiculos", {
+      type: QueryTypes.SELECT,
+    });
+    arrayAllIds = result;
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener vehiculos" });
+  }
+  arrayAllIds = arrayAllIds.map((item) => item.id);
+  if (!mes && !anio) {
+    for (let i = 0; i < arrayAllIds.length; i++) {
+      try {
+        let result = await giama_renting.query(
+          `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
+        SUM(costos_ingresos.importe_neto)
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [arrayAllIds[i]],
+          }
+        );
+        if (result.length === 0) {
+          arrayAllCostos.push([
+            {
+              id_vehiculo: arrayAllIds[i],
+            },
+          ]);
+        } else {
+          arrayAllCostos.push(result);
+        }
+      } catch (error) {
+        console.log(error);
+        return res.send({
+          status: false,
+          message: "Hubo un error al obtener la ficha de costos del vehículo",
+        });
+      }
+    }
+  } else if (mes && anio) {
+    for (let i = 0; i < arrayAllIds.length; i++) {
+      try {
+        let result = await giama_renting.query(
+          `
+        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, SUM(costos_ingresos.importe_neto)
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [arrayAllIds[i], anio, mes],
+          }
+        );
+        if (result.length === 0) {
+          arrayAllCostos.push([
+            {
+              id_vehiculo: arrayAllIds[i],
+            },
+          ]);
+        } else {
+          arrayAllCostos.push(result);
+        }
+      } catch (error) {
+        console.log(error);
+        return res.send({
+          status: false,
+          message: "Hubo un error al obtener la ficha de costos del vehículo",
+        });
+      }
+    }
+  }
+  return res.send(arrayAllCostos);
+};
+
+export const getAllAlquileresPeriodo = async (req, res) => {
+  const { mes, anio } = req.body;
+
+  let arrayAllAlquileres = [];
+
+  let inicioMes = new Date(anio, mes - 1, 1); // Ej: 2025-02-01 si mes=3
+  let finMes = new Date(anio, mes, 0); // Ej: 2025-02-28 si mes=3
+
+  let vehiculos = [];
+
+  try {
+    vehiculos = await giama_renting.query("SELECT id, dominio FROM vehiculos", {
+      type: QueryTypes.SELECT,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener vehículos" });
+  }
+
+  if (!mes || !anio) {
+    // Sin filtro por mes y año
+    for (const vehiculo of vehiculos) {
+      try {
+        const alquileres = await giama_renting.query(
+          `SELECT * FROM alquileres WHERE id_vehiculo = ?`,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [vehiculo.id],
+          }
+        );
+
+        const normalizados = alquileres.map((e) => {
+          const fechaDesde = normalizarFecha(e.fecha_desde);
+          const fechaHasta = normalizarFecha(e.fecha_hasta);
+          const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
+
+          return {
+            id_vehiculo: vehiculo.id,
+            dominio: vehiculo.dominio,
+            importe_neto: e.importe_neto,
+            importe_iva: e.importe_iva,
+            dias_en_mes: diasEnMes,
+          };
+        });
+
+        arrayAllAlquileres.push(
+          normalizados.length > 0
+            ? normalizados
+            : [
+                {
+                  id_vehiculo: vehiculo.id,
+                  dominio: vehiculo.dominio,
+                },
+              ]
+        );
+      } catch (error) {
+        return res.send({
+          status: false,
+          message: "Hubo un error al buscar los alquileres",
+        });
+      }
+    }
+  } else {
+    // Con filtro de mes y año
+    for (const vehiculo of vehiculos) {
+      try {
+        const alquileres = await giama_renting.query(
+          `
+          SELECT * FROM alquileres
+          WHERE id_vehiculo = ?
+            AND fecha_desde <= ?
+            AND fecha_hasta >= ?
+          `,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [
+              vehiculo.id,
+              finMes.toISOString().split("T")[0],
+              inicioMes.toISOString().split("T")[0],
+            ],
+          }
+        );
+
+        const resultados = alquileres.map((alquiler) => {
+          const fechaDesde = normalizarFecha(alquiler.fecha_desde);
+          const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
+
+          const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
+          const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
+
+          const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
+          const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
+
+          const importe_neto =
+            (alquiler.importe_neto / diasTotales) * diasEnMes;
+          const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
+
+          return {
+            id_vehiculo: vehiculo.id,
+            dominio: vehiculo.dominio,
+            fecha_desde: alquiler.fecha_desde,
+            fecha_hasta: alquiler.fecha_hasta,
+            dias_en_mes: diasEnMes,
+            importe_neto,
+            importe_iva,
+          };
+        });
+
+        arrayAllAlquileres.push(
+          resultados.length > 0
+            ? resultados
+            : [
+                {
+                  id_vehiculo: vehiculo.id,
+                  dominio: vehiculo.dominio,
+                },
+              ]
+        );
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al obtener alquileres" });
+      }
+    }
+  }
+
+  return res.send(arrayAllAlquileres.flat());
+};
