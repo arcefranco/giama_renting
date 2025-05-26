@@ -10,7 +10,8 @@ const menuItems = [
         title: "Logística",
         items: [
           { label: "Formulario de ingreso", to: "/vehiculos" },
-          { label: "Reporte vehículos", to: "/vehiculosReporte" }
+          { label: "Reporte vehículos", to: "/vehiculosReporte" },
+          { label: "Reporte fichas de vehículos", to: "/vehiculos/ficha/reporte" }
         ]
       },
 /*       {

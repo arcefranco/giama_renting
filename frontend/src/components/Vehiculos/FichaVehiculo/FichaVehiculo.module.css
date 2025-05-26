@@ -74,3 +74,28 @@
   text-align: right;
   text-align-last: right;
 }
+
+  .spinnerOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .loadingText {
+    font-size: 16px;
+    color: #800020;
+    font-weight: bold;
+  }
+  .dataGrid {
+    font-family: 'Segoe UI', sans-serif;
+    padding: 4rem;
+    font-size: 12px;
+  }

@@ -6,6 +6,8 @@ const initialState = {
   vehiculos: [],
   fichaCostos: null,
   fichaAlquileres: null,
+  fichaAllCostos: null,
+  fichaAllAlquileres: null,
   vehiculo: null,
   isError: false,
   isSuccess: false,
@@ -89,6 +91,30 @@ export const getAlquileresPeriodo = createAsyncThunk(
   "getAlquileresPeriodo",
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.getAlquileresPeriodo(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getAllCostosPeriodo = createAsyncThunk(
+  "getAllCostosPeriodo",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getAllCostosPeriodo(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getAllAlquileresPeriodo = createAsyncThunk(
+  "getAllAlquileresPeriodo",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getAllAlquileresPeriodo(data);
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -206,6 +232,34 @@ export const vehiculosSlice = createSlice({
       state.fichaAlquileres = action.payload;
     });
     builder.addCase(getAlquileresPeriodo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getAllAlquileresPeriodo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAllAlquileresPeriodo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.fichaAllAlquileres = action.payload;
+    });
+    builder.addCase(getAllAlquileresPeriodo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getAllCostosPeriodo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAllCostosPeriodo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.fichaAllCostos = action.payload;
+    });
+    builder.addCase(getAllCostosPeriodo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = action.payload.status;
       state.message = action.payload.message;
