@@ -5,7 +5,7 @@ import {getConceptosCostos} from '../../../reducers/Costos/costosSlice'
 import styles from './FichaVehiculo.module.css'
 import { ClipLoader } from 'react-spinners';
 import DataGrid, {Column, Scrolling, Export, SearchPanel, 
-    FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
+    FilterRow, HeaderFilter, Paging, Summary, TotalItem} from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 
@@ -109,7 +109,7 @@ useEffect(() => {
         vehiculo: vehiculos?.find(v => v.id === id)?.dominio || `ID ${id}`, 
         dominio: alquilerData.dominio,
         alquiler: parseFloat(alquilerData.alquiler) || 0,
-        dias_en_mes: alquilerData.dias_en_mes || 0,
+        dias_en_mes: parseInt(alquilerData.dias_en_mes || 0),
         };
 
         // Rellenar conceptos con 0 si no están
@@ -124,13 +124,17 @@ useEffect(() => {
         const totalEgresos = conceptos
           .filter(c => c.ingreso_egreso === "E")
           .reduce((sum, c) => sum + (row[c.nombre?.toLowerCase().replaceAll(" ", "_")] || 0), 0);
-
-        row.total = (row.alquiler || 0) + (totalIngresos - totalEgresos);
+        console.log("totalIngresos: ",totalIngresos,"totalEgresos: ", totalEgresos)
+        row.total = (row.alquiler || 0) + (totalIngresos + totalEgresos);
 
         return row;
       });
+    const rowsFiltrados = rows.filter(row =>
+        row.alquiler !== 0 ||
+        conceptos.some(c => row[c.nombre?.toLowerCase().replaceAll(" ", "_")] !== 0)
+    );
 
-      setDataGridRows(rows);
+    setDataGridRows(rowsFiltrados);
     }
 }, [alquileresNormalizados, costosAgrupados, conceptos]);
 
@@ -182,18 +186,52 @@ const columnas = [
     <DataGrid
     dataSource={dataGridRows}
     rowAlternationEnabled={true}
+    scrolling={false}
     showBorders
-    columnAutoWidth
     className={styles.dataGrid}
-    height={500}
+    onCellPrepared={(e) => {
+    if (e.rowType === "data" && e.column.dataField === "total") {
+      e.cellElement.style.fontWeight = "bold";
+    }
+    if (e.rowType === "data" && e.data.dominio === "TOTAL") {
+      e.cellElement.style.fontWeight = "bold";
+      e.cellElement.style.backgroundColor = "#f0f0f0";
+    }
+  }}
     >
     <FilterRow visible={true} />
 
-      {columnas.map(col => ( 
+      {columnas.map(col => (
+        col.dataField === "dias_en_mes" ? 
+        <Column key={col.dataField} {...col} 
+         
+        />
+        :
         <Column key={col.dataField} {...col} 
          format={typeof dataGridRows?.[0]?.[col.dataField] === 'number' ? { type: 'fixedPoint', precision: 2 } : undefined}
   />
       ))}
+      <Summary>
+  {columnas.map(col => (
+    typeof col.dataField === "string" &&
+    col.dataField !== "dominio"  &&
+    col.dataField !== "total"  &&
+    <TotalItem
+      key={col.dataField}
+      column={col.dataField}
+      summaryType="sum"
+      displayFormat="{0}"
+      valueFormat="#,##0.##"
+    />
+        ))}
+        <TotalItem
+  column="total"
+  summaryType="sum"
+  displayFormat="{0}"
+  valueFormat="#,##0.##"
+  cssClass={styles.totalItem}
+/>
+    </Summary>
     </DataGrid>
     
     </div>

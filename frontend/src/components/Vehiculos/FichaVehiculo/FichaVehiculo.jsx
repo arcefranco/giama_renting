@@ -130,7 +130,7 @@ useEffect(() => {
 </thead>
 <tbody>
   {filas?.map((fila, i) => {
-    const esPositivo = fila.importe >= 0;
+    const esPositivo = fila.importe >= 0; //tiene que entrar en negativo o no?
     const estilo = {
       color: esPositivo ? "green" : "red",
       fontWeight: 500

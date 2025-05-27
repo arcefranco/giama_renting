@@ -99,3 +99,8 @@
     padding: 4rem;
     font-size: 12px;
   }
+  .totalItem {
+  font-weight: bold;
+  background-color: #f8f0f0;
+  color: #800020;
+}
