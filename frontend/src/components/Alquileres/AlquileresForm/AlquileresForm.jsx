@@ -115,7 +115,7 @@ const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e =
 
 
   let estado;
-  if (preparado && alquiladoHoy) {
+  if (alquiladoHoy) {
     estado = <span className={styles.spanAlquilado}>Alquilado</span>;
   } else if (preparado && !alquiladoHoy) {
     estado = <span className={styles.spanPreparado}>Preparado</span>;

@@ -230,7 +230,8 @@ const renderDominio = (data) => {
         />
         :
         <Column key={col.dataField} {...col} 
-        customizeText={col.dataType === 'number' ? (e) => Math.trunc(e.value).toLocaleString() : (e) => Math.trunc(parseInt(e.value)).toLocaleString()}
+        customizeText={col.dataType === 'number' ? (e) => Math.trunc(e.value).toLocaleString() 
+            : (e) => Math.trunc(parseInt(e.value)).toLocaleString()}
 /*         format={col.forceFixedZero ? { type: 'fixedPoint', precision: 0 } : undefined} */
   />
       ))}

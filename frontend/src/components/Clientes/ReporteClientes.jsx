@@ -52,8 +52,11 @@ const getProvinciasCell = (id) => {
     return provincia ? provincia.nombre : id;
 }
 const renderFecha = (data) => {
-  let fechaSplit = data.value.split("-")
-  return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
+  if(data.value){
+    let fechaSplit = data?.value?.split("-")
+    return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
+
+  }
 }
 const renderImagenesCell = (data) => {
     return (

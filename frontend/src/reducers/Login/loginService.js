@@ -14,6 +14,10 @@ const logIn = async (data) => {
         "username",
         JSON.stringify(response.data.username)
       );
+      window.localStorage.setItem(
+        "nombre",
+        JSON.stringify(response.data.nombre)
+      );
       /*       window.localStorage.setItem("roles", JSON.stringify(response.data.roles)); */
       window.location.replace("/home");
       return response.data;

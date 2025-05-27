@@ -5,7 +5,12 @@ import axios from "axios";
 const menuItems = [
   {
     title: "Vehículos",
-    submenus: [
+    items: [
+          { label: "Formulario de ingreso", to: "/vehiculos" },
+          { label: "Reporte vehículos", to: "/vehiculosReporte" },
+          { label: "Reporte fichas de vehículos", to: "/vehiculos/ficha/reporte" }
+        ],
+/*     submenus: [
       {
         title: "Logística",
         items: [
@@ -13,7 +18,7 @@ const menuItems = [
           { label: "Reporte vehículos", to: "/vehiculosReporte" },
           { label: "Reporte fichas de vehículos", to: "/vehiculos/ficha/reporte" }
         ]
-      },
+      }, */
 /*       {
         title: "Por marca",
         items: [
@@ -21,28 +26,27 @@ const menuItems = [
           { label: "Chevrolet", to: "/vehiculos/chevrolet" }
         ]
       } */
-    ]
+  /*   ] */
   },
    {
     title: "Clientes",
     items: [
-      { label: "Formulario clientes", to: "/clientes" },
-      { label: "Reporte clientes", to: "/clientesReporte" },
+      { label: "Ingreso de clientes", to: "/clientes" },
+      { label: "Listado de clientes", to: "/clientesReporte" },
     ]
   },
   {
    title: "Costos",
    items: [
-     { label: "Alta costos", to: "/costos/alta" },
-     { label: "Conceptos de costos", to: "/costos/conceptos" },
-     { label: "Prorrateo Ingresos/Egresos", to: "/costos/prorrateoIE" },
+     { label: "Conceptos de costos", to: "/costos/alta" },
+     { label: "Ingresos/egresos prorrateados", to: "/costos/prorrateoIE" },
    ]
  },
   {
    title: "Alquileres",
    items: [
-    { label: "Ingreso alquileres", to: "/alquileres" },
-     { label: "Ingreso formas de cobro", to: "/alquileres/formasDeCobro" },
+    { label: "Alquileres", to: "/alquileres" },
+     { label: "Formas de cobro", to: "/alquileres/formasDeCobro" },
    ]
  }
 ];
@@ -55,8 +59,7 @@ const handleLogout = async () => {
         localStorage.removeItem("username");
         window.location.replace("/");
       };
-const username = JSON.parse(localStorage.getItem("username")); // ej: "farce@giama.com.ar"
-const nombreUsuario = username?.split("@")[0];
+const nombre = JSON.parse(localStorage?.getItem("nombre")) ? JSON.parse(localStorage?.getItem("nombre")) : "" 
   return (
     <header className={styles.header}>
       <div className={styles.logo}>Giama Renting</div>
@@ -96,7 +99,10 @@ const nombreUsuario = username?.split("@")[0];
       </nav>
 
       <div className={styles.userSection}>
-        <span>Hola, {nombreUsuario}</span>
+        {
+          nombre && 
+        <span>Hola, {nombre}</span>
+        }
         <button className={styles.logoutBtn} onClick={handleLogout}>Salir</button>
       </div>
     </header>
