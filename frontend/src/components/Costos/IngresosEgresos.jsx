@@ -150,7 +150,7 @@ return (
     <h2 style={{display: "flex", alignItems: "anchor-center"}}> 
 {vehiculo && vehiculo[0]["dominio"]}{" "}-{" "}
 {vehiculo && modelos && modelos.find(e => e.id === vehiculo[0]["modelo"])?.nombre}{" "}-{" "}
-{getEstadoVehiculoSpan(vehiculo)}
+{vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
       
       </h2>
     <button onClick={handleActualizar} className={styles.refreshButton}>
