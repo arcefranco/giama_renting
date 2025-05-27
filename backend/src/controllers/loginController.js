@@ -109,6 +109,7 @@ export const logIn = async (req, res) => {
       return res.send({
         status: true,
         username: user[0].email,
+        nombre: user[0].nombre,
         /*         roles: roles?.map((item) => item.codigo), */
       });
     } else {
