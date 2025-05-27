@@ -6,12 +6,12 @@ import {getModelos} from '../../../reducers/Generales/generalesSlice'
 import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
 import styles from './FichaVehiculo.module.css'
 const FichaVehiculo = () => {
-const {id} = useParams()
+const {id, anio, mes} = useParams()
 const dispatch = useDispatch()
 const [form, setForm] = useState({
     id_vehiculo: id,
-    mes: "",
-    anio: ""
+    mes: mes ? mes : "",
+    anio: anio ? anio : ""
 })
 useEffect(() => {
 Promise.all([

@@ -106,7 +106,7 @@ useEffect(() => {
         const costos = costosAgrupados[id] || {};
 
         const row = {
-        vehiculo: vehiculos?.find(v => v.id === id)?.dominio || `ID ${id}`, 
+        vehiculo: vehiculos?.find(v => v.id === id)?.dominio || id, 
         dominio: alquilerData.dominio,
         alquiler: parseFloat(alquilerData.alquiler) || 0,
         dias_en_mes: parseInt(alquilerData.dias_en_mes || 0),
@@ -124,7 +124,6 @@ useEffect(() => {
         const totalEgresos = conceptos
           .filter(c => c.ingreso_egreso === "E")
           .reduce((sum, c) => sum + (row[c.nombre?.toLowerCase().replaceAll(" ", "_")] || 0), 0);
-        console.log("totalIngresos: ",totalIngresos,"totalEgresos: ", totalEgresos)
         row.total = (row.alquiler || 0) + (totalIngresos + totalEgresos);
 
         return row;
@@ -145,10 +144,28 @@ const columnas = [
     ...conceptos.map(c => ({
       dataField: c.nombre?.toLowerCase().replaceAll(" ", "_"),
       caption: c.nombre,
-      
     })),
-    { dataField: "total", caption: "Total"  },
-  ];
+    { dataField: "total", caption: "Total" },
+];
+
+const renderDominio = (data) => {
+    console.log(data.data)
+    return (
+      <button
+        onClick={() =>{
+            if(!form["anio"] && !form["mes"]){
+                window.open(`/vehiculos/ficha/${data.data.vehiculo}`, '_blank')
+            }else{
+                window.open(`/vehiculos/ficha/${data.data.vehiculo}/${form["anio"]}/${form["mes"]}`, '_blank')
+            }  
+        }
+        } 
+        style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        {data.data.dominio}
+      </button>
+    );
+};
   return (
     <div>
     {isLoading && (
@@ -207,8 +224,14 @@ const columnas = [
          
         />
         :
+        col.dataField === "dominio" ? 
+        <Column key={col.dataField} {...col} cellRender={renderDominio}
+         
+        />
+        :
         <Column key={col.dataField} {...col} 
-         format={typeof dataGridRows?.[0]?.[col.dataField] === 'number' ? { type: 'fixedPoint', precision: 2 } : undefined}
+        customizeText={col.dataType === 'number' ? (e) => Math.trunc(e.value).toLocaleString() : (e) => Math.trunc(parseInt(e.value)).toLocaleString()}
+/*         format={col.forceFixedZero ? { type: 'fixedPoint', precision: 0 } : undefined} */
   />
       ))}
       <Summary>
@@ -217,20 +240,20 @@ const columnas = [
     col.dataField !== "dominio"  &&
     col.dataField !== "total"  &&
     <TotalItem
-      key={col.dataField}
-      column={col.dataField}
-      summaryType="sum"
-      displayFormat="{0}"
-      valueFormat="#,##0.##"
+        key={col.dataField}
+        column={col.dataField}
+        summaryType="sum"
+        displayFormat="{0}"         
+        customizeText={(e) => Math.trunc(e.value).toLocaleString()}
     />
         ))}
-        <TotalItem
-  column="total"
-  summaryType="sum"
-  displayFormat="{0}"
-  valueFormat="#,##0.##"
-  cssClass={styles.totalItem}
-/>
+    <TotalItem
+        column="total"
+        summaryType="sum"
+        displayFormat="{0}" 
+        customizeText={(e) => Math.trunc(e.value).toLocaleString()}
+        cssClass={styles.totalItem}
+    />
     </Summary>
     </DataGrid>
     

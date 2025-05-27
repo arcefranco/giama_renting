@@ -41,6 +41,7 @@ function App() {
     <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo/>}/>
     <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo/>}/>
     <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo/>}/>
+    <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo/>}/>
     <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos/>}/>
     <Route path="/clientes" element={<ClientesForm/>}/>
     <Route path='/clientesReporte' element={<ReporteClientes/>}/>
