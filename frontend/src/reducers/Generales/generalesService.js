@@ -1,4 +1,5 @@
 import { getFunction } from "../axios/axiosFunctions";
+import axios from "axios";
 
 const getModelos = async () => {
   return getFunction("generales/modelos");
@@ -30,6 +31,22 @@ const getPreciosModelos = async () => {
   return getFunction("generales/precios_modelos");
 };
 
+const getParametroAMRT = async () => {
+  try {
+    const response = await axios.get(
+      import.meta.env.VITE_REACT_APP_HOST + "generales/AMRT"
+    );
+    let parametro = response.data;
+    if (parametro.hasOwnProperty("AMRT")) {
+      return response.data;
+    } else {
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "generales/AMRT");
+  }
+};
+
 const generalesService = {
   getModelos,
   getProveedoresGPS,
@@ -39,5 +56,6 @@ const generalesService = {
   getTiposSexo,
   getSucursales,
   getPreciosModelos,
+  getParametroAMRT,
 };
 export default generalesService;

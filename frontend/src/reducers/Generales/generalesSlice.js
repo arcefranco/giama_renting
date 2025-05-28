@@ -11,6 +11,7 @@ const initialState = {
   tipos_sexo: [],
   sucursales: [],
   preciosModelos: [],
+  AMRT: null,
 };
 
 export const getModelos = createAsyncThunk(
@@ -101,6 +102,19 @@ export const getPreciosModelos = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     const result = await generalesService.getPreciosModelos();
     if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getParametroAMRT = createAsyncThunk(
+  "getParametroAMRT",
+  async (data, { rejectWithValue }) => {
+    const result = await generalesService.getParametroAMRT();
+    console.log(result);
+    if (result.hasOwnProperty("AMRT")) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -237,6 +251,20 @@ export const generalesSlice = createSlice({
       state.isError = true;
       state.message = action.payload;
       state.preciosModelos = null;
+    });
+    builder.addCase(getParametroAMRT.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getParametroAMRT.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.AMRT = action.payload.AMRT;
+    });
+    builder.addCase(getParametroAMRT.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload;
+      state.AMRT = null;
     });
   },
 });

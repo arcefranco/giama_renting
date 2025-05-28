@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {useParams} from 'react-router-dom';
-import {getVehiculosById, getCostosPeriodo, getAlquileresPeriodo} from '../../../reducers/Vehiculos/vehiculosSlice'
+import {getVehiculosById, getCostosPeriodo, getAlquileresPeriodo, getAmortizacion} from '../../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../../reducers/Generales/generalesSlice'
 import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
 import styles from './FichaVehiculo.module.css'
+import { getTodayDate } from '../../../helpers/getTodayDate';
 const FichaVehiculo = () => {
 const {id, anio, mes} = useParams()
 const dispatch = useDispatch()
@@ -15,7 +16,8 @@ const [form, setForm] = useState({
 })
 useEffect(() => {
 Promise.all([
-    dispatch(getVehiculosById({id: id})),
+    dispatch(getVehiculosById({id: id, fecha: getTodayDate()})),
+    dispatch(getAmortizacion({id: id})),
     dispatch(getModelos()),
     dispatch(getAlquileresPeriodo(form)),
     dispatch(getCostosPeriodo(form))
@@ -46,7 +48,7 @@ const periodos = generarPeriodos();
 
 
 const { vehiculo, isError, isSuccess, isLoading, message, fichaCostos,
-fichaAlquileres } = useSelector(state => state.vehiculosReducer);
+fichaAlquileres, amortizacion, amortizacion_todos_movimientos } = useSelector(state => state.vehiculosReducer);
 const { modelos } = useSelector(state => state.generalesReducer);
 const [filas, setFilas] = useState([])
 const [totalImporte, setTotalImporte] = useState(null)
@@ -76,10 +78,22 @@ useEffect(() => {
       });
     });
   }
+  if(vehiculo?.length && form["mes"] && form["anio"]){
+    filas.push({
+      concepto: `Amortización ${vehiculo[0]["dias_diferencia"]} dias`,
+      importe: amortizacion * (-1) // * (-1) para que sean negativos
+    })}
+  else if(vehiculo?.length && !form["mes"] && !form["anio"]){
+    filas.push({
+      concepto: `Amortización ${vehiculo[0]["dias_diferencia"]} dias`,
+      importe: amortizacion_todos_movimientos * (-1) // * (-1) para que sean negativos
+    })
+  }
+  
 
   setFilas(filas);
   setTotalImporte(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0))
-}, [fichaAlquileres, fichaCostos])
+}, [fichaAlquileres, fichaCostos, vehiculo])
 useEffect(() => {
     Promise.all([
         dispatch(getCostosPeriodo(form)),
@@ -136,7 +150,7 @@ useEffect(() => {
       fontWeight: 500
     };
     const importeFormateado = esPositivo
-      ? fila.importe.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      ? fila.importe?.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : `(${Math.abs(fila.importe).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
 
     return (

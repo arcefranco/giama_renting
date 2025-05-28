@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
-import { getModelos, getSucursales, getPreciosModelos } from '../../reducers/Generales/generalesSlice'
+import { getModelos, getSucursales, getPreciosModelos, getParametroAMRT } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
@@ -11,7 +11,8 @@ const dispatch = useDispatch()
     Promise.all([
       dispatch(getModelos()),
       dispatch(getSucursales()),
-      dispatch(getPreciosModelos())
+      dispatch(getPreciosModelos()),
+      dispatch(getParametroAMRT())
     ])
   }, [])
   
@@ -33,7 +34,7 @@ const dispatch = useDispatch()
     
   })
 
-  const {modelos, sucursales, preciosModelos} = useSelector((state) => state.generalesReducer)
+  const {modelos, sucursales, preciosModelos, AMRT} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
@@ -91,6 +92,15 @@ useEffect(() => {
     }
 
 }, [isError, isSuccess]) 
+
+useEffect(() => {
+if(AMRT) {
+  setFormData({
+    ...form,
+    "meses_amortizacion": AMRT
+  })
+}
+}, [AMRT])
 
 
 const handleChange = (e) => {
@@ -215,7 +225,7 @@ const handleSubmit = async (e) => {
         </div>
         <div className={styles.inputContainer}>
         <span>Meses amortización</span>
-        <input type="number" name='meses_amortizacion' value={form["meses_amortizacion"]}
+        <input type="number" name='meses_amortizacion' disabled value={form["meses_amortizacion"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>

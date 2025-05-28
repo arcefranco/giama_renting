@@ -25,7 +25,8 @@ const [form, setForm] = useState({
     nombre: '',
     cuenta_contable: '',
     cuenta_secundaria: '',
-    ingreso_egreso: ''
+    ingreso_egreso: '',
+    activable: 0
 })
 useEffect(() => {
 
@@ -58,7 +59,8 @@ useEffect(() => {
             nombre: '',
             cuenta_contable: '',
             cuenta_secundaria: '',
-            ingreso_egreso: ''
+            ingreso_egreso: '',
+            activable: 0
         })
     }
 
@@ -79,9 +81,21 @@ const handleChange = (e) => {
 
     }
 };
+const handleCheckChange = (e) => {
+  const { name, checked } = e.target;
+  setForm(prevForm => ({
+    ...prevForm,
+    [name]: checked ? 1 : 0
+  }));
+}
 const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(postConceptoCostos(form))
+    if(form["ingreso_egreso"] == "I" && form["activable"] == 1){
+      Swal.fire("Un ingreso no puede ser un gasto activable")
+    }else{
+
+      dispatch(postConceptoCostos(form))
+    }
 } 
 const handleActualizar = ( ) => {
   dispatch(getConceptosCostos())
@@ -98,7 +112,14 @@ const renderModificarCell = (data) => {
 };
 
 const renderCuentaContable = (data) => {
-  return `${data.data.cuenta_contable} - ${cuentasContables.find(e => e.Codigo == data.data.cuenta_contable)?.Nombre}`
+  return <div style={{
+        display: "flex",
+    justifyContent: "space-evenly",
+  }}>
+    <span>{data.data.cuenta_contable}</span>
+    <span>{" "}</span>
+    <span style={{width: "5rem"}}>{cuentasContables.find(e => e.Codigo == data.data.cuenta_contable)?.Nombre}</span>
+  </div>
 }
 
 const handleDeleteClick = (id) => {
@@ -154,9 +175,9 @@ const renderEliminarCell = (data) => {
         allowColumnResizing={true}
         height={300}
         columnAutoWidth={true}>
-        <Column dataField="nombre" caption="Nombre" alignment="left" />
-        <Column dataField="cuenta_contable" caption="Cuenta contable" alignment="center" cellRender={renderCuentaContable}/>
-        <Column dataField="cuenta_secundaria" caption="Cuenta secundaria" alignment="center" />
+        <Column dataField="nombre" width={200} caption="Nombre" alignment="left" />
+        <Column dataField="cuenta_contable" width={400} caption="Cuenta contable" alignment="center" cellRender={renderCuentaContable}/>
+        <Column dataField="cuenta_secundaria" width={100} caption="Cuenta secundaria" alignment="center" />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
       </DataGrid>
@@ -179,7 +200,9 @@ const renderEliminarCell = (data) => {
                 }
               </select>
             </div>
-            <div className={styles.inputContainer}>
+            <div className={styles.inputContainer} style={{
+                  width: "7rem"
+            }}>
             <span>Tipo</span>
             <label>
               <input
@@ -201,6 +224,14 @@ const renderEliminarCell = (data) => {
               />
               Egreso
             </label>
+          </div>
+          <div className={styles.inputContainer} style={{
+                flexDirection: "row",
+                alignItems: "anchor-center"
+          }}>
+            <span>Gasto activable</span>
+            <input name='activable'
+            checked={form["activable"] === 1} onChange={handleCheckChange} type="checkbox" />
           </div>
             </form>
             <button 

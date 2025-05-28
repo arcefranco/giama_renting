@@ -176,6 +176,28 @@ const getAllAlquileresPeriodo = async (data) => {
     return ServiceErrorHandler(error, "vehiculos/getAllAlquileresPeriodo");
   }
 };
+const getAmortizacion = async (data) => {
+  let header = {};
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getAmortizacion",
+      data,
+      {
+        ...header,
+        withCredentials: true,
+      }
+    );
+    let resultado = response.data;
+    if (resultado.hasOwnProperty("amortizacion")) {
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "vehiculos/getAmortizacion");
+  }
+};
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,
@@ -186,5 +208,6 @@ const vehiculosService = {
   getAlquileresPeriodo,
   getAllAlquileresPeriodo,
   getAllCostosPeriodo,
+  getAmortizacion,
 };
 export default vehiculosService;
