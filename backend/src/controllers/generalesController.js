@@ -99,3 +99,19 @@ export const getPreciosModelos = async (req, res) => {
     return res.send(error);
   }
 };
+
+export const getParametroAMRT = async (req, res) => {
+  let AMRT;
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "AMRT"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    AMRT = result[0]["valor_str"];
+  } catch (error) {
+    return res.send(error);
+  }
+  return res.send({ AMRT: AMRT });
+};

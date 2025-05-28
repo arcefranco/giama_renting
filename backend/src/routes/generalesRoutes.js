@@ -8,6 +8,7 @@ import {
   getTiposSexo,
   getSucursales,
   getPreciosModelos,
+  getParametroAMRT,
 } from "../controllers/generalesController.js";
 
 const generalesRouter = Router();
@@ -28,4 +29,5 @@ generalesRouter.get("/tipos_responsable", getTiposResponsable);
 generalesRouter.get("/tipos_sexo", getTiposSexo);
 generalesRouter.get("/sucursales", getSucursales);
 generalesRouter.get("/precios_modelos", getPreciosModelos);
+generalesRouter.get("/AMRT", getParametroAMRT);
 export default generalesRouter;

@@ -18,14 +18,25 @@ export const getCuentasContables = async (req, res) => {
 
 //CONCEPTOS
 export const postConceptoCostos = async (req, res) => {
-  const { nombre, cuenta_contable, cuenta_secundaria, ingreso_egreso } =
-    req.body;
+  const {
+    nombre,
+    cuenta_contable,
+    cuenta_secundaria,
+    ingreso_egreso,
+    activable,
+  } = req.body;
   if (!nombre || !cuenta_contable || !ingreso_egreso) {
     return res.send({ status: false, message: "Faltan datos" });
   }
+  if (ingreso_egreso == "I" && activable == 1) {
+    return res.send({
+      status: false,
+      message: "Un ingreso no puede ser un gasto activable",
+    });
+  }
   try {
     await giama_renting.query(
-      "INSERT INTO conceptos_costos (nombre, cuenta_contable, cuenta_secundaria, ingreso_egreso) VALUES (?,?,?,?)",
+      "INSERT INTO conceptos_costos (nombre, cuenta_contable, cuenta_secundaria, ingreso_egreso, activable) VALUES (?,?,?,?,?)",
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -33,6 +44,7 @@ export const postConceptoCostos = async (req, res) => {
           cuenta_contable,
           cuenta_secundaria,
           ingreso_egreso,
+          activable,
         ],
       }
     );
@@ -267,7 +279,7 @@ const asiento_costos_ingresos = async (
     "NroAsiento: ",
     NroAsiento
   );
-  return;
+  return NroAsiento;
 };
 //FUNCION AUXILIAR
 async function registrarCostoIngresoIndividual({
@@ -284,6 +296,23 @@ async function registrarCostoIngresoIndividual({
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
   let ingreso_egreso;
+  let NroAsiento;
+
+  try {
+    NroAsiento = await asiento_costos_ingresos(
+      fecha,
+      cuenta,
+      importe_neto,
+      importe_iva,
+      importe_total,
+      observacion,
+      comprobante,
+      ingreso_egreso,
+      transaction_asientos
+    );
+  } catch (error) {
+    throw error;
+  }
 
   try {
     const result = await giama_renting.query(
@@ -308,7 +337,7 @@ async function registrarCostoIngresoIndividual({
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
       (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva,
-      importe_total, observacion) VALUES (?,?,?,?,?,?,?,?)`,
+      importe_total, observacion, nro_asiento) VALUES (?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -320,23 +349,11 @@ async function registrarCostoIngresoIndividual({
           importeIvaFinal,
           importeTotalFinal,
           observacion,
+          NroAsiento,
         ],
         transaction: transaction_costos_ingresos,
       }
     );
-
-    await asiento_costos_ingresos(
-      fecha,
-      cuenta,
-      importe_neto,
-      importe_iva,
-      importe_total,
-      observacion,
-      comprobante,
-      ingreso_egreso,
-      transaction_asientos
-    );
-
     await transaction_costos_ingresos.commit();
     await transaction_asientos.commit();
   } catch (error) {
