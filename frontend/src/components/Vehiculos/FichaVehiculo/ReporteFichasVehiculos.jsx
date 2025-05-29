@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {getAllCostosPeriodo, getAllAlquileresPeriodo} from '../../../reducers/Vehiculos/vehiculosSlice'
+import {getAllCostosPeriodo, getAllAlquileresPeriodo, getAllAmortizaciones} from '../../../reducers/Vehiculos/vehiculosSlice'
 import {getConceptosCostos} from '../../../reducers/Costos/costosSlice'
 import styles from './FichaVehiculo.module.css'
 import { ClipLoader } from 'react-spinners';
@@ -16,10 +16,11 @@ const [form, setForm] = useState({
     anio: ""
 })
 useEffect(() => {
-Promise.all([
+  Promise.all([
+    dispatch(getAllAmortizaciones()),
     dispatch(getConceptosCostos()),
     dispatch(getAllAlquileresPeriodo(form)),
-    dispatch(getAllCostosPeriodo(form))
+    dispatch(getAllCostosPeriodo(form)),
 ])
 
 },[])
@@ -30,8 +31,8 @@ const nombresMeses = [
 ];
 const generarPeriodos = () => {
   const hoy = new Date();
-  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 2); // dos meses adelante
-  const inicio = new Date(2024, 0); // enero 2024
+  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 6); // seis meses adelante
+  const inicio = new Date(2025, 0); // enero 2025
   const periodos = [];
 
   while (fin >= inicio) {
@@ -49,7 +50,7 @@ const periodos = generarPeriodos();
 
 
 const { isError, isSuccess, isLoading, message, fichaAllCostos,
-fichaAllAlquileres, vehiculos } = useSelector(state => state.vehiculosReducer);
+fichaAllAlquileres, vehiculos, fichaAllAmortizaciones } = useSelector(state => state.vehiculosReducer);
 const {conceptos} = useSelector(state => state.costosReducer)
 const { modelos } = useSelector(state => state.generalesReducer);
 const [alquileresNormalizados, setAlquileresNormalizados] = useState(null)
@@ -65,7 +66,7 @@ useEffect(() => {
 
 useEffect(() => {
     if (fichaAllAlquileres?.length > 0) {
-      const normalizados = fichaAllAlquileres.flat().map(item => ({
+      const normalizados = fichaAllAlquileres?.flat().map(item => ({
         id: item.id_vehiculo,
         dominio: item.dominio,
         alquiler: item.importe_neto || 0,
@@ -95,13 +96,13 @@ useEffect(() => {
 
 useEffect(() => {
     if (conceptos.length > 0 && (alquileresNormalizados?.length > 0 || Object.keys(costosAgrupados).length > 0)) {
-      const conceptosPorNombre = conceptos.map(c => c.nombre.toLowerCase().replaceAll(" ", "_"));
+      const conceptosPorNombre = conceptos?.map(c => c.nombre.toLowerCase().replaceAll(" ", "_"));
       const vehiculoIds = new Set([
         ...alquileresNormalizados?.map(a => a.id),
-        ...Object.keys(costosAgrupados).map(id => parseInt(id)),
+        ...Object.keys(costosAgrupados)?.map(id => parseInt(id)),
       ]);
 
-      const rows = Array.from(vehiculoIds).map(id => {
+      const rows = Array.from(vehiculoIds)?.map(id => {
         const alquilerData = alquileresNormalizados?.find(a => a.id === id) || {};
         const costos = costosAgrupados[id] || {};
 
@@ -110,6 +111,10 @@ useEffect(() => {
         dominio: alquilerData.dominio,
         alquiler: parseFloat(alquilerData.alquiler) || 0,
         dias_en_mes: parseInt(alquilerData.dias_en_mes || 0),
+        amortizacion: form["anio"] && form["mes"] ?
+         (fichaAllAmortizaciones.find(e => e.id == id)?.amortizacion) * (-1)
+         :
+         (fichaAllAmortizaciones.find(e => e.id == id)?.amortizacion_todos_movimientos) * (-1)
         };
 
         // Rellenar conceptos con 0 si no están
@@ -124,7 +129,7 @@ useEffect(() => {
         const totalEgresos = conceptos
           .filter(c => c.ingreso_egreso === "E")
           .reduce((sum, c) => sum + (row[c.nombre?.toLowerCase().replaceAll(" ", "_")] || 0), 0);
-        row.total = (row.alquiler || 0) + (totalIngresos + totalEgresos);
+        row.total = (row.alquiler || 0) + (row.amortizacion) + (totalIngresos + totalEgresos);
 
         return row;
       });
@@ -141,7 +146,8 @@ const columnas = [
     { dataField: "dominio", caption: "Vehículo" },
     { dataField: "alquiler", caption: "Alquiler" },
     { dataField: "dias_en_mes", caption: "Días (alquiler)" },
-    ...conceptos.map(c => ({
+    {dataField: "amortizacion", caption: "Amortización"},
+    ...conceptos?.map(c => ({
       dataField: c.nombre?.toLowerCase().replaceAll(" ", "_"),
       caption: c.nombre,
     })),
@@ -193,7 +199,7 @@ const renderDominio = (data) => {
         }}
       >
         <option value="">Todos los movimientos</option>
-        {periodos.map(({ mes, anio, nombreMes }) => (
+        {periodos?.map(({ mes, anio, nombreMes }) => (
           <option key={`${mes}-${anio}`} value={`${mes}-${anio}`}>
             {`${nombreMes} ${anio}`}
           </option>
@@ -218,7 +224,7 @@ const renderDominio = (data) => {
     >
     <FilterRow visible={true} />
 
-      {columnas.map(col => (
+      {columnas?.map(col => (
         col.dataField === "dias_en_mes" ? 
         <Column key={col.dataField} {...col} 
          
@@ -236,10 +242,11 @@ const renderDominio = (data) => {
   />
       ))}
       <Summary>
-  {columnas.map(col => (
+  {columnas?.map(col => (
     typeof col.dataField === "string" &&
     col.dataField !== "dominio"  &&
     col.dataField !== "total"  &&
+    col.dataField !== "dias_en_mes" &&
     <TotalItem
         key={col.dataField}
         column={col.dataField}

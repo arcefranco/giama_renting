@@ -198,6 +198,9 @@ const getAmortizacion = async (data) => {
     return ServiceErrorHandler(error, "vehiculos/getAmortizacion");
   }
 };
+const getAllAmortizaciones = async () => {
+  return getFunction("vehiculos/getAllAmortizaciones");
+};
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,
@@ -209,5 +212,6 @@ const vehiculosService = {
   getAllAlquileresPeriodo,
   getAllCostosPeriodo,
   getAmortizacion,
+  getAllAmortizaciones,
 };
 export default vehiculosService;

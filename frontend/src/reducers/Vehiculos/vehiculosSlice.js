@@ -8,6 +8,7 @@ const initialState = {
   fichaAlquileres: null,
   fichaAllCostos: null,
   fichaAllAlquileres: null,
+  fichaAllAmortizaciones: null,
   amortizacion: null,
   amortizacion_todos_movimientos: null,
   vehiculo: null,
@@ -130,6 +131,18 @@ export const getAmortizacion = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.getAmortizacion(data);
     if (result.hasOwnProperty("amortizacion")) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getAllAmortizaciones = createAsyncThunk(
+  "getAllAmortizaciones",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getAllAmortizaciones();
+    if (Array.isArray(result)) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -294,6 +307,18 @@ export const vehiculosSlice = createSlice({
       state.isError = action.payload.status;
       state.message = action.payload.message;
       state.amortizacion = null;
+    });
+    builder.addCase(getAllAmortizaciones.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAllAmortizaciones.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.fichaAllAmortizaciones = action.payload;
+    });
+    builder.addCase(getAllAmortizaciones.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
     });
   },
 });

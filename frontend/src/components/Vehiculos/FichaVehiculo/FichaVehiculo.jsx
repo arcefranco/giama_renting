@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {useParams} from 'react-router-dom';
-import {getVehiculosById, getCostosPeriodo, getAlquileresPeriodo, getAmortizacion} from '../../../reducers/Vehiculos/vehiculosSlice'
+import {getVehiculosById, getCostosPeriodo, 
+getAlquileresPeriodo, getAmortizacion} from '../../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../../reducers/Generales/generalesSlice'
 import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
 import styles from './FichaVehiculo.module.css'
 import { getTodayDate } from '../../../helpers/getTodayDate';
+
 const FichaVehiculo = () => {
 const {id, anio, mes} = useParams()
 const dispatch = useDispatch()
@@ -29,8 +31,8 @@ const nombresMeses = [
 ];
 const generarPeriodos = () => {
   const hoy = new Date();
-  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 2); // dos meses adelante
-  const inicio = new Date(2024, 0); // enero 2024
+  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 6); // seis meses adelante
+  const inicio = new Date(2025, 0); // enero 2025
   const periodos = [];
 
   while (fin >= inicio) {
@@ -62,7 +64,7 @@ useEffect(() => {
 
     filas.push({
       concepto: `Alquiler (${totalDias} días)`,
-      importe: totalNeto
+      importe: Math.round(totalNeto)
     });
 /*  filas.push({
       concepto: `IVA`,
@@ -74,25 +76,25 @@ useEffect(() => {
     fichaCostos.forEach(c => {
       filas.push({
         concepto: c.nombre,
-        importe: parseFloat(c["SUM(costos_ingresos.importe_neto)"])
+        importe: Math.round(parseFloat(c["SUM(costos_ingresos.importe_neto)"]))
       });
     });
   }
   if(vehiculo?.length && form["mes"] && form["anio"]){
     filas.push({
-      concepto: `Amortización ${vehiculo[0]["dias_diferencia"]} dias`,
-      importe: amortizacion * (-1) // * (-1) para que sean negativos
+      concepto: `Amortización ${periodos.find(({ mes, anio, nombreMes }) => form["mes"] == mes)?.nombreMes} ${form["anio"]}`,
+      importe: Math.round(amortizacion * (-1)) // * (-1) para que sean negativos
     })}
   else if(vehiculo?.length && !form["mes"] && !form["anio"]){
     filas.push({
       concepto: `Amortización ${vehiculo[0]["dias_diferencia"]} dias`,
-      importe: amortizacion_todos_movimientos * (-1) // * (-1) para que sean negativos
+      importe: Math.round(amortizacion_todos_movimientos * (-1)) // * (-1) para que sean negativos
     })
   }
   
 
   setFilas(filas);
-  setTotalImporte(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0))
+  setTotalImporte(Math.round(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0)))
 }, [fichaAlquileres, fichaCostos, vehiculo])
 useEffect(() => {
     Promise.all([
@@ -150,8 +152,8 @@ useEffect(() => {
       fontWeight: 500
     };
     const importeFormateado = esPositivo
-      ? fila.importe?.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : `(${Math.abs(fila.importe).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+      ? fila.importe?.toLocaleString("es-AR"/* , { minimumFractionDigits: 2, maximumFractionDigits: 2 } */)
+      : `(${Math.abs(fila.importe).toLocaleString("es-AR"/* , { minimumFractionDigits: 2, maximumFractionDigits: 2 } */)})`;
 
     return (
       <tr key={i}>
@@ -170,8 +172,8 @@ useEffect(() => {
     fontWeight: 600
   }}>
     {totalImporte >= 0
-      ? totalImporte?.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : `(${Math.abs(totalImporte).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+      ? totalImporte?.toLocaleString("es-AR"/* , { minimumFractionDigits: 2, maximumFractionDigits: 2 } */)
+      : `(${Math.abs(totalImporte).toLocaleString("es-AR"/* , { minimumFractionDigits: 2, maximumFractionDigits: 2 } */)})`}
   </span>
 </div>
     </div>
