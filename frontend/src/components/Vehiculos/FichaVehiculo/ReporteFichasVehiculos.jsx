@@ -112,9 +112,9 @@ useEffect(() => {
         alquiler: parseFloat(alquilerData.alquiler) || 0,
         dias_en_mes: parseInt(alquilerData.dias_en_mes || 0),
         amortizacion: form["anio"] && form["mes"] ?
-         (fichaAllAmortizaciones.find(e => e.id == id)?.amortizacion) * (-1)
+         (fichaAllAmortizaciones?.find(e => e.id == id)?.amortizacion) * (-1)
          :
-         (fichaAllAmortizaciones.find(e => e.id == id)?.amortizacion_todos_movimientos) * (-1)
+         (fichaAllAmortizaciones?.find(e => e.id == id)?.amortizacion_todos_movimientos) * (-1)
         };
 
         // Rellenar conceptos con 0 si no están
