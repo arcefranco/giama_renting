@@ -708,7 +708,7 @@ export const getAmortizacion = async (req, res) => {
   let result;
   try {
     result = await giama_renting.query(
-      ` SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
+      `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
         SUM(costos_ingresos.importe_neto) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
         DATEDIFF(?, vehiculos.fecha_ingreso) AS dias_diferencia, 
         conceptos_costos.activable
@@ -740,4 +740,66 @@ export const getAmortizacion = async (req, res) => {
       (precio_inicial_total / meses_amortizacion_anual) *
       result[0]["dias_diferencia"],
   });
+};
+
+export const getAllAmortizaciones = async (req, res) => {
+  let vehiculos = [];
+  let arrayAmortizaciones = [];
+  try {
+    vehiculos = await giama_renting.query("SELECT id, dominio FROM vehiculos", {
+      type: QueryTypes.SELECT,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener vehículos" });
+  }
+  for (const vehiculo of vehiculos) {
+    try {
+      const amortizacion = await giama_renting.query(
+        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
+        SUM(costos_ingresos.importe_neto) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
+        DATEDIFF(?, vehiculos.fecha_ingreso) AS dias_diferencia, 
+        conceptos_costos.activable
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        LEFT JOIN vehiculos ON costos_ingresos.id_vehiculo = vehiculos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [getTodayDate(), vehiculo.id],
+        }
+      );
+      console.log("THIS IS AMORTIZACION: ", amortizacion);
+      if (amortizacion.length) {
+        const precio_inicial = amortizacion[0]["precio_inicial"];
+        const meses_amortizacion = amortizacion[0]["meses_amortizacion"];
+        const sum_gastos_activables = amortizacion.reduce((total, item) => {
+          return item.activable === 1 ? total + Math.abs(item.importe) : total;
+        }, 0);
+        const precio_inicial_total =
+          parseFloat(precio_inicial) + sum_gastos_activables;
+        const meses_amortizacion_anual = 30 * meses_amortizacion;
+        const dias_diferencia = amortizacion[0]["dias_diferencia"];
+
+        arrayAmortizaciones.push({
+          id: vehiculo.id,
+          amortizacion: precio_inicial_total / meses_amortizacion,
+          amortizacion_todos_movimientos:
+            (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
+        });
+      } else {
+        arrayAmortizaciones.push({
+          id: vehiculo.id,
+          amortizacion: null,
+          amortizacion_todos_movimientos: null,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      return res.send(error);
+    }
+  }
+  return res.send(arrayAmortizaciones);
 };
