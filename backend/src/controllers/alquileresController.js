@@ -14,12 +14,12 @@ export const getFormasCobro = async (req, res) => {
 };
 
 export const postFormaCobro = async (req, res) => {
-  const { nombre, cuenta_contable } = req.body;
+  const { nombre, cuenta_contable, cuenta_secundaria } = req.body;
   try {
     await giama_renting.query(
-      "INSERT INTO formas_cobro (nombre, cuenta_contable) VALUES (?,?)",
+      "INSERT INTO formas_cobro (nombre, cuenta_contable, cuenta_secundaria) VALUES (?,?,?)",
       {
-        replacements: [nombre, cuenta_contable],
+        replacements: [nombre, cuenta_contable, cuenta_secundaria],
         type: QueryTypes.INSERT,
       }
     );
@@ -29,6 +29,39 @@ export const postFormaCobro = async (req, res) => {
     });
   } catch (error) {
     return res.send({ status: false, message: JSON.stringify(error) });
+  }
+};
+
+const asientoAlquiler = async (
+  db,
+  NroAsiento,
+  cuenta_contable,
+  DH,
+  importe,
+  concepto,
+  transaction
+) => {
+  try {
+    await pa7_giama_renting.query(
+      `INSERT INTO ${db} 
+    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          getTodayDate(),
+          NroAsiento,
+          cuenta_contable,
+          DH,
+          importe,
+          concepto,
+          /* comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
+        ],
+        transaction: transaction,
+      }
+    );
+  } catch (error) {
+    transaction.rollback();
+    throw "Error al generar un asiento";
   }
 };
 
@@ -46,11 +79,15 @@ export const postAlquiler = async (req, res) => {
     importe_total,
     id_forma_cobro,
     cuenta_contable_forma_cobro,
+    cuenta_secundaria_forma_cobro,
   } = req.body;
   let alquileresVigentes;
   let NroAsiento;
-  let cuentaIC21;
+  let NroAsientoSecundario;
+  let cuentaIV21;
+  let cuentaIV21_2;
   let cuentaALQU;
+  let cuentaALQU_2;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde} hasta: ${fecha_hasta}`;
@@ -107,7 +144,7 @@ export const postAlquiler = async (req, res) => {
     console.log(error);
     return res.send({ status: false, message: JSON.stringify(error) });
   }
-  //OBTENGO NUMEROS DE CUENTA IC21 Y ALQU
+  //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU Y ALQU_2(cuenta secundaria)
   try {
     const result = await giama_renting.query(
       `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
@@ -115,7 +152,19 @@ export const postAlquiler = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
-    cuentaIC21 = result[0]["valor_str"];
+    cuentaIV21 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    throw "Error al buscar un parámetro";
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "IV22"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaIV21_2 = result[0]["valor_str"];
   } catch (error) {
     console.log(error);
     throw "Error al buscar un parámetro";
@@ -128,6 +177,18 @@ export const postAlquiler = async (req, res) => {
       }
     );
     cuentaALQU = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    throw "Error al buscar un parámetro";
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "ALQ2"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaALQU_2 = result[0]["valor_str"];
   } catch (error) {
     console.log(error);
     throw "Error al buscar un parámetro";
@@ -146,6 +207,21 @@ export const postAlquiler = async (req, res) => {
   } catch (error) {
     throw `Error al obtener número de asiento: ${error}`;
   }
+  //obtengo numero de asiento secundario
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasientosecundario(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT }
+    );
+    NroAsientoSecundario = result[2][0].nroAsiento;
+  } catch (error) {
+    throw `Error al obtener número de asiento: ${error}`;
+  }
+  //inserto alquiler
   try {
     await giama_renting.query(
       `INSERT INTO alquileres 
@@ -181,24 +257,16 @@ export const postAlquiler = async (req, res) => {
     transaction_giama_renting.rollback();
     return res.send({ status: false, message: JSON.stringify(error) });
   }
-  //movimientos contables /* los asientos se hacen a partir de que se cobra? */
+  //movimientos contables
   try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          getTodayDate(),
-          NroAsiento,
-          cuenta_contable_forma_cobro,
-          "D",
-          importe_total,
-          concepto,
-          /* comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
-        ],
-        transaction: transaction_pa7_giama_renting,
-      }
+    await asientoAlquiler(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_contable_forma_cobro,
+      "D",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting
     );
   } catch (error) {
     console.log(error);
@@ -208,22 +276,14 @@ export const postAlquiler = async (req, res) => {
   }
   //movimiento 2
   try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          getTodayDate(),
-          NroAsiento,
-          cuentaALQU,
-          "H",
-          importe_neto,
-          concepto,
-          /* comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
-        ],
-        transaction: transaction_pa7_giama_renting,
-      }
+    await asientoAlquiler(
+      "c_movimientos",
+      NroAsiento,
+      cuentaALQU,
+      "H",
+      importe_neto,
+      concepto,
+      transaction_pa7_giama_renting
     );
   } catch (error) {
     console.log(error);
@@ -233,22 +293,65 @@ export const postAlquiler = async (req, res) => {
   }
   //movimiento 3
   try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto) VALUES (?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          getTodayDate(),
-          NroAsiento,
-          cuentaIC21,
-          "H",
-          importe_iva,
-          concepto,
-          /*comprobante, NO HAY NI CONCEPTO NI NROCOMPROBANTE*/
-        ],
-        transaction: transaction_pa7_giama_renting,
-      }
+    await asientoAlquiler(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIV21,
+      "H",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimientos contables en C2_MOVIMIENTOS
+  try {
+    await asientoAlquiler(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_forma_cobro,
+      "D",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimiento 2
+  try {
+    await asientoAlquiler(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaALQU_2,
+      "H",
+      importe_neto,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimiento 3
+  try {
+    await asientoAlquiler(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaIV21_2,
+      "H",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting
     );
   } catch (error) {
     console.log(error);

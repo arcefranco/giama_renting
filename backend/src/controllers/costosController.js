@@ -152,6 +152,7 @@ const asiento_costos_ingresos = async (
   //FUNCION AUXILIAR
   Fecha,
   Cuenta,
+  CuentaSecundaria,
   importe_neto,
   importe_iva,
   importe_total,
@@ -161,22 +162,43 @@ const asiento_costos_ingresos = async (
   transaction
 ) => {
   let cuentaIC21;
+  let cuentaIV21;
   let cuentaTOTC;
+  let cuentaIC22;
+  let cuentaIV22;
+  let cuentaTOT2;
   let NroAsiento;
+  let NroAsientoSecundario;
   const dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   const dhTotal = ingreso_egreso === "I" ? "D" : "H";
-  //OBTENGO NUMEROS DE CUENTA IC21 Y TOTC
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaIC21 = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    throw "Error al buscar un parámetro";
+  //OBTENGO CUENTA IC21 Y TOTC
+  if (ingreso_egreso === "E") {
+    try {
+      const result = await giama_renting.query(
+        `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      cuentaIC21 = result[0]["valor_str"];
+    } catch (error) {
+      console.log(error);
+      throw "Error al buscar un parámetro";
+    }
+  }
+  if (ingreso_egreso === "I") {
+    try {
+      const result = await giama_renting.query(
+        `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      cuentaIV21 = result[0]["valor_str"];
+    } catch (error) {
+      console.log(error);
+      throw "Error al buscar un parámetro";
+    }
   }
   try {
     const result = await giama_renting.query(
@@ -188,7 +210,52 @@ const asiento_costos_ingresos = async (
     cuentaTOTC = result[0]["valor_str"];
   } catch (error) {
     console.log(error);
-    throw "Error al buscar un parámetro";
+    throw new Error("Error al buscar un parámetro");
+  }
+  //OBTENGO  CUENTA IC22/IV22 Y TOT2 SI HAY CUENTA SECUNDARIA
+  if (CuentaSecundaria) {
+    if (ingreso_egreso === "E") {
+      try {
+        const result = await giama_renting.query(
+          `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
+          {
+            type: QueryTypes.SELECT,
+          }
+        );
+        cuentaIC22 = result[0]["valor_str"];
+      } catch (error) {
+        console.log(error);
+        throw new Error("Error al buscar un parámetro");
+      }
+    }
+    if (ingreso_egreso === "I") {
+      try {
+        const result = await giama_renting.query(
+          `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
+          {
+            type: QueryTypes.SELECT,
+          }
+        );
+        cuentaIV22 = result[0]["valor_str"];
+      } catch (error) {
+        console.log(error);
+        throw new Error("Error al buscar un parámetro");
+      }
+    }
+    if (!ingreso_egreso)
+      throw new Error("Error al decodificar si es ingreso o egreso");
+    try {
+      const result = await giama_renting.query(
+        `SELECT valor_str FROM parametros WHERE codigo = "TOT2"`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      cuentaTOT2 = result[0]["valor_str"];
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error al buscar un parámetro");
+    }
   }
   //OBTENGO Y GUARDO NUMERO DE ASIENTO
   try {
@@ -202,7 +269,23 @@ const asiento_costos_ingresos = async (
     );
     NroAsiento = result[2][0].nroAsiento;
   } catch (error) {
-    throw `Error al obtener número de asiento: ${error}`;
+    throw new Error(`Error al obtener número de asiento: ${error}`);
+  }
+  //OBTENGO Y GUARDO NUMERO DE ASIENTO SECUNDARIO SI HAY CUENTA SECUNDARIA
+  if (CuentaSecundaria) {
+    try {
+      const result = await pa7_giama_renting.query(
+        `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasientosecundario(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+        { type: QueryTypes.SELECT }
+      );
+      NroAsientoSecundario = result[2][0].nroAsiento;
+    } catch (error) {
+      throw new Error(`Error al obtener número de asiento: ${error}`);
+    }
   }
   //MOVIMIENTO 1
   try {
@@ -225,7 +308,7 @@ const asiento_costos_ingresos = async (
     );
   } catch (error) {
     console.log(error);
-    throw `Hubo un error en la inserción del asiento: ${error}`;
+    throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
   }
   //MOVIMIENTO 2
   try {
@@ -237,7 +320,11 @@ const asiento_costos_ingresos = async (
         replacements: [
           Fecha,
           NroAsiento,
-          cuentaIC21,
+          ingreso_egreso === "E"
+            ? cuentaIC21
+            : ingreso_egreso === "I"
+            ? cuentaIV21
+            : "",
           dhNetoEIva,
           importe_iva,
           observacion,
@@ -247,7 +334,7 @@ const asiento_costos_ingresos = async (
       }
     );
   } catch (error) {
-    `Hubo un error en la inserción del asiento: ${error}`;
+    throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
   }
   //MOVIMIENTO 3
   try {
@@ -269,16 +356,82 @@ const asiento_costos_ingresos = async (
       }
     );
   } catch (error) {
-    throw `Hubo un error en la inserción del asiento: ${error}`;
+    throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
   }
-  console.log(
-    "cuentaIC21: ",
-    cuentaIC21,
-    "cuentaTOTC: ",
-    cuentaTOTC,
-    "NroAsiento: ",
-    NroAsiento
-  );
+  //movimientos si hay cuenta secundaria
+  if (CuentaSecundaria) {
+    //MOVIMIENTO 1
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO c2_movimientos 
+      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            Fecha,
+            NroAsientoSecundario,
+            CuentaSecundaria,
+            dhNetoEIva,
+            importe_neto,
+            observacion,
+            comprobante,
+          ],
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
+    }
+    //MOVIMIENTO 2
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO c2_movimientos 
+      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            Fecha,
+            NroAsientoSecundario,
+            ingreso_egreso === "E"
+              ? cuentaIC22
+              : ingreso_egreso === "I"
+              ? cuentaIV22
+              : "",
+            dhNetoEIva,
+            importe_iva,
+            observacion,
+            comprobante,
+          ],
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
+    }
+    //MOVIMIENTO 3
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO c2_movimientos 
+      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            Fecha,
+            NroAsientoSecundario,
+            cuentaTOT2,
+            dhTotal,
+            importe_total,
+            observacion,
+            comprobante,
+          ],
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
+    }
+  }
   return NroAsiento;
 };
 //FUNCION AUXILIAR
@@ -292,28 +445,12 @@ async function registrarCostoIngresoIndividual({
   importe_total,
   observacion,
   cuenta,
+  cuenta_secundaria,
 }) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
   let ingreso_egreso;
   let NroAsiento;
-
-  try {
-    NroAsiento = await asiento_costos_ingresos(
-      fecha,
-      cuenta,
-      importe_neto,
-      importe_iva,
-      importe_total,
-      observacion,
-      comprobante,
-      ingreso_egreso,
-      transaction_asientos
-    );
-  } catch (error) {
-    throw error;
-  }
-
   try {
     const result = await giama_renting.query(
       `SELECT ingreso_egreso FROM conceptos_costos WHERE cuenta_contable = ?`,
@@ -325,9 +462,30 @@ async function registrarCostoIngresoIndividual({
     ingreso_egreso = result[0]["ingreso_egreso"];
   } catch (error) {
     console.log(error);
-    throw "Error al buscar cuenta contable";
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
+    throw new Error("Error al buscar cuenta contable");
   }
-
+  try {
+    NroAsiento = await asiento_costos_ingresos(
+      fecha,
+      cuenta,
+      cuenta_secundaria,
+      importe_neto,
+      importe_iva,
+      importe_total,
+      observacion,
+      comprobante,
+      ingreso_egreso,
+      transaction_asientos
+    );
+  } catch (error) {
+    await transaction_asientos.rollback();
+    transaction_costos_ingresos.rollback();
+    throw new Error(error.message);
+  }
+  //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
+  //(solo asiento primario)
   const factor = ingreso_egreso === "E" ? -1 : 1;
   const importeNetoFinal = importe_neto * factor;
   const importeIvaFinal = importe_iva * factor;
@@ -359,7 +517,7 @@ async function registrarCostoIngresoIndividual({
   } catch (error) {
     await transaction_costos_ingresos.rollback();
     await transaction_asientos.rollback();
-    throw error;
+    throw new Error(error.message);
   }
 }
 
@@ -368,7 +526,8 @@ export const postCostos_Ingresos = async (req, res) => {
     await registrarCostoIngresoIndividual(req.body);
     return res.send({ status: true, message: "Ingresado correctamente" });
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    console.log(error);
+    return res.send({ status: false, message: error.message });
   }
 };
 

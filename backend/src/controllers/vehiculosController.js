@@ -771,7 +771,6 @@ export const getAllAmortizaciones = async (req, res) => {
           replacements: [getTodayDate(), vehiculo.id],
         }
       );
-      console.log("THIS IS AMORTIZACION: ", amortizacion);
       if (amortizacion.length) {
         const precio_inicial = amortizacion[0]["precio_inicial"];
         const meses_amortizacion = amortizacion[0]["meses_amortizacion"];
