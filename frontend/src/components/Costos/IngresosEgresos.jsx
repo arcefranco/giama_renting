@@ -31,7 +31,8 @@ const [form, setForm] = useState({
     importe_iva: '',
     importe_total: '',
     observacion: '',
-    cuenta: ''
+    cuenta: '',
+    cuenta_secundaria: ''
 })
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
@@ -85,7 +86,8 @@ useEffect(() => {
         importe_iva: '',
         importe_total: '',
         observacion: '',
-        cuenta: ''
+        cuenta: '',
+        cuenta_secundaria: ''
         })
     }
 
@@ -108,6 +110,7 @@ const handleChange = (e) => {
      ...form,
      [name]: value,
      "cuenta": conceptos.find(e => e.id == value)?.cuenta_contable,
+     "cuenta_secundaria": conceptos.find(e => e.id == value)?.cuenta_secundaria
    }); 
   }
     else if(value && name === "importe_iva"){

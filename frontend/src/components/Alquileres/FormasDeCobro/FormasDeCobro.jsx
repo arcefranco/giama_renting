@@ -13,6 +13,7 @@ const {cuentasContables} = useSelector((state) => state.costosReducer)
 const [form, setForm] = useState({
     nombre: '',
     cuenta_contable: '',
+    cuenta_secundaria: ''
 })
 useEffect(() => {
 Promise.all([
@@ -55,10 +56,20 @@ useEffect(() => {
 }, [isError, isSuccess]) 
 const handleChange = (e) => {
 const { name, value } = e.target;
+if(name === "cuenta_contable"){
+setForm({
+  ...form,
+  [name]: value,
+  ["cuenta_secundaria"]: cuentasContables.find(e => e.Codigo == value)?.CuentaSecundaria
+})
+
+}else{
 setForm({
     ...form,
     [name]: value,
-}); 
+});
+}
+ 
 }
 const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,6 +107,11 @@ const handleSubmit = async (e) => {
                   })
                 }
               </select>
+            </div>
+              <div className={styles.inputContainer}>
+                <span>Cuenta secundaria</span>
+                <input type="text" name='cuenta_secundaria' 
+                value={form["cuenta_secundaria"]} disabled/>
             </div>
             </form>
             <button 

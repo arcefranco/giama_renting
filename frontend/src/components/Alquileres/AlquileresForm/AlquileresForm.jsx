@@ -42,7 +42,8 @@ const [form, setForm] = useState({
     importe_iva: '',
     importe_total: '',
     id_forma_cobro: '',
-    cuenta_contable_forma_cobro: ''
+    cuenta_contable_forma_cobro: '',
+    cuenta_secundaria_forma_cobro: ''
 })
 const [alquileresVigentes, setAlquileresVigentes] = useState(null)
 useEffect(() => {
@@ -161,7 +162,8 @@ else if(value && name === "id_forma_cobro"){
       setForm({
      ...form,
      [name]: value,
-     "cuenta_contable_forma_cobro": formasDeCobro.find(e => e.id == value)?.cuenta_contable
+     "cuenta_contable_forma_cobro": formasDeCobro.find(e => e.id == value)?.cuenta_contable,
+     "cuenta_secundaria_forma_cobro": formasDeCobro.find(e => e.id == value)?.cuenta_secundaria
    }); 
 }
 else if(value && name === "id_cliente"){
