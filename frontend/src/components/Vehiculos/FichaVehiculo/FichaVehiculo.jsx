@@ -82,20 +82,21 @@ useEffect(() => {
   }
   if(vehiculo?.length && form["mes"] && form["anio"]){
     filas.push({
-      concepto: `Amortización ${periodos.find(({ mes, anio, nombreMes }) => form["mes"] == mes)?.nombreMes} ${form["anio"]}`,
+      concepto: `Amortización ${periodos?.find(({ mes, anio, nombreMes }) => form["mes"] == mes)?.nombreMes} ${form["anio"]}`,
       importe: Math.round(amortizacion * (-1)) // * (-1) para que sean negativos
     })}
   else if(vehiculo?.length && !form["mes"] && !form["anio"]){
     filas.push({
       concepto: `Amortización ${vehiculo[0]["dias_diferencia"]} dias`,
-      importe: Math.round(amortizacion_todos_movimientos * (-1)) // * (-1) para que sean negativos
+      importe: vehiculo[0]["dias_diferencia"] == 0 ? 0 :
+      Math.round(amortizacion_todos_movimientos * (-1)) // * (-1) para que sean negativos
     })
   }
   
 
   setFilas(filas);
   setTotalImporte(Math.round(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0)))
-}, [fichaAlquileres, fichaCostos, vehiculo])
+}, [fichaAlquileres, fichaCostos, vehiculo, amortizacion, amortizacion_todos_movimientos])
 useEffect(() => {
     Promise.all([
         dispatch(getCostosPeriodo(form)),
@@ -126,7 +127,7 @@ useEffect(() => {
     }}
   >
     <option value="">Todos los movimientos</option>
-    {periodos.map(({ mes, anio, nombreMes }) => (
+    {periodos?.map(({ mes, anio, nombreMes }) => (
       <option key={`${mes}-${anio}`} value={`${mes}-${anio}`}>
         {`${nombreMes} ${anio}`}
       </option>

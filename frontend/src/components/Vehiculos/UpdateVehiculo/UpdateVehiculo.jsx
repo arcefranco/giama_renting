@@ -43,7 +43,7 @@ const UpdateVehiculo = () => {
         modelo: vehiculo[0].modelo || '',
         nro_chasis: vehiculo[0].nro_chasis || '',
         nro_motor: vehiculo[0].nro_motor || '',
-        kilometros: vehiculo[0].kilometros_iniciales || '',
+        kilometros: vehiculo[0].kilometros_actuales || '',
         proveedor_gps: vehiculo[0].proveedor_gps || '',
         nro_serie_gps: vehiculo[0].nro_serie_gps || '',
         dispositivo: vehiculo[0].dispositivo_peaje || '',

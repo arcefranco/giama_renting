@@ -49,9 +49,16 @@ if(vehiculos){
     estado = "Sin preparar";
   }
 
+  const dominio_visible = v.dominio
+  ? v.dominio
+  : v.dominio_provisorio
+  ? v.dominio_provisorio
+  : "SIN DOMINIO";
+
   return {
     ...v,
     estado,
+    dominio_visible
   };
 }))
 }
@@ -195,10 +202,25 @@ return (
         cellRender={({ data }) => getNombreModelo(data.modelo)}/>
         <Column dataField="fecha_ingreso" width={85} caption="Ingreso" dataType="date" alignment="center"/>
         <Column dataField="precio_inicial" caption="Precio Inicial" alignment="right" width={100} format="currency" />
-        <Column dataField="dominio" caption="Dominio" cellRender={renderDominio} />
+        <Column
+        dataField="dominio_visible"
+        caption="Dominio"
+        cellRender={({ data }) => {
+          return (
+            data.dominio ? (
+              <span>{data.dominio}</span>
+            ) : data.dominio_provisorio ? (
+              <span>{data.dominio_provisorio}</span>
+            ) : (
+              <span>SIN DOMINIO</span>
+            )
+          );
+        }}
+        />
         <Column dataField="nro_chasis" caption="Nro. Chasis" />
         <Column dataField="nro_motor" caption="Nro. Motor" />
         <Column dataField="kilometros_iniciales" width={100} caption="Km Iniciales" format="fixedPoint" />
+        <Column dataField="kilometros_actuales" width={100} caption="Km Actuales" format="fixedPoint" />
         <Column
           dataField="proveedor_gps"
           caption="Proveedor GPS"
