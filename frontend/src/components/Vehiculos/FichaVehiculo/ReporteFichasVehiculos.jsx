@@ -69,6 +69,7 @@ useEffect(() => {
       const normalizados = fichaAllAlquileres?.flat().map(item => ({
         id: item.id_vehiculo,
         dominio: item.dominio,
+        dominio_provisorio: item.dominio_provisorio,
         alquiler: item.importe_neto || 0,
         dias_en_mes: item.dias_en_mes || 0,
       }));
@@ -109,6 +110,7 @@ useEffect(() => {
         const row = {
         vehiculo: vehiculos?.find(v => v.id === id)?.dominio || id, 
         dominio: alquilerData.dominio,
+        dominio_provisorio: alquilerData.dominio_provisorio ? alquilerData.dominio_provisorio : "",  
         alquiler: parseFloat(alquilerData.alquiler) || 0,
         dias_en_mes: parseInt(alquilerData.dias_en_mes || 0),
         amortizacion: form["anio"] && form["mes"] ?
@@ -155,8 +157,9 @@ const columnas = [
 ];
 
 const renderDominio = (data) => {
-    console.log(data.data)
+    console.log("THIS: ", data.data)
     return (
+      data.data.dominio ? 
       <button
         onClick={() =>{
             if(!form["anio"] && !form["mes"]){
@@ -170,6 +173,23 @@ const renderDominio = (data) => {
       >
         {data.data.dominio}
       </button>
+      :
+      data.data.dominio_provisorio ?
+      <button
+        onClick={() =>{
+            if(!form["anio"] && !form["mes"]){
+                window.open(`/vehiculos/ficha/${data.data.vehiculo}`, '_blank')
+            }else{
+                window.open(`/vehiculos/ficha/${data.data.vehiculo}/${form["anio"]}/${form["mes"]}`, '_blank')
+            }  
+        }
+        } 
+        style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        {data.data.dominio_provisorio}
+      </button>
+      :
+      <span>SIN DOMINIO</span>
     );
 };
   return (
@@ -230,6 +250,7 @@ const renderDominio = (data) => {
          
         />
         :
+        
         col.dataField === "dominio" ? 
         <Column key={col.dataField} {...col} cellRender={renderDominio}
          

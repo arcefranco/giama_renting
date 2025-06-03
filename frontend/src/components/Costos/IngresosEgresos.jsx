@@ -151,7 +151,8 @@ return (
   )}
     <h2>Ingresos y egresos del vehículo</h2>
     <h2 style={{display: "flex", alignItems: "anchor-center"}}> 
-{vehiculo && vehiculo[0]["dominio"]}{" "}-{" "}
+{vehiculo?.length && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
+vehiculo?.length &&  vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""}{" "}-{" "}
 {vehiculo && modelos && modelos.find(e => e.id === vehiculo[0]["modelo"])?.nombre}{" "}-{" "}
 {vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
       

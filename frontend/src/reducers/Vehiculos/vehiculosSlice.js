@@ -133,6 +133,7 @@ export const getAmortizacion = createAsyncThunk(
     if (result.hasOwnProperty("amortizacion")) {
       return result;
     } else {
+      console.log(result);
       return rejectWithValue(result);
     }
   }

@@ -28,10 +28,10 @@ export const getEstadoVehiculoSpan = (vehiculo) => {
   }
 
   else if (
-    vehiculo?.proveedor_gps !== 0 &&
-    vehiculo?.nro_serie_gps !== 0 &&
-    vehiculo?.calcomania !== 0 &&
-    vehiculo?.gnc !== 0
+    vehiculo?.proveedor_gps &&
+    vehiculo?.nro_serie_gps  &&
+    vehiculo?.calcomania  &&
+    vehiculo?.gnc 
   ) {
     return (
       <span style={{ ...baseStyle, background: "#ffa809a1" }}>Preparado</span>

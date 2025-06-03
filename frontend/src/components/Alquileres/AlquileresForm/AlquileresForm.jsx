@@ -128,7 +128,8 @@ const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e =
     value: e.id,
     label: (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-        <span>{e.dominio} - {modelos.find(m => m.id == e.modelo)?.nombre}</span>
+        <span>{e.dominio ? e.dominio : 
+    e.dominio_provisorio ? e.dominio_provisorio : ""} - {modelos.find(m => m.id == e.modelo)?.nombre}</span>
         {estado}
       </div>
     )

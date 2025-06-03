@@ -23,6 +23,7 @@ const UpdateVehiculo = () => {
     nro_serie_gps: '',
     dispositivo: '',
     meses_amortizacion: '',
+    dominio: '',
     color: '',
     calcomania: 0,
     gnc: 0,
@@ -50,7 +51,8 @@ const UpdateVehiculo = () => {
         color: vehiculo[0].color || '',
         calcomania: vehiculo[0].calcomania || 0,
         gnc: vehiculo[0].gnc || 0,
-        sucursal: vehiculo[0].sucursal || ''
+        sucursal: vehiculo[0].sucursal || '',
+        dominio: ""
       });
     }
   }, [vehiculo]);
@@ -82,20 +84,6 @@ const UpdateVehiculo = () => {
     e.preventDefault();
     const body = { ...form, id: id };
     dispatch(updateVehiculo(body));
-    setFormData({
-        modelo: '',
-        dominio: '',
-        nro_chasis: '',
-        nro_motor: '',
-        kilometros: '',
-        proveedor_gps: '',
-        nro_serie_gps: '',
-        dispositivo: '',
-        meses_amortizacion: '',
-        color: '',
-        calcomania: 0,
-        gnc: 0
-      })
   };
 
   return (
@@ -109,7 +97,8 @@ const UpdateVehiculo = () => {
           </div>
         )}
         <h2 style={{display: "flex", alignItems: "center"}}>
-          Modificar datos del vehículo: {vehiculo && vehiculo[0]["dominio"]} {vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
+          Modificar datos del vehículo: {vehiculo && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
+    vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : ""} {vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
         </h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>
@@ -123,6 +112,15 @@ const UpdateVehiculo = () => {
               ))}
             </select>
           </div>
+          
+            {
+              vehiculo?.length && !vehiculo[0]["dominio"] && vehiculo[0]["dominio_provisorio"] &&
+              <div className={styles.inputContainer}>
+                <span>Dominio</span>
+                <input type="text" name="dominio" value={form.dominio} onChange={handleChange} />
+              </div>
+              
+            }
 
           <div className={styles.inputContainer}>
             <span>Nro. Chasis</span>

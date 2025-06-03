@@ -132,6 +132,14 @@ const renderFecha = (data) => {
     return ""
   }
 }
+const renderDominio = (data) => {
+    return (
+      data.data.dominio ? <span>{data.data.dominio}</span> : 
+      data.data.dominio_provisorio ? <span>{data.data.dominio_provisorio}</span> : 
+      <span>SIN DOMINIO</span>
+    )
+};
+
 return (
 <div className={styles.container}>
 {isLoading && (
@@ -187,7 +195,7 @@ return (
         cellRender={({ data }) => getNombreModelo(data.modelo)}/>
         <Column dataField="fecha_ingreso" width={85} caption="Ingreso" dataType="date" alignment="center"/>
         <Column dataField="precio_inicial" caption="Precio Inicial" alignment="right" width={100} format="currency" />
-        <Column dataField="dominio" caption="Dominio" />
+        <Column dataField="dominio" caption="Dominio" cellRender={renderDominio} />
         <Column dataField="nro_chasis" caption="Nro. Chasis" />
         <Column dataField="nro_motor" caption="Nro. Motor" />
         <Column dataField="kilometros_iniciales" width={100} caption="Km Iniciales" format="fixedPoint" />

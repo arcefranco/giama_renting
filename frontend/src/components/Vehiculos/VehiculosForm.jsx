@@ -20,6 +20,7 @@ const dispatch = useDispatch()
   const [form, setFormData] = useState({
     modelo: '',
     dominio: '',
+    dominio_provisorio: '',
     nro_chasis: '',
     nro_motor: '',
     kilometros: '',
@@ -128,6 +129,9 @@ const handleFileChange = (e) => {
 };
 const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!form.modelo || (!form.dominio && !form.dominio_provisorio)){
+      alert("Faltan datos")
+    }else{
     const formData = new FormData();
     // Agregás los campos normales
     Object.entries(form).forEach(([key, value]) => {
@@ -138,8 +142,8 @@ const handleSubmit = async (e) => {
     imagenes.forEach((img) => {
       formData.append("images", img);
     });
-  
     dispatch(postVehiculo(formData))
+    }
 }
 
   return (
@@ -175,6 +179,11 @@ const handleSubmit = async (e) => {
           <span>Dominio</span>
           <input type="text" name='dominio' value={form["dominio"]}
           onChange={handleChange} />
+        </div>
+        <div className={styles.inputContainer}>
+          <span>Dominio provisorio</span>
+          <input type="text" name='dominio_provisorio' value={form["dominio_provisorio"]}
+          onChange={handleChange}/>
         </div>
         <div className={styles.inputContainer}>
           <span>Nro. Chasis</span>
@@ -270,13 +279,23 @@ const handleSubmit = async (e) => {
   ))}
 </div>
         </form>
+        {
+        (!form.modelo || (!form.dominio && !form.dominio_provisorio)) ?
         <button 
         className={styles.sendBtn} 
-        onClick={handleSubmit}
-        disabled={!form.modelo}
+        disabled
         >
           Enviar
         </button>
+        :
+        <button 
+        className={styles.sendBtn} 
+        onClick={handleSubmit}
+        >
+          Enviar
+        </button>
+        }
+
       </div>
     </div>
   )
