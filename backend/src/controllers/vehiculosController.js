@@ -80,6 +80,7 @@ export const postVehiculo = async (req, res) => {
   const {
     modelo,
     dominio,
+    dominio_provisorio,
     nro_chasis,
     nro_motor,
     kilometros,
@@ -92,6 +93,11 @@ export const postVehiculo = async (req, res) => {
   console.log(req.body);
   let insertId;
   let meses_amortizacion;
+  if (!dominio && !dominio_provisorio)
+    return res.send({
+      status: false,
+      message: "El vehículo debe tener dominio o dominio provisorio",
+    });
   try {
     const result = await giama_renting.query(
       `SELECT valor_str FROM parametros WHERE codigo = "AMRT"`,
@@ -102,13 +108,13 @@ export const postVehiculo = async (req, res) => {
     meses_amortizacion = result[0]["valor_str"];
   } catch (error) {
     console.log(error);
-    throw "Error al buscar un parámetro";
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
   }
   try {
     const result = await giama_renting.query(
-      `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, nro_chasis, nro_motor,
+      `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
         kilometros_iniciales, dispositivo_peaje, meses_amortizacion, color, sucursal, nro_factura_compra)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -116,6 +122,7 @@ export const postVehiculo = async (req, res) => {
           getTodayDate(),
           costo,
           dominio,
+          dominio_provisorio,
           nro_chasis,
           nro_motor,
           kilometros,
@@ -243,10 +250,12 @@ export const updateVehiculo = async (req, res) => {
     dispositivo,
     meses_amortizacion,
     color,
+    dominio,
     calcomania,
     gnc,
     sucursal,
   } = req.body;
+  console.log(req.body);
   let vehiculoAnterior;
   let fechaDePreparacion;
   const estaPreparado = (vehiculo) => {
@@ -275,6 +284,7 @@ export const updateVehiculo = async (req, res) => {
   } catch (error) {
     return res.send({ status: false, message: JSON.stringify(error) });
   }
+
   const preparadoAntes = estaPreparado(vehiculoAnterior[0]);
   const preparadoAhora = estaPreparado(vehiculoNuevo);
   if (preparadoAntes && !preparadoAhora) {
@@ -286,25 +296,27 @@ export const updateVehiculo = async (req, res) => {
   }
   try {
     await giama_renting.query(
-      `UPDATE vehiculos SET modelo = ?, nro_chasis = ?, nro_motor = ?,
-        kilometros_iniciales = ?, proveedor_gps = ?, nro_serie_gps = ?, dispositivo_peaje = ?, meses_amortizacion = ?, color = ?,
+      `UPDATE vehiculos SET modelo = ?, dominio = ?, nro_chasis = ?, nro_motor = ?,
+        kilometros_iniciales = ?, proveedor_gps = ?, nro_serie_gps = ?,
+         dispositivo_peaje = ?, meses_amortizacion = ?, color = ?,
         calcomania = ?, gnc = ?, fecha_preparacion = ?, sucursal = ?
         WHERE id = ?`,
       {
-        type: QueryTypes.INSERT,
+        type: QueryTypes.UPDATE,
         replacements: [
           modelo,
+          dominio ? dominio : null,
           nro_chasis,
           nro_motor,
           kilometros,
-          proveedor_gps,
+          proveedor_gps ? proveedor_gps : null,
           nro_serie_gps,
           dispositivo,
           meses_amortizacion,
           color,
           calcomania,
           gnc,
-          fechaDePreparacion,
+          fechaDePreparacion ? fechaDePreparacion : null,
           sucursal,
           id,
         ],
@@ -582,9 +594,12 @@ export const getAllAlquileresPeriodo = async (req, res) => {
   let vehiculos = [];
 
   try {
-    vehiculos = await giama_renting.query("SELECT id, dominio FROM vehiculos", {
-      type: QueryTypes.SELECT,
-    });
+    vehiculos = await giama_renting.query(
+      "SELECT id, dominio, dominio_provisorio FROM vehiculos",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
   } catch (error) {
     console.log(error);
     return res.send({ status: false, message: "Error al obtener vehículos" });
@@ -610,6 +625,7 @@ export const getAllAlquileresPeriodo = async (req, res) => {
           return {
             id_vehiculo: vehiculo.id,
             dominio: vehiculo.dominio,
+            dominio_provisorio: vehiculo.dominio_provisorio,
             importe_neto: e.importe_neto,
             importe_iva: e.importe_iva,
             dias_en_mes: diasEnMes,
@@ -623,6 +639,7 @@ export const getAllAlquileresPeriodo = async (req, res) => {
                 {
                   id_vehiculo: vehiculo.id,
                   dominio: vehiculo.dominio,
+                  dominio_provisorio: vehiculo.dominio_provisorio,
                 },
               ]
         );
@@ -705,17 +722,18 @@ export const getAmortizacion = async (req, res) => {
   let meses_amortizacion;
   let sum_gastos_activables;
   let precio_inicial_total;
+  let dias_diferencia;
   let result;
   try {
     result = await giama_renting.query(
-      `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
-        SUM(costos_ingresos.importe_neto) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
+      `SELECT vehiculos.id, conceptos_costos.nombre, 
+        SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
         DATEDIFF(?, vehiculos.fecha_ingreso) AS dias_diferencia, 
         conceptos_costos.activable
-        FROM costos_ingresos
+        FROM vehiculos
+        LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        LEFT JOIN vehiculos ON costos_ingresos.id_vehiculo = vehiculos.id
-        WHERE costos_ingresos.id_vehiculo = ?
+        WHERE vehiculos.id = ?
         GROUP BY costos_ingresos.id_concepto
         ORDER BY conceptos_costos.ingreso_egreso DESC`,
       {
@@ -723,6 +741,7 @@ export const getAmortizacion = async (req, res) => {
         replacements: [getTodayDate(), id],
       }
     );
+    dias_diferencia = result[0]["dias_diferencia"];
     precio_inicial = result[0]["precio_inicial"];
     meses_amortizacion = result[0]["meses_amortizacion"];
     sum_gastos_activables = result.reduce((total, item) => {
@@ -734,11 +753,15 @@ export const getAmortizacion = async (req, res) => {
     return res.send(error);
   }
   let meses_amortizacion_anual = 30 * meses_amortizacion;
+  console.log({
+    amortizacion: precio_inicial_total / meses_amortizacion,
+    amortizacion_todos_movimientos:
+      (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
+  });
   return res.send({
     amortizacion: precio_inicial_total / meses_amortizacion,
     amortizacion_todos_movimientos:
-      (precio_inicial_total / meses_amortizacion_anual) *
-      result[0]["dias_diferencia"],
+      (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
   });
 };
 
@@ -756,14 +779,14 @@ export const getAllAmortizaciones = async (req, res) => {
   for (const vehiculo of vehiculos) {
     try {
       const amortizacion = await giama_renting.query(
-        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
-        SUM(costos_ingresos.importe_neto) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
+        `SELECT vehiculos.id, conceptos_costos.nombre, 
+        SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
         DATEDIFF(?, vehiculos.fecha_ingreso) AS dias_diferencia, 
         conceptos_costos.activable
-        FROM costos_ingresos
+        FROM vehiculos
+        LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        LEFT JOIN vehiculos ON costos_ingresos.id_vehiculo = vehiculos.id
-        WHERE costos_ingresos.id_vehiculo = ?
+        WHERE vehiculos.id = ?
         GROUP BY costos_ingresos.id_concepto
         ORDER BY conceptos_costos.ingreso_egreso DESC`,
         {
