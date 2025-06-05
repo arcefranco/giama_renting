@@ -342,13 +342,12 @@ export const getCostosPeriodo = async (req, res) => {
   if (!mes && !anio) {
     try {
       const result = await giama_renting.query(
-        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
-        SUM(costos_ingresos.importe_neto)
+        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, conceptos_costos.id AS id_costo,
+        costos_ingresos.comprobante, costos_ingresos.fecha,
+        costos_ingresos.importe_neto
         FROM costos_ingresos
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        WHERE costos_ingresos.id_vehiculo = ?
-        GROUP BY costos_ingresos.id_concepto
-        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+        WHERE costos_ingresos.id_vehiculo = ?`,
         {
           type: QueryTypes.SELECT,
           replacements: [id_vehiculo],
@@ -366,13 +365,13 @@ export const getCostosPeriodo = async (req, res) => {
     try {
       const result = await giama_renting.query(
         `
-        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, SUM(costos_ingresos.importe_neto)
+        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, conceptos_costos.id AS id_costo,
+        costos_ingresos.comprobante, costos_ingresos.fecha,
+        costos_ingresos.importe_neto
         FROM costos_ingresos
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
         WHERE costos_ingresos.id_vehiculo = ?
-        AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
-        GROUP BY costos_ingresos.id_concepto
-        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+        AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?`,
         {
           type: QueryTypes.SELECT,
           replacements: [id_vehiculo, anio, mes],
@@ -389,7 +388,7 @@ export const getCostosPeriodo = async (req, res) => {
   }
 };
 
-export const getAlquileresPeriodo = async (req, res) => {
+/* export const getAlquileresPeriodo = async (req, res) => {
   const { id_vehiculo, mes, anio } = req.body;
   // Paso 1: Definir rango del mes buscado
   const inicioMes = new Date(anio, mes - 1, 1); // Ej: 2025-02-01 si mes=3
@@ -497,8 +496,102 @@ export const getAlquileresPeriodo = async (req, res) => {
       res.status(500).json({ message: "Error al obtener alquileres" });
     }
   }
-};
+}; */
+export const getAlquileresPeriodo = async (req, res) => {
+  const { id_vehiculo, mes, anio } = req.body;
 
+  const inicioMes = new Date(anio, mes - 1, 1);
+  const finMes = new Date(anio, mes, 0);
+
+  try {
+    const alquileres = await giama_renting.query(
+      `
+      SELECT a.*, c.nombre, c.apellido
+      FROM alquileres a
+      JOIN clientes c ON a.id_cliente = c.id
+      WHERE a.id_vehiculo = ?
+        ${mes && anio ? `AND a.fecha_desde <= ? AND a.fecha_hasta >= ?` : ""}
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements:
+          mes && anio
+            ? [
+                id_vehiculo,
+                finMes.toISOString().split("T")[0],
+                inicioMes.toISOString().split("T")[0],
+              ]
+            : [id_vehiculo],
+      }
+    );
+
+    if (!mes || !anio) {
+      const resultados = alquileres.map((e) => {
+        const fechaDesde = normalizarFecha(e.fecha_desde);
+        const fechaHasta = normalizarFecha(e.fecha_hasta);
+        const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
+
+        return {
+          nombre: e.nombre,
+          apellido: e.apellido,
+          fecha_desde: e.fecha_desde,
+          fecha_hasta: e.fecha_hasta,
+          importe_neto: e.importe_neto,
+          importe_iva: e.importe_iva,
+          dias_en_mes: diasEnMes,
+        };
+      });
+
+      return res.send({ alquileres: resultados });
+    } else {
+      const resultados = alquileres.map((alquiler) => {
+        const fechaDesde = normalizarFecha(alquiler.fecha_desde);
+        const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
+
+        const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
+        const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
+
+        const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
+        const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
+
+        const importe_neto = (alquiler.importe_neto / diasTotales) * diasEnMes;
+        const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
+
+        return {
+          id_alquiler: alquiler.id_alquiler,
+          nombre: alquiler.nombre,
+          apellido: alquiler.apellido,
+          fecha_desde: alquiler.fecha_desde,
+          fecha_hasta: alquiler.fecha_hasta,
+          dias_en_mes: diasEnMes,
+          importe_neto: importe_neto,
+          importe_iva: importe_iva,
+        };
+      });
+
+      // Totales si querés mostrarlos en el frontend
+      const total = resultados.reduce(
+        (acc, curr) => {
+          acc.importe_neto_total += curr.importe_neto;
+          acc.importe_iva_total += curr.importe_iva;
+          return acc;
+        },
+        { importe_neto_total: 0, importe_iva_total: 0 }
+      );
+
+      return res.json({
+        alquileres: resultados,
+        totales: total, // o simplemente `resultados` si no te interesa este total
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: false,
+      message: "Hubo un error al buscar los alquileres",
+    });
+  }
+};
 export const getAllCostosPeriodo = async (req, res) => {
   const { mes, anio } = req.body;
   let arrayAllCostos = [];
@@ -724,6 +817,7 @@ export const getAmortizacion = async (req, res) => {
   let sum_gastos_activables;
   let precio_inicial_total;
   let dias_diferencia;
+  let fechaIngreso;
   let result;
   try {
     result = await giama_renting.query(
