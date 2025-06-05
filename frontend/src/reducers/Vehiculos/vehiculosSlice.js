@@ -94,7 +94,7 @@ export const getAlquileresPeriodo = createAsyncThunk(
   "getAlquileresPeriodo",
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.getAlquileresPeriodo(data);
-    if (Array.isArray(result)) {
+    if (result.hasOwnProperty("alquileres")) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -257,7 +257,7 @@ export const vehiculosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = action.payload.status;
       state.message = action.payload.message;
-      state.fichaAlquileres = action.payload;
+      state.fichaAlquileres = action.payload.alquileres;
     });
     builder.addCase(getAlquileresPeriodo.rejected, (state, action) => {
       state.isLoading = false;

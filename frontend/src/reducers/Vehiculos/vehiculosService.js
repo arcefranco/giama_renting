@@ -124,7 +124,7 @@ const getAlquileresPeriodo = async (data) => {
         withCredentials: true,
       }
     );
-    if (Array.isArray(response.data)) {
+    if (response.data.hasOwnProperty("alquileres")) {
       return response.data;
     } else {
       console.log("response: ", response);
