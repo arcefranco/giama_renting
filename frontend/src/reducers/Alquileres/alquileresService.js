@@ -12,6 +12,22 @@ const getFormasDeCobro = async () => {
   return getFunction("alquileres/formaDeCobro");
 };
 
+const getAlquileres = async (form) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "alquileres/",
+      form
+    );
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, route);
+  }
+};
+
 const getAlquileresByIdVehiculo = async (data) => {
   let header = {};
   try {
@@ -38,6 +54,7 @@ const alquileresService = {
   postAlquiler,
   getFormasDeCobro,
   getAlquileresByIdVehiculo,
+  getAlquileres,
 };
 
 export default alquileresService;

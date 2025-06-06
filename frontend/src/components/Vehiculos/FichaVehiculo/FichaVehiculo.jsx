@@ -171,7 +171,7 @@ function getLastDayOfMonth(year, month) {
     </tr>
   </thead>
   <tbody>
-    {filas?.map((fila, i) => {
+  {filas?.map((fila, i) => {
   const esPositivo = fila.importe >= 0;
   const estilo = {
     color: esPositivo ? "green" : "red",
@@ -182,16 +182,16 @@ function getLastDayOfMonth(year, month) {
     : `(${Math.abs(fila.importe).toLocaleString("es-AR")})`;
 
   const esAlquiler = fila.tipo === 'alquiler';
-  const esAmortizacion = fila.tipo === 'amortizacion';
 
+  
   return (
+    esAlquiler &&
     <React.Fragment key={i}>
       <tr
         onClick={() => {
           if (esAlquiler) setExpandidoAlquiler(prev => !prev);
-          if (esAmortizacion) setExpandidoAmortizacion(prev => !prev);
         }}
-        style={{ cursor: esAlquiler || esAmortizacion ? "pointer" : "default" }}
+        style={{ cursor: "pointer"  }}
       >
         <td>{fila.concepto}</td>
         <td className={styles.importeAlignRight} style={estilo}>{importeFormateado}</td>
@@ -211,28 +211,11 @@ function getLastDayOfMonth(year, month) {
         </tr>
       ))}
 
-      {esAmortizacion && expandidoAmortizacion && (
-        <tr key={`detalle-amortizacion-${i}`} className={styles.detalleRow}>
-          <td colSpan={2} style={{ padding: 0, border: "none" }}>
-            <div className={`${styles.detalleWrapper} ${expandidoAmortizacion ? styles.expandido : ""}`}>
-              <div className={styles.detalleFila}>
-                <span>
-                  <b>Desde:</b>{" "}
-                  {form["mes"] && form["anio"]
-                    ? `${formatearFecha(`${form["anio"]}-${String(form["mes"]).padStart(2, "0")}-01`)}`
-                    : formatearFecha(vehiculo[0]["fecha_ingreso"])}{" "}
-                  - <b>Hasta:</b> {form["mes"] && form["anio"] ? formatearFecha(getLastDayOfMonth(form["anio"], form["mes"])) : formatearFecha(getTodayDate())}
-                </span>
-                <span>{fila.importe?.toLocaleString("es-AR")}</span>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
     </React.Fragment>
   );
 })}
-     {costosAgrupados && Object.entries(costosAgrupados)?.map(([nombre, items]) => {
+
+{costosAgrupados && Object.entries(costosAgrupados)?.map(([nombre, items]) => {
       const total = items.reduce((acc, c) => acc + parseFloat(c.importe_neto), 0);
       return (
         <React.Fragment key={nombre}>
@@ -268,6 +251,53 @@ function getLastDayOfMonth(year, month) {
         </React.Fragment>
       );
     })}
+  {filas?.map((fila, i) => {
+  const esPositivo = fila.importe >= 0;
+  const estilo = {
+    color: esPositivo ? "green" : "red",
+    fontWeight: 500
+  };
+  const importeFormateado = esPositivo
+    ? fila.importe?.toLocaleString("es-AR")
+    : `(${Math.abs(fila.importe).toLocaleString("es-AR")})`;
+
+  const esAmortizacion = fila.tipo === 'amortizacion';
+  
+  return (
+    esAmortizacion &&
+    <React.Fragment key={i}>
+      <tr
+        onClick={() => {
+          if (esAmortizacion) setExpandidoAmortizacion(prev => !prev);
+        }}
+        style={{cursor: "pointer"}}
+      >
+        <td>{fila.concepto}</td>
+        <td className={styles.importeAlignRight} style={estilo}>{importeFormateado}</td>
+      </tr>
+      
+      {esAmortizacion && expandidoAmortizacion && (
+        <tr key={`detalle-amortizacion-${i}`} className={styles.detalleRow}>
+          <td colSpan={2} style={{ padding: 0, border: "none" }}>
+            <div className={`${styles.detalleWrapper} ${expandidoAmortizacion ? styles.expandido : ""}`}>
+              <div className={styles.detalleFila}>
+                <span>
+                  <b>Desde:</b>{" "}
+                  {form["mes"] && form["anio"]
+                    ? `${formatearFecha(`${form["anio"]}-${String(form["mes"]).padStart(2, "0")}-01`)}`
+                    : formatearFecha(vehiculo[0]["fecha_ingreso"])}{" "}
+                  - <b>Hasta:</b> {form["mes"] && form["anio"] ? formatearFecha(getLastDayOfMonth(form["anio"], form["mes"])) : formatearFecha(getTodayDate())}
+                </span>
+                <span></span>
+                <span>{fila.importe?.toLocaleString("es-AR")}</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+      </React.Fragment>
+  )
+  })}
   </tbody>
 </table>
 </div>

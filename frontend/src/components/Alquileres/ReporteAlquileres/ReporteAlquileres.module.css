@@ -1,0 +1,88 @@
+.container {
+    position: relative;
+    padding: 2rem;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+  
+  .dataGrid {
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .refreshButton {
+    background-color: #800000;
+    color: white;
+    padding: 8px 16px;
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .refreshButton:hover {
+    background-color: #a52a2a;
+  }
+
+  .spinnerOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .loadingText {
+    font-size: 16px;
+    color: #800020;
+    font-weight: bold;
+  }
+  
+  .filter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .inputContainer{
+    display: flex;
+    flex-direction: column;
+  }
+
+    .inputContainer input[type="date"] {
+    border: none;
+    border-bottom: 2px solid #800000; 
+    padding: 8px;
+    outline: none;
+    font-family: inherit;
+    background-color: transparent;
+  }
+  
+  .inputContainer input[type="date"]:focus {
+    border-bottom: 2px solid #a52a2a;
+  }
+  
+  .searchButton {
+    background-color: #800000;
+    color: white;
+    padding: 8px;
+    margin: 1rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .searchButton:hover {
+    background-color: #a52a2a;
+  }

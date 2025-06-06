@@ -133,7 +133,7 @@ const UpdateVehiculo = () => {
           </div>
 
           <div className={styles.inputContainer}>
-            <span>Kilómetros</span>
+            <span>Kilómetros actuales</span>
             <input type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
           </div>
 

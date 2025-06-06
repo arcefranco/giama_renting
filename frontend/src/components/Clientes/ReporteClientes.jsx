@@ -145,7 +145,7 @@ return (
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
       </DataGrid>
-    </div>
+</div>
 )
 }
 

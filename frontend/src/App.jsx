@@ -21,6 +21,7 @@ import AlquileresForm from './components/Alquileres/AlquileresForm/AlquileresFor
 import ProrrateoIE from './components/Costos/ProrrateoIE';
 import FichaVehiculo from './components/Vehiculos/FichaVehiculo/FichaVehiculo';
 import ReporteFichasVehiculos from './components/Vehiculos/FichaVehiculo/ReporteFichasVehiculos';
+import ReporteAlquileres from './components/Alquileres/ReporteAlquileres/ReporteAlquileres';
 
 function App() {
 
@@ -53,6 +54,7 @@ function App() {
     <Route path='/alquileres' element={<AlquileresForm/>}/>
     <Route path='/alquileres/:id'element={<AlquileresForm key={location.pathname}/>}/>
     <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
+    <Route path='/alquileres/reporte' element={<ReporteAlquileres/>}/>
     </Route>
   </Route>
     </Routes>

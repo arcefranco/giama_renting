@@ -196,7 +196,7 @@ const handleSubmit = async (e) => {
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
-        <span>Kilometros</span>
+        <span>Kilometros iniciales</span>
         <input type="number" name='kilometros' value={form["kilometros"]}
         onChange={handleChange} />
         </div>
