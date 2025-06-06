@@ -379,3 +379,31 @@ export const getAlquileresByIdVehiculo = async (req, res) => {
     return res.send({ status: false, message: JSON.stringify(error) });
   }
 };
+
+export const getAlquileres = async (req, res) => {
+  const { fecha_desde, fecha_hasta } = req.body;
+  if (!fecha_desde || !fecha_hasta) {
+    try {
+      const result = await giama_renting.query("SELECT * FROM alquileres", {
+        type: QueryTypes.SELECT,
+      });
+      return res.send(result);
+    } catch (error) {
+      return res.send({ status: false, message: JSON.stringify(error) });
+    }
+  }
+  if (fecha_desde && fecha_hasta) {
+    try {
+      const result = await giama_renting.query(
+        "SELECT * FROM alquileres WHERE fecha_desde >= ? AND fecha_hasta <= ?",
+        {
+          type: QueryTypes.SELECT,
+          replacements: [fecha_desde, fecha_hasta],
+        }
+      );
+      return res.send(result);
+    } catch (error) {
+      return res.send({ status: false, message: JSON.stringify(error) });
+    }
+  }
+};

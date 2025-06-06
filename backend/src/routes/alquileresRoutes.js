@@ -4,6 +4,7 @@ import {
   postFormaCobro,
   getFormasCobro,
   getAlquileresByIdVehiculo,
+  getAlquileres,
 } from "../controllers/alquileresController.js";
 const alquileresRouter = Router();
 alquileresRouter.use((req, res, next) => {
@@ -17,4 +18,5 @@ alquileresRouter.post("/postAlquiler", postAlquiler);
 alquileresRouter.post("/formaDeCobro", postFormaCobro);
 alquileresRouter.get("/formaDeCobro", getFormasCobro);
 alquileresRouter.post("/idVehiculo", getAlquileresByIdVehiculo);
+alquileresRouter.post("/", getAlquileres);
 export default alquileresRouter;
