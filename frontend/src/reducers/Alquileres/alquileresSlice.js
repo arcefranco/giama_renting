@@ -6,6 +6,7 @@ const initialState = {
   formasDeCobro: [],
   alquileresVehiculo: [],
   alquileres: [],
+  alquilerById: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -34,6 +35,18 @@ export const postAlquiler = createAsyncThunk(
     }
   }
 );
+
+export const anulacionAlquiler = createAsyncThunk(
+  "anulacionAlquiler",
+  async (data, { rejectWithValue }) => {
+    const result = await alquileresService.anulacionAlquiler(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
 export const getFormasDeCobro = createAsyncThunk(
   "getFormasDeCobro",
   async (data, { rejectWithValue }) => {
@@ -50,6 +63,18 @@ export const getAlquileresByIdVehiculo = createAsyncThunk(
   "getAlquileresByIdVehiculo",
   async (data, { rejectWithValue }) => {
     const result = await alquileresService.getAlquileresByIdVehiculo(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getAlquilerById = createAsyncThunk(
+  "getAlquilerById",
+  async (data, { rejectWithValue }) => {
+    const result = await alquileresService.getAlquilerById(data);
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -95,6 +120,19 @@ export const alquileresSlice = createSlice({
       state.isError = true;
       state.message = action.payload.message;
     });
+    builder.addCase(anulacionAlquiler.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anulacionAlquiler.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(anulacionAlquiler.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload.message;
+    });
     builder.addCase(postFormaCobro.pending, (state) => {
       state.isLoading = true;
     });
@@ -130,6 +168,19 @@ export const alquileresSlice = createSlice({
       state.alquileresVehiculo = action.payload;
     });
     builder.addCase(getAlquileresByIdVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.message = action.payload;
+    });
+    builder.addCase(getAlquilerById.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAlquilerById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.alquilerById = action.payload;
+    });
+    builder.addCase(getAlquilerById.rejected, (state, action) => {
       state.isLoading = false;
       state.isSuccess = false;
       state.message = action.payload;

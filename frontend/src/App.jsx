@@ -22,6 +22,7 @@ import ProrrateoIE from './components/Costos/ProrrateoIE';
 import FichaVehiculo from './components/Vehiculos/FichaVehiculo/FichaVehiculo';
 import ReporteFichasVehiculos from './components/Vehiculos/FichaVehiculo/ReporteFichasVehiculos';
 import ReporteAlquileres from './components/Alquileres/ReporteAlquileres/ReporteAlquileres';
+import UpdateAlquiler from './components/Alquileres/UpdateAlquiler/UpdateAlquiler';
 
 function App() {
 
@@ -53,6 +54,7 @@ function App() {
     <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
     <Route path='/alquileres' element={<AlquileresForm/>}/>
     <Route path='/alquileres/:id'element={<AlquileresForm key={location.pathname}/>}/>
+    <Route path='/alquileres/actualizar/:id'element={<UpdateAlquiler/>}/>
     <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
     <Route path='/alquileres/reporte' element={<ReporteAlquileres/>}/>
     </Route>

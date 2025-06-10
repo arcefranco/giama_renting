@@ -78,7 +78,7 @@ const renderCliente = (data) => {
 const renderModificar = (data) => {
       return (
       <button
-        onClick={() => window.open(`/alquileres/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`/alquileres/actualizar/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px" ,
           textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >

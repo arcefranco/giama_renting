@@ -8,6 +8,10 @@ const postAlquiler = async (form) => {
   return postFunction("alquileres/postAlquiler", form);
 };
 
+const anulacionAlquiler = async (form) => {
+  return postFunction("alquileres/anulacion", form);
+};
+
 const getFormasDeCobro = async () => {
   return getFunction("alquileres/formaDeCobro");
 };
@@ -49,12 +53,36 @@ const getAlquileresByIdVehiculo = async (data) => {
     return ServiceErrorHandler(error, "alquileres/idVehiculo");
   }
 };
+
+const getAlquilerById = async (data) => {
+  let header = {};
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "alquileres/id",
+      data,
+      {
+        ...header,
+        withCredentials: true,
+      }
+    );
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "alquileres/id");
+  }
+};
 const alquileresService = {
   postFormaCobro,
   postAlquiler,
   getFormasDeCobro,
   getAlquileresByIdVehiculo,
   getAlquileres,
+  getAlquilerById,
+  anulacionAlquiler,
 };
 
 export default alquileresService;
