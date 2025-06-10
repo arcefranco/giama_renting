@@ -1,6 +1,8 @@
 import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { esAnteriorAHoy } from "../../helpers/esAnteriorAHoy.js";
+import { formatearFechaISO } from "../../helpers/formatearFechaISO.js";
 
 export const getFormasCobro = async (req, res) => {
   try {
@@ -380,6 +382,22 @@ export const getAlquileresByIdVehiculo = async (req, res) => {
   }
 };
 
+export const getAlquilerById = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const result = await giama_renting.query(
+      "SELECT * FROM alquileres WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    return res.send(result);
+  } catch (error) {
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+};
+
 export const getAlquileres = async (req, res) => {
   const { fecha_desde, fecha_hasta } = req.body;
   if (!fecha_desde || !fecha_hasta) {
@@ -406,4 +424,320 @@ export const getAlquileres = async (req, res) => {
       return res.send({ status: false, message: JSON.stringify(error) });
     }
   }
+};
+
+export const anulacionAlquiler = async (req, res) => {
+  const {
+    id_alquiler,
+    id_vehiculo,
+    id_cliente,
+    fecha_hasta_actual,
+    fecha_hasta_anterior,
+    observacion,
+    importe_neto,
+    importe_iva,
+    importe_total,
+    id_forma_cobro,
+  } = req.body;
+  let apellido_cliente;
+  let cuenta_contable_forma_cobro;
+  let cuenta_secundaria_forma_cobro;
+  let NroAsiento;
+  let NroAsientoSecundario;
+  let cuentaIV21;
+  let cuentaIV21_2;
+  let cuentaALQU;
+  let cuentaALQU_2;
+  let concepto;
+  let transaction_giama_renting = await giama_renting.transaction();
+  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let fechaLimite;
+  //BUSCAR APELLIDO Y CUENTAS CONTABLES
+  try {
+    const result = await giama_renting.query(
+      `SELECT cuenta_contable FROM formas_cobro WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_forma_cobro],
+      }
+    );
+    cuenta_contable_forma_cobro = result[0]["cuenta_contable"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT cuenta_secundaria FROM formas_cobro WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_forma_cobro],
+      }
+    );
+    cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+
+  try {
+    const result = await giama_renting.query(
+      `SELECT fecha_hasta FROM alquileres WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_alquiler],
+      }
+    );
+    fechaLimite = result[0]["fecha_hasta"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  if (esAnteriorAHoy(fechaLimite)) {
+    return res.send({
+      status: false,
+      message: "Se ha excedido el tiempo límite para modificar el alquiler",
+    });
+  }
+  concepto = `Anulacion alquiler - ${apellido_cliente} - desde: ${fecha_hasta_actual} hasta: ${fecha_hasta_anterior}`;
+  //CHEQUEAR QUE EL ALQUILER ESTÉ VIGENTE (EN CURSO O A COMENZAR)
+  try {
+    const result = await giama_renting.query(
+      `SELECT apellido FROM clientes WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    apellido_cliente = result[0]["apellido"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  //obtengo parametros IVA21/22, ALQU Y ALQ2
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaIV21 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "IV22"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaIV21_2 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "ALQU"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaALQU = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "ALQ2"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaALQU_2 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  //obtengo numero de asiento
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasiento(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT }
+    );
+    NroAsiento = result[2][0].nroAsiento;
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Error al obtener numero de asiento",
+    });
+  }
+  //obtengo numero de asiento secundario
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasientosecundario(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT }
+    );
+    NroAsientoSecundario = result[2][0].nroAsiento;
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Error al obtener numero de asiento",
+    });
+  }
+  //alquiler negativo
+  try {
+    await giama_renting.query(
+      `INSERT INTO alquileres 
+    (id_vehiculo,
+    id_cliente,
+    fecha_desde,
+    fecha_hasta,
+    importe_neto,
+    importe_iva,
+    importe_total,
+    id_forma_cobro,
+    fecha_cobro,
+    observacion,
+    nro_asiento) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          id_vehiculo,
+          id_cliente,
+          formatearFechaISO(fecha_hasta_actual),
+          fecha_hasta_anterior,
+          importe_neto * -1,
+          importe_iva * -1,
+          importe_total * -1,
+          id_forma_cobro,
+          getTodayDate(),
+          observacion ? observacion : null,
+          NroAsiento,
+        ],
+        transaction: transaction_giama_renting,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    return res.send({ status: false, message: "Error al insertar alquiler" });
+  }
+  //movimientos contables
+  try {
+    await asientoAlquiler(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_contable_forma_cobro,
+      "H",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimiento 2
+  try {
+    await asientoAlquiler(
+      "c_movimientos",
+      NroAsiento,
+      cuentaALQU,
+      "D",
+      importe_neto,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimiento 3
+  try {
+    await asientoAlquiler(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIV21,
+      "D",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimientos contables en C2_MOVIMIENTOS
+  try {
+    await asientoAlquiler(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_forma_cobro,
+      "H",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimiento 2
+  try {
+    await asientoAlquiler(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaALQU_2,
+      "D",
+      importe_neto,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  //movimiento 3
+  try {
+    await asientoAlquiler(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaIV21_2,
+      "D",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  transaction_giama_renting.commit();
+  transaction_pa7_giama_renting.commit();
+  return res.send({ status: true, message: "Alquiler modificado con éxito" });
 };
