@@ -335,6 +335,11 @@ const handleSubmit = async (e) => {
                     }
                   </select>
                 </div>
+                <div className={styles.inputContainer}>
+                    <span>Observacion</span>
+                    <textarea type="text" name='observacion' value={form["observacion"]} 
+                    onChange={handleChange}/>
+                </div>
                 </form>
                 <button 
                 className={styles.sendBtn} onClick={handleSubmit}  

@@ -42,6 +42,7 @@ const [form, setForm] = useState({
     importe_iva: '',
     importe_total: '',
     id_forma_cobro: '',
+    observacion: '',
     cuenta_contable_forma_cobro: '',
     cuenta_secundaria_forma_cobro: ''
 })
@@ -297,6 +298,11 @@ const handleSubmit = async (e) => {
                       })
                     }
                   </select>
+                </div>
+                <div className={styles.inputContainer}>
+                  <span>Observacion</span>
+                  <textarea type="text" name='observacion' value={form["observacion"]} 
+                  onChange={handleChange}/>
                 </div>
                 </form>
                 <button 

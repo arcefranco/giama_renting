@@ -9,6 +9,7 @@ import styles from "./ReporteAlquileres.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
+import { esAnteriorAHoy } from '../../../helpers/esAnteriorAHoy'
 
 const ReporteAlquileres = () => {
 const dispatch = useDispatch()
@@ -79,8 +80,10 @@ const renderModificar = (data) => {
       return (
       <button
         onClick={() => window.open(`/alquileres/actualizar/${data.data.id}`, '_blank')}
-        style={{ color: '#1976d2', fontSize: "11px" ,
-          textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+        style={{ color: esAnteriorAHoy(data.data.fecha_hasta) ? "grey" : '#1976d2', fontSize: "11px" ,
+          textDecoration: 'underline', background: 'none', border: 'none', 
+          cursor: esAnteriorAHoy(data.data.fecha_hasta) ? "none" : 'pointer' }}
+          disabled={esAnteriorAHoy(data.data.fecha_hasta)}
       >
         Modificar
       </button>

@@ -127,6 +127,10 @@ function getLastDayOfMonth(year, month) {
   return lastDay.toISOString().slice(0, 10);
 }
 
+function esNegativo(numero) {
+  return numero < 0 ? 1 : 0;
+}
+
   return (
     <div className={styles.container}>
     <h2>Ficha del vehículo: </h2>
@@ -204,7 +208,10 @@ function getLastDayOfMonth(year, month) {
               <div className={styles.detalleFila}>
                 <span><b>Desde:</b> {formatearFecha(a.fecha_desde?.slice(0, 10))} - <b>Hasta:</b> {formatearFecha(a.fecha_hasta?.slice(0, 10))}</span>
                 <span>{a.nombre} {a.apellido}</span>
-                <span>{parseFloat(a.importe_neto).toLocaleString("es-AR")}</span>
+                <span style={{color: `${esNegativo(a.importe_neto) ? "red" : "black"}`}}>
+                  {parseFloat(a.importe_neto).toLocaleString("es-AR")}
+                  {esNegativo(a.importe_neto) && " (ANULADO)"}
+                  </span>
               </div>
             </div>
           </td>
