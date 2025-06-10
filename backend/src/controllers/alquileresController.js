@@ -80,6 +80,7 @@ export const postAlquiler = async (req, res) => {
     importe_iva,
     importe_total,
     id_forma_cobro,
+    observacion,
     cuenta_contable_forma_cobro,
     cuenta_secundaria_forma_cobro,
   } = req.body;
@@ -236,7 +237,8 @@ export const postAlquiler = async (req, res) => {
     importe_total,
     id_forma_cobro,
     fecha_cobro,
-    nro_asiento) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    nro_asiento,
+    observacion) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -250,6 +252,7 @@ export const postAlquiler = async (req, res) => {
           id_forma_cobro,
           getTodayDate(),
           NroAsiento,
+          observacion ? observacion : null,
         ],
         transaction: transaction_giama_renting,
       }
