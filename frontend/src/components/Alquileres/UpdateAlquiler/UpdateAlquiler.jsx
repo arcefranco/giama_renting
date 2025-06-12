@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import { useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { getAlquilerById, getFormasDeCobro, reset, anulacionAlquiler } from '../../../reducers/Alquileres/alquileresSlice';
+import { getAlquilerById, getFormasDeCobro, reset, anulacionAlquiler, getAnulaciones } from '../../../reducers/Alquileres/alquileresSlice';
 import { ToastContainer, toast } from 'react-toastify';
 import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
 import {getVehiculos} from '../../../reducers/Vehiculos/vehiculosSlice.js'
@@ -15,13 +15,18 @@ import es from "date-fns/locale/es";
 import Select from 'react-select';
 import add from '../../../assets/add.png'
 import { countDates } from '../../../helpers/countDates.js';
+import { redondear } from '../../../helpers/redondear.js';
 
 
 const UpdateAlquiler = () => {
 const dispatch = useDispatch();
 const {id} = useParams();
 useEffect(() => {
-dispatch(getAlquilerById({id: id}))
+  Promise.all([
+    dispatch(getAlquilerById({id: id})),
+    dispatch(getAnulaciones({id_alquiler: id}))
+  ])
+
 }, [id])
 useEffect(() => {
 Promise.all([
@@ -32,7 +37,7 @@ Promise.all([
 ])
 }, [])
 const {isError, isSuccess, isLoading, 
-  message, formasDeCobro, alquilerById} = useSelector((state) => state.alquileresReducer)
+  message, formasDeCobro, alquilerById, anulaciones} = useSelector((state) => state.alquileresReducer)
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
@@ -86,14 +91,39 @@ if(alquilerById.length){
 }
 }, [alquilerById])
 
+const getMinDate = () => {
+  const desde = form.fecha_desde instanceof Date ? form.fecha_desde : new Date(form.fecha_desde);
+  return hoy > desde ? hoy : desde;
+};
+
+const getMaxDate = () => {
+  if (anulaciones.length > 0) {
+    const fechasDesde = anulaciones?.map(a => new Date(a.fecha_desde));
+    const menorFechaDesde = new Date(Math.min(...fechasDesde));
+    return menorFechaDesde;
+  }
+  return form.fecha_hasta instanceof Date ? form.fecha_hasta : new Date(form.fecha_hasta);
+};
+
+useEffect(() => {
+  if(anulaciones?.length && alquilerById?.length){
+    setForm({
+      ...form,
+      fecha_hasta: getMaxDate()
+    })
+    setCantidadDias(countDates(parseDate(alquilerById[0]["fecha_desde"]), getMaxDate()))
+  }
+
+}, [anulaciones, alquilerById])
+
 useEffect(() => {
 setDiferenciaDias(cantidadDias - cantidadDiasActual)
 }, [cantidadDias, cantidadDiasActual])
 
 useEffect(() => {
 if(alquilerById.length && cantidadDias){
-    setValorDiaNeto(alquilerById[0]["importe_neto"] / cantidadDias)
-    setValorDiaIVA(alquilerById[0]["importe_iva"] / cantidadDias)
+    setValorDiaNeto(redondear(alquilerById[0]["importe_neto"] / cantidadDias))
+    setValorDiaIVA(redondear(alquilerById[0]["importe_iva"] / cantidadDias))
 }
 }, [cantidadDias, alquilerById])
 
@@ -168,11 +198,6 @@ const opcionesVehiculos = vehiculos?.filter(v => {return !v.fecha_venta}).map(e 
     )
   };
 });
-
-const getMinDate = () => {
-  const desde = form.fecha_desde instanceof Date ? form.fecha_desde : new Date(form.fecha_desde);
-  return hoy > desde ? hoy : desde;
-};
 
 const customStyles = {
   container: (provided) => ({
@@ -297,13 +322,14 @@ const handleSubmit = async (e) => {
                       dateFormat="dd/MM/yyyy"
                       selected={form.fecha_hasta_actual}
                       onChange={(date) =>
-                        { 
+                        {
+                        console.log("this is date: ", date) 
                         setForm(prev => ({ ...prev, fecha_hasta_actual: date }))
-                        setCantidadDiasActual(countDates(form["fecha_desde"], date))
+                        setCantidadDiasActual(countDates(form["fecha_desde"], date) - 1)
                         }
                     }
                       minDate={getMinDate()}
-                      maxDate={form.fecha_hasta}
+                      maxDate={getMaxDate()}
                       placeholderText="Seleccione una fecha"
                       locale="es"
                     />

@@ -7,6 +7,7 @@ const initialState = {
   alquileresVehiculo: [],
   alquileres: [],
   alquilerById: [],
+  anulaciones: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -87,6 +88,19 @@ export const getAlquileres = createAsyncThunk(
   "getAlquileres",
   async (data, { rejectWithValue }) => {
     const result = await alquileresService.getAlquileres(data);
+    console.log(result);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getAnulaciones = createAsyncThunk(
+  "getAnulaciones",
+  async (data, { rejectWithValue }) => {
+    const result = await alquileresService.getAnulaciones(data);
     console.log(result);
     if (Array.isArray(result)) {
       return result;
@@ -197,6 +211,20 @@ export const alquileresSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = false;
       state.message = action.payload;
+    });
+    builder.addCase(getAnulaciones.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getAnulaciones.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.anulaciones = action.payload;
+    });
+    builder.addCase(getAnulaciones.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.isError = true;
+      state.message = action.payload.message;
     });
   },
 });

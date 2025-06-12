@@ -77,7 +77,12 @@ useEffect(() => {
   return acc;
 }, {}))
   if (fichaAlquileres?.length) {
-    const totalDias = fichaAlquileres.reduce((acc, a) => acc + a.dias_en_mes, 0);
+  const totalDias = fichaAlquileres.reduce((acc, a) => {
+  const importe = Number(a.importe_neto);
+  const dias = Number(a.dias_en_mes);
+
+  return acc + (importe < 0 ? -dias : dias);
+}, 0);
     const totalNeto = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
 /*  const totalIva = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_iva), 0); */
 
@@ -206,11 +211,12 @@ function esNegativo(numero) {
           <td colSpan={2} style={{ padding: 0, border: "none" }}>
             <div className={`${styles.detalleWrapper} ${expandidoAlquiler ? styles.expandido : ""}`}>
               <div className={styles.detalleFila}>
-                <span><b>Desde:</b> {formatearFecha(a.fecha_desde?.slice(0, 10))} - <b>Hasta:</b> {formatearFecha(a.fecha_hasta?.slice(0, 10))}</span>
+                <span><b>Desde:</b> {formatearFecha(a.fecha_desde?.slice(0, 10))} - 
+                <b>Hasta:</b> {formatearFecha(a.fecha_hasta?.slice(0, 10))}</span>
                 <span>{a.nombre} {a.apellido}</span>
                 <span style={{color: `${esNegativo(a.importe_neto) ? "red" : "black"}`}}>
                   {parseFloat(a.importe_neto).toLocaleString("es-AR")}
-                  {esNegativo(a.importe_neto) && " (ANULADO)"}
+                  {esNegativo(a.importe_neto) ? " (ANULADO)" : ""}
                   </span>
               </div>
             </div>

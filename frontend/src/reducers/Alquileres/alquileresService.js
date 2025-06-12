@@ -32,6 +32,22 @@ const getAlquileres = async (form) => {
   }
 };
 
+const getAnulaciones = async (form) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "alquileres/getAnulaciones",
+      form
+    );
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, route);
+  }
+};
+
 const getAlquileresByIdVehiculo = async (data) => {
   let header = {};
   try {
@@ -83,6 +99,7 @@ const alquileresService = {
   getAlquileres,
   getAlquilerById,
   anulacionAlquiler,
+  getAnulaciones,
 };
 
 export default alquileresService;

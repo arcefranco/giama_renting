@@ -4,12 +4,13 @@ import {getVehiculos} from "./../../../reducers/Vehiculos/vehiculosSlice"
 import {getClientes} from "./../../../reducers/Clientes/clientesSlice"
 import {getModelos} from "./../../../reducers/Generales/generalesSlice"
 import {useDispatch, useSelector} from "react-redux"
-import DataGrid, {Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
+import DataGrid, {Column, Scrolling, Paging, TotalItem, Summary} from "devextreme-react/data-grid"
 import styles from "./ReporteAlquileres.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
 import { esAnteriorAHoy } from '../../../helpers/esAnteriorAHoy'
+import {redondear} from "../../../helpers/redondear"
 
 const ReporteAlquileres = () => {
 const dispatch = useDispatch()
@@ -22,10 +23,6 @@ Promise.all([
   dispatch(getModelos())
 ])
 }, [])
-
-const handleActualizar = ( ) => {
-  dispatch(getClientes())
-}
 
 const {
     alquileres,
@@ -41,6 +38,10 @@ const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
 })
+
+const handleActualizar = ( ) => {
+  dispatch(getAlquileres({fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"]}))
+}
 const handleChange = (e) => {
 const { name, value } = e.target;
 setForm({
@@ -77,22 +78,59 @@ const renderCliente = (data) => {
 }
 
 const renderModificar = (data) => {
+const row = data.data
+if(esAnteriorAHoy(row.fecha_hasta) && row.importe_neto < 0){
+  return (
+    <button
+        style={{ color: "grey" , fontSize: "11px" ,
+          textDecoration: 'underline', background: 'none', border: 'none', 
+          cursor:  "none"}}
+          disabled
+    >
+      Modificar
+    </button>
+  )
+}else if(!esAnteriorAHoy(row.fecha_hasta) && row.importe_neto > 0){
       return (
       <button
         onClick={() => window.open(`/alquileres/actualizar/${data.data.id}`, '_blank')}
-        style={{ color: esAnteriorAHoy(data.data.fecha_hasta) ? "grey" : '#1976d2', fontSize: "11px" ,
+        style={{ color: '#1976d2', fontSize: "11px" ,
           textDecoration: 'underline', background: 'none', border: 'none', 
-          cursor: esAnteriorAHoy(data.data.fecha_hasta) ? "none" : 'pointer' }}
-          disabled={esAnteriorAHoy(data.data.fecha_hasta)}
+          cursor: 'pointer' }}
       >
         Modificar
       </button>
     );
 }
+}
 
 const handleSubmit = () => {
   dispatch(getAlquileres(form))
 }
+
+const handleCustomSummary = (e) => {
+  console.log("summaryProcess", e.summaryProcess);
+  if (e.name === "countVehiculos") {
+    if (e.summaryProcess === "start") {
+      e.totalValue = 0;
+    }
+    if (e.summaryProcess === "calculate") {
+      e.totalValue += 1;
+    }
+  }
+if (e.name === "importeTotal") {
+  if (e.summaryProcess === "start") {
+    e.totalValue = 0;
+  }
+  if (e.summaryProcess === "calculate") {
+    const valor = Number(e.value) || 0;
+    e.totalValue += valor;
+  }
+  if (e.summaryProcess === "finalize") {
+    e.totalValue = redondear(e.totalValue);
+  }
+}
+};
   return (
     <div className={styles.container}>
 {isLoading && (
@@ -132,16 +170,32 @@ const handleSubmit = () => {
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={400}>
-        <Export enabled={true} allowExportSelectedData={true} />
+        height={400}
+        >
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
         <Column dataField="id_vehiculo" caption="Vehículo" cellRender={renderVehiculo} alignment="center"/>
         <Column dataField="id_cliente" caption="Cliente" cellRender={renderCliente} alignment="center"/>
         <Column dataField="fecha_desde" caption="Desde" cellRender={renderFecha} alignment="center"/>
         <Column dataField="fecha_hasta" caption="Hasta" cellRender={renderFecha} alignment="center"/>
-        <Column dataField="importe_neto" alignment="right"caption="Importe neto" />
+        <Column dataField="importe_neto" alignment="right"caption="Importe neto" customizeText={(e) => Math.trunc(e.value).toLocaleString()}/>
         <Column caption="" cellRender={renderModificar} alignment="center"/>
+        <Summary calculateCustomSummary={handleCustomSummary}>
+        <TotalItem
+          name="importeTotal"
+          column="importe_neto"
+          summaryType="custom"
+          displayFormat="Total: {0}"
+          showInColumn="importe_neto"
+          customizeText={(e) => `Total: ${e.value.toLocaleString()}`}
+        />
+        <TotalItem
+        name="countVehiculos"
+        column="id_vehiculo"
+        summaryType="custom"
+        displayFormat="Total registros: {0}"
+        showInColumn="id_vehiculo"/>
+        </Summary>
       </DataGrid>
 </div>
   )
