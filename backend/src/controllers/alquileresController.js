@@ -455,6 +455,7 @@ export const anulacionAlquiler = async (req, res) => {
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let fechaLimite;
+  let esAnulacion;
   //BUSCAR APELLIDO Y CUENTAS CONTABLES
   try {
     const result = await giama_renting.query(
@@ -482,19 +483,39 @@ export const anulacionAlquiler = async (req, res) => {
     console.log(error);
     return res.send({ status: false, message: "Error al buscar un parámetro" });
   }
+  try {
+    const result = await giama_renting.query(
+      `SELECT apellido FROM clientes WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    apellido_cliente = result[0]["apellido"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
 
   try {
     const result = await giama_renting.query(
-      `SELECT fecha_hasta FROM alquileres WHERE id = ?`,
+      `SELECT fecha_hasta, id_alquiler_original FROM alquileres WHERE id = ?`,
       {
         type: QueryTypes.SELECT,
         replacements: [id_alquiler],
       }
     );
     fechaLimite = result[0]["fecha_hasta"];
+    esAnulacion = result[0]["id_alquiler_original"];
   } catch (error) {
     console.log(error);
     return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  if (esAnulacion) {
+    return res.send({
+      status: false,
+      message: "No se puede modificar una anulación",
+    });
   }
   if (esAnteriorAHoy(fechaLimite)) {
     return res.send({
@@ -614,7 +635,8 @@ export const anulacionAlquiler = async (req, res) => {
     id_forma_cobro,
     fecha_cobro,
     observacion,
-    nro_asiento) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    id_alquiler_original,
+    nro_asiento) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -628,6 +650,7 @@ export const anulacionAlquiler = async (req, res) => {
           id_forma_cobro,
           getTodayDate(),
           observacion ? observacion : null,
+          id_alquiler,
           NroAsiento,
         ],
         transaction: transaction_giama_renting,
@@ -743,4 +766,23 @@ export const anulacionAlquiler = async (req, res) => {
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
   return res.send({ status: true, message: "Alquiler modificado con éxito" });
+};
+
+export const getAnulaciones = async (req, res) => {
+  const { id_alquiler } = req.body;
+  let anulaciones;
+  try {
+    anulaciones = await giama_renting.query(
+      "SELECT fecha_desde, fecha_hasta FROM alquileres WHERE id_alquiler_original = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_alquiler],
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener anulaciones" });
+  }
+
+  return res.send(anulaciones);
 };

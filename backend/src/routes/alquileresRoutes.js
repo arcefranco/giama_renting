@@ -7,6 +7,7 @@ import {
   getAlquileres,
   getAlquilerById,
   anulacionAlquiler,
+  getAnulaciones,
 } from "../controllers/alquileresController.js";
 const alquileresRouter = Router();
 alquileresRouter.use((req, res, next) => {
@@ -23,4 +24,5 @@ alquileresRouter.post("/idVehiculo", getAlquileresByIdVehiculo);
 alquileresRouter.post("/id", getAlquilerById);
 alquileresRouter.post("/", getAlquileres);
 alquileresRouter.post("/anulacion", anulacionAlquiler);
+alquileresRouter.post("/getAnulaciones", getAnulaciones);
 export default alquileresRouter;

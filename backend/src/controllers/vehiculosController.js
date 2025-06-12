@@ -466,7 +466,7 @@ export const getAlquileresPeriodo = async (req, res) => {
         };
       });
 
-      // Totales si querés mostrarlos en el frontend
+      // es si querés mostrarlos en el frontend
       const total = resultados.reduce(
         (acc, curr) => {
           acc.importe_neto_total += curr.importe_neto;
