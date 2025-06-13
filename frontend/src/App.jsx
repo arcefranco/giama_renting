@@ -23,7 +23,9 @@ import FichaVehiculo from './components/Vehiculos/FichaVehiculo/FichaVehiculo';
 import ReporteFichasVehiculos from './components/Vehiculos/FichaVehiculo/ReporteFichasVehiculos';
 import ReporteAlquileres from './components/Alquileres/ReporteAlquileres/ReporteAlquileres';
 import UpdateAlquiler from './components/Alquileres/UpdateAlquiler/UpdateAlquiler';
-
+import AltaUsuario from './components/Usuarios/AltaUsuario/AltaUsuario';
+import AltaPassword from './components/Usuarios/Password/AltaPassword';
+import RecoveryPass from './components/Usuarios/Password/RecoveryPass';
 function App() {
 
 
@@ -31,12 +33,14 @@ function App() {
     <Routes>
       {/* Rutas sin header */}
       <Route path="/" element={<Login />} />
-
+      <Route path="/password/:token" element={<AltaPassword />} />  
+      <Route path="/recovery" element={<RecoveryPass />} />    
       {/* Rutas con header y protección */}
       
   <Route element={<ProtectedRoute />}>
     <Route element={<MainLayout />}>
     <Route path="/home" element={<Home />} />
+    <Route path='/usuarios/alta' element={<AltaUsuario/>}/>
     <Route path="/vehiculos" element={<VehiculosForm />} />
     <Route path="/vehiculosReporte" element={<ReporteVehiculos />} />
     <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo/>}/>

@@ -6,6 +6,7 @@ import vehiculosReducer from "./src/reducers/Vehiculos/vehiculosSlice";
 import clientesReducer from "./src/reducers/Clientes/clientesSlice";
 import costosReducer from "./src/reducers/Costos/costosSlice";
 import alquileresReducer from "./src/reducers/Alquileres/alquileresSlice";
+import usuariosReducer from "./src/reducers/Usuarios/usuariosSlice";
 
 const reducer = combineReducers({
   loginReducer,
@@ -14,6 +15,7 @@ const reducer = combineReducers({
   clientesReducer,
   costosReducer,
   alquileresReducer,
+  usuariosReducer,
 });
 export const store = configureStore({
   reducer: reducer,

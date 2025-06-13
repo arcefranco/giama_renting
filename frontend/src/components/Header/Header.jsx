@@ -50,6 +50,13 @@ const menuItems = [
     { label: "Formas de cobro", to: "/alquileres/formasDeCobro" },
    ]
  }
+ ,
+  {
+   title: "Usuarios",
+   items: [
+    { label: "Crear usuario", to: "/usuarios/alta" }
+   ]
+ }
 ];
 
 const Header = () => {
