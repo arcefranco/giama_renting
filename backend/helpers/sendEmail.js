@@ -1,7 +1,5 @@
 import { transporter, transporterTrap } from "./transporter.js";
 import dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
 
 dotenv.config();
 

@@ -6,19 +6,20 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../../helpers/sendEmail.js";
 dotenv.config();
-const { sign } = pkg;
+const { sign, verify } = pkg;
 
 export const createUsuario = async (req, res) => {
-  const { login, email } = req.body;
+  const { email, nombre } = req.body;
 
-  if (!login || !email) {
+  if (!email) {
     return res.send({ status: false, message: "Faltan campos" });
   }
+
   try {
     await giama_renting.query(
-      "INSERT INTO usuarios (login, email) VALUES (?,?)",
+      "INSERT INTO usuarios (email, nombre) VALUES (?,?)",
       {
-        replacements: [login, email],
+        replacements: [email, nombre ? nombre : null],
         type: QueryTypes.INSERT,
       }
     );
@@ -32,7 +33,7 @@ export const createUsuario = async (req, res) => {
   const payload = {
     email: email,
   };
-  const token = sign(payload, process.env.SECRET, { expiresIn: "3h" });
+  const token = sign(payload, process.env.SECRET, { expiresIn: "20m" });
   try {
     await sendEmail(email, token);
   } catch (error) {
@@ -52,11 +53,22 @@ export const createUsuario = async (req, res) => {
 export const createPass = async (req, res) => {
   const { password, token } = req.body;
   let hashPass = await bcrypt.hash(password, 10);
+  let email;
+  try {
+    // Verificamos el token y extraemos el email
+    const decoded = verify(token, process.env.SECRET);
+    email = decoded.email;
+  } catch (err) {
+    return res.status(401).send({
+      status: false,
+      message: "Token inválido o expirado",
+    });
+  }
   try {
     await giama_renting.query(
       "UPDATE usuarios SET password  = ?, newUser = 0 WHERE email = ?",
       {
-        replacements: [hashPass, pkg.decode(token)?.email],
+        replacements: [hashPass, email],
       }
     );
   } catch (error) {
@@ -68,6 +80,30 @@ export const createPass = async (req, res) => {
   return res.send({
     status: true,
     message: "Contraseña creada con exito!",
+  });
+};
+
+export const recoveryPass = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.send({ status: false, message: "Faltan campos" });
+  }
+  const payload = {
+    email: email,
+  };
+  const token = sign(payload, process.env.SECRET, { expiresIn: "20m" });
+  try {
+    await sendEmail(email, token);
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: JSON.stringify(error),
+    });
+  }
+  return res.send({
+    status: true,
+    message:
+      "Se le ha enviado un link a su casilla para reestablecer su contraseña",
   });
 };
 

@@ -5,6 +5,7 @@ import {
   logIn,
   validarToken,
   logOut,
+  recoveryPass,
 } from "../controllers/loginController.js";
 const loginRouter = Router();
 
@@ -18,6 +19,7 @@ loginRouter.use((req, res, next) => {
 
 loginRouter.post("/createPass", createPass);
 loginRouter.post("/createUsuario", createUsuario);
+loginRouter.post("/recovery", recoveryPass);
 loginRouter.post("/login", logIn);
 loginRouter.get("/validar-token", validarToken);
 loginRouter.get("/logout", logOut);
