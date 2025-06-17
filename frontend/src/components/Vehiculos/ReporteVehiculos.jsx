@@ -39,14 +39,21 @@ if(vehiculos){
   } else if (v.vehiculo_alquilado === 1) {
     estado = "Alquilado";
   } else if (
-    v.proveedor_gps !== 0 &&
-    v.nro_serie_gps !== 0 &&
-    v.calcomania !== 0 &&
-    v.gnc !== 0
+    v.estado_actual == 2
   ) {
-    estado = "Preparado";
-  } else {
-    estado = "Sin preparar";
+    estado = "Listo para alquilar";
+  }
+  else if (v.estado_actual == 3){
+    estado = "En reparación"
+  }
+  else if (v.estado_actual == 4){
+    estado = "Seguro a recuperar"
+  }
+    else if (v.estado_actual == 1){
+    estado = "Sin preparar"
+  }
+  else {
+    estado = "Sin estado disponible";
   }
 
   const dominio_visible = v.dominio
@@ -183,17 +190,23 @@ return (
         <Column
           dataField="estado"
           caption="Estado actual"
-          width={130}
+          width={160}
           cellRender={({ data }) => {
             switch (data.estado) {
               case "Vendido":
                 return <span className={styles.spanVendido}>Vendido</span>;
               case "Alquilado":
                 return <span className={styles.spanAlquilado}>Alquilado</span>;
-              case "Preparado":
-                return <span className={styles.spanPreparado}>Preparado</span>;
-              default:
+              case "Listo para alquilar":
+                return <span className={styles.spanPreparado}>Listo para alquilar</span>;
+              case "En reparación":
+                return <span className={styles.spanReparacion}>En reparación</span>;
+              case "Seguro a recuperar":
+                return <span className={styles.spanSeguro}>Seguro a recuperar</span>;
+              case "Sin preparar":
                 return <span className={styles.spanNoPreparado}>Sin preparar</span>;
+              default:
+                return <span className={styles.spanNoDisponible}>Sin estado disponible</span>;
             }
           }}
         />
