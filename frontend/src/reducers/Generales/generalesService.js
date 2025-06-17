@@ -24,11 +24,17 @@ const getTiposResponsable = async () => {
 const getTiposSexo = async () => {
   return getFunction("generales/tipos_sexo");
 };
+
 const getSucursales = async () => {
   return getFunction("generales/sucursales");
 };
+
 const getPreciosModelos = async () => {
   return getFunction("generales/precios_modelos");
+};
+
+const getEstados = async () => {
+  return getFunction("generales/estados");
 };
 
 const getParametroAMRT = async () => {
@@ -57,5 +63,6 @@ const generalesService = {
   getSucursales,
   getPreciosModelos,
   getParametroAMRT,
+  getEstados,
 };
 export default generalesService;

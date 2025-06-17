@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { getModelos, getProveedoresGPS, getSucursales } from '../../../reducers/Generales/generalesSlice';
+import { getModelos, getProveedoresGPS, getSucursales, getEstados } from '../../../reducers/Generales/generalesSlice';
 import { getVehiculosById, updateVehiculo, reset } from '../../../reducers/Vehiculos/vehiculosSlice';
 import styles from './UpdateVehiculo.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
+import Select from 'react-select';
+import SelectEstados from '../../../utils/SelectEstados';
 
 const UpdateVehiculo = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { modelos, proveedoresGPS, sucursales } = useSelector(state => state.generalesReducer);
+  const { modelos, proveedoresGPS, sucursales, estados } = useSelector(state => state.generalesReducer);
+  const { username } = useSelector(state => state.loginReducer);
   const { vehiculo, isError, isSuccess, isLoading, message } = useSelector(state => state.vehiculosReducer);
 
   const [form, setForm] = useState({
+    usuario: username,
     modelo: '',
     nro_chasis: '',
     nro_motor: '',
@@ -27,19 +31,24 @@ const UpdateVehiculo = () => {
     color: '',
     calcomania: 0,
     gnc: 0,
-    sucursal: ''
+    sucursal: '',
+    estado: '',
+    polarizado: '',
+    cubre_asiento: ''
   });
 
   useEffect(() => {
     dispatch(getModelos());
     dispatch(getProveedoresGPS());
-    dispatch(getSucursales())
+    dispatch(getSucursales()),
+    dispatch(getEstados())
     dispatch(getVehiculosById({id: id}));
   }, [id]);
 
   useEffect(() => {
     if (vehiculo) {
       setForm({
+        usuario: username,
         modelo: vehiculo[0].modelo || '',
         nro_chasis: vehiculo[0].nro_chasis || '',
         nro_motor: vehiculo[0].nro_motor || '',
@@ -51,8 +60,12 @@ const UpdateVehiculo = () => {
         color: vehiculo[0].color || '',
         calcomania: vehiculo[0].calcomania || 0,
         gnc: vehiculo[0].gnc || 0,
+        polarizado: vehiculo[0].polarizado || 0,
+        cubre_asiento: vehiculo[0].cubre_asiento || 0,
         sucursal: vehiculo[0].sucursal || '',
-        dominio: ""
+        estado: vehiculo[0].estado_actual || '',
+        dominio: vehiculo[0].dominio ? vehiculo[0].dominio : ""
+        
       });
     }
   }, [vehiculo]);
@@ -60,6 +73,7 @@ const UpdateVehiculo = () => {
   useEffect(() => {
     if (isError) {
       toast.error(message);
+      dispatch(reset())
     }
     if (isSuccess) {
       toast.success(message);
@@ -86,6 +100,13 @@ const UpdateVehiculo = () => {
     dispatch(updateVehiculo(body));
   };
 
+  const customStyles = {
+  container: (provided) => ({
+    ...provided,
+    width: '16rem',
+  })
+};
+
   return (
     <div>
       <div className={styles.container}>
@@ -107,20 +128,33 @@ const UpdateVehiculo = () => {
             <span>Modelo</span>
             <select name="modelo" value={form.modelo} onChange={handleChange}>
               <option value="">Seleccione un modelo</option>
-              {modelos.map((m) => (
+              {modelos?.map((m) => (
                 <option key={m.id} value={m.id}>{m.nombre}</option>
               ))}
             </select>
           </div>
           
             {
-              vehiculo?.length && !vehiculo[0]["dominio"] && vehiculo[0]["dominio_provisorio"] &&
+              vehiculo?.length && !vehiculo[0]["dominio"] &&
               <div className={styles.inputContainer}>
                 <span>Dominio</span>
                 <input type="text" name="dominio" value={form.dominio} onChange={handleChange} />
               </div>
               
             }
+            <div className={styles.inputContainer}>
+            <span>Estado</span>
+            <SelectEstados
+            estados={estados}
+            value={form.estado}
+            onChange={(value) =>
+            setForm((prev) => ({
+            ...prev,
+            estado: value
+            }))
+            }
+            />
+          </div>
 
           <div className={styles.inputContainer}>
             <span>Nro. Chasis</span>
@@ -194,6 +228,26 @@ const UpdateVehiculo = () => {
             type="checkbox"
             name="gnc"
             checked={form.gnc === 1}
+            onChange={handleCheckChange}
+            />
+          </div>
+
+          <div className={styles.inputContainer}>
+            <span>Polarizado</span>
+            <input
+            type="checkbox"
+            name="polarizado"
+            checked={form.polarizado === 1}
+            onChange={handleCheckChange}
+            />
+          </div>
+
+          <div className={styles.inputContainer}>
+            <span>Cubre asiento</span>
+            <input
+            type="checkbox"
+            name="cubre_asiento"
+            checked={form.cubre_asiento === 1}
             onChange={handleCheckChange}
             />
           </div>
