@@ -115,3 +115,17 @@ export const getParametroAMRT = async (req, res) => {
   }
   return res.send({ AMRT: AMRT });
 };
+
+export const getEstados = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM estados_vehiculos",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};

@@ -113,8 +113,8 @@ export const postVehiculo = async (req, res) => {
   try {
     const result = await giama_renting.query(
       `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
-        kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, nro_factura_compra)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, nro_factura_compra, estado_actual)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -132,6 +132,7 @@ export const postVehiculo = async (req, res) => {
           color,
           sucursal,
           nro_factura_compra,
+          1,
         ],
       }
     );
@@ -255,24 +256,14 @@ export const updateVehiculo = async (req, res) => {
     calcomania,
     gnc,
     sucursal,
+    estado,
+    polarizado,
+    cubre_asiento,
+    usuario,
   } = req.body;
   console.log(req.body);
   let vehiculoAnterior;
   let fechaDePreparacion;
-  const estaPreparado = (vehiculo) => {
-    return (
-      vehiculo.proveedor_gps !== null &&
-      vehiculo.nro_serie_gps !== null &&
-      vehiculo.calcomania === 1 &&
-      vehiculo.gnc === 1
-    );
-  };
-  const vehiculoNuevo = {
-    proveedor_gps: proveedor_gps,
-    nro_serie_gps: nro_serie_gps,
-    calcomania: calcomania,
-    gnc: gnc,
-  };
 
   try {
     vehiculoAnterior = await giama_renting.query(
@@ -283,11 +274,11 @@ export const updateVehiculo = async (req, res) => {
       }
     );
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    return res.send({ status: false, message: "Error al buscar el vehiculo" });
   }
 
-  const preparadoAntes = estaPreparado(vehiculoAnterior[0]);
-  const preparadoAhora = estaPreparado(vehiculoNuevo);
+  let preparadoAntes = vehiculoAnterior[0]["estado_actual"] == 2 ? true : false;
+  let preparadoAhora = estado == 2 ? true : false;
   if (preparadoAntes && !preparadoAhora) {
     fechaDePreparacion = null;
   } else if (!preparadoAntes && preparadoAhora) {
@@ -295,12 +286,15 @@ export const updateVehiculo = async (req, res) => {
   } else {
     fechaDePreparacion = vehiculoAnterior.fecha_preparacion;
   }
+
   try {
     await giama_renting.query(
       `UPDATE vehiculos SET modelo = ?, dominio = ?, nro_chasis = ?, nro_motor = ?,
         kilometros_actuales = ?, proveedor_gps = ?, nro_serie_gps = ?,
         dispositivo_peaje = ?, meses_amortizacion = ?, color = ?,
-        calcomania = ?, gnc = ?, fecha_preparacion = ?, sucursal = ?
+        calcomania = ?, gnc = ?, fecha_preparacion = ?, sucursal = ?, estado_actual = ?,
+        polarizado = ?, cubre_asiento = ?,
+        usuario_ultima_modificacion = ?
         WHERE id = ?`,
       {
         type: QueryTypes.UPDATE,
@@ -319,13 +313,20 @@ export const updateVehiculo = async (req, res) => {
           gnc,
           fechaDePreparacion ? fechaDePreparacion : null,
           sucursal,
+          estado,
+          polarizado,
+          cubre_asiento,
+          usuario,
           id,
         ],
       }
     );
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    return res.send({
+      status: false,
+      message: "Error al actualizar en base de datos",
+    });
   }
   return res.send({
     status: true,
