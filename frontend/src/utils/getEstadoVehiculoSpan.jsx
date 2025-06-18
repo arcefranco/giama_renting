@@ -58,6 +58,7 @@ else if (vehiculo?.estado_actual == 1) {
   
 }
 else  {
+  console.log(vehiculo)
   return (
     <span style={{ ...baseStyle, background: "#ccc", color: "#fff" }}>
       Sin estado disponible

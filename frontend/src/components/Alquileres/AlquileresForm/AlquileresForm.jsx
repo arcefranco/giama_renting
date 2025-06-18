@@ -112,18 +112,26 @@ const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el date
     end: addDays(new Date(a.fecha_hasta), 1),
 }));
 const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e => {
-  const preparado = e.proveedor_gps && e.nro_serie_gps && e.calcomania && e.gnc;
   const alquiladoHoy = e.vehiculo_alquilado
 
 
   let estado;
   if (alquiladoHoy) {
     estado = <span className={styles.spanAlquilado}>Alquilado</span>;
-  } else if (preparado && !alquiladoHoy) {
-    estado = <span className={styles.spanPreparado}>Preparado</span>;
-  } else {
+  } else if (e.estado_actual == 2) {
+    estado = <span className={styles.spanPreparado}>Listo para alquilar</span>;
+  } else if (e.estado_actual == 1) {
     estado = <span className={styles.spanNoPreparado}>Sin preparar</span>;
   }
+  else if (e.estado_actual == 3) {
+    estado = <span className={styles.spanReparacion}>En reparacion</span>;
+  }
+  else if (e.estado_actual == 4) {
+    estado = <span className={styles.spanSeguro}>Seguro a recuperar</span>;
+  }
+  
+  
+  
 
   return {
     value: e.id,
