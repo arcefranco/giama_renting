@@ -26,6 +26,8 @@ import UpdateAlquiler from './components/Alquileres/UpdateAlquiler/UpdateAlquile
 import AltaUsuario from './components/Usuarios/AltaUsuario/AltaUsuario';
 import AltaPassword from './components/Usuarios/Password/AltaPassword';
 import RecoveryPass from './components/Usuarios/Password/RecoveryPass';
+import ContratoAlquiler from './components/Alquileres/ContratoAlquiler/ContratoAlquiler';
+import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteContratos';
 function App() {
 
 
@@ -57,10 +59,13 @@ function App() {
     <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
     <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
     <Route path='/alquileres' element={<AlquileresForm/>}/>
+    <Route path='/alquileres/contrato' element={<ContratoAlquiler/>}/>   
+    <Route path='/contrato/actualizar/:id' element={<ContratoAlquiler/>}/>
     <Route path='/alquileres/:id'element={<AlquileresForm key={location.pathname}/>}/>
     <Route path='/alquileres/actualizar/:id'element={<UpdateAlquiler/>}/>
     <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
     <Route path='/alquileres/reporte' element={<ReporteAlquileres/>}/>
+    <Route path='/alquileres/contrato/reporte' element={<ReporteContratos/>}/>
     </Route>
   </Route>
     </Routes>

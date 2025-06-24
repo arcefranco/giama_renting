@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
 import {getFormasDeCobro, reset, 
-  postAlquiler, getAlquileresByIdVehiculo} from '../../../reducers/Alquileres/alquileresSlice.js'
+  postAlquiler, getAlquileresByIdVehiculo, getContratosByIdVehiculo} from '../../../reducers/Alquileres/alquileresSlice.js'
 import {getVehiculos} from '../../../reducers/Vehiculos/vehiculosSlice.js'
 import {getClientes} from '../../../reducers/Clientes/clientesSlice.js'
 import { ClipLoader } from "react-spinners";
@@ -17,11 +17,11 @@ import { addDays } from 'date-fns';
 import Select from 'react-select';
 import add from '../../../assets/add.png'
 
-const AlquileresForm = () => {
+const AlquileresForm = ({ modoContrato = false, onSubmitFinal, idVehiculoSeleccionado }) => {
 const dispatch = useDispatch()
 const {id} = useParams()
 const {isError, isSuccess, isLoading, 
-  message, formasDeCobro, alquileresVehiculo} = useSelector((state) => state.alquileresReducer)
+  message, formasDeCobro, alquileresVehiculo , contratosVehiculo} = useSelector((state) => state.alquileresReducer)
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
@@ -32,21 +32,39 @@ const getToday = () => {
 };
 registerLocale("es", es);
 const hoy = getToday();
+const getNextWednesday = (fromDate) => {
+  const date = new Date(fromDate);
+  const day = date.getDay();
+  const diff = (3 - day + 7) % 7; // 3 = miércoles
+  if (diff === 0) return date;
+  date.setDate(date.getDate() + diff);
+  return date;
+};
+
+// Suma N días a una fecha
+const addDays = (date, days) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+const fechaDesdePorDefecto = getNextWednesday(hoy);
+const fechaHastaPorDefecto = addDays(fechaDesdePorDefecto, 6);
 const [form, setForm] = useState({
     apellido_cliente: '',
     id_vehiculo: id ? id : "",
     id_cliente: '',
-    fecha_desde: '',
-    fecha_hasta: '',
+    fecha_desde_alquiler: fechaDesdePorDefecto,
+    fecha_hasta_alquiler: fechaHastaPorDefecto,
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
-    id_forma_cobro: '',
+    id_forma_cobro_alquiler: '',
     observacion: '',
-    cuenta_contable_forma_cobro: '',
-    cuenta_secundaria_forma_cobro: ''
+    cuenta_contable_forma_cobro_alquiler: '',
+    cuenta_secundaria_forma_cobro_alquiler: ''
 })
-const [alquileresVigentes, setAlquileresVigentes] = useState(null)
+const [alquileresVigentes, setAlquileresVigentes] = useState([])
+const [contratosVigentes, setContratosVigentes] = useState([])
 useEffect(() => {
 Promise.all([
     dispatch(getVehiculos()),
@@ -84,13 +102,13 @@ useEffect(() => {
         setForm({
         id_vehiculo: '',
         id_cliente: '',
-        fecha_desde: '',
-        fecha_hasta: '',
+        fecha_desde_alquiler: '',
+        fecha_hasta_alquiler: '',
         importe_neto: '',
         importe_iva: '',
         importe_total: '',
-        id_forma_cobro: '',
-        cuenta_contable_forma_cobro: ''
+        id_forma_cobro_alquiler: '',
+        cuenta_contable_forma_cobro_alquiler: ''
         })
     }
 
@@ -101,6 +119,32 @@ if([form["id_vehiculo"]]){
   dispatch(getAlquileresByIdVehiculo({id: form["id_vehiculo"]}))
 }
 }, [form["id_vehiculo"]])
+useEffect(() => { //obtengo contratos del vehiculo seleccionado (en modoContrato)
+if(modoContrato && idVehiculoSeleccionado){
+  dispatch(getContratosByIdVehiculo({id: idVehiculoSeleccionado}))
+}
+}, [idVehiculoSeleccionado])
+
+useEffect(() => { //fechas por defecto en modoContrato
+if (modoContrato && contratosVigentes?.length) {
+const contratoMasLargo = contratosVigentes.reduce((max, actual) => { //ultima reserva
+  const fechaMax = new Date(max.fecha_hasta);
+  const fechaActual = new Date(actual.fecha_hasta);
+  return fechaActual > fechaMax ? actual : max;
+});
+const fechaDesde = getNextWednesday(new Date(contratoMasLargo.fecha_hasta));
+const fechaHasta = addDays(fechaDesde, 6); // duración semanal
+    setForm((prev) => ({
+      ...prev,
+      fecha_desde_alquiler: fechaDesde,
+      fecha_hasta_alquiler: fechaHasta,
+    }));
+  }
+}, [modoContrato, contratosVigentes]);
+
+useEffect(() => { //filtro el array contratosVigentes con contratosVehiculo obtenido a la fecha de hoy
+  setContratosVigentes(contratosVehiculo?.filter(a => new Date(a.fecha_hasta) >= hoy))
+}, [contratosVehiculo])
 
 useEffect(() => { //filtro el array obtenido a la fecha de hoy
   setAlquileresVigentes(alquileresVehiculo.filter(a => new Date(a.fecha_hasta) >= hoy))
@@ -168,12 +212,12 @@ else if(value && name === "importe_iva"){
      "importe_total": parseFloat(value) + parseFloat(form["importe_neto"])
    }); 
 }
-else if(value && name === "id_forma_cobro"){
+else if(value && name === "id_forma_cobro_alquiler"){
       setForm({
      ...form,
      [name]: value,
-     "cuenta_contable_forma_cobro": formasDeCobro.find(e => e.id == value)?.cuenta_contable,
-     "cuenta_secundaria_forma_cobro": formasDeCobro.find(e => e.id == value)?.cuenta_secundaria
+     "cuenta_contable_forma_cobro_alquiler": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
+     "cuenta_secundaria_forma_cobro_alquiler": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
    }); 
 }
 else if(value && name === "id_cliente"){
@@ -193,7 +237,11 @@ else{
 }
 const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(postAlquiler(form))
+    if (modoContrato) {
+      onSubmitFinal(form); 
+    } else {
+      dispatch(postAlquiler(form));
+    }
 } 
   return (
         <div className={styles.container}>
@@ -208,8 +256,14 @@ const handleSubmit = async (e) => {
             <p className={styles.loadingText}>Cargando...</p>
           </div>
         )}
+                {
+                modoContrato ? 
+                <h2>Semana adelantada de alquiler</h2> : 
                 <h2>Alta de alquiler</h2>
+                }
                 <form action="" enctype="multipart/form-data" className={styles.form}>
+                {
+                  !modoContrato &&
                 <div className={styles.inputContainer}>
                   <span>Vehículo</span>
                   <Select
@@ -227,14 +281,17 @@ const handleSubmit = async (e) => {
                       setForm((prevForm) => ({
                         ...prevForm,
                         id_vehiculo: option?.value || "",
-                        fecha_desde: "",
-                        fecha_hasta: "",
+                        fecha_desde_alquiler: "",
+                        fecha_hasta_alquiler: "",
                       }));
                     }}
                     placeholder="Seleccione un vehículo"
                     styles={customStyles}
                   />
                 </div>
+                }
+                {
+                  !modoContrato &&
                 <div className={styles.inputWrapper}>
                   <span>Clientes</span>
                   <div className={styles.selectWithIcon}>
@@ -256,13 +313,14 @@ const handleSubmit = async (e) => {
                     />
                   </div>
                 </div>
+                }
                 <div className={styles.inputContainer}>
                     <span>Fecha desde</span>
                     <DatePicker
                       dateFormat="dd/MM/yyyy"
-                      selected={form.fecha_desde}
-                      onChange={(date) => setForm(prev => ({ ...prev, fecha_desde: date }))}
-                      excludeDateIntervals={obtenerRangosOcupados(alquileresVigentes)}
+                      selected={form.fecha_desde_alquiler}
+                      onChange={(date) => setForm(prev => ({ ...prev, fecha_desde_alquiler: date }))}
+                      excludeDateIntervals={obtenerRangosOcupados([...alquileresVigentes, ...contratosVigentes])}
                       minDate={getToday()}
                       placeholderText="Seleccione una fecha"
                       locale="es"
@@ -272,10 +330,10 @@ const handleSubmit = async (e) => {
                     <span>Fecha hasta</span>
                     <DatePicker
                       dateFormat="dd/MM/yyyy"
-                      selected={form.fecha_hasta}
-                      onChange={(date) => setForm(prev => ({ ...prev, fecha_hasta: date }))}
-                      excludeDateIntervals={obtenerRangosOcupados(alquileresVigentes)}
-                      minDate={form.fecha_desde || getToday()}
+                      selected={form.fecha_hasta_alquiler}
+                      onChange={(date) => setForm(prev => ({ ...prev, fecha_hasta_alquiler: date }))}
+                      excludeDateIntervals={obtenerRangosOcupados([...alquileresVigentes, ...contratosVigentes])}
+                      minDate={form.fecha_desde_alquiler || getToday()}
                       placeholderText="Seleccione una fecha"
                       locale="es"
                     />
@@ -297,7 +355,7 @@ const handleSubmit = async (e) => {
                 </div>
                 <div className={styles.inputContainer}>
                   <span>Formas de cobro</span>
-                  <select name="id_forma_cobro"  value={form["id_forma_cobro"]} 
+                  <select name="id_forma_cobro_alquiler"  value={form["id_forma_cobro_alquiler"]} 
                   onChange={handleChange} id="">
                     <option value={""} disabled selected>{"Seleccione una opción"}</option>
                     {
@@ -313,14 +371,27 @@ const handleSubmit = async (e) => {
                   onChange={handleChange}/>
                 </div>
                 </form>
+                {
+                modoContrato ?
+                <button 
+                className={styles.sendBtn} onClick={handleSubmit} 
+                disabled={
+                    !form["fecha_desde_alquiler"] || !form["fecha_hasta_alquiler"] ||
+                    !form["importe_neto"] || !form["importe_iva"] ||
+                    !form["importe_total"] || !form["id_forma_cobro_alquiler"]}>
+                  Enviar
+                </button>
+                :
                 <button 
                 className={styles.sendBtn} onClick={handleSubmit} 
                 disabled={!form["id_vehiculo"] || !form["id_cliente"] ||
-                    !form["fecha_desde"] || !form["fecha_hasta"] ||
+                    !form["fecha_desde_alquiler"] || !form["fecha_hasta_alquiler"] ||
                     !form["importe_neto"] || !form["importe_iva"] ||
-                    !form["importe_total"] || !form["id_forma_cobro"]}>
+                    !form["importe_total"] || !form["id_forma_cobro_alquiler"]}>
                   Enviar
                 </button>
+
+                }
         </div>
   )
 }
