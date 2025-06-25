@@ -10,7 +10,7 @@ import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css"
 import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
-import { getEstadoVehiculoSpan } from '../../utils/getEstadoVehiculoSpan';
+import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 
 
 const IngresosEgresos = () => {  
@@ -154,7 +154,7 @@ return (
 {vehiculo?.length && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
 vehiculo?.length &&  vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""}{" "}-{" "}
 {vehiculo && modelos && modelos.find(e => e.id === vehiculo[0]["modelo"])?.nombre}{" "}-{" "}
-{vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
+{vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
       
       </h2>
     <button onClick={handleActualizar} className={styles.refreshButton}>

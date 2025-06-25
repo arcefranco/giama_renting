@@ -104,6 +104,33 @@ if(esAnteriorAHoy(row.fecha_hasta)){
 }
 }
 
+const renderRenovarAlquiler = (data) => {
+const row = data.data
+if(esAnteriorAHoy(row.fecha_hasta)){
+  return (
+    <button
+        style={{ color: "grey" , fontSize: "11px" ,
+          textDecoration: 'underline', background: 'none', border: 'none', 
+          cursor:  "none"}}
+          disabled
+    >
+      Renovar alquiler
+    </button>
+  )
+}else if(!esAnteriorAHoy(row.fecha_hasta)){
+      return (
+      <button
+        onClick={() => window.open(`/alquileres/${data.data.id}`, '_blank')}
+        style={{ color: '#1976d2', fontSize: "11px" ,
+          textDecoration: 'underline', background: 'none', border: 'none', 
+          cursor: 'pointer' }}
+      >
+        Renovar alquiler
+      </button>
+    );
+}  
+}
+
 const handleSubmit = () => {
   dispatch(getAlquileres(form))
 }
@@ -169,6 +196,7 @@ const handleCustomSummary = (e) => {
         <Column dataField="deposito_garantia" alignment="right"caption="Depósito" 
         customizeText={(e) => Math.trunc(e.value).toLocaleString()}/>
         <Column caption="" cellRender={renderModificar} alignment="center"/>
+        <Column caption="" cellRender={renderRenovarAlquiler} alignment="center"/>
         <Summary calculateCustomSummary={handleCustomSummary}>
         <TotalItem
         name="countVehiculos"

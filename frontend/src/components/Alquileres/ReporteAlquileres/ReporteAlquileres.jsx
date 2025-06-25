@@ -76,34 +76,6 @@ const renderCliente = (data) => {
     </div>
   }
 }
-
-const renderModificar = (data) => {
-const row = data.data
-if(esAnteriorAHoy(row.fecha_hasta) && row.importe_neto < 0){
-  return (
-    <button
-        style={{ color: "grey" , fontSize: "11px" ,
-          textDecoration: 'underline', background: 'none', border: 'none', 
-          cursor:  "none"}}
-          disabled
-    >
-      Modificar
-    </button>
-  )
-}else if(!esAnteriorAHoy(row.fecha_hasta) && row.importe_neto > 0){
-      return (
-      <button
-        onClick={() => window.open(`/alquileres/actualizar/${data.data.id}`, '_blank')}
-        style={{ color: '#1976d2', fontSize: "11px" ,
-          textDecoration: 'underline', background: 'none', border: 'none', 
-          cursor: 'pointer' }}
-      >
-        Modificar
-      </button>
-    );
-}
-}
-
 const handleSubmit = () => {
   dispatch(getAlquileres(form))
 }
@@ -179,7 +151,6 @@ if (e.name === "importeTotal") {
         <Column dataField="fecha_desde" caption="Desde" cellRender={renderFecha} alignment="center"/>
         <Column dataField="fecha_hasta" caption="Hasta" cellRender={renderFecha} alignment="center"/>
         <Column dataField="importe_neto" alignment="right"caption="Importe neto" customizeText={(e) => Math.trunc(e.value).toLocaleString()}/>
-        <Column caption="" cellRender={renderModificar} alignment="center"/>
         <Summary calculateCustomSummary={handleCustomSummary}>
         <TotalItem
           name="importeTotal"

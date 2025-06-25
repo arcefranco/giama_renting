@@ -46,7 +46,6 @@ const menuItems = [
    title: "Alquileres",
    items: [
     { label: "Alta de contrato", to: "/alquileres/contrato" },
-    { label: "Alquileres", to: "/alquileres" },
     { label: "Listado de alquileres", to: "/alquileres/reporte" },
     { label: "Listado de contratos", to: "/alquileres/contrato/reporte" },
     { label: "Formas de cobro", to: "/alquileres/formasDeCobro" },

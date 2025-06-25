@@ -4,10 +4,10 @@ import {useParams} from 'react-router-dom';
 import {getVehiculosById, getCostosPeriodo, 
 getAlquileresPeriodo, getAmortizacion} from '../../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../../reducers/Generales/generalesSlice'
-import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
 import styles from './FichaVehiculo.module.css'
 import { getTodayDate } from '../../../helpers/getTodayDate';
 import { formatearFecha } from '../../../helpers/formatearFecha';
+import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
 
 const FichaVehiculo = () => {
 const {id, anio, mes} = useParams()
@@ -144,7 +144,7 @@ function esNegativo(numero) {
     <h2 style={{display: "flex", alignItems: "center"}}>
     {vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
     vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""}  - {modelos.find(e => e.id === vehiculo[0]?.modelo)?.nombre}{" "}
-      - {vehiculo[0]?.color} - {vehiculo && getEstadoVehiculoSpan(vehiculo[0])}</h2>
+      - {vehiculo[0]?.color} - {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}</h2>
     }
     <div className={styles.select}>
     <span>Período: </span>

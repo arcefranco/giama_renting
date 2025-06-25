@@ -8,8 +8,7 @@ import { eliminarImagenes, reset } from '../../reducers/Vehiculos/vehiculosSlice
 import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
-import { getEstadoVehiculoSpan } from '../../utils/getEstadoVehiculoSpan';
-
+import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 
 
 const ImagenesVehiculo = () => {
@@ -75,7 +74,7 @@ const ImagenesVehiculo = () => {
       {vehiculo && (
         <h2 style={{display: "flex", alignItems: "center", fontSize: "xx-large"}}>
           {vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
-    vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {getEstadoVehiculoSpan(vehiculo[0])}
+    vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
         </h2>
       )}
 

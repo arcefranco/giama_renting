@@ -118,7 +118,7 @@ const getContratosByIdVehiculo = async (data) => {
   }
 };
 
-const getAlquilerById = async (data) => {
+const getAlquilerByIdContrato = async (data) => {
   let header = {};
   try {
     const response = await axios.post(
@@ -169,7 +169,7 @@ const alquileresService = {
   getAlquileresByIdVehiculo,
   getAlquileres,
   getContratos,
-  getAlquilerById,
+  getAlquilerByIdContrato,
   getContratoById,
   anulacionAlquiler,
   anulacionContrato,

@@ -7,7 +7,7 @@ const initialState = {
   alquileresVehiculo: [],
   alquileres: [],
   contratos: [],
-  alquilerById: [],
+  alquilerByIdContrato: [],
   contratoById: [],
   contratosVehiculo: [],
   anulaciones: [],
@@ -80,7 +80,6 @@ export const getFormasDeCobro = createAsyncThunk(
   "getFormasDeCobro",
   async (data, { rejectWithValue }) => {
     const result = await alquileresService.getFormasDeCobro();
-    console.log(result);
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -112,10 +111,10 @@ export const getContratosByIdVehiculo = createAsyncThunk(
   }
 );
 
-export const getAlquilerById = createAsyncThunk(
-  "getAlquilerById",
+export const getAlquilerByIdContrato = createAsyncThunk(
+  "getAlquilerByIdContrato",
   async (data, { rejectWithValue }) => {
-    const result = await alquileresService.getAlquilerById(data);
+    const result = await alquileresService.getAlquilerByIdContrato(data);
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -290,15 +289,15 @@ export const alquileresSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload;
     });
-    builder.addCase(getAlquilerById.pending, (state) => {
+    builder.addCase(getAlquilerByIdContrato.pending, (state) => {
       state.isLoading = true;
     });
-    builder.addCase(getAlquilerById.fulfilled, (state, action) => {
+    builder.addCase(getAlquilerByIdContrato.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isError = false;
-      state.alquilerById = action.payload;
+      state.alquilerByIdContrato = action.payload;
     });
-    builder.addCase(getAlquilerById.rejected, (state, action) => {
+    builder.addCase(getAlquilerByIdContrato.rejected, (state, action) => {
       state.isLoading = false;
       state.isSuccess = false;
       state.message = action.payload;

@@ -5,3 +5,9 @@ export const getTodayDate = () => {
   const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+export const getToday = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // elimina horas
+  return today;
+};

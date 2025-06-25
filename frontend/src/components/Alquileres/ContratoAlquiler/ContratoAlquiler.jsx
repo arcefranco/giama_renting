@@ -16,6 +16,10 @@ import { ClipLoader } from "react-spinners";
 import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
 import { parseISO } from "date-fns";
+import { renderEstadoVehiculo } from "../../../utils/renderEstadoVehiculo.jsx";
+import { addDaysHelper } from "../../../helpers/addDaysHelper.js";
+import { getNextWednesday } from "../../../helpers/getNextWednesday.js";
+import { getToday } from "../../../helpers/getTodayDate.js";
 
 const ContratoAlquiler = () => {
 
@@ -34,33 +38,13 @@ useEffect(() => {
     dispatch(getContratoById({id: id}))
   }
 }, [])
-const getToday = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // elimina horas
-  return today;
-};
 const hoy = getToday();
-// Devuelve el miércoles más próximo desde hoy (inclusive si hoy es miércoles)
-const getNextWednesday = (fromDate) => {
-  const date = new Date(fromDate);
-  const day = date.getDay();
-  const diff = (3 - day + 7) % 7; // 3 = miércoles
-  if (diff === 0) return date;
-  date.setDate(date.getDate() + diff);
-  return date;
-};
-
-// Suma N días a una fecha
-const addDays = (date, days) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-};
 const fechaDesdePorDefecto = getNextWednesday(hoy);
-const fechaHastaPorDefecto = addDays(fechaDesdePorDefecto, 90); //son 13 semanas, 91 dias
+/* datos solo validos al montaje del componente */
+const fechaHastaPorDefecto = addDaysHelper(fechaDesdePorDefecto, 90);
+
 const {isError, isSuccess, isLoading, 
   message, formasDeCobro, contratosVehiculo, contratoById } = useSelector((state) => state.alquileresReducer)
-const [contratosVigentes, setContratosVigentes] = useState(null)
 const [formContrato, setFormContrato] = useState({
     id_vehiculo: '',
     id_cliente: '',
@@ -71,8 +55,6 @@ const [formContrato, setFormContrato] = useState({
     cuenta_contable_forma_cobro_contrato: '',
     cuenta_secundaria_forma_cobro_contrato: '',
 });
-const [minDate, setMinDate] = useState(getToday())
-const [maxDate, setMaxDate] = useState(null)
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
@@ -111,7 +93,7 @@ useEffect(() => {
 }, [isError, isSuccess]) 
 
 useEffect(() => {
-if (id && contratoById.length) {
+if (id && contratoById.length) { //si estoy modificando un contrato
     const fechaDesde = parseISO(contratoById[0]["fecha_desde"]);
     const fechaHasta = parseISO(contratoById[0]["fecha_hasta"]);
 
@@ -133,10 +115,6 @@ const fechaHastaPickers = parseISO(contratoById[0]["fecha_hasta"]);
 fechaDesdePickers.setHours(3, 0, 0, 0);
 fechaHastaPickers.setHours(0, 0, 0, 0);
 
-setMinDate(fechaDesdePickers);
-setMaxDate(fechaHastaPickers);
-console.log(fechaDesdePickers)
-console.log(fechaHastaPickers)
 }else{
   setFormContrato({
     id_vehiculo: '',
@@ -148,44 +126,18 @@ console.log(fechaHastaPickers)
     cuenta_contable_forma_cobro_contrato: '',
     cuenta_secundaria_forma_cobro_contrato: '',
 })
-setMinDate(getToday())
-setMaxDate(null)
 }
 }, [contratoById, id]);
 
-useEffect(() => { //filtro el array contratosVigentes con contratosVehiculo obtenido a la fecha de hoy
-  setContratosVigentes(contratosVehiculo?.filter(a => new Date(a.fecha_hasta) >= hoy))
-}, [contratosVehiculo])
 const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e => {
-  
-  const alquiladoHoy = e.vehiculo_alquilado
-
-
-  let estado;
-  if (alquiladoHoy) {
-    estado = <span className={styles.spanAlquilado}>Alquilado</span>;
-  } else if (e.estado_actual == 2) {
-    estado = <span className={styles.spanPreparado}>Listo para alquilar</span>;
-  } else if (e.estado_actual == 1) {
-    estado = <span className={styles.spanNoPreparado}>Sin preparar</span>;
-  }
-  else if (e.estado_actual == 3) {
-    estado = <span className={styles.spanReparacion}>En reparacion</span>;
-  }
-  else if (e.estado_actual == 4) {
-    estado = <span className={styles.spanSeguro}>Seguro a recuperar</span>;
-  }
-  
-  
-  
 
   return {
     value: e.id,
     label: (
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
         <span>{e.dominio ? e.dominio : 
     e.dominio_provisorio ? e.dominio_provisorio : ""} - {modelos.find(m => m.id == e.modelo)?.nombre}</span>
-        {estado}
+        {renderEstadoVehiculo(e, "chico")}
       </div>
     )
   };
@@ -223,31 +175,35 @@ if([formContrato["id_vehiculo"]]){
 }
 }, [formContrato["id_vehiculo"]])
 
-useEffect(() => { /* evalua el rango de fechas ocupado por algún contrato previo del vehículo */
-  if (!formContrato.id_vehiculo || !contratosVehiculo?.length) return;
-
-  // Filtrar solo contratos del vehículo actual
-  const contratosDelVehiculo = contratosVehiculo.filter(
-    (c) => c.id_vehiculo === formContrato.id_vehiculo
-  );
-
-  // Buscar la fecha_hasta más lejana de los contratos vigentes
-  const ultimaFechaHasta = contratosDelVehiculo.length
+useEffect(() => { /* fechas por defecto */
+  if (!formContrato.id_vehiculo || !contratosVehiculo?.length) {
+    /*volvemos a setear fechaspordefecto del momento del montaje 
+    por si el vehiculo no tiene contratos pertinentes a la fecha */
+      const proxMiercoles = getNextWednesday(hoy);
+      setFormContrato(prev => ({
+        ...prev,
+        fecha_desde_contrato: proxMiercoles,
+        fecha_hasta_contrato: addDaysHelper(proxMiercoles, 90),
+      }));
+  
+    return; 
+  }
+  if(!id){// Buscar la fecha_hasta más lejana de los contratos vigentes
+  const ultimaFechaHasta = contratosVehiculo.length
     ? new Date(
         Math.max(
-          ...contratosDelVehiculo.map((c) => new Date(c.fecha_hasta).getTime())
+          ...contratosVehiculo.map((c) => new Date(c.fecha_hasta).getTime())
         )
       )
     : hoy;
 
   // Obtener miércoles siguiente a esa fecha
-  const siguienteMiercoles = getNextWednesday(addDays(ultimaFechaHasta, 1));
+  const siguienteMiercoles = getNextWednesday(ultimaFechaHasta);
 
   // Calcular fecha hasta (90 días desde el miércoles)
-  const hasta = addDays(siguienteMiercoles, 90);
+  const hasta = addDaysHelper(siguienteMiercoles, 90);
 
-  // Actualizar el estado
-  if(!id){
+  
     setFormContrato((prevForm) => ({
       ...prevForm,
       fecha_desde_contrato: siguienteMiercoles,
@@ -260,15 +216,17 @@ useEffect(() => { /* evalua el rango de fechas ocupado por algún contrato previ
 const obtenerRangosOcupados = (alquileres) =>
   alquileres
     ?.filter((a) => {
-      if (id) {
+      if (id) { //si estoy editando, omito ese contrato de los rangos bloqueados
         return String(a.id) !== String(id);
       }
       return true;
     })
     .map((a) => ({
       start: new Date(a.fecha_desde),
-      end: addDays(new Date(a.fecha_hasta), 1), // incluir fecha final
+      end: addDaysHelper(new Date(a.fecha_hasta), 1), // incluir fecha final
 }));
+
+
 
 const handleFinalSubmit = (formAlquiler) => {
   const payload = {
@@ -345,7 +303,40 @@ const submitUpdate = async (e) => {
           </div>
         </div>
         <div className={styles.inputContainer}>
-        <span>Deposito</span>
+            <span>Fecha desde</span>
+            <DatePicker
+              dateFormat="dd/MM/yyyy"
+              selected={formContrato.fecha_desde_contrato}
+              onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_desde_contrato: date }))}
+              minDate={hoy}
+              placeholderText="Seleccione una fecha"
+              excludeDateIntervals={obtenerRangosOcupados(contratosVehiculo)}
+              locale="es"
+            />
+        </div>
+        <div className={styles.inputContainer}>
+            <span>Fecha hasta</span>
+            <DatePicker
+              dateFormat="dd/MM/yyyy"
+              selected={formContrato.fecha_hasta_contrato}
+              onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_hasta_contrato: date }))}
+              minDate={hoy}
+              placeholderText="Seleccione una fecha"
+              excludeDateIntervals={obtenerRangosOcupados(contratosVehiculo)}
+              locale="es"
+            />
+        </div>
+        </form>
+
+            {
+      id && <button className={styles.sendBtn} onClick={submitUpdate}>Enviar</button>
+    }
+    </div>
+    <div className={styles.container} style={{height: "20rem"}}>
+    <h2>Depósito en garantía</h2>
+      <form action="" className={styles.form}>
+      <div className={styles.inputContainer}>
+        <span>Importe total</span>
         <input
         disabled={id ? true : false}
         type="number"
@@ -368,39 +359,12 @@ const submitUpdate = async (e) => {
             }
           </select>
         </div>
-        <div className={styles.inputContainer}>
-            <span>Fecha desde</span>
-            <DatePicker
-              dateFormat="dd/MM/yyyy"
-              selected={formContrato.fecha_desde_contrato}
-              onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_desde_contrato: date }))}
-              minDate={minDate}
-              maxDate={maxDate}
-              placeholderText="Seleccione una fecha"
-              excludeDateIntervals={obtenerRangosOcupados(contratosVigentes)}
-              locale="es"
-            />
-        </div>
-        <div className={styles.inputContainer}>
-            <span>Fecha hasta</span>
-            <DatePicker
-              dateFormat="dd/MM/yyyy"
-              selected={formContrato.fecha_hasta_contrato}
-              onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_hasta_contrato: date }))}
-              minDate={minDate}
-              maxDate={maxDate}
-              placeholderText="Seleccione una fecha"
-              excludeDateIntervals={obtenerRangosOcupados(contratosVigentes)}
-              locale="es"
-            />
-        </div>
-        </form>
-            {
-      id && <button className={styles.sendBtn} onClick={submitUpdate}>Enviar</button>
-    }
+      </form>
     </div>
     {
-      !id && <AlquileresForm modoContrato={true} onSubmitFinal={handleFinalSubmit} idVehiculoSeleccionado={formContrato.id_vehiculo}/>
+      !id && <AlquileresForm modoContrato={true} onSubmitFinal={handleFinalSubmit} 
+      idVehiculoSeleccionado={formContrato.id_vehiculo} minDateContrato={formContrato.fecha_desde_contrato} 
+      maxDateContrato={formContrato.fecha_hasta_contrato}/>
     }
     
 

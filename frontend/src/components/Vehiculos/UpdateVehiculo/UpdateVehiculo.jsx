@@ -6,9 +6,8 @@ import { getVehiculosById, updateVehiculo, reset } from '../../../reducers/Vehic
 import styles from './UpdateVehiculo.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
-import { getEstadoVehiculoSpan } from '../../../utils/getEstadoVehiculoSpan';
-import Select from 'react-select';
 import SelectEstados from '../../../utils/SelectEstados';
+import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
 
 const UpdateVehiculo = () => {
   const { id } = useParams();
@@ -119,7 +118,7 @@ const UpdateVehiculo = () => {
         )}
         <h2 style={{display: "flex", alignItems: "center"}}>
           Modificar datos del vehículo: {vehiculo && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
-    vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : ""} {vehiculo?.length && getEstadoVehiculoSpan(vehiculo[0])}
+    vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : ""} {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
         </h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>

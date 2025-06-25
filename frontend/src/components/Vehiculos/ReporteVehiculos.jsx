@@ -7,6 +7,7 @@ import styles from "./ReporteVehiculos.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
+import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 const ReporteVehiculos = () => {
 const dispatch = useDispatch();
 useEffect(() => {
@@ -32,30 +33,6 @@ const [vehiculosConEstado, setVehiculosConEstado] = useState(null)
 useEffect(() => {
 if(vehiculos){
   setVehiculosConEstado(vehiculos?.map(v => {
-  let estado = "";
-
-  if (v.fecha_venta) {
-    estado = "Vendido";
-  } else if (v.vehiculo_alquilado === 1) {
-    estado = "Alquilado";
-  } else if (
-    v.estado_actual == 2
-  ) {
-    estado = "Listo para alquilar";
-  }
-  else if (v.estado_actual == 3){
-    estado = "En reparación"
-  }
-  else if (v.estado_actual == 4){
-    estado = "Seguro a recuperar"
-  }
-    else if (v.estado_actual == 1){
-    estado = "Sin preparar"
-  }
-  else {
-    estado = "Sin estado disponible";
-  }
-
   const dominio_visible = v.dominio
   ? v.dominio
   : v.dominio_provisorio
@@ -64,7 +41,6 @@ if(vehiculos){
 
   return {
     ...v,
-    estado,
     dominio_visible
   };
 }))
@@ -113,17 +89,6 @@ const renderCostosCell = (data) => {
         style={{ color: '#1976d2', fontSize: "11px" ,textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Costos
-      </button>
-    );
-};
-const renderAlquilerCell = (data) => {
-    return (
-      <button
-        onClick={() => window.open(`/alquileres/${data.data.id}`, '_blank')}
-        style={{ color: '#1976d2', fontSize: "11px" ,
-          textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
-      >
-        Alquilar
       </button>
     );
 };
@@ -178,9 +143,7 @@ return (
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={400}
-        
-      >
+        height={400}>
         <SearchPanel visible={true} highlightCaseSensitive={true} />
         <FilterRow visible={true} />
         <HeaderFilter visible={true} />
@@ -188,27 +151,10 @@ return (
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
         <Column
-          dataField="estado"
-          caption="Estado actual"
-          width={160}
-          cellRender={({ data }) => {
-            switch (data.estado) {
-              case "Vendido":
-                return <span className={styles.spanVendido}>Vendido</span>;
-              case "Alquilado":
-                return <span className={styles.spanAlquilado}>Alquilado</span>;
-              case "Listo para alquilar":
-                return <span className={styles.spanPreparado}>Listo para alquilar</span>;
-              case "En reparación":
-                return <span className={styles.spanReparacion}>En reparación</span>;
-              case "Seguro a recuperar":
-                return <span className={styles.spanSeguro}>Seguro a recuperar</span>;
-              case "Sin preparar":
-                return <span className={styles.spanNoPreparado}>Sin preparar</span>;
-              default:
-                return <span className={styles.spanNoDisponible}>Sin estado disponible</span>;
-            }
-          }}
+        dataField="estado"
+        caption="Estado actual"
+        width={160}
+        cellRender={({ data }) => renderEstadoVehiculo(data)}
         />
         <Column dataField="id" caption="ID" width={50} />
         <Column dataField="modelo" width={75} caption="Modelo" 
@@ -265,7 +211,6 @@ return (
         <Column dataField="id"  width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
-        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderAlquilerCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderFichaCell} />
       </DataGrid>
     </div>
