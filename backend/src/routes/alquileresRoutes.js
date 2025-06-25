@@ -5,7 +5,6 @@ import {
   getFormasCobro,
   getAlquileresByIdVehiculo,
   getAlquileres,
-  getAlquilerById,
   anulacionAlquiler,
   getAnulaciones,
   postContratoAlquiler,
@@ -13,6 +12,7 @@ import {
   getContratos,
   getContratoById,
   anulacionContrato,
+  getAlquilerByIdContrato,
 } from "../controllers/alquileresController.js";
 const alquileresRouter = Router();
 alquileresRouter.use((req, res, next) => {
@@ -28,7 +28,7 @@ alquileresRouter.post("/formaDeCobro", postFormaCobro);
 alquileresRouter.get("/formaDeCobro", getFormasCobro);
 alquileresRouter.post("/idVehiculo", getAlquileresByIdVehiculo);
 alquileresRouter.post("/contrato/idVehiculo", getContratosByIdVehiculo);
-alquileresRouter.post("/id", getAlquilerById);
+alquileresRouter.post("/id", getAlquilerByIdContrato);
 alquileresRouter.post("/contrato/id", getContratoById);
 alquileresRouter.post("/", getAlquileres);
 alquileresRouter.post("/contratos", getContratos);

@@ -62,6 +62,7 @@ const asientoContable = async (
       }
     );
   } catch (error) {
+    console.log(error);
     transaction.rollback();
     throw "Error al generar un asiento";
   }
@@ -69,20 +70,21 @@ const asientoContable = async (
 
 export const postAlquiler = async (req, res) => {
   const {
+    id_contrato,
     //datos del cliente para el concepto:
     apellido_cliente,
     //no incluye fecha_cobro, hasta ahora se coloca fecha de hoy
     id_vehiculo,
     id_cliente,
-    fecha_desde,
-    fecha_hasta,
+    fecha_desde_alquiler,
+    fecha_hasta_alquiler,
     importe_neto,
     importe_iva,
     importe_total,
-    id_forma_cobro,
+    id_forma_cobro_alquiler,
     observacion,
-    cuenta_contable_forma_cobro,
-    cuenta_secundaria_forma_cobro,
+    cuenta_contable_forma_cobro_alquiler,
+    cuenta_secundaria_forma_cobro_alquiler,
   } = req.body;
   let alquileresVigentes;
   let NroAsiento;
@@ -93,7 +95,9 @@ export const postAlquiler = async (req, res) => {
   let cuentaALQU_2;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde} hasta: ${fecha_hasta}`;
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde_alquiler} hasta: ${fecha_hasta_alquiler}`;
+  let fecha_desde_parseada = formatearFechaISO(fecha_desde_alquiler);
+  let fecha_hasta_parseada = formatearFechaISO(fecha_hasta_alquiler);
   //buscar si el vehiculo está vendido
   try {
     const result = await giama_renting.query(
@@ -123,8 +127,8 @@ export const postAlquiler = async (req, res) => {
     );
     alquileresVigentes = result;
     const parseDate = (str) => new Date(str);
-    const nuevaDesde = parseDate(fecha_desde);
-    const nuevaHasta = parseDate(fecha_hasta);
+    const nuevaDesde = parseDate(fecha_desde_alquiler);
+    const nuevaHasta = parseDate(fecha_hasta_alquiler);
 
     // Recorremos los alquileres existentes y verificamos si se superponen
     const hayConflicto = alquileresVigentes?.some(
@@ -238,21 +242,23 @@ export const postAlquiler = async (req, res) => {
     id_forma_cobro,
     fecha_cobro,
     nro_asiento,
-    observacion) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    observacion,
+    id_contrato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
           id_vehiculo,
           id_cliente,
-          fecha_desde,
-          fecha_hasta,
+          fecha_desde_parseada,
+          fecha_hasta_parseada,
           importe_neto,
           importe_iva,
           importe_total,
-          id_forma_cobro,
+          id_forma_cobro_alquiler,
           getTodayDate(),
           NroAsiento,
-          observacion ? observacion : null,
+          observacion ? observacion : "",
+          id_contrato,
         ],
         transaction: transaction_giama_renting,
       }
@@ -260,14 +266,14 @@ export const postAlquiler = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
+    return res.send({ status: false, message: "Error al insertar alquiler" });
   }
   //movimientos contables
   try {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
-      cuenta_contable_forma_cobro,
+      cuenta_contable_forma_cobro_alquiler,
       "D",
       importe_total,
       concepto,
@@ -318,7 +324,7 @@ export const postAlquiler = async (req, res) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
-      cuenta_secundaria_forma_cobro,
+      cuenta_secundaria_forma_cobro_alquiler,
       "D",
       importe_total,
       concepto,
@@ -410,6 +416,12 @@ export const postContratoAlquiler = async (req, res) => {
   let conceptoDeposito = `Deposito en garantía - ${apellido_cliente} - desde: ${fecha_desde_contrato} hasta: ${fecha_hasta_contrato}`;
   let contratosVigentes;
   //buscar si el vehiculo está vendido
+
+  let fecha_desde_alquiler_parseada = formatearFechaISO(fecha_desde_alquiler);
+  let fecha_hasta_alquiler_parseada = formatearFechaISO(fecha_hasta_alquiler);
+  let fecha_desde_contrato_parseada = formatearFechaISO(fecha_desde_contrato);
+  let fecha_hasta_contrato_parseada = formatearFechaISO(fecha_hasta_contrato);
+
   try {
     const result = await giama_renting.query(
       "SELECT fecha_venta FROM vehiculos WHERE id = ?",
@@ -444,8 +456,8 @@ export const postContratoAlquiler = async (req, res) => {
     // Recorremos los contratos existentes y verificamos si se superponen
     const hayConflicto = contratosVigentes?.some(
       ({ fecha_desde, fecha_hasta }) => {
-        const desdeExistente = parseDate(fecha_desde_contrato);
-        const hastaExistente = parseDate(fecha_hasta_contrato);
+        const desdeExistente = parseDate(fecha_desde);
+        const hastaExistente = parseDate(fecha_hasta);
 
         return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
       }
@@ -479,8 +491,8 @@ export const postContratoAlquiler = async (req, res) => {
     // Recorremos los alquileres existentes y verificamos si se superponen
     const hayConflicto = alquileresVigentes?.some(
       ({ fecha_desde, fecha_hasta }) => {
-        const desdeExistente = parseDate(fecha_desde_alquiler);
-        const hastaExistente = parseDate(fecha_hasta_alquiler);
+        const desdeExistente = parseDate(fecha_desde);
+        const hastaExistente = parseDate(fecha_hasta);
 
         return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
       }
@@ -609,8 +621,8 @@ export const postContratoAlquiler = async (req, res) => {
         replacements: [
           id_vehiculo,
           id_cliente,
-          fecha_desde_contrato,
-          fecha_hasta_contrato,
+          fecha_desde_contrato_parseada,
+          fecha_hasta_contrato_parseada,
           deposito,
           id_forma_cobro_contrato,
           getTodayDate(),
@@ -650,8 +662,8 @@ export const postContratoAlquiler = async (req, res) => {
         replacements: [
           id_vehiculo,
           id_cliente,
-          fecha_desde_alquiler,
-          fecha_hasta_alquiler,
+          fecha_desde_alquiler_parseada,
+          fecha_hasta_alquiler_parseada,
           importe_neto,
           importe_iva,
           importe_total,
@@ -893,7 +905,10 @@ export const getContratosByIdVehiculo = async (req, res) => {
   const { id } = req.body;
   try {
     const result = await giama_renting.query(
-      "SELECT * FROM contratos_alquiler WHERE id_vehiculo = ?",
+      `SELECT * 
+      FROM contratos_alquiler 
+      WHERE id_vehiculo = ? 
+      AND fecha_hasta >= CURDATE();`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
@@ -905,11 +920,11 @@ export const getContratosByIdVehiculo = async (req, res) => {
   }
 };
 
-export const getAlquilerById = async (req, res) => {
+export const getAlquilerByIdContrato = async (req, res) => {
   const { id } = req.body;
   try {
     const result = await giama_renting.query(
-      "SELECT * FROM alquileres WHERE id = ?",
+      "SELECT * FROM alquileres WHERE id_contrato = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id],

@@ -19,11 +19,21 @@ import { diferenciaDias } from "../../helpers/diferenciaDias.js";
 export const getVehiculos = async (req, res) => {
   try {
     const resultado = await giama_renting.query(
-      `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado
-FROM vehiculos
-LEFT JOIN 
-(SELECT alquileres.id_vehiculo FROM alquileres WHERE NOW() BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
-AS alq ON vehiculos.id = alq.id_vehiculo`,
+      `SELECT 
+      vehiculos.*, 
+      (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
+      (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
+      FROM vehiculos
+      LEFT JOIN (
+      SELECT id_vehiculo 
+      FROM alquileres 
+      WHERE NOW() BETWEEN fecha_desde AND fecha_hasta
+      ) AS alq ON vehiculos.id = alq.id_vehiculo
+      LEFT JOIN (
+      SELECT id_vehiculo 
+      FROM contratos_alquiler 
+      WHERE NOW() BETWEEN fecha_desde AND fecha_hasta
+      ) AS con ON vehiculos.id = con.id_vehiculo;`,
       {
         type: QueryTypes.SELECT,
       }
