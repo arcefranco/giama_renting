@@ -192,7 +192,7 @@ const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e =
 const customStyles = {
   container: (provided) => ({
     ...provided,
-    width: '16rem'
+    width: '22rem'
   })
 };
 const handleChange = (e) => {
@@ -266,10 +266,11 @@ const handleSubmit = async (e) => {
                 <h2>Semana adelantada de alquiler</h2> : 
                 <h2>Alta de alquiler</h2>
                 }
-                <form action="" enctype="multipart/form-data" className={styles.form}>
+                <form action="" enctype="multipart/form-data">
                 {
                   !modoContrato &&
-                <div className={styles.inputContainer}>
+                  <div className={styles.form2Inputs}>
+                  <div className={styles.inputContainer}>
                   <span>Vehículo</span>
                   <Select
                     options={opcionesVehiculos}
@@ -283,12 +284,12 @@ const handleSubmit = async (e) => {
                     styles={customStyles}
                   />
                 </div>
-                }
-                {
-                  !modoContrato &&
-                <div className={styles.inputWrapper}>
+                <div></div>
+                <div className={styles.inputWrapper} >
                   <span>Clientes</span>
-                  <div className={styles.selectWithIcon}>
+                  <div className={styles.selectWithIcon} style={{
+                    width: "20rem"
+                  }}>
                     <select name="id_cliente" value={form["id_cliente"]} disabled>
                       <option value={""} disabled selected>{"Seleccione un cliente"}</option>
                       {
@@ -301,7 +302,10 @@ const handleSubmit = async (e) => {
                     </select>
                   </div>
                 </div>
+                </div>
                 }
+                <div className={styles.formNormal}>
+
                 <div className={styles.inputContainer}>
                     <span>Fecha desde</span>
                     <DatePicker
@@ -363,6 +367,8 @@ const handleSubmit = async (e) => {
                   <span>Observacion</span>
                   <textarea type="text" name='observacion' value={form["observacion"]} 
                   onChange={handleChange}/>
+                </div>
+
                 </div>
                 </form>
                 {

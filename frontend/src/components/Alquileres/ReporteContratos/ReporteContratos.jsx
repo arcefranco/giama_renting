@@ -40,7 +40,7 @@ const [form, setForm] = useState({
 })
 
 const handleActualizar = ( ) => {
-  dispatch(getAlquileres({fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"]}))
+  dispatch(getContratos({fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"]}))
 }
 const handleChange = (e) => {
 const { name, value } = e.target;
@@ -132,7 +132,7 @@ if(esAnteriorAHoy(row.fecha_hasta)){
 }
 
 const handleSubmit = () => {
-  dispatch(getAlquileres(form))
+  dispatch(getContratos(form))
 }
 
 const handleCustomSummary = (e) => {

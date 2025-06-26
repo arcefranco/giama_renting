@@ -25,11 +25,28 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
-    padding: 3rem;
-    max-height: 70vh; 
+    padding: 2rem;
+/*     max-height: 70vh;  */
     justify-items: anchor-center;
     position: relative;
-    height: 22rem;
+/*     height: 22rem; */
+  }
+
+  .form2Inputs{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 2rem;
+    justify-items: anchor-center;
+    position: relative;
+  }
+  .formNormal{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 2rem;
+    justify-items: anchor-center;
+    position: relative;
   }
 
 .inputContainer{
@@ -145,88 +162,6 @@
     font-weight: bold;
   }
 
-    .spanPreparado {
-    display: flex;
-    justify-self: center;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-    border-radius: 4px;
-    width: 4rem;
-    height: 1rem;
-    padding: 3px 6px;
-    background: #ffa809a1;
-  }
-
-  .spanNoPreparado {
-    display: flex;
-    justify-self: center;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-    border-radius: 4px;
-    width: 4rem;
-    height: 1rem;
-    padding: 3px 6px;
-    color: #ffff;
-    background: #ff0909a1;
-  }
-
-  .spanAlquilado {
-  display: flex;
-  justify-self: center;
-  justify-content: center;
-  align-items: center;
-  font-size: 10px;
-  border-radius: 4px;
-  width: 4rem;
-  height: 1rem;
-  padding: 3px 6px;
-  color: #fff;
-  background: #6f8babb0;
-}
-
-    .spanReparacion {
-    display: flex;
-    justify-self: center;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-    border-radius: 4px;
-    width: 9rem;
-    height: 1rem;
-    padding: 3px 6px;
-    color: #ffff;
-    background: #000000;
-  }
-
-  .spanNoDisponible {
-    display: flex;
-    justify-self: center;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-    border-radius: 4px;
-    width: 9rem;
-    height: 1rem;
-    padding: 3px 6px;
-    color: #ffff;
-    background: #8c8c8c;
-  }
-
-  .spanSeguro {
-    display: flex;
-    justify-self: center;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-    border-radius: 4px;
-    width: 9rem;
-    height: 1rem;
-    padding: 3px 6px;
-    color: #ffff;
-    background: #61c2ff;
-  }
 
 .inputWrapper {
   display: flex;
@@ -240,6 +175,7 @@
   display: flex;
   align-items: center;
   position: relative;
+  width: 22rem;
 }
 
 .selectWithIcon select {

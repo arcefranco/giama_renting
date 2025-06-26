@@ -7,8 +7,8 @@ const menuItems = [
     title: "Vehículos",
     items: [
           { label: "Formulario de ingreso", to: "/vehiculos" },
-          { label: "Reporte vehículos", to: "/vehiculosReporte" },
-          { label: "Reporte fichas de vehículos", to: "/vehiculos/ficha/reporte" }
+          { label: "Listado vehículos", to: "/vehiculosReporte" },
+          { label: "Listado fichas", to: "/vehiculos/ficha/reporte" }
         ],
 /*     submenus: [
       {
@@ -36,21 +36,28 @@ const menuItems = [
     ]
   },
   {
-   title: "Costos",
-   items: [
-     { label: "Conceptos de costos", to: "/costos/alta" },
-     { label: "Ingresos/egresos prorrateados", to: "/costos/prorrateoIE" },
-   ]
- },
-  {
    title: "Alquileres",
    items: [
     { label: "Alta de contrato", to: "/alquileres/contrato" },
     { label: "Listado de alquileres", to: "/alquileres/reporte" },
     { label: "Listado de contratos", to: "/alquileres/contrato/reporte" },
-    { label: "Formas de cobro", to: "/alquileres/formasDeCobro" },
+
    ]
- }
+  },
+  {
+   title: "Parámetros",
+   items: [
+    { label: "Formas de cobro", to: "/alquileres/formasDeCobro" }, 
+     { label: "Conceptos de costos", to: "/costos/alta" },
+   ]
+ },
+  {
+   title: "Costos/Ingresos",
+   items: [
+     { label: "Ingresos/egresos prorrateados", to: "/costos/prorrateoIE" },
+     { label: "Carga ingresos/egresos", to: "/costos/prorrateoIE" },
+   ]
+ },
  ,
   {
    title: "Usuarios",

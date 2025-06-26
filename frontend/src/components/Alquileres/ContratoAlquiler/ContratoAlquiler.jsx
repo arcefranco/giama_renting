@@ -145,7 +145,7 @@ const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e =
 const customStyles = {
   container: (provided) => ({
     ...provided,
-    width: '16rem'
+    width: '22rem'
   })
 };
 const handleChangeContrato = (e) => {
@@ -260,7 +260,10 @@ const submitUpdate = async (e) => {
     )}
     <div className={styles.container}>
       <h2>Datos del contrato</h2>
-        <form action="" className={styles.form}>
+        <form action="" className={styles.form} style={{
+        gridTemplateColumns: "1fr 1fr"
+        }}>
+        
         <div className={styles.inputContainer}>
           <span>Vehículo</span>
           <Select
@@ -284,7 +287,7 @@ const submitUpdate = async (e) => {
         <div className={styles.inputWrapper}>
           <span>Clientes</span>
           <div className={styles.selectWithIcon}>
-            <select name="id_cliente" disabled={id ? true : false} value={formContrato["id_cliente"]} onChange={handleChangeContrato}>
+            <select  name="id_cliente" disabled={id ? true : false} value={formContrato["id_cliente"]} onChange={handleChangeContrato}>
               <option value={""} disabled selected>{"Seleccione un cliente"}</option>
               {
                 clientes?.length && clientes.map(e => (
