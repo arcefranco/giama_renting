@@ -96,12 +96,8 @@ export const postAlquiler = async (req, res) => {
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde_alquiler} hasta: ${fecha_hasta_alquiler}`;
-  let fecha_desde_parseada = formatearFechaISO(fecha_desde_alquiler);
-  let fecha_hasta_parseada = formatearFechaISO(fecha_hasta_alquiler);
   console.log("fecha_desde_alquiler: ", fecha_desde_alquiler);
   console.log("fecha_hasta_alquiler: ", fecha_hasta_alquiler);
-  console.log("fecha_desde_parseada: ", fecha_desde_parseada);
-  console.log("fecha_hasta_parseada: ", fecha_hasta_parseada);
   return res.send({ status: true, message: "Prueba fechas alta de alquiler" });
 
   //buscar si el vehiculo está vendido
