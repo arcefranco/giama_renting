@@ -19,6 +19,7 @@ import { addDays, parseISO } from 'date-fns';
 import Select from 'react-select';
 import add from '../../../assets/add.png'
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo.jsx';
+import { formatearFechaISO } from '../../../../../backend/helpers/formatearFechaISO.js';
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   minDateContrato, maxDateContrato }) => {
@@ -148,7 +149,11 @@ useEffect(() => {
   
 }, [modoContrato, minDateContrato, maxDateContrato,
 alquilerByIdContrato, contratoById])
-
+const toLocalDateOnly = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0); // asegura que no tenga hora residual
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 useEffect(() => {
       setForm({
       ...form,
@@ -238,7 +243,12 @@ const handleSubmit = async (e) => {
     if (modoContrato) {
       onSubmitFinal(form); 
     } else {
-      dispatch(postAlquiler(form));
+      const formFixed = {
+      ...form,
+      fecha_desde_alquiler: toLocalDateOnly(form.fecha_desde_alquiler),
+      fecha_hasta_alquiler: toLocalDateOnly(form.fecha_hasta_alquiler),
+      }
+      dispatch(postAlquiler(formFixed));
     }
 } 
   return (
