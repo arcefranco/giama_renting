@@ -98,7 +98,6 @@ export const postAlquiler = async (req, res) => {
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde_alquiler} hasta: ${fecha_hasta_alquiler}`;
   console.log("fecha_desde_alquiler: ", fecha_desde_alquiler);
   console.log("fecha_hasta_alquiler: ", fecha_hasta_alquiler);
-  return res.send({ status: true, message: "Prueba fechas alta de alquiler" });
 
   //buscar si el vehiculo está vendido
   try {
@@ -251,8 +250,8 @@ export const postAlquiler = async (req, res) => {
         replacements: [
           id_vehiculo,
           id_cliente,
-          fecha_desde_parseada,
-          fecha_hasta_parseada,
+          fecha_desde_alquiler,
+          fecha_hasta_alquiler,
           importe_neto,
           importe_iva,
           importe_total,
