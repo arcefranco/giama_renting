@@ -131,6 +131,9 @@ export const costosSlice = createSlice({
       state.isError = false;
       state.message = "";
     },
+    resetCostosVehiculo: (state) => {
+      state.costos_ingresos_vehiculo = [];
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getCuentasContables.pending, (state) => {
@@ -271,5 +274,5 @@ export const costosSlice = createSlice({
     });
   },
 });
-export const { reset } = costosSlice.actions;
+export const { reset, resetCostosVehiculo } = costosSlice.actions;
 export default costosSlice.reducer;

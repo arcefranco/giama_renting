@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import DataGrid, {Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
-import { getModelos, getProveedoresGPS , getSucursales} from '../../reducers/Generales/generalesSlice';
+import { getModelos, getProveedoresGPS , getSucursales, getEstados} from '../../reducers/Generales/generalesSlice';
 import styles from "./ReporteVehiculos.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
@@ -16,6 +16,7 @@ useEffect(() => {
         dispatch(getModelos()),
         dispatch(getProveedoresGPS()),
         dispatch(getSucursales()),
+        dispatch(getEstados()),
         locale('es')
     ])
 
@@ -27,25 +28,41 @@ const {
     isSuccess,
     isLoading
 } = useSelector((state) => state.vehiculosReducer)
-const {modelos, proveedoresGPS, sucursales} = useSelector(state => state.generalesReducer)
+const {modelos, proveedoresGPS, sucursales, estados} = useSelector(state => state.generalesReducer)
 const [vehiculosConEstado, setVehiculosConEstado] = useState(null)
 
 useEffect(() => {
-if(vehiculos){
-  setVehiculosConEstado(vehiculos?.map(v => {
-  const dominio_visible = v.dominio
-  ? v.dominio
-  : v.dominio_provisorio
-  ? v.dominio_provisorio
-  : "SIN DOMINIO";
+  if (vehiculos && estados?.length) {
+    setVehiculosConEstado(
+      vehiculos.map((v) => {
+        const dominio_visible = v.dominio
+          ? v.dominio
+          : v.dominio_provisorio
+          ? v.dominio_provisorio
+          : "SIN DOMINIO";
 
-  return {
-    ...v,
-    dominio_visible
-  };
-}))
-}
-}, [vehiculos])
+        let estado_nombre = "";
+
+        if (v.fecha_venta) {
+          estado_nombre = "Vendido";
+        } else if (v.vehiculo_alquilado === 1) {
+          estado_nombre = "Alquilado";
+        } else if (v.vehiculo_reservado === 1) {
+          estado_nombre = "Reservado";
+        } else {
+          const estado = estados.find((e) => e.id === v.estado_actual);
+          estado_nombre = estado?.nombre || "Sin estado";
+        }
+
+        return {
+          ...v,
+          dominio_visible,
+          estado_nombre, // lo usamos para filtrar
+        };
+      })
+    );
+  }
+}, [vehiculos, estados]);
 
 const getNombreModelo = (id) => {
   const modelo = modelos.find((m) => m.id === id); 
@@ -151,9 +168,18 @@ return (
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
         <Column
-        dataField="estado"
-        caption="Estado actual"
+        dataField="estado_nombre"
+        caption="Estado"
         width={160}
+        calculateDisplayValue={(rowData) => {
+        
+        if (rowData.fecha_venta) return "Vendido";
+        if (rowData.vehiculo_alquilado === 1) return "Alquilado";
+        if (rowData.vehiculo_reservado === 1) return "Reservado";
+
+        const estado = estados?.find((e) => e.id === rowData.estado_actual);
+        return estado?.nombre || "Sin estado";
+        }}
         cellRender={({ data }) => renderEstadoVehiculo(data)}
         />
         <Column dataField="id" caption="ID" width={50} />

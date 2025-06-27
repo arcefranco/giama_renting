@@ -1,7 +1,8 @@
 import React, {useEffect, useState, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux';
-import { getCostosIngresosByIdVehiculo, getConceptosCostos, postCostos_Ingresos, reset } from '../../reducers/Costos/costosSlice';
-import {getVehiculosById} from '../../reducers/Vehiculos/vehiculosSlice'
+import { getCostosIngresosByIdVehiculo, getConceptosCostos, 
+  postCostos_Ingresos, reset, resetCostosVehiculo } from '../../reducers/Costos/costosSlice.js';
+import {getVehiculos, getVehiculosById, resetVehiculo} from '../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
 import DataGrid, {Column, Scrolling, Summary, TotalItem} from "devextreme-react/data-grid"
@@ -11,6 +12,8 @@ import styles from "./IngresosEgresos.module.css"
 import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
+import Select from 'react-select';
+
 
 
 const IngresosEgresos = () => {  
@@ -20,10 +23,10 @@ const gridRef = useRef(null);
 const dispatch = useDispatch()
 const {isError, isSuccess, isLoading, message, 
 costos_ingresos_vehiculo, conceptos} = useSelector((state) => state.costosReducer)
-const {vehiculo} = useSelector((state) => state.vehiculosReducer)
+const {vehiculo, vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
 const [form, setForm] = useState({
-    id_vehiculo: id,
+    id_vehiculo: id ? id : "",
     fecha: '',
     id_concepto: '',
     comprobante: '',
@@ -34,6 +37,7 @@ const [form, setForm] = useState({
     cuenta: '',
     cuenta_secundaria: ''
 })
+const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
     const pageCount = Math.ceil(costos_ingresos_vehiculo.length / 5);
@@ -42,12 +46,20 @@ useEffect(() => {
 }, [costos_ingresos_vehiculo]);
 useEffect(() => {
   Promise.all([
-    dispatch(getCostosIngresosByIdVehiculo({id: id})),
-    dispatch(getVehiculosById({id: id})),
     dispatch(getConceptosCostos()),
     dispatch(getModelos()),
+    dispatch(getVehiculos()),
     locale('es')
   ])
+  if(id){
+    dispatch(getCostosIngresosByIdVehiculo({id: id})),
+    dispatch(getVehiculosById({id: id}))
+  }
+  return () => {
+    dispatch(reset())
+    dispatch(resetCostosVehiculo())
+    dispatch(resetVehiculo())
+  }
 }, [])
 useEffect(() => {
 
@@ -64,8 +76,8 @@ useEffect(() => {
         })
         dispatch(getCostosIngresosByIdVehiculo({id: id}))
         dispatch(reset())
-    }
-    if(isSuccess){
+  }
+  if(isSuccess){
       toast.success(message, {
         position: "bottom-center",
         autoClose: 5000,
@@ -77,23 +89,69 @@ useEffect(() => {
         theme: "colored",
         })
         dispatch(reset())
-        setForm({
-        id_vehiculo: id,
-        fecha: '',
-        id_concepto: '',
-        comprobante: '',
-        importe_neto: '',
-        importe_iva: '',
-        importe_total: '',
-        observacion: '',
-        cuenta: '',
-        cuenta_secundaria: ''
-        })
-    }
 
-  }, [isError, isSuccess]) 
+        if(id){
+          setForm({
+          id_vehiculo: id,
+          fecha: '',
+          id_concepto: '',
+          comprobante: '',
+          importe_neto: '',
+          importe_iva: '',
+          importe_total: '',
+          observacion: '',
+          cuenta: '',
+          cuenta_secundaria: ''
+          })
+        }else if (!id){
+          setForm({
+          id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
+          fecha: '',
+          id_concepto: '',
+          comprobante: '',
+          importe_neto: '',
+          importe_iva: '',
+          importe_total: '',
+          observacion: '',
+          cuenta: '',
+          cuenta_secundaria: ''
+          })
+        }
+  }
+
+}, [isError, isSuccess]) 
+
+useEffect(() => {
+  if(vehiculos?.length){
+    setOpcionesVehiculos(vehiculos?.filter(v => {return !v.fecha_venta})?.map(e => {
+    
+      return {
+        value: e.id,
+        label: (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
+            <span>{e.dominio ? e.dominio : 
+        e.dominio_provisorio ? e.dominio_provisorio : ""} - {modelos?.find(m => m.id == e.modelo)?.nombre}</span>
+            {renderEstadoVehiculo(e, "chico")}
+          </div>
+        )
+      };
+    }))
+  }
+}, [vehiculos, modelos])
+
+useEffect(() => {
+  if(!id && form.id_vehiculo){
+    dispatch(getCostosIngresosByIdVehiculo({id: form.id_vehiculo})),
+    dispatch(getVehiculosById({id: form.id_vehiculo}))
+  }
+}, [form.id_vehiculo])
+
 const handleActualizar = ( ) => {
-  dispatch(getCostosIngresosByIdVehiculo({id: id}))
+  if(!id){
+    dispatch(getCostosIngresosByIdVehiculo({id: form.id_vehiculo}))
+  }else{
+    dispatch(getCostosIngresosByIdVehiculo({id: id}))
+  }
 }
 const handleChange = (e) => {
   const { name, value } = e.target;
@@ -136,6 +194,17 @@ const renderFecha = (data) => {
   let fechaSplit = data.value.split("-")
   return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
 }
+const renderConcepto = (data) => {
+  const idConcepto = data.data.id_concepto
+  return <span>{conceptos.find(e => e.id == idConcepto)?.nombre}</span>
+}
+
+const customStyles = {
+  container: (provided) => ({
+    ...provided,
+    width: '22rem'
+  })
+};
 return (
 <div className={styles.container}>
 <ToastContainer/>
@@ -150,13 +219,42 @@ return (
     </div>
   )}
     <h2>Ingresos y egresos del vehículo</h2>
+    {
+      vehiculo?.length && modelos?.length ?
+    <div>
     <h2 style={{display: "flex", alignItems: "anchor-center"}}> 
-{vehiculo?.length && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
-vehiculo?.length &&  vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""}{" "}-{" "}
-{vehiculo && modelos && modelos.find(e => e.id === vehiculo[0]["modelo"])?.nombre}{" "}-{" "}
-{vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
+    {vehiculo?.length && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
+    vehiculo?.length &&  vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""}{" "}-{" "}
+    {vehiculo && modelos && modelos?.find(e => e.id === vehiculo[0]["modelo"])?.nombre}{" "}-{" "}
+    {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
       
       </h2>
+
+    </div>
+    :
+    <h2>Seleccionar un vehículo</h2>
+
+    }
+          { !id && <div className={styles.inputContainer}>
+          <span>Vehículo</span>
+          <Select
+            options={opcionesVehiculos}
+            value={
+              opcionesVehiculos?.find(
+                (opt) => String(opt.value) === String(form.id_vehiculo)
+                      ) || null
+            }
+            onChange={(option) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                id_vehiculo: option?.value || "",
+              }));
+            }}
+            placeholder="Seleccione un vehículo"
+            styles={customStyles}
+          />
+        </div> 
+        }
     <button onClick={handleActualizar} className={styles.refreshButton}>
     🔄 Actualizar
     </button>
@@ -173,6 +271,7 @@ vehiculo?.length &&  vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_prov
         columnAutoWidth={true}>
         <Scrolling mode="standard"/>
         <Column dataField="fecha" sortOrder="desc" cellRender={renderFecha} alignment="center" caption="Fecha"/>
+        <Column dataField="id_concepto" sortOrder="desc" cellRender={renderConcepto} alignment="center" caption="Concepto"/>
         <Column dataField="comprobante" caption="Comprobante"/>
         <Column dataField="importe_neto" alignment="right" caption="Importe Neto"/>
         <Column dataField="importe_iva" alignment="right" caption="IVA"/>

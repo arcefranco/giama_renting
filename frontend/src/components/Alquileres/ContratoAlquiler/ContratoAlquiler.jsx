@@ -129,7 +129,7 @@ fechaHastaPickers.setHours(0, 0, 0, 0);
 }
 }, [contratoById, id]);
 
-const opcionesVehiculos = vehiculos.filter(v => {return !v.fecha_venta}).map(e => {
+const opcionesVehiculos = vehiculos?.filter(v => {return !v.fecha_venta}).map(e => {
 
   return {
     value: e.id,

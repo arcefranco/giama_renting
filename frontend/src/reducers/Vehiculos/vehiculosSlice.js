@@ -161,6 +161,9 @@ export const vehiculosSlice = createSlice({
       state.isError = false;
       state.message = "";
     },
+    resetVehiculo: (state) => {
+      state.vehiculo = [];
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getVehiculos.pending, (state) => {
@@ -323,5 +326,5 @@ export const vehiculosSlice = createSlice({
     });
   },
 });
-export const { reset } = vehiculosSlice.actions;
+export const { reset, resetVehiculo } = vehiculosSlice.actions;
 export default vehiculosSlice.reducer;
