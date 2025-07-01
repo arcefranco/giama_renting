@@ -63,6 +63,7 @@ export const getConceptosCostos = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
+    console.log(resultado);
     return res.send(resultado);
   } catch (error) {
     return res.send(error);

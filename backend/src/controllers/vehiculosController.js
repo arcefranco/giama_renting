@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
-import { giama_renting } from "../../helpers/connection.js";
+import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
-
+import { asientoContable } from "../../helpers/asientoContable.js";
 import {
   PutObjectCommand,
   S3Client,
@@ -87,6 +87,11 @@ export const getVehiculosById = async (req, res) => {
 };
 
 export const postVehiculo = async (req, res) => {
+  /** falta hacer asiento de costo:
+   * costo neto e iva (calculado acá) al debe
+   * total al haber
+   * hacer también asientos secundarios
+   */
   const {
     modelo,
     dominio,
@@ -99,15 +104,31 @@ export const postVehiculo = async (req, res) => {
     color,
     sucursal,
     nro_factura_compra,
+    usuario,
   } = req.body;
   console.log(req.body);
+  let cuentaRODN;
+  let cuentaRODT;
+  let cuentaIC21;
+  let cuentaIC22;
+  let cuentaRDN2;
+  let cuentaRDT2;
+  let NroAsiento;
+  let NroAsientoSecundario;
+  let transaction_giama_renting = await giama_renting.transaction();
+  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let insertId;
   let meses_amortizacion;
+  const importe_iva = parseFloat(costo) * 0.21; //
+  const importe_total = importe_iva + parseFloat(costo);
   if (!dominio && !dominio_provisorio)
     return res.send({
       status: false,
       message: "El vehículo debe tener dominio o dominio provisorio",
     });
+  let concepto = `Ingreso del vehiculo - ${
+    dominio ? dominio : dominio_provisorio
+  }`; //A REVISAR
   try {
     const result = await giama_renting.query(
       `SELECT valor_str FROM parametros WHERE codigo = "AMRT"`,
@@ -122,9 +143,110 @@ export const postVehiculo = async (req, res) => {
   }
   try {
     const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "RODN"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaRODN = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "RODT"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaRODT = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaIC21 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "IC22"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaIC22 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "RDN2"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaRDN2 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = "RDT2"`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    cuentaRDT2 = result[0]["valor_str"];
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al buscar un parámetro" });
+  }
+  //buscar numeros de asiento y asiento secundario
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasiento(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT }
+    );
+    NroAsiento = result[2][0].nroAsiento;
+  } catch (error) {
+    throw `Error al obtener número de asiento: ${error}`;
+  }
+  //obtengo numero de asiento secundario
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasientosecundario(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT }
+    );
+    NroAsientoSecundario = result[2][0].nroAsiento;
+  } catch (error) {
+    throw `Error al obtener número de asiento: ${error}`;
+  }
+  try {
+    const result = await giama_renting.query(
       `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
-        kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, nro_factura_compra, estado_actual)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, 
+        nro_factura_compra, estado_actual, usuario_ultima_modificacion)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -143,12 +265,15 @@ export const postVehiculo = async (req, res) => {
           sucursal,
           nro_factura_compra,
           1,
+          usuario,
         ],
+        transaction: transaction_giama_renting,
       }
     );
     insertId = result[0]; // este es el id insertado
   } catch (error) {
     console.log(error);
+    transaction_giama_renting.rollback();
     const { status, body } = handleSqlError(
       error,
       "vehículo",
@@ -171,9 +296,128 @@ export const postVehiculo = async (req, res) => {
     try {
       await s3.send(command);
     } catch (err) {
+      transaction_giama_renting.rollback();
       console.error("Error al subir imagen:", err);
     }
   }
+  //asientos
+  try {
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaRODN,
+      "D",
+      costo, //costo neto vehiculo
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: "Error al generar el asiento contable",
+    });
+  }
+  try {
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIC21,
+      "D",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: "Error al generar el asiento contable",
+    });
+  }
+  try {
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaRODT,
+      "H",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: "Error al generar el asiento contable",
+    });
+  }
+  //asientos secundarios
+  try {
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaRDN2,
+      "D",
+      costo, //costo neto vehiculo
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: "Error al generar el asiento contable",
+    });
+  }
+  try {
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaIC22,
+      "D",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: "Error al generar el asiento contable",
+    });
+  }
+  try {
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaRDT2,
+      "H",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: "Error al generar el asiento contable",
+    });
+  }
+  transaction_giama_renting.commit();
+  transaction_pa7_giama_renting.commit();
   return res.send({
     status: true,
     message: "El vehículo ha sido cargado con éxito",
@@ -353,12 +597,13 @@ export const getCostosPeriodo = async (req, res) => {
   if (!mes && !anio) {
     try {
       const result = await giama_renting.query(
-        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, conceptos_costos.id AS id_costo,
+        `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, conceptos_costos.id AS id_costo, conceptos_costos.activable,
         costos_ingresos.comprobante, costos_ingresos.fecha,
         costos_ingresos.importe_neto
         FROM costos_ingresos
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
         WHERE costos_ingresos.id_vehiculo = ?
+        AND conceptos_costos.activable = 0
         ORDER BY 
 	      (costos_ingresos.importe_neto < 0),
 	      costos_ingresos.importe_neto DESC`,
@@ -367,7 +612,15 @@ export const getCostosPeriodo = async (req, res) => {
           replacements: [id_vehiculo],
         }
       );
-      return res.send(result);
+      const agrupado = {};
+
+      result.forEach((costo) => {
+        const nombre = costo.nombre;
+        if (!agrupado[nombre]) agrupado[nombre] = [];
+        agrupado[nombre].push(costo);
+      });
+      console.log(agrupado);
+      return res.send(agrupado);
     } catch (error) {
       console.log(error);
       return res.send({
@@ -379,13 +632,14 @@ export const getCostosPeriodo = async (req, res) => {
     try {
       const result = await giama_renting.query(
         `
-        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, conceptos_costos.id AS id_costo,
+        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, conceptos_costos.id AS id_costo, conceptos_costos.activable,
         costos_ingresos.comprobante, costos_ingresos.fecha,
         costos_ingresos.importe_neto
         FROM costos_ingresos
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
         WHERE costos_ingresos.id_vehiculo = ?
         AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
+        AND conceptos_costos.activable = 0
         ORDER BY 
 	      (costos_ingresos.importe_neto < 0),
 	      costos_ingresos.importe_neto DESC`,
@@ -394,7 +648,15 @@ export const getCostosPeriodo = async (req, res) => {
           replacements: [id_vehiculo, anio, mes],
         }
       );
-      return res.send(result);
+      const agrupado = {};
+
+      result.forEach((costo) => {
+        const nombre = costo.nombre;
+        if (!agrupado[nombre]) agrupado[nombre] = [];
+        agrupado[nombre].push(costo);
+      });
+
+      return res.send(agrupado);
     } catch (error) {
       console.log(error);
       return res.send({
@@ -402,6 +664,58 @@ export const getCostosPeriodo = async (req, res) => {
         message: "Hubo un error al obtener la ficha de costos del vehículo",
       });
     }
+  }
+};
+
+export const getCostoNetoVehiculo = async (req, res) => {
+  const { id_vehiculo, mes, anio } = req.body;
+
+  if (!id_vehiculo) {
+    return res.send({ status: false, message: "Falta id del vehículo" });
+  }
+
+  let fechaLimite = null;
+  if (mes && anio) {
+    // Construir último día del mes
+    const ultimoDia = new Date(anio, mes, 0); // mes ya es 1-based
+    fechaLimite = ultimoDia.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+  } else {
+    // Si no se especifica periodo, usar hoy
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaLimite = hoy.toISOString().slice(0, 10);
+  }
+
+  const query = `
+    SELECT
+      v.id AS id_vehiculo,
+      v.precio_inicial,
+      COALESCE(SUM(ci.importe_neto), 0) AS total_costos_activables,
+      v.precio_inicial + COALESCE(SUM(ABS(ci.importe_neto)), 0) AS costo_neto_total
+    FROM vehiculos v
+    LEFT JOIN costos_ingresos ci 
+      ON ci.id_vehiculo = v.id
+      AND ci.fecha <= ?
+    LEFT JOIN conceptos_costos cc 
+      ON ci.id_concepto = cc.id
+      AND cc.activable = 1
+    WHERE v.id = ?
+    GROUP BY v.id
+  `;
+
+  try {
+    const [result] = await giama_renting.query(query, {
+      type: QueryTypes.SELECT,
+      replacements: [fechaLimite, id_vehiculo],
+    });
+
+    return res.send(result || { costo_neto_total: 0 });
+  } catch (error) {
+    console.error(error);
+    return res.send({
+      status: false,
+      message: "Error al calcular el costo neto del vehículo",
+    });
   }
 };
 

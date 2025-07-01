@@ -12,6 +12,7 @@ import {
   getAllAlquileresPeriodo,
   getAmortizacion,
   getAllAmortizaciones,
+  getCostoNetoVehiculo,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 
@@ -31,6 +32,7 @@ vehiculosRouter.get("/getImagenesVehiculos/:id", getImagenesVehiculos);
 vehiculosRouter.post("/eliminarImagenes", eliminarImagenes);
 vehiculosRouter.post("/updateVehiculo", updateVehiculo);
 vehiculosRouter.post("/getCostosPeriodo", getCostosPeriodo);
+vehiculosRouter.post("/getCostoNetoVehiculo", getCostoNetoVehiculo);
 vehiculosRouter.post("/getAlquileresPeriodo", getAlquileresPeriodo);
 vehiculosRouter.post("/getAllCostosPeriodo", getAllCostosPeriodo);
 vehiculosRouter.post("/getAllAlquileresPeriodo", getAllAlquileresPeriodo);
