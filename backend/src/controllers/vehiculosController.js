@@ -719,6 +719,69 @@ export const getCostoNetoVehiculo = async (req, res) => {
   }
 };
 
+export const getSituacionFlota = async (req, res) => {
+  const { mes, anio } = req.body;
+
+  let fechaLimite = new Date(); // Por defecto, hoy
+
+  if (mes && anio) {
+    fechaLimite = new Date(anio, mes, 0); // Último día del mes
+  }
+
+  const fechaLimiteSQL = fechaLimite.toISOString().slice(0, 10);
+
+  const query = `
+SELECT
+  v.id AS id_vehiculo,
+  v.fecha_ingreso,
+  v.dominio,
+  v.dominio_provisorio,
+  COUNT(a.id) AS cantidad_alquileres,
+  SUM(
+    DATEDIFF(
+      LEAST(?, a.fecha_hasta),
+      GREATEST(v.fecha_ingreso, a.fecha_desde)
+    )
+  ) AS dias_alquilado,
+  DATEDIFF(?, v.fecha_ingreso) AS dias_en_flota,
+  ROUND(
+    (SUM(
+      DATEDIFF(
+        LEAST(?, a.fecha_hasta),
+        GREATEST(v.fecha_ingreso, a.fecha_desde)
+      )
+    ) / NULLIF(DATEDIFF(?, v.fecha_ingreso), 0)) * 100,
+    2
+  ) AS porcentaje_ocupacion
+FROM vehiculos v
+LEFT JOIN alquileres a ON a.id_vehiculo = v.id
+  AND a.fecha_desde <= ?
+  AND a.fecha_hasta >= v.fecha_ingreso
+GROUP BY v.id, v.fecha_ingreso
+  `;
+
+  try {
+    const result = await giama_renting.query(query, {
+      type: QueryTypes.SELECT,
+      replacements: [
+        fechaLimiteSQL,
+        fechaLimiteSQL,
+        fechaLimiteSQL,
+        fechaLimiteSQL,
+        fechaLimiteSQL,
+      ],
+    });
+
+    return res.send(result);
+  } catch (error) {
+    console.error(error);
+    return res.send({
+      status: false,
+      message: "Error al obtener la situación de la flota",
+    });
+  }
+};
+
 export const getAlquileresPeriodo = async (req, res) => {
   const { id_vehiculo, mes, anio } = req.body;
 
