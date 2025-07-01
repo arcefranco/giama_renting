@@ -11,6 +11,7 @@ const initialState = {
   fichaAllAmortizaciones: null,
   amortizacion: null,
   amortizacion_todos_movimientos: null,
+  costo_neto_vehiculo: null,
   vehiculo: null,
   isError: false,
   isSuccess: false,
@@ -82,9 +83,26 @@ export const getCostosPeriodo = createAsyncThunk(
   "getCostosPeriodo",
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.getCostosPeriodo(data);
-    if (Array.isArray(result)) {
+    if (
+      typeof result === "object" &&
+      result !== null &&
+      !Array.isArray(result)
+    ) {
       return result;
     } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getCostoNetoVehiculo = createAsyncThunk(
+  "getCostoNetoVehiculo",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getCostoNetoVehiculo(data);
+    if (result.hasOwnProperty("costo_neto_total")) {
+      return result["costo_neto_total"];
+    } else {
+      console.log(result);
       return rejectWithValue(result);
     }
   }
@@ -251,6 +269,20 @@ export const vehiculosSlice = createSlice({
     builder.addCase(getCostosPeriodo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getCostoNetoVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getCostoNetoVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.costo_neto_vehiculo = action.payload;
+    });
+    builder.addCase(getCostoNetoVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
       state.message = action.payload.message;
     });
     builder.addCase(getAlquileresPeriodo.pending, (state) => {

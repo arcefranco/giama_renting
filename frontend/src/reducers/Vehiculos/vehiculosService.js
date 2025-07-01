@@ -103,7 +103,11 @@ const getCostosPeriodo = async (data) => {
         withCredentials: true,
       }
     );
-    if (Array.isArray(response.data)) {
+    if (
+      typeof response.data === "object" &&
+      response.data !== null &&
+      !Array.isArray(response.data)
+    ) {
       return response.data;
     } else {
       console.log("response: ", response);
@@ -111,6 +115,29 @@ const getCostosPeriodo = async (data) => {
     }
   } catch (error) {
     return ServiceErrorHandler(error, "vehiculos/getCostosPeriodo");
+  }
+};
+const getCostoNetoVehiculo = async (data) => {
+  let header = {};
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getCostoNetoVehiculo",
+      data,
+      {
+        ...header,
+        withCredentials: true,
+      }
+    );
+    let resultado = response.data;
+    console.log("costo_neto_vehiculo: ", response.data);
+    if (resultado.hasOwnProperty("costo_neto_total")) {
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return ServiceErrorHandler(error, "vehiculos/getCostoNetoVehiculo");
   }
 };
 const getAlquileresPeriodo = async (data) => {
@@ -208,6 +235,7 @@ const vehiculosService = {
   updateVehiculo,
   eliminarImagenes,
   getCostosPeriodo,
+  getCostoNetoVehiculo,
   getAlquileresPeriodo,
   getAllAlquileresPeriodo,
   getAllCostosPeriodo,

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {getAllCostosPeriodo, getAllAlquileresPeriodo, getAllAmortizaciones} from '../../../reducers/Vehiculos/vehiculosSlice'
-import {getConceptosCostos} from '../../../reducers/Costos/costosSlice'
+import { getConceptosCostos } from '../../../reducers/Costos/costosSlice';
 import styles from './FichaVehiculo.module.css'
 import { ClipLoader } from 'react-spinners';
 import DataGrid, {Column, Scrolling, Export, SearchPanel, 
@@ -159,7 +159,7 @@ const columnas = [
 const renderDominio = (data) => {
     console.log("THIS: ", data.data)
     return (
-      data.data.dominio ? 
+      data.data?.dominio ? 
       <button
         onClick={() =>{
             if(!form["anio"] && !form["mes"]){
@@ -174,7 +174,7 @@ const renderDominio = (data) => {
         {data.data.dominio}
       </button>
       :
-      data.data.dominio_provisorio ?
+      data.data?.dominio_provisorio ?
       <button
         onClick={() =>{
             if(!form["anio"] && !form["mes"]){

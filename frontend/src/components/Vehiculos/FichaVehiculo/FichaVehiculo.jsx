@@ -2,8 +2,9 @@ import React, {useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {useParams} from 'react-router-dom';
 import {getVehiculosById, getCostosPeriodo, 
-getAlquileresPeriodo, getAmortizacion} from '../../../reducers/Vehiculos/vehiculosSlice'
+getAlquileresPeriodo, getAmortizacion, getCostoNetoVehiculo} from '../../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../../reducers/Generales/generalesSlice'
+import { getConceptosCostos } from '../../../reducers/Costos/costosSlice';
 import styles from './FichaVehiculo.module.css'
 import { getTodayDate } from '../../../helpers/getTodayDate';
 import { formatearFecha } from '../../../helpers/formatearFecha';
@@ -14,20 +15,26 @@ const {id, anio, mes} = useParams()
 const dispatch = useDispatch()
 const [expandidoAlquiler, setExpandidoAlquiler] = useState(false);
 const [expandidoAmortizacion, setExpandidoAmortizacion] = useState(false);
-const [costosAgrupados, setCostosAgrupados] = useState([])
 const [expandidoCostos, setExpandidoCostos] = useState({});
 const [form, setForm] = useState({
     id_vehiculo: id,
     mes: mes ? mes : "",
     anio: anio ? anio : ""
 })
+const [ocupacion, setOcupacion] = useState({
+  dias_en_flota: 0,
+  dias_alquilado: 0,
+  porcentaje_ocupacion: 0,
+});
 useEffect(() => {
 Promise.all([
     dispatch(getVehiculosById({id: id, fecha: getTodayDate()})),
     dispatch(getAmortizacion({id: id})),
+    dispatch(getCostoNetoVehiculo(form)),
     dispatch(getModelos()),
     dispatch(getAlquileresPeriodo(form)),
-    dispatch(getCostosPeriodo(form))
+    dispatch(getCostosPeriodo(form)),
+    dispatch(getConceptosCostos())
 ])
 },[])
 const toggleDetalle = (nombre) => {
@@ -63,19 +70,14 @@ const periodos = generarPeriodos();
 
 
 const { vehiculo, isError, isSuccess, isLoading, message, fichaCostos,
-fichaAlquileres, amortizacion, amortizacion_todos_movimientos } = useSelector(state => state.vehiculosReducer);
+fichaAlquileres, amortizacion, amortizacion_todos_movimientos, costo_neto_vehiculo } = useSelector(state => state.vehiculosReducer);
 const { modelos } = useSelector(state => state.generalesReducer);
+const { conceptos } = useSelector(state => state.costosReducer);
 const [filas, setFilas] = useState([])
 const [totalImporte, setTotalImporte] = useState(null)
 
 useEffect(() => {
   const filas = [];
-  setCostosAgrupados(fichaCostos?.reduce((acc, costo) => {
-  const nombre = costo.nombre;
-  if (!acc[nombre]) acc[nombre] = [];
-  acc[nombre].push(costo);
-  return acc;
-}, {}))
   if (fichaAlquileres?.length) {
   const totalDias = fichaAlquileres.reduce((acc, a) => {
   const importe = Number(a.importe_neto);
@@ -121,9 +123,46 @@ if (vehiculo?.length && form["mes"] && form["anio"]) {
 }, [fichaAlquileres, fichaCostos, vehiculo, amortizacion, amortizacion_todos_movimientos])
 
 useEffect(() => {
+  if (vehiculo?.[0]?.fecha_ingreso) {
+    const fechaIngreso = new Date(vehiculo[0].fecha_ingreso);
+    let fechaLimite;
+
+    if (form.mes && form.anio) {
+      // Si hay período, usamos el último día del mes especificado
+      fechaLimite = new Date(form.anio, form.mes, 0); // 0 -> último día del mes anterior al siguiente
+    } else {
+      // Si no hay período, usamos la fecha de hoy
+      fechaLimite = new Date();
+    }
+
+    fechaIngreso.setHours(0, 0, 0, 0);
+    fechaLimite.setHours(0, 0, 0, 0);
+
+    // Asegurarse de no generar negativos
+    const diffTime = fechaLimite - fechaIngreso;
+    const diasEnFlota = diffTime > 0 ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
+
+    const diasAlquilado = fichaAlquileres?.reduce((acc, alquiler) => {
+      return acc + Number(alquiler.dias_en_mes || 0);
+    }, 0);
+
+    const porcentajeOcupacion = diasEnFlota > 0
+      ? (diasAlquilado / diasEnFlota) * 100
+      : 0;
+
+    setOcupacion({
+      dias_en_flota: diasEnFlota,
+      dias_alquilado: diasAlquilado,
+      porcentaje_ocupacion: Math.round(porcentajeOcupacion * 100) / 100,
+    });
+  }
+}, [vehiculo, fichaAlquileres, form]);
+
+useEffect(() => {
     Promise.all([
         dispatch(getCostosPeriodo(form)),
-        dispatch(getAlquileresPeriodo(form))
+        dispatch(getAlquileresPeriodo(form)),
+        dispatch(getCostoNetoVehiculo(form))
     ])
 }, [form["mes"], form["anio"]])
 
@@ -166,6 +205,41 @@ function esNegativo(numero) {
       </option>
     ))}
   </select>
+  <div className={styles.resumenContainer}>
+  {/* Fila principal */}
+  <div style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '1rem',
+    fontWeight: 'bold'
+  }}>
+    <span>Costo del vehículo + gastos activos: </span>
+    <span>
+      {" "}{parseFloat(costo_neto_vehiculo).toLocaleString("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}
+    </span>
+  </div>
+
+  {/* Tanteador */}
+  <div className={styles.tanteador}>
+    <div>
+      <div style={{ fontWeight: 'bold' }}>{ocupacion.dias_en_flota}</div>
+      <div style={{ color: '#555' }}>Días en flota</div>
+    </div>
+    <div>
+      <div style={{ fontWeight: 'bold' }}>{ocupacion.dias_alquilado}</div>
+      <div style={{ color: '#555' }}>Días alquilado</div>
+    </div>
+    <div>
+      <div style={{ fontWeight: 'bold' }}>{ocupacion.porcentaje_ocupacion}%</div>
+      <div style={{ color: '#555' }}>% Ocupación</div>
+    </div>
+  </div>
+</div>
   <div className={styles.fichaWrapper}>
   <span style={{
     "float": "right",
@@ -228,7 +302,7 @@ function esNegativo(numero) {
   );
 })}
 
-{costosAgrupados && Object.entries(costosAgrupados)?.map(([nombre, items]) => {
+{fichaCostos && Object.entries(fichaCostos)?.map(([nombre, items]) => {
       const total = items.reduce((acc, c) => acc + parseFloat(c.importe_neto), 0);
       return (
         <React.Fragment key={nombre}>

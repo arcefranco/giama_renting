@@ -63,6 +63,7 @@ export const getConceptosCostos = createAsyncThunk(
   "getConceptosCostos",
   async (data, { rejectWithValue }) => {
     const result = await costosService.getConceptosCostos();
+    console.log(result);
     if (Array.isArray(result)) {
       return result;
     } else {
@@ -199,14 +200,15 @@ export const costosSlice = createSlice({
       state.isLoading = true;
     });
     builder.addCase(getConceptosCostos.fulfilled, (state, action) => {
+      console.log("PAYLOAD: ", action.payload);
       state.isLoading = false;
-      state.isSuccess = action.payload.status;
-      state.message = action.payload.message;
+      state.isSuccess = true;
+      state.isError = false;
       state.conceptos = action.payload;
     });
     builder.addCase(getConceptosCostos.rejected, (state, action) => {
       state.isLoading = false;
-      state.isError = action.payload.status;
+      state.isError = true;
       state.message = action.payload.message;
     });
     builder.addCase(getConceptosCostosById.pending, (state) => {

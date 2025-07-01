@@ -146,3 +146,23 @@
   padding: 0.3rem 2rem;
   border-top: 1px solid #eee;
 }
+
+.resumenContainer {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 2rem;
+  background-color: #f9f9f9;
+  font-family: IBM;
+  font-size: 14px;
+  width: fit-content;
+  min-width: 300px
+}
+
+.tanteador{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  text-align: center;
+  font-size: 13px
+}

@@ -16,6 +16,7 @@ const dispatch = useDispatch()
     ])
   }, [])
   
+  const {username} = useSelector((state) => state.loginReducer)
 
   const [form, setFormData] = useState({
     modelo: '',
@@ -31,7 +32,8 @@ const dispatch = useDispatch()
     meses_amortizacion: '',
     color: '',
     sucursal: '',
-    nro_factura_compra: ''
+    nro_factura_compra: '',
+    usuario: username
     
   })
 
