@@ -1,4 +1,8 @@
-import { getFunction, postFunction } from "../axios/axiosFunctions";
+import {
+  getFunction,
+  postArrayFunction,
+  postFunction,
+} from "../axios/axiosFunctions";
 import axios from "axios";
 import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
 const getVehiculos = async () => {
@@ -140,6 +144,11 @@ const getCostoNetoVehiculo = async (data) => {
     return ServiceErrorHandler(error, "vehiculos/getCostoNetoVehiculo");
   }
 };
+
+const getSituacionFlota = async (data) => {
+  return postArrayFunction("vehiculos/getSituacionFlota", data);
+};
+
 const getAlquileresPeriodo = async (data) => {
   let header = {};
   try {
@@ -236,6 +245,7 @@ const vehiculosService = {
   eliminarImagenes,
   getCostosPeriodo,
   getCostoNetoVehiculo,
+  getSituacionFlota,
   getAlquileresPeriodo,
   getAllAlquileresPeriodo,
   getAllCostosPeriodo,

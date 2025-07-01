@@ -8,7 +8,8 @@ const menuItems = [
     items: [
           { label: "Formulario de ingreso", to: "/vehiculos" },
           { label: "Listado vehículos", to: "/vehiculosReporte" },
-          { label: "Listado fichas", to: "/vehiculos/ficha/reporte" }
+          { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
+          { label: "Situación de la flota", to: "/vehiculos/situacionFlota" }
         ],
 /*     submenus: [
       {

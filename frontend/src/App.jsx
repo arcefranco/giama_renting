@@ -28,6 +28,7 @@ import AltaPassword from './components/Usuarios/Password/AltaPassword';
 import RecoveryPass from './components/Usuarios/Password/RecoveryPass';
 import ContratoAlquiler from './components/Alquileres/ContratoAlquiler/ContratoAlquiler';
 import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteContratos';
+import SituacionFlota from './components/Vehiculos/SituacionFlota/SituacionFlota';
 function App() {
 
 
@@ -50,6 +51,7 @@ function App() {
     <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo/>}/>
     <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo/>}/>
     <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos/>}/>
+    <Route path="/vehiculos/situacionFlota" element={<SituacionFlota/>} />
     <Route path="/clientes" element={<ClientesForm/>}/>
     <Route path='/clientesReporte' element={<ReporteClientes/>}/>
     <Route path='/clientes/imagenes/:id' element={<ImagenesClientes/>}/>

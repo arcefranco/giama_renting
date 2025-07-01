@@ -4,6 +4,7 @@ import vehiculosService from "./vehiculosService.js";
 
 const initialState = {
   vehiculos: [],
+  situacionFlota: [],
   fichaCostos: null,
   fichaAlquileres: null,
   fichaAllCostos: null,
@@ -103,6 +104,18 @@ export const getCostoNetoVehiculo = createAsyncThunk(
       return result["costo_neto_total"];
     } else {
       console.log(result);
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getSituacionFlota = createAsyncThunk(
+  "getSituacionFlota",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getSituacionFlota(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
       return rejectWithValue(result);
     }
   }
@@ -281,6 +294,20 @@ export const vehiculosSlice = createSlice({
       state.costo_neto_vehiculo = action.payload;
     });
     builder.addCase(getCostoNetoVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getSituacionFlota.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getSituacionFlota.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.situacionFlota = action.payload;
+    });
+    builder.addCase(getSituacionFlota.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.message = action.payload.message;

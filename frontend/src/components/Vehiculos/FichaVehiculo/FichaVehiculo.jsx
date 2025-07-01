@@ -9,6 +9,7 @@ import styles from './FichaVehiculo.module.css'
 import { getTodayDate } from '../../../helpers/getTodayDate';
 import { formatearFecha } from '../../../helpers/formatearFecha';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
+import { generarPeriodos } from '../../../helpers/generarPeriodos';
 
 const FichaVehiculo = () => {
 const {id, anio, mes} = useParams()
@@ -43,32 +44,8 @@ const toggleDetalle = (nombre) => {
     [nombre]: !prev[nombre]
   }));
 };
-const nombresMeses = [
-  "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
-  "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
-];
-const generarPeriodos = () => {
-  const hoy = new Date();
-  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 6); // seis meses adelante
-  const inicio = new Date(2025, 0); // enero 2025
-  const periodos = [];
-
-  while (fin >= inicio) {
-    periodos.push({
-      mes: fin.getMonth() + 1,
-      anio: fin.getFullYear(),
-      nombreMes: nombresMeses[fin.getMonth()]
-    });
-    fin.setMonth(fin.getMonth() - 1);
-  }
-
-  return periodos;
-};
-
 
 const periodos = generarPeriodos();
-
-
 const { vehiculo, isError, isSuccess, isLoading, message, fichaCostos,
 fichaAlquileres, amortizacion, amortizacion_todos_movimientos, costo_neto_vehiculo } = useSelector(state => state.vehiculosReducer);
 const { modelos } = useSelector(state => state.generalesReducer);
