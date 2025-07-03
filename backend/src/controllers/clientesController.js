@@ -37,8 +37,28 @@ export const postCliente = async (req, res) => {
     celular,
     mail,
     notas,
+    //datero_cliente
+    composicion_familiar,
+    tiene_o_tuvo_vehiculo,
+    tipo_servicio,
+    certificado_domicilio,
+    score_veraz,
+    nivel_deuda,
+    situacion_deuda,
+    libre_de_deuda,
+    antecedentes_penales,
+    fecha_antecedentes,
+    cantidad_viajes_uber,
+    cantidad_viajes_cabify,
+    cantidad_viajes_didi,
+    antiguedad_uber,
+    antiguedad_cabify,
+    antiguedad_didi,
+    trabajos_anteriores,
+    observacion_perfil,
   } = req.body;
-  console.log("BODY: ", req.body);
+  let transaction = await giama_renting.transaction();
+  console.log("BODY postCliente: ", req.body);
   let insertId;
   try {
     const result = await giama_renting.query(
@@ -72,11 +92,13 @@ export const postCliente = async (req, res) => {
           mail,
           notas,
         ],
+        transaction: transaction,
       }
     );
     insertId = result[0];
   } catch (error) {
     console.log(error);
+    transaction.rollback();
     const { status, body } = handleSqlError(
       error,
       "cliente",
@@ -99,9 +121,69 @@ export const postCliente = async (req, res) => {
     try {
       await s3.send(command);
     } catch (err) {
+      transaction.rollback();
       console.error("Error al subir imagen:", err);
     }
   }
+  try {
+    await giama_renting.query(
+      `INSERT INTO datero_clientes (
+    id_cliente,
+    composicion_familiar,
+    tiene_o_tuvo_vehiculo,
+    tipo_servicio,
+    certificado_domicilio,
+    score_veraz,
+    nivel_deuda,
+    situacion_deuda,
+    libre_de_deuda,
+    antecedentes_penales,
+    fecha_antecedentes,
+    cantidad_viajes_uber,
+    cantidad_viajes_cabify,
+    cantidad_viajes_didi,
+    antiguedad_uber,
+    antiguedad_cabify,
+    antiguedad_didi,
+    trabajos_anteriores,
+    observacion_perfil) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          insertId,
+          composicion_familiar,
+          tiene_o_tuvo_vehiculo,
+          tipo_servicio,
+          certificado_domicilio,
+          score_veraz,
+          nivel_deuda,
+          situacion_deuda,
+          libre_de_deuda,
+          antecedentes_penales,
+          fecha_antecedentes,
+          cantidad_viajes_uber,
+          cantidad_viajes_cabify,
+          cantidad_viajes_didi,
+          antiguedad_uber,
+          antiguedad_cabify,
+          antiguedad_didi,
+          trabajos_anteriores,
+          observacion_perfil,
+        ],
+        transaction: transaction,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    transaction.rollback();
+    const { status, body } = handleSqlError(
+      error,
+      "cliente",
+      "documento/licencia/direccion/celular"
+    );
+    return res.send(body);
+  }
+  transaction.commit();
   return res.send({ status: true, message: "Cliente creado con éxito" });
 };
 
@@ -131,6 +213,23 @@ export const getClientesById = async (req, res) => {
     return res.send(error);
   }
 };
+
+export const getDateroByIdCliente = async (req, res) => {
+  const { id_cliente } = req.body;
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT * FROM datero_clientes WHERE id_cliente = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    return res.send(error);
+  }
+};
+
 export const getImagenesClientes = async (req, res) => {
   const { id } = req.params;
   const prefix = `giama_renting/clientes/${id}/`;
