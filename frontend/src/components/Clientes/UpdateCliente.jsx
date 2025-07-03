@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {getProvincias, getTiposDocumento, getTiposResponsable} from '../../reducers/Generales/generalesSlice'
-import { getClientesById, updateCliente, reset } from '../../reducers/Clientes/clientesSlice';
+import { getClientesById, updateCliente, reset, getDateroByIdCliente } from '../../reducers/Clientes/clientesSlice';
 import styles from './UpdateCliente.module.css';
 import { paises } from '../../paises.js';
 import { ToastContainer, toast } from 'react-toastify';
@@ -12,7 +12,7 @@ const UpdateCliente = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { provincias, tipos_documento, tipos_responsable } = useSelector(state => state.generalesReducer);
-  const { cliente, isError, isSuccess, isLoading, message } = useSelector(state => state.clientesReducer);
+  const { cliente, isError, isSuccess, isLoading, message, datero } = useSelector(state => state.clientesReducer);
   const [errors, setErrors] = useState({});
   const [formValido, setFormValido] = useState(false);
   const [form, setFormData] = useState({
@@ -38,20 +38,32 @@ const UpdateCliente = () => {
     ciudad: '',
     mail: '',
     notas:'',
+    composicion_familiar: "",
+    tiene_o_tuvo_vehiculo: "",
+    tipo_servicio: "",
+    certificado_domicilio: 0,
+    score_veraz: "",
+    nivel_deuda: "",
+    situacion_deuda: "",
+    libre_de_deuda: "",
+    antecedentes_penales: 0,
+    fecha_antecedentes: "",
+    cantidad_viajes_uber: "",
+    cantidad_viajes_cabify: "",
+    cantidad_viajes_didi: "",
+    antiguedad_uber: "",
+    antiguedad_cabify: "",
+    antiguedad_didi: "",
+    trabajos_anteriores: "",
+    observacion_perfil: ""
   })
-  const renderFecha = (fecha) => {
-    if(fecha){
-      let splitFecha = fecha.split("-") 
-      return splitFecha[0] + "-" + splitFecha[1]  + "-" + splitFecha[2]
-
-    }
-  }
-
+  const formRef = useRef(null);
   useEffect(() => {
     dispatch(getProvincias());
     dispatch(getTiposResponsable());
     dispatch(getTiposDocumento()),
     dispatch(getClientesById({id: id}));
+    dispatch(getDateroByIdCliente({id_cliente: id}))
   }, [id]);
 
   useEffect(() => {
@@ -79,9 +91,27 @@ const UpdateCliente = () => {
         ciudad: cliente[0]?.ciudad || '',
         mail: cliente[0]?.mail || '',
         notas: cliente[0]?.notas ||'',
+        composicion_familiar: datero[0]?.composicion_familiar || '',
+        tiene_o_tuvo_vehiculo: datero[0]?.tiene_o_tuvo_vehiculo || '',
+        tipo_servicio: datero[0]?.tipo_servicio || '',
+        certificado_domicilio:datero[0]?.certificado_domicilio || '',
+        score_veraz: datero[0]?.score_veraz || '',
+        nivel_deuda: datero[0]?.nivel_deuda || '',
+        situacion_deuda: datero[0]?.situacion_deuda || '',
+        libre_de_deuda: datero[0]?.libre_de_deuda || '',
+        antecedentes_penales:datero[0]?.antecedentes_penales || '',
+        fecha_antecedentes: datero[0]?.fecha_antecedentes || '',
+        cantidad_viajes_uber: datero[0]?.cantidad_viajes_uber || '',
+        cantidad_viajes_cabify: datero[0]?.cantidad_viajes_cabify || '',
+        cantidad_viajes_didi: datero[0]?.cantidad_viajes_didi || '',
+        antiguedad_uber: datero[0]?.antiguedad_uber || '',
+        antiguedad_cabify: datero[0]?.antiguedad_cabify || '',
+        antiguedad_didi: datero[0]?.antiguedad_didi || '',
+        trabajos_anteriores: datero[0]?.trabajos_anteriores || '',
+        observacion_perfil:datero[0]?.observacion_perfil || ''
       });
     }
-  }, [cliente]);
+  }, [cliente, datero]);
 
   useEffect(() => {
     if (isError) {
@@ -112,7 +142,14 @@ const UpdateCliente = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+const handleCheckChange = (e) => {
+const { name, checked } = e.target;
+setFormData(prevForm => ({
+  ...prevForm,
+  [name]: checked ? 1 : 0
+}));}
+
+const handleSubmit = (e) => {
     e.preventDefault();
     const body = { ...form, id: id };
     dispatch(updateCliente(body));
@@ -140,7 +177,88 @@ const UpdateCliente = () => {
       mail: '',
       notas:'',
       })
-  };
+};
+const handlePrint = () => {
+  const formContent = formRef.current;
+
+  if (!formContent) return;
+
+  const ventana = window.open('', '', 'width=800,height=600');
+
+  ventana.document.write(`
+    <html>
+      <head>
+        <title>Hoja de datos driver</title>
+        <style>
+          body {
+            font-family: sans-serif;
+            font-size: 12px;
+            padding: 20px;
+          }
+          fieldset {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          border: 1px solid #aaa;
+          padding: 10px;
+          margin: 10px;
+          }
+        div {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 12px;
+        }
+
+      div span {
+      font-weight: bold;
+      margin-bottom: 4px;
+      }
+
+      div input,
+      div select,
+      div textarea {
+      display: block;
+      font-size: 10px;
+      padding: 6px;
+      border: none;
+        }
+      input, select, textarea {
+        padding: 6px;
+        border: none;
+        width: 10rem
+        font-size: 4px;
+      }
+      legend {
+        font-weight: bold;
+        font-size: 16px;
+        margin-top: 20px;
+      }
+
+    select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: none;
+    border: none;
+  }
+        </style>
+      </head>
+      <body>
+        ${formContent.innerHTML}
+      </body>
+    </html>
+  `);
+
+  ventana.document.close();
+  ventana.focus();
+  ventana.print();
+  ventana.close();
+};
+const renderFecha = (fecha) => {
+if(fecha){
+  let splitFecha = fecha.split("-") 
+  return splitFecha[0] + "-" + splitFecha[1]  + "-" + splitFecha[2]
+
+}}
   return (
     <div>
       <div className={styles.container}>
@@ -152,7 +270,14 @@ const UpdateCliente = () => {
           </div>
         )}
         <h2>Modificar datos del cliente</h2>
-    <form className={styles.form}>
+        <button
+        type="button"
+        className={styles.sendBtn}
+        onClick={handlePrint}
+        >
+        Imprimir formulario
+        </button>
+    <form ref={formRef} className={styles.form}>
       <fieldset className={styles.fieldSet}>
         <legend>Datos personales</legend>
         <div className={styles.inputContainer}>
@@ -307,6 +432,111 @@ const UpdateCliente = () => {
         <span>Notas</span>
         <textarea name='notas' value={form["notas"]} onChange={handleChange}/>
         </div>
+        </fieldset>
+        <fieldset className={styles.fieldSet}>
+          <div className={styles.inputContainer}>
+            <span>Composición familiar</span>
+            <input type="text" name='composicion_familiar' value={form["composicion_familiar"]}
+            onChange={handleChange} 
+            onBlur={() => setErrors({ ...errors, ["composicion_familiar"]: !form["composicion_familiar"] ? 'Campo obligatorio' : '' })}/>
+          {errors["composicion_familiar"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["composicion_familiar"]}</span>}
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Tiene o tuvo vehículo</span>
+            <input type="text" name='tiene_o_tuvo_vehiculo' value={form["tiene_o_tuvo_vehiculo"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Tipo de servicio a su nombre</span>
+            <input type="text" name='tipo_servicio' value={form["tipo_servicio"]}
+            onChange={handleChange} 
+            onBlur={() => setErrors({ ...errors, ["tipo_servicio"]: !form["tipo_servicio"] ? 'Campo obligatorio' : '' })}/>
+          {errors["tiene_o_tuvo_vehiculo"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["tiene_o_tuvo_vehiculo"]}</span>}
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Certificado de domicilio</span>
+            <input type="checkbox" name='certificado_domicilio' value={form["certificado_domicilio"]}
+            onChange={handleCheckChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Score en veraz</span>
+            <input type="text" name='score_veraz' value={form["score_veraz"]}
+            onChange={handleChange} 
+            onBlur={() => setErrors({ ...errors, ["score_veraz"]: !form["score_veraz"] ? 'Campo obligatorio' : '' })}/>
+            {errors["score_veraz"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["score_veraz"]}</span>}
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Nivel de deuda</span>
+            <input type="text" name='nivel_deuda' value={form["nivel_deuda"]}
+            onChange={handleChange} 
+            onBlur={() => setErrors({ ...errors, ["nivel_deuda"]: !form["nivel_deuda"] ? 'Campo obligatorio' : '' })}/>
+          {errors["nivel_deuda"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nivel_deuda"]}</span>}
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Situación</span>
+            <input type="number" name='situacion_deuda' value={form["situacion_deuda"]}
+            onChange={handleChange} 
+            onBlur={() => setErrors({ ...errors, ["situacion_deuda"]: !form["situacion_deuda"] ? 'Campo obligatorio' : '' })}/>
+          {errors["situacion_deuda"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["situacion_deuda"]}</span>}
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Presenta libre de deuda</span>
+            <input type="text" name='libre_de_deuda' value={form["libre_de_deuda"]}
+            onChange={handleChange} 
+            onBlur={() => setErrors({ ...errors, ["libre_de_deuda"]: !form["libre_de_deuda"] ? 'Campo obligatorio' : '' })}/>
+          {errors["libre_de_deuda"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["libre_de_deuda"]}</span>}
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Antecedentes penales</span>
+            <input type="checkbox" name='antecedentes_penales' 
+            value={form["antecedentes_penales"]}
+            onChange={handleCheckChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha</span>
+            <input type="date" name='fecha_antecedentes' value={form["fecha_antecedentes"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Cant. viajes UBER</span>
+            <input type="number" name='cantidad_viajes_uber' value={form["cantidad_viajes_uber"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Cant. viajes CABIFY</span>
+            <input type="number" name='cantidad_viajes_cabify' value={form["cantidad_viajes_cabify"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Cant. viajes DIDI</span>
+            <input type="number" name='cantidad_viajes_didi' value={form["cantidad_viajes_didi"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Antigüedad UBER</span>
+            <input type="text" name='antiguedad_uber' value={form["antiguedad_uber"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Antigüedad CABIFY</span>
+            <input type="text" name='antiguedad_cabify' value={form["antiguedad_cabify"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+                  <span>Antigüedad DIDI</span>
+            <input type="text" name='antiguedad_didi' value={form["antiguedad_didi"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Trabajos anteriores o actuales a detallar</span>
+            <textarea name='trabajos_anteriores' value={form["trabajos_anteriores"]}
+            onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Observación del perfil del chofer</span>
+            <textarea name='observacion_perfil' value={form["observacion_perfil"]}
+            onChange={handleChange} />
+          </div>
         </fieldset>
         <fieldset className={styles.fieldSet}>
           <legend>Datos de licencia</legend>

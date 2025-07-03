@@ -64,6 +64,20 @@
     border-bottom: 2px solid #a52a2a;
   }
 
+    .inputContainer textarea {
+    border: none;
+    border-bottom: 2px solid #800000;
+    padding: 8px;
+    outline: none;
+    background-color: transparent;
+    resize: vertical;
+    font-family: inherit;
+    width: 14rem;
+  }
+
+  .inputContainer input[type="checkbox"] {
+    align-self: self-start;
+  }
   .inputContainer textarea {
     border: none;
     border-bottom: 2px solid #800000;

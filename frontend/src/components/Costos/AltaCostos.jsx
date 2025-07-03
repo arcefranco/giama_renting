@@ -162,7 +162,7 @@ const renderEliminarCell = (data) => {
         <p className={styles.loadingText}>Cargando...</p>
       </div>
     )}
-        <h2>Conceptos de costos</h2>
+        <h2>Conceptos de costos e ingresos</h2>
     <button onClick={handleActualizar} className={styles.refreshButton}>
     🔄 Actualizar
     </button>

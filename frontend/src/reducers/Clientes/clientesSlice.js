@@ -5,6 +5,7 @@ import clientesService from "./clientesService";
 const initialState = {
   clientes: [],
   cliente: [],
+  datero: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -46,6 +47,19 @@ export const getClientesById = createAsyncThunk(
     }
   }
 );
+
+export const getDateroByIdCliente = createAsyncThunk(
+  "getDateroByIdCliente",
+  async (data, { rejectWithValue }) => {
+    const result = await clientesService.getDateroByIdCliente(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const eliminarImagenes = createAsyncThunk(
   "eliminarImagenes",
   async (data, { rejectWithValue }) => {
@@ -116,6 +130,20 @@ export const clientesSlice = createSlice({
       state.cliente = action.payload;
     });
     builder.addCase(getClientesById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getDateroByIdCliente.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getDateroByIdCliente.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.datero = action.payload;
+    });
+    builder.addCase(getDateroByIdCliente.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = action.payload.status;
       state.message = action.payload.message;
