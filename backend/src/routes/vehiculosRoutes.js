@@ -14,6 +14,7 @@ import {
   getAllAmortizaciones,
   getCostoNetoVehiculo,
   getSituacionFlota,
+  getFichas,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 
@@ -40,4 +41,5 @@ vehiculosRouter.post("/getAllCostosPeriodo", getAllCostosPeriodo);
 vehiculosRouter.post("/getAllAlquileresPeriodo", getAllAlquileresPeriodo);
 vehiculosRouter.post("/getAmortizacion", getAmortizacion);
 vehiculosRouter.get("/getAllAmortizaciones", getAllAmortizaciones);
+vehiculosRouter.post("/getFichas", getFichas);
 export default vehiculosRouter;

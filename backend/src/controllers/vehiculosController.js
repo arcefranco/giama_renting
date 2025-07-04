@@ -3,6 +3,7 @@ import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
 import { asientoContable } from "../../helpers/asientoContable.js";
+import moment from "moment";
 import {
   PutObjectCommand,
   S3Client,
@@ -1134,11 +1135,6 @@ export const getAmortizacion = async (req, res) => {
     return res.send(error);
   }
   let meses_amortizacion_anual = 30 * meses_amortizacion;
-  console.log({
-    amortizacion: precio_inicial_total / meses_amortizacion,
-    amortizacion_todos_movimientos:
-      (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
-  });
   return res.send({
     amortizacion: precio_inicial_total / meses_amortizacion,
     amortizacion_todos_movimientos:
@@ -1205,4 +1201,183 @@ export const getAllAmortizaciones = async (req, res) => {
     }
   }
   return res.send(arrayAmortizaciones);
+};
+
+export const getFichas = async (req, res) => {
+  try {
+    const { mes, anio } = req.body;
+    const filtroPorPeriodo = mes && anio;
+
+    const fechaInicio = filtroPorPeriodo
+      ? moment(`${anio}-${mes.toString().padStart(2, "0")}-01`)
+          .startOf("month")
+          .format("YYYY-MM-DD")
+      : "1900-01-01";
+
+    const fechaFin = filtroPorPeriodo
+      ? moment(fechaInicio).endOf("month").format("YYYY-MM-DD")
+      : moment().format("YYYY-MM-DD");
+
+    const conceptos = await giama_renting.query(
+      `SELECT nombre FROM conceptos_costos`,
+      { type: QueryTypes.SELECT }
+    );
+    const nombresConceptos = conceptos.map((c) => c.nombre);
+
+    const queryConPeriodo = `
+     
+  SELECT
+  v.id AS vehiculo,
+  v.dominio,
+  v.dominio_provisorio,
+
+  -- Alquiler y días prorrateados desde subconsulta
+  COALESCE(a.alquiler, 0) AS alquiler,
+  COALESCE(a.dias_en_mes, 0) AS dias_en_mes,
+
+  -- Costos activables para amortización
+  COALESCE(activos.total_activables, 0) AS total_activables,
+
+  -- Amortización mensual
+  ROUND(
+    (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2))
+    / v.meses_amortizacion
+  , 2) AS amortizacion,
+
+  -- Costos detallados (esto puede requerir ajuste también)
+  JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
+
+FROM vehiculos v
+
+-- 🔁 Subconsulta con alquileres prorrateados por vehículo
+LEFT JOIN (
+  SELECT
+    id_vehiculo,
+    ROUND(SUM(
+      CASE
+        WHEN fecha_desde <= :fechaFin AND fecha_hasta >= :fechaInicio THEN
+          (importe_neto / (DATEDIFF(fecha_hasta, fecha_desde) + 1)) *
+          (DATEDIFF(LEAST(fecha_hasta, :fechaFin), GREATEST(fecha_desde, :fechaInicio)) + 1)
+        ELSE 0
+      END
+    ), 2) AS alquiler,
+
+    SUM(
+      CASE
+        WHEN fecha_desde <= :fechaFin AND fecha_hasta >= :fechaInicio THEN
+          DATEDIFF(LEAST(fecha_hasta, :fechaFin), GREATEST(fecha_desde, :fechaInicio)) + 1
+        ELSE 0
+      END
+    ) AS dias_en_mes
+
+  FROM alquileres
+  GROUP BY id_vehiculo
+) a ON a.id_vehiculo = v.id
+
+-- Costos e ingresos
+LEFT JOIN costos_ingresos ci
+  ON ci.id_vehiculo = v.id
+  AND ci.fecha BETWEEN :fechaInicio AND :fechaFin
+
+LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+
+-- Subconsulta de costos activables
+LEFT JOIN (
+  SELECT ci2.id_vehiculo, SUM(ci2.importe_neto) AS total_activables
+  FROM costos_ingresos ci2
+  JOIN conceptos_costos cc2 ON cc2.id = ci2.id_concepto AND cc2.activable = 1
+  GROUP BY ci2.id_vehiculo
+) activos ON activos.id_vehiculo = v.id
+
+GROUP BY v.id, v.dominio, v.dominio_provisorio,
+         v.precio_inicial, v.meses_amortizacion,
+         a.alquiler, a.dias_en_mes, activos.total_activables;
+`;
+
+    const querySinPeriodo = `
+      SELECT
+        v.id AS vehiculo,
+        v.dominio,
+        v.dominio_provisorio,
+        COALESCE(a.alquiler, 0) AS alquiler,
+        COALESCE(a.dias_en_mes, 0) AS dias_en_mes,
+ROUND(
+  (
+    (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) / (v.meses_amortizacion * 30)
+  ) * DATEDIFF(CURDATE(), v.fecha_ingreso),
+  2
+) AS amortizacion,
+        JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
+      FROM vehiculos v
+      LEFT JOIN (
+        SELECT
+          id_vehiculo,
+          ROUND(SUM(importe_neto), 2) AS alquiler,
+          SUM(DATEDIFF(fecha_hasta, fecha_desde) + 1) AS dias_en_mes
+        FROM alquileres
+        GROUP BY id_vehiculo
+      ) a ON a.id_vehiculo = v.id
+      LEFT JOIN costos_ingresos ci ON ci.id_vehiculo = v.id
+      LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+      LEFT JOIN (
+        SELECT ci2.id_vehiculo, SUM(ci2.importe_neto) AS total_activables
+        FROM costos_ingresos ci2
+        JOIN conceptos_costos cc2 ON cc2.id = ci2.id_concepto AND cc2.activable = 1
+        GROUP BY ci2.id_vehiculo
+      ) activos ON activos.id_vehiculo = v.id
+      GROUP BY v.id, v.dominio, v.dominio_provisorio, v.precio_inicial, v.meses_amortizacion, a.alquiler, a.dias_en_mes, activos.total_activables
+    `;
+
+    const selectedQuery = filtroPorPeriodo ? queryConPeriodo : querySinPeriodo;
+    const replacements = filtroPorPeriodo ? { fechaInicio, fechaFin } : {};
+
+    const result = await giama_renting.query(selectedQuery, {
+      type: QueryTypes.SELECT,
+      replacements,
+    });
+
+    const fichas = result.map((row) => {
+      const costosRaw = Array.isArray(row.costos_detallados)
+        ? row.costos_detallados
+        : JSON.parse(row.costos_detallados || "[]");
+
+      const costosObj = {};
+      for (const nombre of nombresConceptos) {
+        costosObj[nombre] = 0;
+      }
+
+      for (const item of costosRaw) {
+        const nombre = item?.nombre;
+        const importe = parseFloat(item?.importe);
+        if (nombre && !isNaN(importe)) {
+          costosObj[nombre] += importe;
+        }
+      }
+
+      const alquiler = parseFloat(row.alquiler) || 0;
+      const amortizacion = parseFloat(row.amortizacion) || 0;
+
+      const totalCostos = Object.values(costosObj)
+        .map((v) => parseFloat(v) || 0)
+        .reduce((a, b) => a + b, 0);
+
+      const total = alquiler + totalCostos - amortizacion;
+
+      return {
+        vehiculo: row.vehiculo,
+        dominio: row.dominio,
+        dominio_provisorio: row.dominio_provisorio,
+        alquiler,
+        dias_en_mes: parseInt(row.dias_en_mes) || 0,
+        ...costosObj,
+        amortizacion,
+        total: +total.toFixed(2),
+      };
+    });
+
+    return res.send(fichas);
+  } catch (error) {
+    console.error("Error en getFichas:", error);
+    return res.status(500).json({ error: "Error interno del servidor" });
+  }
 };
