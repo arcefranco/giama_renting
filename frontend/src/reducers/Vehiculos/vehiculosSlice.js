@@ -5,6 +5,7 @@ import vehiculosService from "./vehiculosService.js";
 const initialState = {
   vehiculos: [],
   situacionFlota: [],
+  fichas: [],
   fichaCostos: null,
   fichaAlquileres: null,
   fichaAllCostos: null,
@@ -182,6 +183,18 @@ export const getAllAmortizaciones = createAsyncThunk(
   }
 );
 
+export const getFichas = createAsyncThunk(
+  "getFichas",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getFichas(data);
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const vehiculosSlice = createSlice({
   name: "vehiculos",
   initialState,
@@ -280,6 +293,20 @@ export const vehiculosSlice = createSlice({
       state.fichaCostos = action.payload;
     });
     builder.addCase(getCostosPeriodo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = action.payload.status;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getFichas.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getFichas.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = action.payload.status;
+      state.message = action.payload.message;
+      state.fichas = action.payload;
+    });
+    builder.addCase(getFichas.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = action.payload.status;
       state.message = action.payload.message;

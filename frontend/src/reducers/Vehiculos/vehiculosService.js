@@ -237,6 +237,10 @@ const getAmortizacion = async (data) => {
 const getAllAmortizaciones = async () => {
   return getFunction("vehiculos/getAllAmortizaciones");
 };
+
+const getFichas = async (data) => {
+  return postArrayFunction("vehiculos/getFichas", data);
+};
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,
@@ -251,5 +255,6 @@ const vehiculosService = {
   getAllCostosPeriodo,
   getAmortizacion,
   getAllAmortizaciones,
+  getFichas,
 };
 export default vehiculosService;
