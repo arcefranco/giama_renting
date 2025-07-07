@@ -16,7 +16,8 @@ const [form, setForm] = useState({
 })
 useEffect(() => {
     Promise.all([
-      dispatch(getFichas(form))
+      dispatch(getFichas(form)),
+      dispatch(getConceptosCostos())
     ])
 },[])
 
@@ -44,7 +45,8 @@ const generarPeriodos = () => {
 const periodos = generarPeriodos();
 
 const { isError, isSuccess, isLoading, message, fichas } = useSelector(state => state.vehiculosReducer);
-const [columnas, setColumnas] = useState([])
+const { conceptos } = useSelector(state => state.costosReducer);
+const [fichasProcesadas, setFichasProcesadas] = useState([]);
 
 useEffect(() => {
     Promise.all([
@@ -53,19 +55,29 @@ useEffect(() => {
 }, [form["mes"], form["anio"]])
 
 useEffect(() => {
-setColumnas(fichas && fichas.length > 0
-  ? Object.keys(fichas[0]).map((key) => {
-      const isNumeric = typeof fichas[0][key] === 'number';
-      return {
-        dataField: key,
-        dataType: isNumeric ? 'number' : 'string'
-      };
-    })
-  : [])
-}, [fichas])
+  const fechaFinPeriodo = form?.mes && form?.anio
+    ? new Date(form.anio, form.mes, 0)
+    : new Date();
+
+  const procesadas = fichas.map((ficha) => {
+    const fechaIngreso = new Date(ficha.fecha_ingreso);
+    const diasOcupacion = Math.max(0, Math.floor((fechaFinPeriodo - fechaIngreso) / (1000 * 60 * 60 * 24)));
+
+    const porcentajeOcupacion = diasOcupacion > 0
+      ? ((ficha.dias_en_mes / diasOcupacion) * 100).toFixed(2)
+      : 0;
+
+    return {
+      ...ficha,
+      dias_ocupacion: diasOcupacion,
+      porcentaje_ocupacion: porcentajeOcupacion,
+    };
+  });
+  setFichasProcesadas(procesadas);
+}, [fichas, form]);
+
 
 const renderDominio = (data) => {
-    console.log("THIS: ", data.data)
     return (
       data.data?.dominio ? 
       <button
@@ -135,7 +147,7 @@ const renderDominio = (data) => {
       </select>
       </div>
     <DataGrid
-    dataSource={fichas}
+    dataSource={fichasProcesadas}
     rowAlternationEnabled={true}
     scrolling={false}
     showBorders
@@ -152,44 +164,62 @@ const renderDominio = (data) => {
     >
     <FilterRow visible={true} />
 
-   {columnas?.filter((col) => col.dataField !== "dominio_provisorio").map(col => (
-        col.dataField === "dias_en_mes" ? 
-        <Column key={col.dataField} {...col} 
-         
-        />
-        :
-        
-        col.dataField === "dominio" ? 
-        <Column key={col.dataField} {...col} cellRender={renderDominio}
-         
-        />
-        :
-        <Column key={col.dataField} {...col} 
-        customizeText={col.dataType === 'number' ? (e) => Math.trunc(e.value).toLocaleString() 
-            : (e) => Math.trunc(parseInt(e.value)).toLocaleString()}
-  />
-      ))}
+  <Column dataField="dominio" caption="Dominio" cellRender={renderDominio} />
+  <Column dataField="fecha_ingreso" caption="Fecha ingreso" customizeText={(e) => {
+    const date = new Date(e.value);
+    return `${date.getDate().toString().padStart(2, '0')}/${
+      (date.getMonth() + 1).toString().padStart(2, '0')
+    }/${date.getFullYear()}`;
+  }} />
+  <Column dataField="dias_en_mes" caption="Días alquilado" />
+  <Column dataField="dias_ocupacion" caption="Días ocupación" />
+  <Column dataField="porcentaje_ocupacion" caption="% ocupación" customizeText={(e) => `${Math.round(e.value)}%`} />
+
+
+  <Column dataField="alquiler" caption="Alquiler" customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
+  {conceptos?.map((concepto) => (
+    <Column
+      key={concepto.nombre}
+      dataField={concepto.nombre}
+      caption={concepto.nombre}
+      customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}
+    />
+  ))}
+  <Column dataField="amortizacion" caption="Amortización" customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
+  <Column dataField="total" caption="Total" customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
+
+
+
    <Summary>
-  {columnas?.map(col => (
-    typeof col.dataField === "string" &&
-    col.dataField !== "dominio"  &&
-    col.dataField !== "total"  &&
-    col.dataField !== "dias_en_mes" &&
+  {conceptos?.map((concepto) => (
     <TotalItem
-        key={col.dataField}
-        column={col.dataField}
-        summaryType="sum"
-        displayFormat="{0}"         
-        customizeText={(e) => Math.trunc(e.value).toLocaleString()}
+      key={concepto.nombre}
+      column={concepto.nombre}
+      summaryType="sum"
+      displayFormat="{0}"
+      customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}
     />
-        ))}
-    <TotalItem
-        column="total"
-        summaryType="sum"
-        displayFormat="{0}" 
-        customizeText={(e) => Math.trunc(e.value).toLocaleString()}
-        cssClass={styles.totalItem}
-    />
+  ))}
+
+  <TotalItem
+    column="alquiler"
+    summaryType="sum"
+    displayFormat="{0}"
+    customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}
+  />
+  <TotalItem
+    column="amortizacion"
+    summaryType="sum"
+    displayFormat="{0}"
+    customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}
+  />
+  <TotalItem
+    column="total"
+    summaryType="sum"
+    displayFormat="{0}"
+    customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}
+    cssClass={styles.totalItem}
+  />
     </Summary> 
     </DataGrid>
     
