@@ -1229,6 +1229,7 @@ export const getFichas = async (req, res) => {
   SELECT
   v.id AS vehiculo,
   v.dominio,
+  v.fecha_ingreso,
   v.dominio_provisorio,
 
   -- Alquiler y días prorrateados desde subconsulta
@@ -1298,6 +1299,7 @@ GROUP BY v.id, v.dominio, v.dominio_provisorio,
       SELECT
         v.id AS vehiculo,
         v.dominio,
+        v.fecha_ingreso,
         v.dominio_provisorio,
         COALESCE(a.alquiler, 0) AS alquiler,
         COALESCE(a.dias_en_mes, 0) AS dias_en_mes,
@@ -1365,6 +1367,7 @@ ROUND(
 
       return {
         vehiculo: row.vehiculo,
+        fecha_ingreso: row.fecha_ingreso,
         dominio: row.dominio,
         dominio_provisorio: row.dominio_provisorio,
         alquiler,
