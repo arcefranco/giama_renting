@@ -42,4 +42,5 @@ vehiculosRouter.post("/getAllAlquileresPeriodo", getAllAlquileresPeriodo);
 vehiculosRouter.post("/getAmortizacion", getAmortizacion);
 vehiculosRouter.get("/getAllAmortizaciones", getAllAmortizaciones);
 vehiculosRouter.post("/getFichas", getFichas);
+
 export default vehiculosRouter;

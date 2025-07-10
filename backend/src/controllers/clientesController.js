@@ -3,6 +3,7 @@ import { giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
 import { handleSqlError } from "../../helpers/handleSqlError.js";
+import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 
 import {
   PutObjectCommand,
@@ -57,8 +58,36 @@ export const postCliente = async (req, res) => {
     trabajos_anteriores,
     observacion_perfil,
   } = req.body;
-  let transaction = await giama_renting.transaction();
-  console.log("BODY postCliente: ", req.body);
+  const camposObligatorios = [
+    "tipo_documento",
+    "nro_documento",
+    "licencia",
+    "direccion",
+    "nro_direccion",
+    "codigo_postal",
+    "celular",
+    "mail",
+    "composicion_familiar",
+    "tiene_o_tuvo_vehiculo",
+    "certificado_domicilio",
+    "score_veraz",
+    "nivel_deuda",
+    "situacion_deuda",
+  ];
+
+  const campoFaltante = verificarCamposObligatorios(
+    req.body,
+    camposObligatorios
+  );
+
+  if (campoFaltante) {
+    return res.send({
+      status: false,
+      message: `Falta completar el campo obligatorio: ${campoFaltante}`,
+    });
+  }
+
+  const transaction = await giama_renting.transaction();
   let insertId;
   try {
     const result = await giama_renting.query(
@@ -80,7 +109,7 @@ export const postCliente = async (req, res) => {
           doc_expedido_por,
           licencia,
           lic_expedida_por,
-          fecha_vencimiento,
+          fecha_vencimiento ? fecha_vencimiento : null,
           direccion,
           nro_direccion,
           piso,
@@ -160,7 +189,7 @@ export const postCliente = async (req, res) => {
           situacion_deuda,
           libre_de_deuda,
           antecedentes_penales,
-          fecha_antecedentes,
+          fecha_antecedentes ? fecha_antecedentes : null,
           cantidad_viajes_uber,
           cantidad_viajes_cabify,
           cantidad_viajes_didi,
@@ -185,6 +214,282 @@ export const postCliente = async (req, res) => {
   }
   transaction.commit();
   return res.send({ status: true, message: "Cliente creado con éxito" });
+};
+
+export const updateCliente = async (req, res) => {
+  const {
+    id,
+    nombre,
+    apellido,
+    razon_social,
+    fecha_nacimiento,
+    nacionalidad,
+    tipo_contribuyente,
+    tipo_documento,
+    nro_documento,
+    doc_expedido_por,
+    licencia,
+    lic_expedida_por,
+    fecha_vencimiento,
+    direccion,
+    nro_direccion,
+    piso,
+    depto,
+    codigo_postal,
+    provincia,
+    ciudad,
+    celular,
+    mail,
+    notas,
+    //datero cliente
+    composicion_familiar,
+    tiene_o_tuvo_vehiculo,
+    tipo_servicio,
+    certificado_domicilio,
+    score_veraz,
+    nivel_deuda,
+    situacion_deuda,
+    libre_de_deuda,
+    antecedentes_penales,
+    fecha_antecedentes,
+    cantidad_viajes_uber,
+    cantidad_viajes_cabify,
+    cantidad_viajes_didi,
+    antiguedad_uber,
+    antiguedad_cabify,
+    antiguedad_didi,
+    trabajos_anteriores,
+    observacion_perfil,
+  } = req.body;
+  let existeCliente;
+  let existeDatero;
+  const transaction = await giama_renting.transaction();
+  const camposObligatorios = [
+    "tipo_documento",
+    "nro_documento",
+    "licencia",
+    "direccion",
+    "nro_direccion",
+    "codigo_postal",
+    "celular",
+    "mail",
+    "composicion_familiar",
+    "tiene_o_tuvo_vehiculo",
+    "certificado_domicilio",
+    "score_veraz",
+    "nivel_deuda",
+    "situacion_deuda",
+  ];
+
+  const campoFaltante = verificarCamposObligatorios(
+    req.body,
+    camposObligatorios
+  );
+
+  if (campoFaltante) {
+    return res.send({
+      status: false,
+      message: `Falta completar el campo obligatorio: ${campoFaltante}`,
+    });
+  }
+  try {
+    let result = await giama_renting.query(
+      "SELECT id FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    existeCliente = result;
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Error al encontrar el cliente",
+    });
+  }
+  try {
+    let result = await giama_renting.query(
+      "SELECT id_cliente FROM datero_clientes WHERE id_cliente = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    existeDatero = result;
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Error al encontrar el cliente",
+    });
+  }
+  if (!existeCliente.length)
+    return res.send({ status: false, message: "El cliente no existe" });
+  try {
+    await giama_renting.query(
+      `UPDATE clientes SET nombre = ?, apellido = ?, razon_social = ?, fecha_nacimiento = ?, nacionalidad = ?, tipo_contribuyente = ?,
+        tipo_documento = ?, nro_documento = ?, doc_expedido_por = ?, licencia = ?, lic_expedida_por = ?, fecha_vencimiento_licencia = ?, direccion = ?,
+        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, celular = ?, mail = ?, notas = ?
+        WHERE id = ?`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          nombre,
+          apellido,
+          razon_social,
+          fecha_nacimiento,
+          nacionalidad,
+          tipo_contribuyente,
+          tipo_documento,
+          nro_documento,
+          doc_expedido_por,
+          licencia,
+          lic_expedida_por,
+          fecha_vencimiento,
+          direccion,
+          nro_direccion,
+          piso,
+          depto,
+          codigo_postal,
+          provincia,
+          ciudad,
+          celular,
+          mail,
+          notas,
+          id,
+        ],
+        transaction: transaction,
+      }
+    );
+  } catch (error) {
+    transaction.rollback();
+    console.log(error);
+    return res.send({ status: false, message: JSON.stringify(error) });
+  }
+  if (!existeDatero.length) {
+    try {
+      await giama_renting.query(
+        `INSERT INTO datero_clientes (
+    id_cliente,
+    composicion_familiar,
+    tiene_o_tuvo_vehiculo,
+    tipo_servicio,
+    certificado_domicilio,
+    score_veraz,
+    nivel_deuda,
+    situacion_deuda,
+    libre_de_deuda,
+    antecedentes_penales,
+    fecha_antecedentes,
+    cantidad_viajes_uber,
+    cantidad_viajes_cabify,
+    cantidad_viajes_didi,
+    antiguedad_uber,
+    antiguedad_cabify,
+    antiguedad_didi,
+    trabajos_anteriores,
+    observacion_perfil) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id,
+            composicion_familiar,
+            tiene_o_tuvo_vehiculo,
+            tipo_servicio,
+            certificado_domicilio,
+            score_veraz,
+            nivel_deuda,
+            situacion_deuda,
+            libre_de_deuda,
+            antecedentes_penales,
+            fecha_antecedentes ? fecha_antecedentes : null,
+            cantidad_viajes_uber,
+            cantidad_viajes_cabify,
+            cantidad_viajes_didi,
+            antiguedad_uber,
+            antiguedad_cabify,
+            antiguedad_didi,
+            trabajos_anteriores,
+            observacion_perfil,
+          ],
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      transaction.rollback();
+      const { status, body } = handleSqlError(
+        error,
+        "cliente",
+        "documento/licencia/direccion/celular"
+      );
+      return res.send(body);
+    }
+  } else {
+    try {
+      await giama_renting.query(
+        `UPDATE datero_clientes SET 
+      composicion_familiar = ?,
+      tiene_o_tuvo_vehiculo = ?,
+      tipo_servicio = ?,
+      certificado_domicilio = ?,
+      score_veraz = ?,
+      nivel_deuda = ?,
+      situacion_deuda = ?,
+      libre_de_deuda = ?,
+      antecedentes_penales = ?,
+      fecha_antecedentes = ?,
+      cantidad_viajes_uber = ?,
+      cantidad_viajes_cabify = ?,
+      cantidad_viajes_didi = ?,
+      antiguedad_uber = ?,
+      antiguedad_cabify = ?,
+      antiguedad_didi = ?,
+      trabajos_anteriores = ?,
+      observacion_perfil = ?
+      WHERE id_cliente = ?`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            composicion_familiar,
+            tiene_o_tuvo_vehiculo,
+            tipo_servicio,
+            certificado_domicilio,
+            score_veraz,
+            nivel_deuda,
+            situacion_deuda,
+            libre_de_deuda,
+            antecedentes_penales,
+            fecha_antecedentes ? fecha_antecedentes : null,
+            cantidad_viajes_uber,
+            cantidad_viajes_cabify,
+            cantidad_viajes_didi,
+            antiguedad_uber,
+            antiguedad_cabify,
+            antiguedad_didi,
+            trabajos_anteriores,
+            observacion_perfil,
+            id,
+          ],
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      transaction.rollback();
+      console.log(error);
+      transaction.rollback();
+      const { status, body } = handleSqlError(
+        error,
+        "cliente",
+        "documento/licencia/direccion/celular"
+      );
+      return res.send(body);
+    }
+  }
+  transaction.commit();
+  return res.send({
+    status: true,
+    message: "El cliente ha sido actualizado con éxito",
+  });
 };
 
 export const getClientes = async (req, res) => {
@@ -275,6 +580,7 @@ export const getImagenesClientes = async (req, res) => {
     res.status(500).json({ error: "Error al obtener las imágenes" });
   }
 };
+
 export const eliminarImagenes = async (req, res) => {
   console.log("Key recibido:", req.body.key);
   const { key } = req.body;
@@ -297,74 +603,4 @@ export const eliminarImagenes = async (req, res) => {
       .status(500)
       .json({ status: false, message: "Error al eliminar imagen" });
   }
-};
-export const updateCliente = async (req, res) => {
-  const {
-    id,
-    nombre,
-    apellido,
-    razon_social,
-    fecha_nacimiento,
-    nacionalidad,
-    tipo_contribuyente,
-    tipo_documento,
-    nro_documento,
-    doc_expedido_por,
-    licencia,
-    lic_expedida_por,
-    fecha_vencimiento,
-    direccion,
-    nro_direccion,
-    piso,
-    depto,
-    codigo_postal,
-    provincia,
-    ciudad,
-    celular,
-    mail,
-    notas,
-  } = req.body;
-  try {
-    await giama_renting.query(
-      `UPDATE clientes SET nombre = ?, apellido = ?, razon_social = ?, fecha_nacimiento = ?, nacionalidad = ?, tipo_contribuyente = ?,
-        tipo_documento = ?, nro_documento = ?, doc_expedido_por = ?, licencia = ?, lic_expedida_por = ?, fecha_vencimiento_licencia = ?, direccion = ?,
-        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, celular = ?, mail = ?, notas = ?
-        WHERE id = ?`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          nombre,
-          apellido,
-          razon_social,
-          fecha_nacimiento,
-          nacionalidad,
-          tipo_contribuyente,
-          tipo_documento,
-          nro_documento,
-          doc_expedido_por,
-          licencia,
-          lic_expedida_por,
-          fecha_vencimiento,
-          direccion,
-          nro_direccion,
-          piso,
-          depto,
-          codigo_postal,
-          provincia,
-          ciudad,
-          celular,
-          mail,
-          notas,
-          id,
-        ],
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  return res.send({
-    status: true,
-    message: "El cliente ha sido actualizado con éxito",
-  });
 };

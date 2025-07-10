@@ -18,6 +18,7 @@ import { normalizarFecha } from "../../helpers/normalizarFecha.js";
 import { diferenciaDias } from "../../helpers/diferenciaDias.js";
 
 export const getVehiculos = async (req, res) => {
+  const hoy = getTodayDate();
   try {
     const resultado = await giama_renting.query(
       `SELECT 
@@ -28,15 +29,16 @@ export const getVehiculos = async (req, res) => {
       LEFT JOIN (
       SELECT id_vehiculo 
       FROM alquileres 
-      WHERE NOW() BETWEEN fecha_desde AND fecha_hasta
+      WHERE ? BETWEEN fecha_desde AND fecha_hasta
       ) AS alq ON vehiculos.id = alq.id_vehiculo
       LEFT JOIN (
       SELECT id_vehiculo 
       FROM contratos_alquiler 
-      WHERE NOW() BETWEEN fecha_desde AND fecha_hasta
+      WHERE ? BETWEEN fecha_desde AND fecha_hasta
       ) AS con ON vehiculos.id = con.id_vehiculo;`,
       {
         type: QueryTypes.SELECT,
+        replacements: [hoy, hoy],
       }
     );
     return res.send(resultado);
@@ -47,18 +49,19 @@ export const getVehiculos = async (req, res) => {
 
 export const getVehiculosById = async (req, res) => {
   const { id, fecha } = req.body;
+  const hoy = getTodayDate();
   if (!fecha) {
     try {
       const resultado = await giama_renting.query(
         `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado
         FROM vehiculos
         LEFT JOIN 
-        (SELECT alquileres.id_vehiculo FROM alquileres WHERE NOW() BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
+        (SELECT alquileres.id_vehiculo FROM alquileres WHERE ? BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
         AS alq ON vehiculos.id = alq.id_vehiculo
         WHERE id = ?`,
         {
           type: QueryTypes.SELECT,
-          replacements: [id],
+          replacements: [hoy, id],
         }
       );
       return res.send(resultado);
@@ -72,12 +75,12 @@ export const getVehiculosById = async (req, res) => {
         `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado, DATEDIFF(?, fecha_ingreso) AS dias_diferencia
         FROM vehiculos
         LEFT JOIN 
-        (SELECT alquileres.id_vehiculo FROM alquileres WHERE NOW() BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
+        (SELECT alquileres.id_vehiculo FROM alquileres WHERE ? BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
         AS alq ON vehiculos.id = alq.id_vehiculo
         WHERE id = ?`,
         {
           type: QueryTypes.SELECT,
-          replacements: [fecha, id],
+          replacements: [fecha, hoy, id],
         }
       );
       return res.send(resultado);
@@ -721,65 +724,71 @@ export const getCostoNetoVehiculo = async (req, res) => {
 };
 
 export const getSituacionFlota = async (req, res) => {
-  const { mes, anio } = req.body;
-
-  let fechaLimite = new Date(); // Por defecto, hoy
-
-  if (mes && anio) {
-    fechaLimite = new Date(anio, mes, 0); // Último día del mes
-  }
-
-  const fechaLimiteSQL = fechaLimite.toISOString().slice(0, 10);
-
-  const query = `
-SELECT
-  v.id AS id_vehiculo,
-  v.fecha_ingreso,
-  v.dominio,
-  v.dominio_provisorio,
-  COUNT(a.id) AS cantidad_alquileres,
-  SUM(
-    DATEDIFF(
-      LEAST(?, a.fecha_hasta),
-      GREATEST(v.fecha_ingreso, a.fecha_desde)
-    )
-  ) AS dias_alquilado,
-  DATEDIFF(?, v.fecha_ingreso) AS dias_en_flota,
-  ROUND(
-    (SUM(
-      DATEDIFF(
-        LEAST(?, a.fecha_hasta),
-        GREATEST(v.fecha_ingreso, a.fecha_desde)
-      )
-    ) / NULLIF(DATEDIFF(?, v.fecha_ingreso), 0)) * 100,
-    2
-  ) AS porcentaje_ocupacion
-FROM vehiculos v
-LEFT JOIN alquileres a ON a.id_vehiculo = v.id
-  AND a.fecha_desde <= ?
-  AND a.fecha_hasta >= v.fecha_ingreso
-GROUP BY v.id, v.fecha_ingreso
-  `;
+  const hoy = getTodayDate();
 
   try {
-    const result = await giama_renting.query(query, {
-      type: QueryTypes.SELECT,
-      replacements: [
-        fechaLimiteSQL,
-        fechaLimiteSQL,
-        fechaLimiteSQL,
-        fechaLimiteSQL,
-        fechaLimiteSQL,
-      ],
+    // Traer todos los estados definidos en la tabla
+    const estadosDB = await giama_renting.query(
+      "SELECT nombre FROM estados_vehiculos",
+      { type: QueryTypes.SELECT }
+    );
+
+    const ESTADOS_ESTATICOS = estadosDB.map((e) => e.nombre);
+
+    const resultado = await giama_renting.query(
+      `SELECT 
+        COALESCE(
+          CASE 
+            WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
+            WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
+            WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
+            ELSE est.nombre
+          END,
+          'Sin estado'
+        ) AS estado,
+        COUNT(*) AS cantidad
+      FROM vehiculos v
+      LEFT JOIN estados_vehiculos est ON est.id = v.estado_actual
+      LEFT JOIN (
+        SELECT id_vehiculo 
+        FROM alquileres 
+        WHERE :hoy BETWEEN fecha_desde AND fecha_hasta
+      ) alq ON alq.id_vehiculo = v.id
+      LEFT JOIN (
+        SELECT id_vehiculo 
+        FROM contratos_alquiler 
+        WHERE :hoy BETWEEN fecha_desde AND fecha_hasta
+      ) con ON con.id_vehiculo = v.id
+      GROUP BY estado`,
+      {
+        replacements: { hoy },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const resumen = {
+      alquilados: 0,
+      reservados: 0,
+      vendidos: 0,
+    };
+
+    // Agregar estados desde tabla (estáticos)
+    for (const nombre of ESTADOS_ESTATICOS) {
+      resumen[nombre] = 0;
+    }
+
+    // Completar con datos reales
+    resultado.forEach((row) => {
+      resumen[row.estado] = row.cantidad;
     });
 
-    return res.send(result);
+    // Calcular total
+    resumen.total = Object.values(resumen).reduce((a, b) => a + b, 0);
+
+    return res.send(resumen);
   } catch (error) {
-    console.error(error);
-    return res.send({
-      status: false,
-      message: "Error al obtener la situación de la flota",
-    });
+    console.error("Error en getSituacionFlota:", error);
+    return res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -1249,8 +1258,6 @@ export const getFichas = async (req, res) => {
   JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
 
 FROM vehiculos v
-
--- 🔁 Subconsulta con alquileres prorrateados por vehículo
 LEFT JOIN (
   SELECT
     id_vehiculo,
@@ -1280,7 +1287,7 @@ LEFT JOIN costos_ingresos ci
   ON ci.id_vehiculo = v.id
   AND ci.fecha BETWEEN :fechaInicio AND :fechaFin
 
-LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR cc.activable IS NULL)
 
 -- Subconsulta de costos activables
 LEFT JOIN (
@@ -1320,7 +1327,7 @@ ROUND(
         GROUP BY id_vehiculo
       ) a ON a.id_vehiculo = v.id
       LEFT JOIN costos_ingresos ci ON ci.id_vehiculo = v.id
-      LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR cc.activable IS NULL)
       LEFT JOIN (
         SELECT ci2.id_vehiculo, SUM(ci2.importe_neto) AS total_activables
         FROM costos_ingresos ci2

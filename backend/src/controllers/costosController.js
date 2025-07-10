@@ -103,14 +103,20 @@ export const deleteConceptosCostos = async (req, res) => {
 };
 
 export const updateConceptoCostos = async (req, res) => {
-  const { id, nombre, cuenta_contable, cuenta_secundaria, ingreso_egreso } =
-    req.body;
+  const {
+    id,
+    nombre,
+    cuenta_contable,
+    cuenta_secundaria,
+    ingreso_egreso,
+    activable,
+  } = req.body;
   if (!nombre || !cuenta_contable || !ingreso_egreso) {
     return res.send({ status: false, message: "Faltan datos" });
   }
   try {
     await giama_renting.query(
-      "UPDATE conceptos_costos SET nombre = ?, cuenta_contable = ?, cuenta_secundaria = ?, ingreso_egreso = ? WHERE id = ?",
+      "UPDATE conceptos_costos SET nombre = ?, cuenta_contable = ?, cuenta_secundaria = ?, ingreso_egreso = ?, activable = ? WHERE id = ?",
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -118,6 +124,7 @@ export const updateConceptoCostos = async (req, res) => {
           cuenta_contable,
           cuenta_secundaria,
           ingreso_egreso,
+          activable,
           id,
         ],
       }
