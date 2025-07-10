@@ -21,6 +21,8 @@ const [form, setForm] = useState({
     nombre: '',
     cuenta_contable: '',
     cuenta_secundaria: '',
+    ingreso_egreso: '',
+    activable: 0,
     id: id
 })
 useEffect(() => {
@@ -59,6 +61,8 @@ if(concepto){
         nombre: concepto[0]?.nombre,
         cuenta_contable: concepto[0]?.cuenta_contable,
         cuenta_secundaria: concepto[0]?.cuenta_secundaria,
+        ingreso_egreso: concepto[0]?.ingreso_egreso,
+        activable: concepto[0]?.activable,
         id: id
     })
 }
@@ -79,6 +83,13 @@ const handleChange = (e) => {
 
     }
 };
+const handleCheckChange = (e) => {
+  const { name, checked } = e.target;
+  setForm(prevForm => ({
+    ...prevForm,
+    [name]: checked ? 1 : 0
+  }));
+}
 const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(updateConcepto(form))
@@ -116,6 +127,39 @@ const handleSubmit = async (e) => {
                 <input type="text" name='nombre' value={form["nombre"]} 
               onChange={handleChange}/>
             </div>
+                        <div className={styles.inputContainer} style={{
+                              width: "7rem"
+                        }}>
+                        <span>Tipo</span>
+                        <label>
+                          <input
+                            type="radio"
+                            name="ingreso_egreso"
+                            value="I"
+                            checked={form.ingreso_egreso === "I"}
+                            onChange={handleChange}
+                          />
+                          Ingreso
+                        </label>
+                        <label>
+                          <input
+                            type="radio"
+                            name="ingreso_egreso"
+                            value="E"
+                            checked={form.ingreso_egreso === "E"}
+                            onChange={handleChange}
+                          />
+                          Egreso
+                        </label>
+                      </div>
+                      <div className={styles.inputContainer} style={{
+                            flexDirection: "row",
+                            alignItems: "anchor-center"
+                      }}>
+                        <span>Gasto activable</span>
+                        <input name='activable'
+                        checked={form["activable"] === 1} onChange={handleCheckChange} type="checkbox" />
+                      </div>
             </form>
             <button 
             className={styles.sendBtn} onClick={handleSubmit}

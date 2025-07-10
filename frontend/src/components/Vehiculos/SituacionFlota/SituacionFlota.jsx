@@ -1,102 +1,112 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {getSituacionFlota} from '../../../reducers/Vehiculos/vehiculosSlice'
-import { formatearFecha } from '../../../helpers/formatearFecha';
-import DataGrid, {Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
+import DataGrid from "devextreme-react/data-grid"
 import { ClipLoader } from 'react-spinners';
 import styles from './SituacionFlota.module.css'
-import { generarPeriodos } from '../../../helpers/generarPeriodos';
+import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo.jsx';
+import { ESTADOS_ESTATICOS } from '../../../utils/estadosVehiculoConfig.js';
+import { ToastContainer, toast } from 'react-toastify';
+
+const renderEtiquetaDesdeNombre = (nombreEstado) => {
+  // Normalizar el nombre
+  const nombre = nombreEstado?.toLowerCase();
+  const vehiculoSimulado = {
+    fecha_venta: nombre === "vendidos" ? "2025-01-01" : null, //fecha falsa para pasar como 1
+    vehiculo_alquilado: nombre === "alquilados" ? 1 : 0,
+    vehiculo_reservado: nombre === "reservados" ? 1 : 0,
+    estado_actual: null
+  };
+
+  // Si es uno de los estados personalizados
+  if (!["vendidos", "alquilados", "reservados"].includes(nombre)) {
+    // Buscar ID por nombre exacto
+    const estadoEncontrado = ESTADOS_ESTATICOS.find(
+      (e) => e.nombre.toLowerCase() === nombre
+    );
+    if (estadoEncontrado) {
+      vehiculoSimulado.estado_actual = estadoEncontrado.id;
+    }
+  }
+
+  return renderEstadoVehiculo(vehiculoSimulado);
+};
 
 const SituacionFlota = () => {
-const dispatch = useDispatch()
-const [form, setForm] = useState({
-    mes:  "",
-    anio: ""
-})
-useEffect(() => {
-dispatch(getSituacionFlota(form))
-}, [form])
-const { vehiculo, isError, isSuccess, isLoading, message, situacionFlota} = useSelector(state => state.vehiculosReducer);
-const periodos = generarPeriodos()
-const renderFecha = (data) => {
-  if(data.value){
-    let fechaSplit = data?.value?.split("-")
-    return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
+  const dispatch = useDispatch();
+  const {isError, message, isLoading, situacionFlota } = useSelector(
+    (state) => state.vehiculosReducer
+  );
+
+  useEffect(() => {
+    dispatch(getSituacionFlota());
+  }, [dispatch]);
+
+  useEffect(() => {
+      if(isError){
+          toast.error(message, {
+            position: "bottom-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+            })
+            console.log("Entro")
+        }
+  }, [isError])
+
+  if (isLoading) {
+    return (
+      <div className={styles.spinnerOverlay}>
+        <ClipLoader size={60} color="#800020" />
+        <span className={styles.loadingText}>Cargando vehículos...</span>
+      </div>
+    );
   }
-}
-const renderAlquilado = (data) => {
-    if(!data.value) return <span>0</span>
-    if(data.value) return <span>{data.value}</span>
-}
-const renderPorcentaje = (data) => {
-    if(!data.value) return <span>0.00%</span>
-    if(data.value) return <span>{data.value}%</span>
-}
+
+  if (!situacionFlota || Object.keys(situacionFlota).length === 0) {
+    return <div>
+    <ToastContainer /> 
+    <p>No hay datos disponibles</p>
+    </div>
+  }
+
+  const total = situacionFlota.total;
+  const datos = Object.entries(situacionFlota)
+    .map(([estado, cantidad]) => ({
+      estado,
+      cantidad,
+      proporcion: Math.round((cantidad / total) * 100)
+    }));
+
   return (
     <div className={styles.container}>
-    {isLoading && (
-    <div className={styles.spinnerOverlay}>
-    <ClipLoader
-      size={60}
-      color="#800020" // bordó
-      loading={true}
-    />
-      <span className={styles.loadingText}>Cargando vehículos...</span>
+      <h2>Situación actual de la flota</h2>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th className={styles.th}>Situación</th>
+            <th className={styles.th}>Cantidad</th>
+            <th className={styles.th}>Proporción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {datos.map(({ estado, cantidad, proporcion }) => (
+            <tr key={estado}>
+              <td className={styles.td}>{estado == "total" ? "Vehículos en flota" : renderEtiquetaDesdeNombre(estado)}</td>
+              <td className={styles.td}>{cantidad}</td>
+              <td className={styles.td}>{proporcion}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  )}
-        <h2>Situación de la flota</h2>
-        <div className={styles.select}>
-            <span>Período: </span>
-          <select
-            value={form.mes && form.anio ? `${form.mes}-${form.anio}` : ""}
-            onChange={(e) => {
-              const [mes, anio] = e.target.value.split("-");
-              setForm({
-                ...form,
-                mes: parseInt(mes) || "",
-                anio: parseInt(anio) || "",
-              });
-            }}
-          >
-            <option value="">Todos los movimientos</option>
-            {periodos?.map(({ mes, anio, nombreMes }) => (
-              <option key={`${mes}-${anio}`} value={`${mes}-${anio}`}>
-                {`${nombreMes} ${anio}`}
-              </option>
-            ))}
-          </select>
-        </div>
-        <DataGrid
-        className={styles.dataGrid}
-        dataSource={situacionFlota || []}
-        showBorders={true}
-        rowAlternationEnabled={true}
-        allowColumnResizing={true}
-        columnAutoWidth={true}
-        height={400}
-        >
-        <Column dataField="fecha_ingreso" cellRender={renderFecha}/>
-        <Column
-        dataField="dominio_visible"
-        caption="Dominio"
-        cellRender={({ data }) => {
-            return (
-            data.dominio ? (
-                <span>{data.dominio}</span>
-            ) : data.dominio_provisorio ? (
-                <span>{data.dominio_provisorio}</span>
-            ) : (
-                <span>SIN DOMINIO</span>
-            )
-            );
-        }}
-        />
-        <Column dataField="dias_en_flota" caption="Días en flota"/>
-        <Column dataField="dias_alquilado" cellRender={renderAlquilado} caption="Días alquilado"/>   
-        <Column dataField="porcentaje_ocupacion" cellRender={renderPorcentaje} caption="% de ocupación"/> 
-        </DataGrid>
-    </div>
-  )
-}
+  );
+};
+
+
 
 export default SituacionFlota

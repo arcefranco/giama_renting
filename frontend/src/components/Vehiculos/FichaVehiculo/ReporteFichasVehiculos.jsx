@@ -146,8 +146,10 @@ const renderDominio = (data) => {
         ))}
       </select>
       </div>
+      <div style={{overflowX: "auto"}}>
     <DataGrid
     dataSource={fichasProcesadas}
+    columnAutoWidth={true}
     rowAlternationEnabled={true}
     scrolling={false}
     showBorders
@@ -173,14 +175,15 @@ const renderDominio = (data) => {
   }} />
   <Column dataField="dias_en_mes" caption="Días alquilado" />
   <Column dataField="dias_ocupacion" caption="Días ocupación" />
-  <Column dataField="porcentaje_ocupacion" caption="% ocupación" customizeText={(e) => `${Math.round(e.value)}%`} />
+  <Column dataField="porcentaje_ocupacion" width={90} caption="% ocupación" customizeText={(e) => `${Math.round(e.value)}%`} />
 
 
   <Column dataField="alquiler" caption="Alquiler" customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
-  {conceptos?.map((concepto) => (
+  {conceptos?.filter(concepto => !concepto.activable).map((concepto) => (
     <Column
       key={concepto.nombre}
       dataField={concepto.nombre}
+      width={100}
       caption={concepto.nombre}
       customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}
     />
@@ -222,6 +225,8 @@ const renderDominio = (data) => {
   />
     </Summary> 
     </DataGrid>
+
+      </div>
     
     </div>
   )

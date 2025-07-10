@@ -19,7 +19,7 @@ const dispatch = useDispatch()
   }, [])
   
 
-  const [form, setFormData] = useState({
+const [form, setFormData] = useState({
     nombre: '',
     apellido: '',
     razon_social: '',
@@ -61,7 +61,7 @@ const dispatch = useDispatch()
     antiguedad_didi: "",
     trabajos_anteriores: "",
     observacion_perfil: ""
-  })
+})
 
 const {provincias, tipos_documento, tipos_responsable} = useSelector((state) => state.generalesReducer)
 const {isError, isSuccess, isLoading, message} = useSelector((state) => state.clientesReducer)
@@ -72,6 +72,7 @@ const camposObligatorios = [
   "tipo_documento",
   "nro_documento",
   "licencia",
+  "fecha_vencimiento",
   "direccion",
   "nro_direccion",
   "codigo_postal",
@@ -533,6 +534,7 @@ return (
           <span>Fecha de vencimiento</span>
           <input type="date" name='fecha_vencimiento' value={form["fecha_vencimiento"]}
           onChange={handleChange} />
+          {errors["fecha_vencimiento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["fecha_vencimiento"]}</span>}
         </div>
         <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>
         <span>Cargar imágenes de su licencia</span>

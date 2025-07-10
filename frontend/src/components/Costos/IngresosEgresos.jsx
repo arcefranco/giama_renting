@@ -77,7 +77,7 @@ useEffect(() => {
         dispatch(getCostosIngresosByIdVehiculo({id: id}))
         dispatch(reset())
   }
-  if(isSuccess){
+  if(isSuccess && message){
       toast.success(message, {
         position: "bottom-center",
         autoClose: 5000,

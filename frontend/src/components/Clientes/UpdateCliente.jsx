@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {getProvincias, getTiposDocumento, getTiposResponsable} from '../../reducers/Generales/generalesSlice'
 import { getClientesById, updateCliente, reset, getDateroByIdCliente } from '../../reducers/Clientes/clientesSlice';
@@ -58,6 +58,7 @@ const UpdateCliente = () => {
     observacion_perfil: ""
   })
   const formRef = useRef(null);
+  const location = useLocation();
   useEffect(() => {
     dispatch(getProvincias());
     dispatch(getTiposResponsable());
@@ -129,6 +130,7 @@ const UpdateCliente = () => {
       form["tipo_documento"] !== '' &&
       form["nro_documento"] !== '' &&
       form["licencia"] !== '' &&
+      form["fecha_vencimiento"] !== '' &&
       form["direccion"] !== '' &&
       form["nro_direccion"] !== '' &&
       form["codigo_postal"] !== '' &&
@@ -137,10 +139,86 @@ const UpdateCliente = () => {
 
     setFormValido(isButtonEnabled && camposObligatoriosCompletos);
   }, [form]);
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const imprimir = params.get('imprimir');
+
+    if (imprimir === 'true') {
+      // Esperamos que el DOM se cargue completamente antes de imprimir
+      setTimeout(() => {
+        const formContent = formRef.current;
+        if (!formContent) return;
+
+        const clonedForm = formContent.cloneNode(true);
+        const inputs = clonedForm.querySelectorAll('input, select, textarea');
+        inputs.forEach((input) => {
+          const wrapper = document.createElement('div');
+          wrapper.style.marginBottom = '8px';
+
+          let valueToShow = '';
+          if (input.type === 'checkbox') {
+            valueToShow = input.checked ? 'Sí' : 'No';
+          } else if (input.type === 'date') {
+            if (input.value) {
+              const date = new Date(input.value);
+              valueToShow = date.toLocaleDateString('es-AR');
+            }
+          } else {
+            valueToShow = input.value;
+          }
+
+          wrapper.textContent = valueToShow;
+          input.parentNode.replaceChild(wrapper, input);
+        });
+
+        const ventana = window.open('', '', 'width=800,height=600');
+  ventana.document.write(`
+    <html>
+      <head>
+        <title>Hoja de datos driver</title>
+        <style>
+          body {
+            font-family: sans-serif;
+            font-size: 12px;
+            padding: 20px;
+          }
+          fieldset {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border: 1px solid #aaa;
+            padding: 10px;
+            margin: 10px;
+          }
+          div {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+          }
+          div span {
+            font-weight: bold;
+            margin-bottom: 4px;
+          }
+        </style>
+      </head>
+      <body>
+        ${clonedForm.innerHTML}
+      </body>
+    </html>
+  `);
+        ventana.document.close();
+        ventana.focus();
+        ventana.print();
+        ventana.close();
+      }, 1000); // esperás 1s para asegurar que el formulario se renderice
+    }
+  }, [location]);
+
+
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({ ...prev, [name]: value }));
+};
 
 const handleCheckChange = (e) => {
 const { name, checked } = e.target;
@@ -180,8 +258,35 @@ const handleSubmit = (e) => {
 };
 const handlePrint = () => {
   const formContent = formRef.current;
-
   if (!formContent) return;
+
+  // Clonamos el formulario para no modificar el DOM real
+  const clonedForm = formContent.cloneNode(true);
+
+  // Convertimos inputs, selects y textareas en texto
+  const inputs = clonedForm.querySelectorAll('input, select, textarea');
+
+  inputs.forEach((input) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.marginBottom = '8px';
+
+    let valueToShow = '';
+
+    if (input.type === 'checkbox') {
+      valueToShow = input.checked ? 'Sí' : 'No';
+    } else if (input.type === 'date') {
+      // Formatear la fecha si tiene valor
+      if (input.value) {
+        const date = new Date(input.value);
+        valueToShow = date.toLocaleDateString('es-AR'); // formato argentino
+      }
+    } else {
+      valueToShow = input.value;
+    }
+
+    wrapper.textContent = valueToShow;
+    input.parentNode.replaceChild(wrapper, input);
+  });
 
   const ventana = window.open('', '', 'width=800,height=600');
 
@@ -196,54 +301,25 @@ const handlePrint = () => {
             padding: 20px;
           }
           fieldset {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          border: 1px solid #aaa;
-          padding: 10px;
-          margin: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border: 1px solid #aaa;
+            padding: 10px;
+            margin: 10px;
           }
-        div {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 12px;
-        }
-
-      div span {
-      font-weight: bold;
-      margin-bottom: 4px;
-      }
-
-      div input,
-      div select,
-      div textarea {
-      display: block;
-      font-size: 10px;
-      padding: 6px;
-      border: none;
-        }
-      input, select, textarea {
-        padding: 6px;
-        border: none;
-        width: 10rem
-        font-size: 4px;
-      }
-      legend {
-        font-weight: bold;
-        font-size: 16px;
-        margin-top: 20px;
-      }
-
-    select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background: none;
-    border: none;
-  }
+          div {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+          }
+          div span {
+            font-weight: bold;
+            margin-bottom: 4px;
+          }
         </style>
       </head>
       <body>
-        ${formContent.innerHTML}
+        ${clonedForm.innerHTML}
       </body>
     </html>
   `);
@@ -272,10 +348,11 @@ if(fecha){
         <h2>Modificar datos del cliente</h2>
         <button
         type="button"
+        style={{width: "6rem"}}
         className={styles.sendBtn}
         onClick={handlePrint}
         >
-        Imprimir formulario
+        Imprimir datero
         </button>
     <form ref={formRef} className={styles.form}>
       <fieldset className={styles.fieldSet}>
@@ -563,7 +640,9 @@ if(fecha){
         <div className={styles.inputContainer}>
           <span>Fecha de vencimiento</span>
           <input type="date" name='fecha_vencimiento' value={form["fecha_vencimiento"]}
+          onBlur={() => setErrors({ ...errors, ["fecha_vencimiento"]: !form["fecha_vencimiento"] ? 'Campo obligatorio' : '' })} 
           onChange={handleChange} />
+          {errors["fecha_vencimiento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["fecha_vencimiento"]}</span>}
         </div>
       </fieldset>
     </form>

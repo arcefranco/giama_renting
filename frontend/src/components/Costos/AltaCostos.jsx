@@ -30,7 +30,7 @@ const [form, setForm] = useState({
 })
 useEffect(() => {
 
-  if(isError){
+  if(isError && message){
       toast.error(message, {
         position: "bottom-center",
         autoClose: 5000,
@@ -43,7 +43,7 @@ useEffect(() => {
         })
         dispatch(reset())
     }
-    if(isSuccess){
+    if(isSuccess && message){
       toast.success(message, {
         position: "bottom-center",
         autoClose: 5000,
@@ -178,6 +178,10 @@ const renderEliminarCell = (data) => {
         <Column dataField="nombre" width={200} caption="Nombre" alignment="left" />
         <Column dataField="cuenta_contable" width={400} caption="Cuenta contable" alignment="center" cellRender={renderCuentaContable}/>
         <Column dataField="cuenta_secundaria" width={100} caption="Cuenta secundaria" alignment="center" />
+        <Column dataField="activable" width={100} caption="Es activable" 
+        alignment="center" cellRender={(data) => {
+          return data.data.activable == 1 ? "Sí" : "No"
+        }}/>
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
       </DataGrid>

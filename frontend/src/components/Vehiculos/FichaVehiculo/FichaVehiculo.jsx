@@ -46,34 +46,42 @@ const toggleDetalle = (nombre) => {
 };
 
 const periodos = generarPeriodos();
-const { vehiculo, isError, isSuccess, isLoading, message, fichaCostos,
+const { vehiculo, fichaCostos,
 fichaAlquileres, amortizacion, amortizacion_todos_movimientos, costo_neto_vehiculo } = useSelector(state => state.vehiculosReducer);
 const { modelos } = useSelector(state => state.generalesReducer);
-const { conceptos } = useSelector(state => state.costosReducer);
 const [filas, setFilas] = useState([])
 const [totalImporte, setTotalImporte] = useState(null)
+const [totalCostos, setTotalCostos] = useState(null)
+
+useEffect(( ) => {
+let sumaTotal = 0;
+if(Object.keys(fichaCostos)?.length){
+for (const key in fichaCostos) {
+  const items = fichaCostos[key];
+  for (const item of items) {
+    sumaTotal += parseFloat(item.importe_neto);
+  }
+}
+}
+setTotalCostos(sumaTotal)
+}, [fichaCostos])
 
 useEffect(() => {
   const filas = [];
   if (fichaAlquileres?.length) {
-  const totalDias = fichaAlquileres.reduce((acc, a) => {
+  const totalDias = fichaAlquileres?.reduce((acc, a) => {
   const importe = Number(a.importe_neto);
   const dias = Number(a.dias_en_mes);
 
   return acc + (importe < 0 ? -dias : dias);
 }, 0);
-    const totalNeto = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
-/*  const totalIva = fichaAlquileres.reduce((acc, a) => acc + parseFloat(a.importe_iva), 0); */
+    const totalNeto = fichaAlquileres?.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
 
   filas.push({
-    tipo: "alquiler", // <--- importante
+    tipo: "alquiler", 
     concepto: `Alquiler (${totalDias} ${totalDias > 1 ? "días" : "día"})`,
     importe: Math.round(totalNeto)
   });
-/*  filas.push({
-      concepto: `IVA`,
-      importe: totalIva
-    }); */
   }
 
 
@@ -96,8 +104,9 @@ if (vehiculo?.length && form["mes"] && form["anio"]) {
   
 
   setFilas(filas);
-  setTotalImporte(Math.round(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0)))
-}, [fichaAlquileres, fichaCostos, vehiculo, amortizacion, amortizacion_todos_movimientos])
+
+  setTotalImporte(Math.round(filas.reduce((acc, fila) => acc + parseFloat(fila.importe), 0)) + totalCostos)
+}, [fichaAlquileres, fichaCostos, vehiculo, amortizacion, amortizacion_todos_movimientos, totalCostos])
 
 useEffect(() => {
   if (vehiculo?.[0]?.fecha_ingreso) {
@@ -130,7 +139,7 @@ useEffect(() => {
     setOcupacion({
       dias_en_flota: diasEnFlota,
       dias_alquilado: diasAlquilado,
-      porcentaje_ocupacion: Math.round(porcentajeOcupacion * 100) / 100,
+      porcentaje_ocupacion: Math.round(porcentajeOcupacion),
     });
   }
 }, [vehiculo, fichaAlquileres, form]);
@@ -190,7 +199,7 @@ function esNegativo(numero) {
     marginBottom: '1rem',
     fontWeight: 'bold'
   }}>
-    <span>Costo del vehículo + gastos activos: </span>
+    <span>Costo del vehículo + gastos activados: </span>
     <span>
       {" "}{parseFloat(costo_neto_vehiculo).toLocaleString("es-AR", {
         style: "currency",
@@ -372,8 +381,8 @@ function esNegativo(numero) {
     fontWeight: 600
   }}>
     {totalImporte >= 0
-      ? totalImporte?.toLocaleString("es-AR"/* , { minimumFractionDigits: 2, maximumFractionDigits: 2 } */)
-      : `(${Math.abs(totalImporte).toLocaleString("es-AR"/* , { minimumFractionDigits: 2, maximumFractionDigits: 2 } */)})`}
+      ? totalImporte?.toLocaleString("es-AR")
+      : `(${Math.abs(totalImporte).toLocaleString("es-AR")})`}
   </span>
 </div>
     </div>

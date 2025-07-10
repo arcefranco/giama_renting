@@ -170,9 +170,7 @@ return (
         <Column
         dataField="estado_nombre"
         caption="Estado"
-        width={160}
-        calculateDisplayValue={(rowData) => {
-        
+        calculateDisplayValue={(rowData) => {   
         if (rowData.fecha_venta) return "Vendido";
         if (rowData.vehiculo_alquilado === 1) return "Alquilado";
         if (rowData.vehiculo_reservado === 1) return "Reservado";

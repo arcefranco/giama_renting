@@ -1,7 +1,7 @@
 import {
   getFunction,
   postArrayFunction,
-  postFunction,
+  postObjectFunction,
 } from "../axios/axiosFunctions";
 import axios from "axios";
 import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
@@ -146,7 +146,7 @@ const getCostoNetoVehiculo = async (data) => {
 };
 
 const getSituacionFlota = async (data) => {
-  return postArrayFunction("vehiculos/getSituacionFlota", data);
+  return postObjectFunction("vehiculos/getSituacionFlota", data);
 };
 
 const getAlquileresPeriodo = async (data) => {
@@ -241,6 +241,7 @@ const getAllAmortizaciones = async () => {
 const getFichas = async (data) => {
   return postArrayFunction("vehiculos/getFichas", data);
 };
+
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,

@@ -1,12 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import vehiculosService from "./vehiculosService.js";
-
 const initialState = {
   vehiculos: [],
-  situacionFlota: [],
+  situacionFlota: {},
   fichas: [],
-  fichaCostos: null,
+  fichaByIdVehiculo: [],
+  fichaCostos: {},
   fichaAlquileres: null,
   fichaAllCostos: null,
   fichaAllAlquileres: null,
@@ -114,7 +114,12 @@ export const getSituacionFlota = createAsyncThunk(
   "getSituacionFlota",
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.getSituacionFlota(data);
-    if (Array.isArray(result)) {
+
+    if (
+      typeof result === "object" &&
+      !Array.isArray(result) &&
+      result.status !== false
+    ) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -327,6 +332,8 @@ export const vehiculosSlice = createSlice({
     });
     builder.addCase(getSituacionFlota.pending, (state) => {
       state.isLoading = true;
+      state.isSuccess = false;
+      state.isError = false;
     });
     builder.addCase(getSituacionFlota.fulfilled, (state, action) => {
       state.isLoading = false;
@@ -337,6 +344,8 @@ export const vehiculosSlice = createSlice({
     builder.addCase(getSituacionFlota.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
+      state.isSuccess = false;
+      state.situacionFlota = {};
       state.message = action.payload.message;
     });
     builder.addCase(getAlquileresPeriodo.pending, (state) => {

@@ -8,9 +8,9 @@ export const renderEstadoVehiculo = (vehiculo) => {
     alignItems: "center",
     fontSize: "14px",
     borderRadius: "4px",
-    width: "fit-content",
-    padding: "4px 8px",
-    marginLeft: ".5rem",
+    width: "9rem",
+    padding: "2px",
+    margin: ".5rem",
     color: "#fff"
   };
 

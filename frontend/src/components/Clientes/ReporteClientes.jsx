@@ -78,6 +78,16 @@ const renderModificarCell = (data) => {
       </button>
     );
 };
+const renderImprimirCell = (data) => {
+  return (
+    <button
+      onClick={() => window.open(`/clientes/actualizar/${data.data.id}?imprimir=true`, '_blank')}
+      style={{ color: 'green', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+    >
+      🖨️ Imprimir
+    </button>
+  );
+};
 return (
 <div className={styles.container}>
 {isLoading && (
@@ -144,6 +154,13 @@ return (
         <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
+        <Column
+        dataField="id"
+        caption="Imprimir"
+        width={100}
+        alignment="center"
+        cellRender={renderImprimirCell}
+        />
       </DataGrid>
 </div>
 )

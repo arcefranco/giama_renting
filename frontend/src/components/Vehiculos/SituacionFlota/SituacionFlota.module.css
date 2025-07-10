@@ -5,36 +5,23 @@
     overflow-y: auto;
 }
 
-.select {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+.table {
+    width: 60%;
+    place-self: center;
+    border-collapse: collapse;
+    margin-top: 1rem;
 }
 
-.select select {
-    border: none;
-    border-bottom: 2px solid #800000;
-    padding: 8px;
-    outline: none;
-    background-color: transparent;
-    font-size: 14px;
-    color: #000000;
-    width: 15rem;
-    text-align: center;
-    cursor: pointer;
+.th,
+.td {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  text-align: left;
 }
 
-.select select select:focus {
-    border-bottom: 2px solid #a52a2a;
-}
-
-.dataGrid {
-    font-family: 'Segoe UI', sans-serif;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 12px;
-    margin: 2rem;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.th {
+  background-color: #f5f5f5;
+  font-weight: 600;
 }
 
   .spinnerOverlay {
