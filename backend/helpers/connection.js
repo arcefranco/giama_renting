@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const giama_renting = new Sequelize(
-  "giama_renting",
+  process.env.DB_NAME,
   process.env.DB_USERNAME,
   process.env.DB_PASSWORD,
   {
@@ -16,7 +16,7 @@ export const giama_renting = new Sequelize(
 );
 
 export const pa7_giama_renting = new Sequelize(
-  "pa7_giama_renting",
+  process.env.DB_PA7_NAME,
   process.env.DB_USERNAME,
   process.env.DB_PASSWORD,
   {
