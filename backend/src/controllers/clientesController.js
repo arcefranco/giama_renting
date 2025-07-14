@@ -4,7 +4,7 @@ import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
 import { handleSqlError } from "../../helpers/handleSqlError.js";
 import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
-
+import { getTodayDate } from "../../helpers/getTodayDate.js";
 import {
   PutObjectCommand,
   S3Client,
@@ -38,6 +38,8 @@ export const postCliente = async (req, res) => {
     celular,
     mail,
     notas,
+    resolucion_datero,
+    usuario_resolucion_datero,
     //datero_cliente
     composicion_familiar,
     tiene_o_tuvo_vehiculo,
@@ -58,23 +60,17 @@ export const postCliente = async (req, res) => {
     trabajos_anteriores,
     observacion_perfil,
   } = req.body;
+  const hoy = getTodayDate();
   const camposObligatorios = [
     "tipo_documento",
     "nro_documento",
-    "licencia",
     "direccion",
     "nro_direccion",
     "codigo_postal",
     "celular",
     "mail",
-    "composicion_familiar",
-    "tiene_o_tuvo_vehiculo",
-    "certificado_domicilio",
-    "score_veraz",
-    "nivel_deuda",
-    "situacion_deuda",
+    "libre_de_deuda",
   ];
-
   const campoFaltante = verificarCamposObligatorios(
     req.body,
     camposObligatorios
@@ -93,8 +89,9 @@ export const postCliente = async (req, res) => {
     const result = await giama_renting.query(
       `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
         tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
-        nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, mail, notas)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, mail, notas, resolucion_datero, fecha_resolucion_datero,
+        usuario_resolucion_datero)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -120,6 +117,9 @@ export const postCliente = async (req, res) => {
           celular,
           mail,
           notas,
+          resolucion_datero,
+          hoy,
+          usuario_resolucion_datero,
         ],
         transaction: transaction,
       }
@@ -241,6 +241,8 @@ export const updateCliente = async (req, res) => {
     celular,
     mail,
     notas,
+    resolucion_datero,
+    usuario_resolucion_datero,
     //datero cliente
     composicion_familiar,
     tiene_o_tuvo_vehiculo,
@@ -263,22 +265,20 @@ export const updateCliente = async (req, res) => {
   } = req.body;
   let existeCliente;
   let existeDatero;
+  let resolucion_datero_final;
+  let fecha_resolucion_datero_final;
+  let usuario_resolucion_datero_final;
   const transaction = await giama_renting.transaction();
+  const hoy = getTodayDate();
   const camposObligatorios = [
     "tipo_documento",
     "nro_documento",
-    "licencia",
     "direccion",
     "nro_direccion",
     "codigo_postal",
     "celular",
     "mail",
-    "composicion_familiar",
-    "tiene_o_tuvo_vehiculo",
-    "certificado_domicilio",
-    "score_veraz",
-    "nivel_deuda",
-    "situacion_deuda",
+    "libre_de_deuda",
   ];
 
   const campoFaltante = verificarCamposObligatorios(
@@ -294,7 +294,8 @@ export const updateCliente = async (req, res) => {
   }
   try {
     let result = await giama_renting.query(
-      "SELECT id FROM clientes WHERE id = ?",
+      `SELECT id, resolucion_datero, fecha_resolucion_datero, 
+      usuario_resolucion_datero FROM clientes WHERE id = ?`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
@@ -322,13 +323,28 @@ export const updateCliente = async (req, res) => {
       message: "Error al encontrar el cliente",
     });
   }
+  console.log(existeCliente);
   if (!existeCliente.length)
     return res.send({ status: false, message: "El cliente no existe" });
+  resolucion_datero_final =
+    resolucion_datero !== existeCliente[0]["resolucion_datero"]
+      ? resolucion_datero
+      : existeCliente[0]["resolucion_datero"];
+  usuario_resolucion_datero_final =
+    usuario_resolucion_datero !== existeCliente[0]["usuario_resolucion_datero"]
+      ? usuario_resolucion_datero
+      : existeCliente[0]["usuario_resolucion_datero"];
+  fecha_resolucion_datero_final =
+    existeCliente[0]["fecha_resolucion_datero"] !== hoy
+      ? hoy
+      : existeCliente[0]["fecha_resolucion_datero"];
+  console.log(usuario_resolucion_datero, usuario_resolucion_datero_final);
   try {
     await giama_renting.query(
       `UPDATE clientes SET nombre = ?, apellido = ?, razon_social = ?, fecha_nacimiento = ?, nacionalidad = ?, tipo_contribuyente = ?,
         tipo_documento = ?, nro_documento = ?, doc_expedido_por = ?, licencia = ?, lic_expedida_por = ?, fecha_vencimiento_licencia = ?, direccion = ?,
-        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, celular = ?, mail = ?, notas = ?
+        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, celular = ?, mail = ?, notas = ?, 
+        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?
         WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
@@ -355,6 +371,9 @@ export const updateCliente = async (req, res) => {
           celular,
           mail,
           notas,
+          resolucion_datero_final,
+          fecha_resolucion_datero_final,
+          usuario_resolucion_datero_final,
           id,
         ],
         transaction: transaction,
@@ -363,7 +382,12 @@ export const updateCliente = async (req, res) => {
   } catch (error) {
     transaction.rollback();
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { status, body } = handleSqlError(
+      error,
+      "cliente",
+      "documento/licencia/direccion/celular"
+    );
+    return res.send(body);
   }
   if (!existeDatero.length) {
     try {
@@ -516,6 +540,27 @@ export const getClientesById = async (req, res) => {
     return res.send(resultado);
   } catch (error) {
     return res.send(error);
+  }
+};
+
+export const getEstadoCliente = async (req, res) => {
+  const { id_cliente } = req.body;
+  console.log(id_cliente);
+  if (!id_cliente || isNaN(id_cliente)) {
+    return res.send(-1);
+  }
+  try {
+    let estadoCliente = await giama_renting.query(
+      "SELECT resolucion_datero FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    return res.send(estadoCliente[0]["resolucion_datero"]);
+  } catch (error) {
+    console.log(error);
+    return res.send(-1);
   }
 };
 

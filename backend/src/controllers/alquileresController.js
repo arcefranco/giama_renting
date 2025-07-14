@@ -152,6 +152,12 @@ export const postAlquiler = async (req, res) => {
     console.log(error);
     return res.send({ status: false, message: JSON.stringify(error) });
   }
+  //buscar el estado del cliente
+  /*   try {
+    
+  } catch (error) {
+    
+  } */
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU Y ALQU_2(cuenta secundaria)
   try {
     const result = await giama_renting.query(

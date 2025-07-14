@@ -765,6 +765,7 @@ export const getSituacionFlota = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
+    console.log(resultado);
 
     const resumen = {
       alquilados: 0,
@@ -783,7 +784,9 @@ export const getSituacionFlota = async (req, res) => {
     });
 
     // Calcular total
-    resumen.total = Object.values(resumen).reduce((a, b) => a + b, 0);
+    resumen.total = Object.entries(resumen)
+      .filter(([estado]) => estado !== "vendidos" && estado !== "total")
+      .reduce((acum, [, cantidad]) => acum + cantidad, 0);
 
     return res.send(resumen);
   } catch (error) {

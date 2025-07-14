@@ -8,6 +8,7 @@ import {
   eliminarImagenes,
   updateCliente,
   getDateroByIdCliente,
+  getEstadoCliente,
 } from "../controllers/clientesController.js";
 const clientesRouter = Router();
 clientesRouter.use((req, res, next) => {
@@ -21,6 +22,7 @@ clientesRouter.post("/postCliente", upload.array("images"), postCliente);
 clientesRouter.get("/getClientes", getClientes);
 clientesRouter.post("/getclientesById", getClientesById);
 clientesRouter.post("/getDateroByIdCliente", getDateroByIdCliente);
+clientesRouter.post("/getEstadoCliente", getEstadoCliente);
 clientesRouter.get("/getImagenesclientes/:id", getImagenesClientes);
 clientesRouter.post("/eliminarImagenes", eliminarImagenes);
 clientesRouter.post("/updateCliente", updateCliente);
