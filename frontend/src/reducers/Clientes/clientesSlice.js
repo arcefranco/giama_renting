@@ -6,6 +6,7 @@ const initialState = {
   clientes: [],
   cliente: [],
   datero: [],
+  estado_cliente: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -60,6 +61,18 @@ export const getDateroByIdCliente = createAsyncThunk(
   }
 );
 
+export const getEstadoCliente = createAsyncThunk(
+  "getEstadoCliente",
+  async (data, { rejectWithValue }) => {
+    const result = await clientesService.getEstadoCliente(data);
+    if (result >= 0) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const eliminarImagenes = createAsyncThunk(
   "eliminarImagenes",
   async (data, { rejectWithValue }) => {
@@ -94,6 +107,12 @@ export const clientesSlice = createSlice({
       state.isError = false;
       state.message = "";
     },
+    resetEstadoCliente: () => {
+      state.estado_cliente = null;
+      state.isError = false;
+      state.isSuccess = false;
+      state.isLoading = false;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(postCliente.pending, (state) => {
@@ -101,12 +120,14 @@ export const clientesSlice = createSlice({
     });
     builder.addCase(postCliente.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isSuccess = action.payload.status;
+      state.isSuccess = true;
+      state.isError = false;
       state.message = action.payload.message;
     });
     builder.addCase(postCliente.rejected, (state, action) => {
       state.isLoading = false;
-      state.isError = action.payload.status;
+      state.isSuccess = false;
+      state.isError = true;
       state.message = action.payload.message;
     });
     builder.addCase(getClientes.pending, (state) => {
@@ -139,14 +160,32 @@ export const clientesSlice = createSlice({
     });
     builder.addCase(getDateroByIdCliente.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isSuccess = action.payload.status;
+      state.isSuccess = true;
+      state.isError = false;
       state.message = action.payload.message;
       state.datero = action.payload;
     });
     builder.addCase(getDateroByIdCliente.rejected, (state, action) => {
       state.isLoading = false;
-      state.isError = action.payload.status;
+      state.isError = true;
+      state.isSuccess = false;
       state.message = action.payload.message;
+    });
+    builder.addCase(getEstadoCliente.pending, (state) => {
+      state.isLoading = true;
+      state.estado_cliente = null;
+    });
+    builder.addCase(getEstadoCliente.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.estado_cliente = action.payload;
+    });
+    builder.addCase(getEstadoCliente.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.estado_cliente = action.payload;
     });
     builder.addCase(eliminarImagenes.pending, (state) => {
       state.isLoading = true;
@@ -180,5 +219,5 @@ export const clientesSlice = createSlice({
     });
   },
 });
-export const { reset } = clientesSlice.actions;
+export const { reset, resetEstadoCliente } = clientesSlice.actions;
 export default clientesSlice.reducer;

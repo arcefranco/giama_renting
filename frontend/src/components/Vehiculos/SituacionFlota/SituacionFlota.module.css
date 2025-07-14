@@ -19,6 +19,12 @@
   text-align: left;
 }
 
+.tdNumero {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
 .th {
   background-color: #f5f5f5;
   font-weight: 600;

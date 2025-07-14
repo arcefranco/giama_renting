@@ -204,8 +204,8 @@ function esNegativo(numero) {
       {" "}{parseFloat(costo_neto_vehiculo).toLocaleString("es-AR", {
         style: "currency",
         currency: "ARS",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
       })}
     </span>
   </div>
@@ -214,7 +214,7 @@ function esNegativo(numero) {
   <div className={styles.tanteador}>
     <div>
       <div style={{ fontWeight: 'bold' }}>{ocupacion.dias_en_flota}</div>
-      <div style={{ color: '#555' }}>Días en flota</div>
+      <div style={{ color: '#555' }}>Días ocupación</div>
     </div>
     <div>
       <div style={{ fontWeight: 'bold' }}>{ocupacion.dias_alquilado}</div>

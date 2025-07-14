@@ -3,7 +3,6 @@ export const getNextWednesday = (fromDate) => {
   date.setHours(0, 0, 0, 0);
   const day = date.getDay();
   const diff = (3 - day + 7) % 7; // 3 = miércoles
-  console.log(diff);
   if (diff === 0) return date;
   else {
     date.setDate(date.getDate() + diff);

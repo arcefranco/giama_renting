@@ -39,6 +39,27 @@ const getClientesById = async (data) => {
 const getDateroByIdCliente = async (data) => {
   return postArrayFunction("clientes/getDateroByIdCliente", data);
 };
+
+const getEstadoCliente = async (form) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "clientes/getEstadoCliente",
+      form,
+      {
+        withCredentials: true,
+      }
+    );
+    if (response.data >= 0) {
+      return response.data;
+    } else {
+      console.log("response: ", response);
+      throw response.data;
+    }
+  } catch (error) {
+    return -1;
+  }
+};
+
 const eliminarImagenes = async (key) => {
   try {
     const response = await axios.post(
@@ -90,6 +111,7 @@ const clientesService = {
   getClientesById,
   getDateroByIdCliente,
   updateCliente,
+  getEstadoCliente,
 };
 
 export default clientesService;

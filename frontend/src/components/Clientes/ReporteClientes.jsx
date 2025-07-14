@@ -7,6 +7,9 @@ import styles from "./ReporteClientes.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
+import sinResolucionIcon from "../../assets/sin_resolucion.png"
+import rechazadoIcon from "../../assets/rechazado.png"
+import aprobadoIcon from "../../assets/aprobado.png"
 const ReporteClientes = () => {
 const dispatch = useDispatch();
 useEffect(() => {
@@ -88,6 +91,24 @@ const renderImprimirCell = (data) => {
     </button>
   );
 };
+const renderResolucion = ({ data }) => {
+  const valor = data.resolucion_datero;
+
+  const opciones = {
+    0: { label: 'Sin resolución', icon: sinResolucionIcon },
+    1: { label: 'Aprobado', icon: aprobadoIcon },
+    2: { label: 'Rechazado', icon: rechazadoIcon }
+  };
+
+  const seleccion = opciones[valor] || { label: 'Desconocido', icon: sinResolucionIcon };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <img src={seleccion.icon} alt={seleccion.label} style={{ width: 20, height: 20 }} />
+      <span>{seleccion.label}</span>
+    </div>
+  );
+};
 return (
 <div className={styles.container}>
 {isLoading && (
@@ -152,6 +173,7 @@ return (
         <Column dataField="celular" caption="Celular" width={90}/>
         <Column dataField="mail" caption="Mail" width={90}/>
         <Column dataField="notas" caption="Notas" width={200} />
+        <Column dataField="resolucion_datero" caption="Res. datero" width={200} cellRender={renderResolucion}/>
         <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column

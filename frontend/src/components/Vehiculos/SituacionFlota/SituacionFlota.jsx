@@ -90,15 +90,15 @@ const SituacionFlota = () => {
           <tr>
             <th className={styles.th}>Situación</th>
             <th className={styles.th}>Cantidad</th>
-            <th className={styles.th}>Proporción</th>
+            <th className={styles.th}>Porcentaje</th>
           </tr>
         </thead>
         <tbody>
           {datos.map(({ estado, cantidad, proporcion }) => (
             <tr key={estado}>
               <td className={styles.td}>{estado == "total" ? "Vehículos en flota" : renderEtiquetaDesdeNombre(estado)}</td>
-              <td className={styles.td}>{cantidad}</td>
-              <td className={styles.td}>{proporcion}%</td>
+              <td className={styles.tdNumero}>{cantidad}</td>
+              <td className={styles.tdNumero}>{proporcion}%</td>
             </tr>
           ))}
         </tbody>

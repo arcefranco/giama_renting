@@ -6,7 +6,7 @@ import { postContratoAlquiler, getFormasDeCobro, getContratosByIdVehiculo,
   getContratoById, anulacionContrato, reset } from "../../../reducers/Alquileres/alquileresSlice.js";
 import { getVehiculos } from "../../../reducers/Vehiculos/vehiculosSlice.js";
 import { getModelos } from "../../../reducers/Generales/generalesSlice.js";
-import { getClientes } from "../../../reducers/Clientes/clientesSlice.js";
+import { getClientes, getEstadoCliente, resetEstadoCliente } from "../../../reducers/Clientes/clientesSlice.js";
 import styles from "../AlquileresForm/AlquileresForm.module.css"
 import DatePicker from "react-datepicker";
 import Select from 'react-select';
@@ -20,6 +20,9 @@ import { renderEstadoVehiculo } from "../../../utils/renderEstadoVehiculo.jsx";
 import { addDaysHelper } from "../../../helpers/addDaysHelper.js";
 import { getNextWednesday } from "../../../helpers/getNextWednesday.js";
 import { getToday } from "../../../helpers/getTodayDate.js";
+import sinResolucionIcon from "../../../assets/sin_resolucion.png"
+import rechazadoIcon from "../../../assets/rechazado.png"
+import aprobadoIcon from "../../../assets/aprobado.png"
 
 const ContratoAlquiler = () => {
 
@@ -34,7 +37,7 @@ useEffect(() => {
     dispatch(getClientes())
 
   ])
-  if(id){
+  if(id && !isNaN(id)){
     dispatch(getContratoById({id: id}))
   }
 }, [])
@@ -48,6 +51,7 @@ const {isError, isSuccess, isLoading,
 const [formContrato, setFormContrato] = useState({
     id_vehiculo: '',
     id_cliente: '',
+    apellido_cliente: '',
     deposito: '',
     id_forma_cobro_contrato: '',
     fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
@@ -56,7 +60,7 @@ const [formContrato, setFormContrato] = useState({
     cuenta_secundaria_forma_cobro_contrato: '',
 });
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
-const {clientes} = useSelector((state) => state.clientesReducer)
+const {clientes, estado_cliente} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
 
 useEffect(() => {
@@ -170,10 +174,50 @@ else if(value && name === "id_cliente"){
 }
 };
 useEffect(() => { //obtengo contratos del vehiculo seleccionado
-if([formContrato["id_vehiculo"]]){
-  dispatch(getContratosByIdVehiculo({id: formContrato["id_vehiculo"]}))
+if(formContrato.id_vehiculo && !isNaN(formContrato.id_vehiculo)){
+dispatch(getContratosByIdVehiculo({id: formContrato["id_vehiculo"]}))
 }
 }, [formContrato["id_vehiculo"]])
+
+useEffect(() => { //obtengo estado del cliente seleccionado
+if(formContrato.id_cliente && !isNaN(formContrato.id_cliente)){
+  dispatch(getEstadoCliente({id_cliente: formContrato["id_cliente"]}))
+}
+}, [formContrato["id_cliente"]])
+
+ useEffect(() => {
+  if(estado_cliente || estado_cliente == 0){
+  if(estado_cliente == -1){
+    toast.info("Hubo un problema al buscar el estado actual del datero del chofer", {
+    position: "bottom-center",
+    autoClose: 2000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+    })
+    setFormContrato({
+      ...formContrato,
+      id_cliente: "",
+      apellido_cliente: ""
+    })
+  }
+  if(estado_cliente == 0){
+    toast.info("Este chofer aún no tiene el datero aprobado", {
+    position: "bottom-center",
+    autoClose: 2000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+    })
+  }
+  }
+}, [estado_cliente]) 
 
 useEffect(() => { /* fechas por defecto */
   if (!formContrato.id_vehiculo || !contratosVehiculo?.length) {
@@ -245,6 +289,26 @@ const submitUpdate = async (e) => {
   }))
 }
 
+const getIconFromResolucion = (valor) => {
+  const opciones = {
+    0: sinResolucionIcon,
+    1: aprobadoIcon,
+    2: rechazadoIcon,
+  };
+  return opciones[valor] || sinResolucionIcon;
+};
+const clienteOptions = clientes.map(cliente => ({
+  value: cliente.id,
+  label: (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <img src={getIconFromResolucion(cliente.resolucion_datero)} alt="" style={{ width: 16, height: 16 }} />
+      {`${cliente.nro_documento} - ${cliente.nombre} ${cliente.apellido}`}
+    </div>
+  ),
+  isDisabled: cliente.resolucion_datero === 2,
+}));
+
+
   return (
     <div>
       <ToastContainer /> 
@@ -284,26 +348,38 @@ const submitUpdate = async (e) => {
             styles={customStyles}
           />
         </div>
+        <div style={{display: "flex", alignItems: "center"}}>
+        <div>
         <div className={styles.inputWrapper}>
           <span>Clientes</span>
-          <div className={styles.selectWithIcon}>
-            <select  name="id_cliente" disabled={id ? true : false} value={formContrato["id_cliente"]} onChange={handleChangeContrato}>
-              <option value={""} disabled selected>{"Seleccione un cliente"}</option>
-              {
-                clientes?.length && clientes.map(e => (
-                  <option key={e.id} value={e.id}>
-                    {e.nro_documento} - {e.nombre} {e.apellido}
-                  </option>
-                ))
-              }
-            </select>
+            <Select
+            options={clienteOptions}
+            placeholder="Seleccione un cliente"
+            value={formContrato.id_cliente
+            ? clienteOptions.find(opt => opt.value == formContrato.id_cliente)
+            : null}
+            onChange={(e) => {
+            const selectedCliente = clientes.find(c => c.id === e.value);
+            setFormContrato({
+            ...formContrato,
+            id_cliente: selectedCliente.id,
+            apellido_cliente: selectedCliente.apellido,
+            });
+            }}
+            isDisabled={id ? true : false}
+            />
+            <p style={{fontSize: "11px"}}>Los clientes con su datero rechazado se encuentran inhabilitados</p>
+        </div>
+        </div>
+        <div>
+
             <img
               src={add}
               alt="Añadir cliente"
               className={styles.addIcon}
               onClick={() => window.open('/clientes', '_blank')}
             />
-          </div>
+        </div>
         </div>
         <div className={styles.inputContainer}>
             <span>Fecha desde</span>

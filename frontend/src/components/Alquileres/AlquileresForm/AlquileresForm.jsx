@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
 import {getFormasDeCobro, reset, 
-  postAlquiler, getAlquileresByIdVehiculo, getContratosByIdVehiculo,
+  postAlquiler,
   getAlquilerByIdContrato,
   getContratoById} from '../../../reducers/Alquileres/alquileresSlice.js'
 import {getVehiculos} from '../../../reducers/Vehiculos/vehiculosSlice.js'
@@ -15,12 +15,10 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { addDays, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import Select from 'react-select';
-import add from '../../../assets/add.png'
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo.jsx';
 import { toLocalDateOnly } from '../../../helpers/toLocalDateOnly.js';
-
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   minDateContrato, maxDateContrato }) => {
@@ -248,6 +246,8 @@ const handleSubmit = async (e) => {
       dispatch(postAlquiler(formFixed));
     }
 } 
+
+
   return (
         <div className={styles.container}>
             <ToastContainer /> 
@@ -285,6 +285,7 @@ const handleSubmit = async (e) => {
                   />
                 </div>
                 <div></div>
+                
                 <div className={styles.inputWrapper} >
                   <span>Clientes</span>
                   <div className={styles.selectWithIcon} style={{
@@ -301,7 +302,7 @@ const handleSubmit = async (e) => {
                       }
                     </select>
                   </div>
-                </div>
+                </div> 
                 </div>
                 }
                 <div className={styles.formNormal}>

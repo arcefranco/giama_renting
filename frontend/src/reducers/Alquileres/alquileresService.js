@@ -88,7 +88,6 @@ const getAlquileresByIdVehiculo = async (data) => {
     if (Array.isArray(response.data)) {
       return response.data;
     } else {
-      console.log("response: ", response);
       throw response.data;
     }
   } catch (error) {
@@ -110,7 +109,6 @@ const getContratosByIdVehiculo = async (data) => {
     if (Array.isArray(response.data)) {
       return response.data;
     } else {
-      console.log("response: ", response);
       throw response.data;
     }
   } catch (error) {
@@ -132,7 +130,6 @@ const getAlquilerByIdContrato = async (data) => {
     if (Array.isArray(response.data)) {
       return response.data;
     } else {
-      console.log("response: ", response);
       throw response.data;
     }
   } catch (error) {
@@ -154,7 +151,6 @@ const getContratoById = async (data) => {
     if (Array.isArray(response.data)) {
       return response.data;
     } else {
-      console.log("response: ", response);
       throw response.data;
     }
   } catch (error) {

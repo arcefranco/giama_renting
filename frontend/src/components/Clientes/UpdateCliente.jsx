@@ -13,6 +13,7 @@ const UpdateCliente = () => {
   const dispatch = useDispatch();
   const { provincias, tipos_documento, tipos_responsable } = useSelector(state => state.generalesReducer);
   const { cliente, isError, isSuccess, isLoading, message, datero } = useSelector(state => state.clientesReducer);
+  const {username} = useSelector((state) => state.loginReducer)
   const [errors, setErrors] = useState({});
   const [formValido, setFormValido] = useState(false);
   const [form, setFormData] = useState({
@@ -38,6 +39,9 @@ const UpdateCliente = () => {
     ciudad: '',
     mail: '',
     notas:'',
+    resolucion_datero: 0,
+    usuario_resolucion_datero: username ? username : "",
+    //datero
     composicion_familiar: "",
     tiene_o_tuvo_vehiculo: "",
     tipo_servicio: "",
@@ -66,6 +70,12 @@ const UpdateCliente = () => {
     dispatch(getClientesById({id: id}));
     dispatch(getDateroByIdCliente({id_cliente: id}))
   }, [id]);
+  useEffect(() => {
+    setFormData({
+      ...form,
+      usuario_resolucion_datero: username
+    })
+  }, [username])
 
   useEffect(() => {
     if (cliente) {
@@ -92,6 +102,8 @@ const UpdateCliente = () => {
         ciudad: cliente[0]?.ciudad || '',
         mail: cliente[0]?.mail || '',
         notas: cliente[0]?.notas ||'',
+        resolucion_datero: cliente[0]?.resolucion_datero || '',
+        usuario_resolucion_datero: username ? username : "",
         composicion_familiar: datero[0]?.composicion_familiar || '',
         tiene_o_tuvo_vehiculo: datero[0]?.tiene_o_tuvo_vehiculo || '',
         tipo_servicio: datero[0]?.tipo_servicio || '',
@@ -99,7 +111,7 @@ const UpdateCliente = () => {
         score_veraz: datero[0]?.score_veraz || '',
         nivel_deuda: datero[0]?.nivel_deuda || '',
         situacion_deuda: datero[0]?.situacion_deuda || '',
-        libre_de_deuda: datero[0]?.libre_de_deuda || '',
+        libre_de_deuda: datero[0]?.libre_de_deuda || 0,
         antecedentes_penales:datero[0]?.antecedentes_penales || '',
         fecha_antecedentes: datero[0]?.fecha_antecedentes || '',
         cantidad_viajes_uber: datero[0]?.cantidad_viajes_uber || '',
@@ -129,8 +141,6 @@ const UpdateCliente = () => {
     const camposObligatoriosCompletos =
       form["tipo_documento"] !== '' &&
       form["nro_documento"] !== '' &&
-      form["licencia"] !== '' &&
-      form["fecha_vencimiento"] !== '' &&
       form["direccion"] !== '' &&
       form["nro_direccion"] !== '' &&
       form["codigo_postal"] !== '' &&
@@ -217,7 +227,17 @@ const UpdateCliente = () => {
 
 const handleChange = (e) => {
   const { name, value } = e.target;
-  setFormData(prev => ({ ...prev, [name]: value }));
+  if(name == "resolucion_datero"){
+    setFormData({
+      ...form,
+      resolucion_datero: parseInt(value)
+    })
+  }else{
+    setFormData({
+      ...form,
+      [name]: value,
+    }); 
+  }
 };
 
 const handleCheckChange = (e) => {
@@ -514,9 +534,7 @@ if(fecha){
           <div className={styles.inputContainer}>
             <span>Composición familiar</span>
             <input type="text" name='composicion_familiar' value={form["composicion_familiar"]}
-            onChange={handleChange} 
-            onBlur={() => setErrors({ ...errors, ["composicion_familiar"]: !form["composicion_familiar"] ? 'Campo obligatorio' : '' })}/>
-          {errors["composicion_familiar"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["composicion_familiar"]}</span>}
+            onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
             <span>Tiene o tuvo vehículo</span>
@@ -526,48 +544,38 @@ if(fecha){
           <div className={styles.inputContainer}>
             <span>Tipo de servicio a su nombre</span>
             <input type="text" name='tipo_servicio' value={form["tipo_servicio"]}
-            onChange={handleChange} 
-            onBlur={() => setErrors({ ...errors, ["tipo_servicio"]: !form["tipo_servicio"] ? 'Campo obligatorio' : '' })}/>
-          {errors["tiene_o_tuvo_vehiculo"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["tiene_o_tuvo_vehiculo"]}</span>}
+            onChange={handleChange} />
           </div>
-          <div className={styles.inputContainer}>
+          <div className={styles.inputContainer} style={{alignItems: "start"}}>
             <span>Certificado de domicilio</span>
             <input type="checkbox" name='certificado_domicilio' value={form["certificado_domicilio"]}
-            onChange={handleCheckChange} />
+            onChange={handleCheckChange} checked={form.certificado_domicilio === 1}/>
           </div>
           <div className={styles.inputContainer}>
             <span>Score en veraz</span>
             <input type="text" name='score_veraz' value={form["score_veraz"]}
-            onChange={handleChange} 
-            onBlur={() => setErrors({ ...errors, ["score_veraz"]: !form["score_veraz"] ? 'Campo obligatorio' : '' })}/>
-            {errors["score_veraz"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["score_veraz"]}</span>}
+            onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
             <span>Nivel de deuda</span>
             <input type="text" name='nivel_deuda' value={form["nivel_deuda"]}
-            onChange={handleChange} 
-            onBlur={() => setErrors({ ...errors, ["nivel_deuda"]: !form["nivel_deuda"] ? 'Campo obligatorio' : '' })}/>
-          {errors["nivel_deuda"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nivel_deuda"]}</span>}
+            onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
             <span>Situación</span>
             <input type="number" name='situacion_deuda' value={form["situacion_deuda"]}
-            onChange={handleChange} 
-            onBlur={() => setErrors({ ...errors, ["situacion_deuda"]: !form["situacion_deuda"] ? 'Campo obligatorio' : '' })}/>
-          {errors["situacion_deuda"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["situacion_deuda"]}</span>}
+            onChange={handleChange} />
           </div>
-          <div className={styles.inputContainer}>
+          <div className={styles.inputContainer} style={{alignItems: "start"}}>
             <span>Presenta libre de deuda</span>
-            <input type="text" name='libre_de_deuda' value={form["libre_de_deuda"]}
-            onChange={handleChange} 
-            onBlur={() => setErrors({ ...errors, ["libre_de_deuda"]: !form["libre_de_deuda"] ? 'Campo obligatorio' : '' })}/>
-          {errors["libre_de_deuda"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["libre_de_deuda"]}</span>}
+            <input type="checkbox" name='libre_de_deuda' value={form["libre_de_deuda"]}
+            onChange={handleCheckChange} checked={form.libre_de_deuda === 1}/>
           </div>
-          <div className={styles.inputContainer}>
+          <div className={styles.inputContainer} style={{alignItems: "start"}}>
             <span>Antecedentes penales</span>
             <input type="checkbox" name='antecedentes_penales' 
             value={form["antecedentes_penales"]}
-            onChange={handleCheckChange} />
+            onChange={handleCheckChange} checked={form.antecedentes_penales === 1}/>
           </div>
           <div className={styles.inputContainer}>
             <span>Fecha</span>
@@ -614,16 +622,23 @@ if(fecha){
             <textarea name='observacion_perfil' value={form["observacion_perfil"]}
             onChange={handleChange} />
           </div>
+          <div className={styles.inputContainer}>
+          <span>Resolución datero</span>
+          <select name="resolucion_datero" value={form["resolucion_datero"]}
+          onChange={handleChange} id="">
+            <option value={0}>Sin resolución</option>
+            <option value={1}>Aprobado</option>
+            <option value={2}>Rechazado</option>
+          </select>
+          </div>
         </fieldset>
         <fieldset className={styles.fieldSet}>
           <legend>Datos de licencia</legend>
         <div className={styles.inputContainer}>
         <span>Licencia</span>
         <input type="number" 
-        onBlur={() => setErrors({ ...errors, ["licencia"]: !form["licencia"] ? 'Campo obligatorio' : '' })} 
         name='licencia' value={form["licencia"]}
         onChange={handleChange} />
-        {errors["licencia"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["licencia"]}</span>}
         </div>
         <div className={styles.inputContainer}>
           <span>Licencia expedida por</span>
@@ -640,9 +655,7 @@ if(fecha){
         <div className={styles.inputContainer}>
           <span>Fecha de vencimiento</span>
           <input type="date" name='fecha_vencimiento' value={form["fecha_vencimiento"]}
-          onBlur={() => setErrors({ ...errors, ["fecha_vencimiento"]: !form["fecha_vencimiento"] ? 'Campo obligatorio' : '' })} 
           onChange={handleChange} />
-          {errors["fecha_vencimiento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["fecha_vencimiento"]}</span>}
         </div>
       </fieldset>
     </form>
