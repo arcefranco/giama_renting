@@ -17,6 +17,7 @@ import {
   getFichas,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
+import { auth } from "../middlewares/auth.js";
 
 const vehiculosRouter = Router();
 
@@ -27,20 +28,25 @@ vehiculosRouter.use((req, res, next) => {
   );
   next();
 });
-vehiculosRouter.get("/getVehiculos", getVehiculos);
-vehiculosRouter.post("/getVehiculosById", getVehiculosById);
-vehiculosRouter.post("/postVehiculo", upload.array("images"), postVehiculo);
-vehiculosRouter.get("/getImagenesVehiculos/:id", getImagenesVehiculos);
-vehiculosRouter.post("/eliminarImagenes", eliminarImagenes);
-vehiculosRouter.post("/updateVehiculo", updateVehiculo);
-vehiculosRouter.post("/getCostosPeriodo", getCostosPeriodo);
-vehiculosRouter.post("/getCostoNetoVehiculo", getCostoNetoVehiculo);
-vehiculosRouter.post("/getSituacionFlota", getSituacionFlota);
-vehiculosRouter.post("/getAlquileresPeriodo", getAlquileresPeriodo);
-vehiculosRouter.post("/getAllCostosPeriodo", getAllCostosPeriodo);
-vehiculosRouter.post("/getAllAlquileresPeriodo", getAllAlquileresPeriodo);
-vehiculosRouter.post("/getAmortizacion", getAmortizacion);
-vehiculosRouter.get("/getAllAmortizaciones", getAllAmortizaciones);
-vehiculosRouter.post("/getFichas", getFichas);
+vehiculosRouter.get("/getVehiculos", auth, getVehiculos);
+vehiculosRouter.post("/getVehiculosById", auth, getVehiculosById);
+vehiculosRouter.post(
+  "/postVehiculo",
+  auth,
+  upload.array("images"),
+  postVehiculo
+);
+vehiculosRouter.post("/getImagenesVehiculos", auth, getImagenesVehiculos);
+vehiculosRouter.post("/eliminarImagenes", auth, eliminarImagenes);
+vehiculosRouter.post("/updateVehiculo", auth, updateVehiculo);
+vehiculosRouter.post("/getCostosPeriodo", auth, getCostosPeriodo);
+vehiculosRouter.post("/getCostoNetoVehiculo", auth, getCostoNetoVehiculo);
+vehiculosRouter.post("/getSituacionFlota", auth, getSituacionFlota);
+vehiculosRouter.post("/getAlquileresPeriodo", auth, getAlquileresPeriodo);
+vehiculosRouter.post("/getAllCostosPeriodo", auth, getAllCostosPeriodo);
+vehiculosRouter.post("/getAllAlquileresPeriodo", auth, getAllAlquileresPeriodo);
+vehiculosRouter.post("/getAmortizacion", auth, getAmortizacion);
+vehiculosRouter.get("/getAllAmortizaciones", auth, getAllAmortizaciones);
+vehiculosRouter.post("/getFichas", auth, getFichas);
 
 export default vehiculosRouter;

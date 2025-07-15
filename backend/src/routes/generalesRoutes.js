@@ -11,6 +11,7 @@ import {
   getParametroAMRT,
   getEstados,
 } from "../controllers/generalesController.js";
+import { auth } from "../middlewares/auth.js";
 
 const generalesRouter = Router();
 
@@ -22,14 +23,14 @@ generalesRouter.use((req, res, next) => {
   next();
 });
 
-generalesRouter.get("/modelos", getModelos);
-generalesRouter.get("/proveedoresGps", getProveedoresGPS);
-generalesRouter.get("/provincias", getProvincias);
-generalesRouter.get("/tipos_documento", getTiposDocumento);
-generalesRouter.get("/tipos_responsable", getTiposResponsable);
-generalesRouter.get("/tipos_sexo", getTiposSexo);
-generalesRouter.get("/sucursales", getSucursales);
-generalesRouter.get("/precios_modelos", getPreciosModelos);
-generalesRouter.get("/estados", getEstados);
-generalesRouter.get("/AMRT", getParametroAMRT);
+generalesRouter.get("/modelos", auth, getModelos);
+generalesRouter.get("/proveedoresGps", auth, getProveedoresGPS);
+generalesRouter.get("/provincias", auth, getProvincias);
+generalesRouter.get("/tipos_documento", auth, getTiposDocumento);
+generalesRouter.get("/tipos_responsable", auth, getTiposResponsable);
+generalesRouter.get("/tipos_sexo", auth, getTiposSexo);
+generalesRouter.get("/sucursales", auth, getSucursales);
+generalesRouter.get("/precios_modelos", auth, getPreciosModelos);
+generalesRouter.get("/estados", auth, getEstados);
+generalesRouter.get("/AMRT", auth, getParametroAMRT);
 export default generalesRouter;

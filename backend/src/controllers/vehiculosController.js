@@ -285,7 +285,7 @@ export const postVehiculo = async (req, res) => {
 };
 
 export const getImagenesVehiculos = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const prefix = `giama_renting/vehiculos/${id}/`;
   const s3 = new S3Client({
     region: "us-west-2",

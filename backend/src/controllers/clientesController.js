@@ -581,7 +581,7 @@ export const getDateroByIdCliente = async (req, res) => {
 };
 
 export const getImagenesClientes = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   const prefix = `giama_renting/clientes/${id}/`;
   const s3 = new S3Client({
     region: "us-west-2",
@@ -597,7 +597,6 @@ export const getImagenesClientes = async (req, res) => {
     });
 
     const data = await s3.send(command);
-
     if (!data.Contents) return res.json([]);
 
     const archivos = await Promise.all(
@@ -618,7 +617,6 @@ export const getImagenesClientes = async (req, res) => {
         };
       })
     );
-
     res.json(archivos);
   } catch (error) {
     console.error("Error al obtener imágenes del cliente:", error);

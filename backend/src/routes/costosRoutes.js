@@ -10,6 +10,7 @@ import {
   prorrateoIE,
   updateConceptoCostos,
 } from "../controllers/costosController.js";
+import { auth } from "../middlewares/auth.js";
 const costosRouter = Router();
 
 costosRouter.use((req, res, next) => {
@@ -20,16 +21,17 @@ costosRouter.use((req, res, next) => {
   next();
 });
 
-costosRouter.get("/cuentasContables", getCuentasContables);
-costosRouter.post("/concepto", postConceptoCostos);
-costosRouter.get("/concepto", getConceptosCostos);
-costosRouter.post("/getConceptosCostosById", getConceptosCostosById);
-costosRouter.post("/updateConcepto", updateConceptoCostos);
-costosRouter.post("/deleteConcepto", deleteConceptosCostos);
-costosRouter.post("/costos_ingresos", postCostos_Ingresos);
+costosRouter.get("/cuentasContables", auth, getCuentasContables);
+costosRouter.post("/concepto", auth, postConceptoCostos);
+costosRouter.get("/concepto", auth, getConceptosCostos);
+costosRouter.post("/getConceptosCostosById", auth, getConceptosCostosById);
+costosRouter.post("/updateConcepto", auth, updateConceptoCostos);
+costosRouter.post("/deleteConcepto", auth, deleteConceptosCostos);
+costosRouter.post("/costos_ingresos", auth, postCostos_Ingresos);
 costosRouter.post(
   "/costos_ingresos_id_vehiculo",
+  auth,
   getCostosIngresosByIdVehiculo
 );
-costosRouter.post("/prorrateoIE", prorrateoIE);
+costosRouter.post("/prorrateoIE", auth, prorrateoIE);
 export default costosRouter;
