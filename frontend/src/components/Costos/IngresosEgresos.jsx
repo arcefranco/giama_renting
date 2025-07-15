@@ -75,7 +75,9 @@ useEffect(() => {
         theme: "colored",
         })
         dispatch(getCostosIngresosByIdVehiculo({id: id}))
-        dispatch(reset())
+  }
+  if(isSuccess && !message){
+    dispatch(reset())
   }
   if(isSuccess && message){
       toast.success(message, {
@@ -88,8 +90,6 @@ useEffect(() => {
         progress: undefined,
         theme: "colored",
         })
-        dispatch(reset())
-
         if(id){
           setForm({
           id_vehiculo: id,
@@ -167,8 +167,8 @@ const handleChange = (e) => {
       setForm({
      ...form,
      [name]: value,
-     "cuenta": conceptos.find(e => e.id == value)?.cuenta_contable,
-     "cuenta_secundaria": conceptos.find(e => e.id == value)?.cuenta_secundaria
+     "cuenta": conceptos?.find(e => e.id == value)?.cuenta_contable,
+     "cuenta_secundaria": conceptos?.find(e => e.id == value)?.cuenta_secundaria
    }); 
   }
     else if(value && name === "importe_iva"){
