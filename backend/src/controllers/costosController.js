@@ -1,6 +1,11 @@
 import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
-import { handleSqlError } from "../../helpers/handleSqlError.js";
+import { asientoContable } from "../../helpers/asientoContable.js";
+import { getParametro } from "../../helpers/getParametro.js";
+import {
+  getNumeroAsiento,
+  getNumeroAsientoSecundario,
+} from "../../helpers/getNumeroAsiento.js";
 
 export const getCuentasContables = async (req, res) => {
   try {
@@ -156,7 +161,7 @@ export const getCostosIngresosByIdVehiculo = async (req, res) => {
   }
 };
 //FUNCION AUXILIAR
-const asiento_costos_ingresos = async (
+const asientos_costos_ingresos = async (
   //FUNCION AUXILIAR
   Fecha,
   Cuenta,
@@ -169,276 +174,107 @@ const asiento_costos_ingresos = async (
   ingreso_egreso,
   transaction
 ) => {
-  let cuentaIC21;
-  let cuentaIV21;
+  let cuentaIVA;
+  let cuentaSecundariaIVA;
   let cuentaTOTC;
-  let cuentaIC22;
-  let cuentaIV22;
   let cuentaTOT2;
   let NroAsiento;
   let NroAsientoSecundario;
   const dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   const dhTotal = ingreso_egreso === "I" ? "D" : "H";
   //OBTENGO CUENTA IC21 Y TOTC
-  if (ingreso_egreso === "E") {
-    try {
-      const result = await giama_renting.query(
-        `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      cuentaIC21 = result[0]["valor_str"];
-    } catch (error) {
-      console.log(error);
-      throw "Error al buscar un parámetro";
-    }
-  }
-  if (ingreso_egreso === "I") {
-    try {
-      const result = await giama_renting.query(
-        `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      cuentaIV21 = result[0]["valor_str"];
-    } catch (error) {
-      console.log(error);
-      throw "Error al buscar un parámetro";
-    }
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "TOTC"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaTOTC = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    throw new Error("Error al buscar un parámetro");
-  }
+  if (ingreso_egreso === "E") cuentaIVA = await getParametro("IC21");
+  if (ingreso_egreso === "I") cuentaIVA = await getParametro("IV21");
+  cuentaTOTC = await getParametro("TOTC");
   //OBTENGO  CUENTA IC22/IV22 Y TOT2 SI HAY CUENTA SECUNDARIA
   if (CuentaSecundaria) {
-    if (ingreso_egreso === "E") {
-      try {
-        const result = await giama_renting.query(
-          `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
-          {
-            type: QueryTypes.SELECT,
-          }
-        );
-        cuentaIC22 = result[0]["valor_str"];
-      } catch (error) {
-        console.log(error);
-        throw new Error("Error al buscar un parámetro");
-      }
-    }
-    if (ingreso_egreso === "I") {
-      try {
-        const result = await giama_renting.query(
-          `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
-          {
-            type: QueryTypes.SELECT,
-          }
-        );
-        cuentaIV22 = result[0]["valor_str"];
-      } catch (error) {
-        console.log(error);
-        throw new Error("Error al buscar un parámetro");
-      }
-    }
+    if (ingreso_egreso === "E")
+      cuentaSecundariaIVA = await getParametro("IC22");
+    if (ingreso_egreso === "I")
+      cuentaSecundariaIVA = await getParametro("IV22");
     if (!ingreso_egreso)
       throw new Error("Error al decodificar si es ingreso o egreso");
-    try {
-      const result = await giama_renting.query(
-        `SELECT valor_str FROM parametros WHERE codigo = "TOT2"`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      cuentaTOT2 = result[0]["valor_str"];
-    } catch (error) {
-      console.log(error);
-      throw new Error("Error al buscar un parámetro");
-    }
+    cuentaTOT2 = await getParametro("TOT2");
   }
-  //OBTENGO Y GUARDO NUMERO DE ASIENTO
   try {
-    const result = await pa7_giama_renting.query(
-      `
-        SET @nro_asiento = 0;
-        CALL net_getnumeroasiento(@nro_asiento);
-        SELECT @nro_asiento AS nroAsiento;
-      `,
-      { type: QueryTypes.SELECT }
-    );
-    NroAsiento = result[2][0].nroAsiento;
+    NroAsiento = await getNumeroAsiento();
+    if (CuentaSecundaria)
+      NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    throw new Error(`Error al obtener número de asiento: ${error}`);
+    return res.send({ status: false, message: error.message });
   }
-  //OBTENGO Y GUARDO NUMERO DE ASIENTO SECUNDARIO SI HAY CUENTA SECUNDARIA
-  if (CuentaSecundaria) {
-    try {
-      const result = await pa7_giama_renting.query(
-        `
-        SET @nro_asiento = 0;
-        CALL net_getnumeroasientosecundario(@nro_asiento);
-        SELECT @nro_asiento AS nroAsiento;
-      `,
-        { type: QueryTypes.SELECT }
-      );
-      NroAsientoSecundario = result[2][0].nroAsiento;
-    } catch (error) {
-      throw new Error(`Error al obtener número de asiento: ${error}`);
-    }
-  }
-  //MOVIMIENTO 1
   try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          Fecha,
-          NroAsiento,
-          Cuenta,
-          dhNetoEIva,
-          importe_neto,
-          observacion,
-          comprobante,
-        ],
-        transaction: transaction,
-      }
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      Cuenta,
+      dhNetoEIva,
+      importe_neto,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha
     );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIVA,
+      dhNetoEIva,
+      importe_iva,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaTOTC,
+      dhTotal,
+      importe_total,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha
+    );
+    if (CuentaSecundaria) {
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        CuentaSecundaria,
+        dhNetoEIva,
+        importe_neto,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha
+      );
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuentaSecundariaIVA,
+        dhNetoEIva,
+        importe_iva,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha
+      );
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuentaTOT2,
+        dhTotal,
+        importe_total,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha
+      );
+    }
   } catch (error) {
     console.log(error);
     throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
-  }
-  //MOVIMIENTO 2
-  try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          Fecha,
-          NroAsiento,
-          ingreso_egreso === "E"
-            ? cuentaIC21
-            : ingreso_egreso === "I"
-            ? cuentaIV21
-            : "",
-          dhNetoEIva,
-          importe_iva,
-          observacion,
-          comprobante,
-        ],
-        transaction: transaction,
-      }
-    );
-  } catch (error) {
-    throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
-  }
-  //MOVIMIENTO 3
-  try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          Fecha,
-          NroAsiento,
-          cuentaTOTC,
-          dhTotal,
-          importe_total,
-          observacion,
-          comprobante,
-        ],
-        transaction: transaction,
-      }
-    );
-  } catch (error) {
-    throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
-  }
-  //movimientos si hay cuenta secundaria
-  if (CuentaSecundaria) {
-    //MOVIMIENTO 1
-    try {
-      await pa7_giama_renting.query(
-        `INSERT INTO c2_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [
-            Fecha,
-            NroAsientoSecundario,
-            CuentaSecundaria,
-            dhNetoEIva,
-            importe_neto,
-            observacion,
-            comprobante,
-          ],
-          transaction: transaction,
-        }
-      );
-    } catch (error) {
-      console.log(error);
-      throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
-    }
-    //MOVIMIENTO 2
-    try {
-      await pa7_giama_renting.query(
-        `INSERT INTO c2_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [
-            Fecha,
-            NroAsientoSecundario,
-            ingreso_egreso === "E"
-              ? cuentaIC22
-              : ingreso_egreso === "I"
-              ? cuentaIV22
-              : "",
-            dhNetoEIva,
-            importe_iva,
-            observacion,
-            comprobante,
-          ],
-          transaction: transaction,
-        }
-      );
-    } catch (error) {
-      throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
-    }
-    //MOVIMIENTO 3
-    try {
-      await pa7_giama_renting.query(
-        `INSERT INTO c2_movimientos 
-      (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (?,?,?,?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [
-            Fecha,
-            NroAsientoSecundario,
-            cuentaTOT2,
-            dhTotal,
-            importe_total,
-            observacion,
-            comprobante,
-          ],
-          transaction: transaction,
-        }
-      );
-    } catch (error) {
-      throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
-    }
   }
   return NroAsiento;
 };
@@ -475,7 +311,7 @@ async function registrarCostoIngresoIndividual({
     throw new Error("Error al buscar cuenta contable");
   }
   try {
-    NroAsiento = await asiento_costos_ingresos(
+    NroAsiento = await asientos_costos_ingresos(
       fecha,
       cuenta,
       cuenta_secundaria,

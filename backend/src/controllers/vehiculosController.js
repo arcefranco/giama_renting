@@ -16,6 +16,11 @@ import { handleSqlError } from "../../helpers/handleSqlError.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { normalizarFecha } from "../../helpers/normalizarFecha.js";
 import { diferenciaDias } from "../../helpers/diferenciaDias.js";
+import { getParametro } from "../../helpers/getParametro.js";
+import {
+  getNumeroAsiento,
+  getNumeroAsientoSecundario,
+} from "../../helpers/getNumeroAsiento.js";
 
 export const getVehiculos = async (req, res) => {
   const hoy = getTodayDate();
@@ -91,11 +96,6 @@ export const getVehiculosById = async (req, res) => {
 };
 
 export const postVehiculo = async (req, res) => {
-  /** falta hacer asiento de costo:
-   * costo neto e iva (calculado acá) al debe
-   * total al haber
-   * hacer también asientos secundarios
-   */
   const {
     modelo,
     dominio,
@@ -110,7 +110,6 @@ export const postVehiculo = async (req, res) => {
     nro_factura_compra,
     usuario,
   } = req.body;
-  console.log(req.body);
   let cuentaRODN;
   let cuentaRODT;
   let cuentaIC21;
@@ -132,118 +131,24 @@ export const postVehiculo = async (req, res) => {
     });
   let concepto = `Ingreso del vehiculo - ${
     dominio ? dominio : dominio_provisorio
-  }`; //A REVISAR
+  }`;
   try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "AMRT"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    meses_amortizacion = result[0]["valor_str"];
+    meses_amortizacion = await getParametro("AMRT");
+    cuentaRODN = await getParametro("RODN");
+    cuentaRODT = await getParametro("RODT");
+    cuentaIC21 = await getParametro("IC21");
+    cuentaIC22 = await getParametro("IC22");
+    cuentaRDN2 = await getParametro("RDN2");
+    cuentaRDT2 = await getParametro("RDT2");
   } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "RODN"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaRODN = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "RODT"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaRODT = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "IC21"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaIC21 = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "IC22"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaIC22 = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "RDN2"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaRDN2 = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "RDT2"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaRDT2 = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
+    return res.send({ status: false, message: error });
   }
   //buscar numeros de asiento y asiento secundario
   try {
-    const result = await pa7_giama_renting.query(
-      `
-        SET @nro_asiento = 0;
-        CALL net_getnumeroasiento(@nro_asiento);
-        SELECT @nro_asiento AS nroAsiento;
-      `,
-      { type: QueryTypes.SELECT }
-    );
-    NroAsiento = result[2][0].nroAsiento;
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    throw `Error al obtener número de asiento: ${error}`;
-  }
-  //obtengo numero de asiento secundario
-  try {
-    const result = await pa7_giama_renting.query(
-      `
-        SET @nro_asiento = 0;
-        CALL net_getnumeroasientosecundario(@nro_asiento);
-        SELECT @nro_asiento AS nroAsiento;
-      `,
-      { type: QueryTypes.SELECT }
-    );
-    NroAsientoSecundario = result[2][0].nroAsiento;
-  } catch (error) {
-    throw `Error al obtener número de asiento: ${error}`;
+    return res.send({ status: false, message: error.message });
   }
   try {
     const result = await giama_renting.query(
@@ -306,6 +211,7 @@ export const postVehiculo = async (req, res) => {
   }
   //asientos
   try {
+    //asientos
     await asientoContable(
       "c_movimientos",
       NroAsiento,
@@ -315,16 +221,6 @@ export const postVehiculo = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al generar el asiento contable",
-    });
-  }
-  try {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
@@ -334,16 +230,6 @@ export const postVehiculo = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al generar el asiento contable",
-    });
-  }
-  try {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
@@ -353,17 +239,7 @@ export const postVehiculo = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al generar el asiento contable",
-    });
-  }
-  //asientos secundarios
-  try {
+    //asientos secundarios
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
@@ -373,16 +249,6 @@ export const postVehiculo = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al generar el asiento contable",
-    });
-  }
-  try {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
@@ -392,16 +258,6 @@ export const postVehiculo = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al generar el asiento contable",
-    });
-  }
-  try {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
