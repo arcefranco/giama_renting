@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import vehiculosService from "./vehiculosService.js";
 const initialState = {
   vehiculos: [],
+  imagenes: [],
   situacionFlota: {},
   fichas: [],
   fichaByIdVehiculo: [],
@@ -62,6 +63,18 @@ export const updateVehiculo = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     const result = await vehiculosService.updateVehiculo(data);
     if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const getImagenesVehiculos = createAsyncThunk(
+  "getImagenesVehiculos",
+  async (data, { rejectWithValue }) => {
+    const result = await vehiculosService.getImagenesVehiculos(data);
+    if (Array.isArray(result)) {
       return result;
     } else {
       return rejectWithValue(result);
@@ -268,6 +281,21 @@ export const vehiculosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(updateVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getImagenesVehiculos.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getImagenesVehiculos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.imagenes = action.payload;
+    });
+    builder.addCase(getImagenesVehiculos.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

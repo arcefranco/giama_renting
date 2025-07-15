@@ -40,6 +40,10 @@ const getDateroByIdCliente = async (data) => {
   return postArrayFunction("clientes/getDateroByIdCliente", data);
 };
 
+const getImagenesClientes = async (data) => {
+  return postArrayFunction("clientes/getImagenesclientes", data);
+};
+
 const getEstadoCliente = async (form) => {
   try {
     const response = await axios.post(
@@ -111,6 +115,7 @@ const clientesService = {
   getClientesById,
   getDateroByIdCliente,
   updateCliente,
+  getImagenesClientes,
   getEstadoCliente,
 };
 

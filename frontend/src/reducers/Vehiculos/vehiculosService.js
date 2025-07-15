@@ -75,6 +75,9 @@ const updateVehiculo = async (form) => {
     return ServiceErrorHandler(error, "vehiculos/updateVehiculo");
   }
 };
+const getImagenesVehiculos = async (form) => {
+  return postArrayFunction("vehiculos/getImagenesVehiculos", form);
+};
 const eliminarImagenes = async (key) => {
   try {
     const response = await axios.post(
@@ -247,6 +250,7 @@ const vehiculosService = {
   getVehiculosById,
   postVehiculo,
   updateVehiculo,
+  getImagenesVehiculos,
   eliminarImagenes,
   getCostosPeriodo,
   getCostoNetoVehiculo,

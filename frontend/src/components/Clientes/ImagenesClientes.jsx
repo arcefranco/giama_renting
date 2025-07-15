@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import styles from './ImagenesClientes.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { eliminarImagenes, reset } from '../../reducers/Clientes/clientesSlice';
+import { eliminarImagenes, reset, getClientesById, getImagenesClientes } from '../../reducers/Clientes/clientesSlice';
 import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
@@ -12,32 +11,31 @@ import { ToastContainer, toast } from 'react-toastify';
 
 const ImagenesClientes = () => {
   const { id } = useParams();
-  const [imagenes, setImagenes] = useState([]);
-  const [cliente, setCliente] = useState(null);
   const dispatch = useDispatch();
-  const { isError, isSuccess, isLoading, message } = useSelector(state => state.clientesReducer);
+  const { isError, isSuccess, isLoading, message, cliente, imagenes } = useSelector(state => state.clientesReducer);
+  const [imagenesState, setImagenesState] = useState([])
   useEffect(() => {
     Promise.all([
-        axios.get(import.meta.env.VITE_REACT_APP_HOST + `clientes/getImagenesClientes/${id}`).then((res) => setImagenes(res.data)),
-        axios.post(import.meta.env.VITE_REACT_APP_HOST + `clientes/getClientesById`, {id: id}).then((res) => setCliente(res.data)),
+        dispatch(getImagenesClientes({id: id})),
+        dispatch(getClientesById({id: id}))
     ])
 
   }, [id]);
   useEffect(() => {
-      if (isError) {
+      if (isError && message) {
         toast.error(message);
       }
-      if (isSuccess) {
+      if (isSuccess && message) {
         toast.success(message);
         dispatch(reset());
-        axios.get(import.meta.env.VITE_REACT_APP_HOST + `clientes/getImagenesClientes/${id}`).then((res) => setImagenes(res.data))
+        dispatch(getImagenesClientes({id: id}))
       }
   }, [isError, isSuccess]);
 const handleEliminarImagen = async (key) => {
     try {
       dispatch(eliminarImagenes({key: key}))
       // Luego actualizá tu estado o hacé refetch de las imágenes
-      setImagenes(prev => prev.filter(img => img.Key !== key));
+      setImagenesState(prev => prev.filter(img => img.Key !== key));
     } catch (err) {
       console.error(err);
       alert('Error al eliminar la imagen');
@@ -68,7 +66,7 @@ const handleEliminarImagen = async (key) => {
             <p className={styles.loadingText}>Eliminando imagen...</p>
           </div>
         )}
-      {cliente && (
+      {cliente?.length && (
         <h2 style={{fontSize: "xx-large"}}>
         {cliente[0]["nombre"] ? cliente[0]["nombre"] + " " + cliente[0]["apellido"] : cliente[0]["razon_social"]}
 
@@ -76,7 +74,7 @@ const handleEliminarImagen = async (key) => {
       )}
 
       <div className={styles.grid}>
-        {imagenes?.map((img, index) => (
+        {imagenesState.length ? imagenesState?.map((img, index) => (
           <div key={index} className={styles.card}>
             <img
               src={img.url}
@@ -90,7 +88,7 @@ const handleEliminarImagen = async (key) => {
               <p>{new Date(img.lastModified).toLocaleString()}</p>
             </div>
           </div>
-        ))}
+        )) : <span>El cliente no tiene imagenes guardadas</span>}
       </div>
     </div>
   );

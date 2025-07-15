@@ -4,7 +4,10 @@ import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
 export const getFunction = async (route) => {
   try {
     const response = await axios.get(
-      import.meta.env.VITE_REACT_APP_HOST + route
+      import.meta.env.VITE_REACT_APP_HOST + route,
+      {
+        withCredentials: true,
+      }
     );
     if (Array.isArray(response.data)) {
       return response.data;

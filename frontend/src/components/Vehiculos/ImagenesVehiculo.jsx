@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import styles from './ImagenesVehiculo.module.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { getModelos } from '../../reducers/Generales/generalesSlice';
-import { eliminarImagenes, reset } from '../../reducers/Vehiculos/vehiculosSlice';
+import { eliminarImagenes, reset, getVehiculosById, getImagenesVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
 import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
@@ -13,34 +13,33 @@ import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 
 const ImagenesVehiculo = () => {
   const { id } = useParams();
-  const [imagenes, setImagenes] = useState([]);
-  const [vehiculo, setVehiculo] = useState(null);
+  const [imagenesState, setImagenesState] = useState([]);
   const dispatch = useDispatch();
-  const { isError, isSuccess, isLoading, message } = useSelector(state => state.vehiculosReducer);
+  const { isError, isSuccess, isLoading, message, vehiculo, imagenes } = useSelector(state => state.vehiculosReducer);
   const {modelos} = useSelector(state => state.generalesReducer)
   useEffect(() => {
     Promise.all([
-        axios.get(import.meta.env.VITE_REACT_APP_HOST + `vehiculos/getImagenesVehiculos/${id}`).then((res) => setImagenes(res.data)),
-        axios.post(import.meta.env.VITE_REACT_APP_HOST + `vehiculos/getVehiculosById`, {id: id}).then((res) => setVehiculo(res.data)),
+        dispatch(getImagenesVehiculos({id: id})),
+        dispatch(getVehiculosById({id: id})),
         dispatch(getModelos()),
     ])
 
   }, [id]);
     useEffect(() => {
-      if (isError) {
+      if (isError && message) {
         toast.error(message);
       }
-      if (isSuccess) {
+      if (isSuccess && message) {
         toast.success(message);
         dispatch(reset());
-        axios.get(import.meta.env.VITE_REACT_APP_HOST + `vehiculos/getImagenesVehiculos/${id}`).then((res) => setImagenes(res.data))
+        dispatch(getImagenesVehiculos({id: id}))
       }
     }, [isError, isSuccess]);
   const handleEliminarImagen = async (key) => {
     try {
       dispatch(eliminarImagenes({key: key}))
       // Luego actualizá tu estado o hacé refetch de las imágenes
-      setImagenes(prev => prev.filter(img => img.Key !== key));
+      setImagenesState(prev => prev.filter(img => img.Key !== key));
     } catch (err) {
       console.error(err);
       alert('Error al eliminar la imagen');
@@ -71,7 +70,7 @@ const ImagenesVehiculo = () => {
             <p className={styles.loadingText}>Eliminando imagen...</p>
           </div>
         )} 
-      {vehiculo && (
+      {vehiculo?.length && (
         <h2 style={{display: "flex", alignItems: "center", fontSize: "xx-large"}}>
           {vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
     vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
@@ -79,7 +78,7 @@ const ImagenesVehiculo = () => {
       )}
 
       <div className={styles.grid}>
-        {imagenes?.map((img, index) => (
+        {imagenesState?.length ? imagenesState?.map((img, index) => (
           <div key={index} className={styles.card}>
             <img
               src={img.url}
@@ -93,7 +92,7 @@ const ImagenesVehiculo = () => {
               <p>{new Date(img.lastModified).toLocaleString()}</p>
             </div>
           </div>
-        ))}
+        )) : <span>El vehículo no tiene imagenes guardadas</span>}
       </div>
     </div>
   );
