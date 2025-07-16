@@ -64,8 +64,7 @@ const {clientes, estado_cliente} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
 
 useEffect(() => {
-  if(id){
-    if(isError){
+    if(isError && message){
         toast.error(message, {
           position: "bottom-center",
           autoClose: 5000,
@@ -78,7 +77,7 @@ useEffect(() => {
           })
           dispatch(reset())
       }
-      if(isSuccess){
+      if(isSuccess && message){
         toast.success(message, {
           position: "bottom-center",
           autoClose: 5000,
@@ -89,11 +88,19 @@ useEffect(() => {
           progress: undefined,
           theme: "colored",
           })
+          setFormContrato({
+          id_vehiculo: '',
+          id_cliente: '',
+          apellido_cliente: '',
+          deposito: '',
+          id_forma_cobro_contrato: '',
+          fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
+          fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+          cuenta_contable_forma_cobro_contrato: '',
+          cuenta_secundaria_forma_cobro_contrato: '',
+          })
           dispatch(reset())
       }
-
-  }
-
 }, [isError, isSuccess]) 
 
 useEffect(() => {
@@ -133,19 +140,23 @@ fechaHastaPickers.setHours(0, 0, 0, 0);
 }
 }, [contratoById, id]);
 
-const opcionesVehiculos = vehiculos?.filter(v => {return !v.fecha_venta}).map(e => {
+const opcionesVehiculos = vehiculos
+  ?.filter((v) => !v.fecha_venta)
+  .map((e) => {
+    const dominio = e.dominio || e.dominio_provisorio || "";
+    const modeloNombre = modelos.find((m) => m.id == e.modelo)?.nombre || "";
 
-  return {
-    value: e.id,
-    label: (
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
-        <span>{e.dominio ? e.dominio : 
-    e.dominio_provisorio ? e.dominio_provisorio : ""} - {modelos.find(m => m.id == e.modelo)?.nombre}</span>
-        {renderEstadoVehiculo(e, "chico")}
-      </div>
-    )
-  };
-});
+    return {
+      value: e.id,
+      label: (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: '15px' }}>
+          <span>{dominio} - {modeloNombre}</span>
+          {renderEstadoVehiculo(e, 'chico')}
+        </div>
+      ),
+      searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
+    };
+  });
 const customStyles = {
   container: (provided) => ({
     ...provided,
@@ -346,6 +357,9 @@ const clienteOptions = clientes.map(cliente => ({
             }}
             placeholder="Seleccione un vehículo"
             styles={customStyles}
+            filterOption={(option, inputValue) =>
+            option.data.searchKey.includes(inputValue.toLowerCase())
+            }
           />
         </div>
         <div style={{display: "flex", alignItems: "center"}}>
