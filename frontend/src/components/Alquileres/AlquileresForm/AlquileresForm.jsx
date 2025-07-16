@@ -100,12 +100,13 @@ useEffect(() => {
         progress: undefined,
         theme: "colored",
         })
-        dispatch(reset())
+        Promise.all([
+          dispatch(reset()),
+          dispatch(getAlquilerByIdContrato({id: idContrato}))
+        ])
         setForm({
-        id_vehiculo: '',
-        id_cliente: '',
-        fecha_desde_alquiler: '',
-        fecha_hasta_alquiler: '',
+        ...form,
+        id_contrato: idContrato,
         importe_neto: '',
         importe_iva: '',
         importe_total: '',
