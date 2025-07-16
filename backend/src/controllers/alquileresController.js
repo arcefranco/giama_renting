@@ -10,8 +10,64 @@ import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
-//buscar cliente en postAlquiler y postContrato
-//analizar factorizar la funcion postAlquiler para reutilizarla en postContrato y no escribirla 2 veces
+import { verificarCliente } from "../../helpers/verificarCliente.js";
+
+const insertAlquiler = async (body) => {
+  const {
+    id_vehiculo,
+    id_cliente,
+    fecha_desde_alquiler,
+    fecha_hasta_alquiler,
+    importe_neto,
+    importe_iva,
+    importe_total,
+    id_forma_cobro_alquiler,
+    NroAsiento,
+    observacion,
+    id_contrato,
+    transaction,
+  } = body;
+  try {
+    await giama_renting.query(
+      `INSERT INTO alquileres 
+    (id_vehiculo,
+    id_cliente,
+    fecha_desde,
+    fecha_hasta,
+    importe_neto,
+    importe_iva,
+    importe_total,
+    id_forma_cobro,
+    fecha_cobro,
+    nro_asiento,
+    observacion,
+    id_contrato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          id_vehiculo,
+          id_cliente,
+          fecha_desde_alquiler,
+          fecha_hasta_alquiler,
+          importe_neto,
+          importe_iva,
+          importe_total,
+          id_forma_cobro_alquiler,
+          getTodayDate(),
+          NroAsiento,
+          observacion ? observacion : "",
+          id_contrato,
+        ],
+        transaction: transaction,
+      }
+    );
+    return true;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error al insertar alquiler");
+  }
+};
+
 export const getFormasCobro = async (req, res) => {
   try {
     const resultado = await giama_renting.query("SELECT * FROM formas_cobro", {
@@ -70,9 +126,17 @@ export const postAlquiler = async (req, res) => {
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde_alquiler} hasta: ${fecha_hasta_alquiler}`;
-  console.log("fecha_desde_alquiler: ", fecha_desde_alquiler);
-  console.log("fecha_hasta_alquiler: ", fecha_hasta_alquiler);
-
+  //buscar el estado del cliente
+  try {
+    let estadoCliente = await verificarCliente(id_cliente);
+    if (estadoCliente?.length)
+      return res.send({ status: false, message: estadoCliente });
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Hubo un error al verificar el estado del cliente",
+    });
+  }
   //buscar si el vehiculo está vendido
   try {
     const result = await giama_renting.query(
@@ -126,12 +190,6 @@ export const postAlquiler = async (req, res) => {
     console.log(error);
     return res.send({ status: false, message: JSON.stringify(error) });
   }
-  //buscar el estado del cliente
-  /*   try {
-    
-  } catch (error) {
-    
-  } */
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU Y ALQU_2(cuenta secundaria)
   try {
     cuentaIV21 = await getParametro("IV21");
@@ -150,43 +208,27 @@ export const postAlquiler = async (req, res) => {
   }
   //inserto alquiler
   try {
-    await giama_renting.query(
-      `INSERT INTO alquileres 
-    (id_vehiculo,
-    id_cliente,
-    fecha_desde,
-    fecha_hasta,
-    importe_neto,
-    importe_iva,
-    importe_total,
-    id_forma_cobro,
-    fecha_cobro,
-    nro_asiento,
-    observacion,
-    id_contrato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          id_vehiculo,
-          id_cliente,
-          fecha_desde_alquiler,
-          fecha_hasta_alquiler,
-          importe_neto,
-          importe_iva,
-          importe_total,
-          id_forma_cobro_alquiler,
-          getTodayDate(),
-          NroAsiento,
-          observacion ? observacion : "",
-          id_contrato,
-        ],
-        transaction: transaction_giama_renting,
-      }
-    );
+    await insertAlquiler({
+      id_vehiculo: id_vehiculo,
+      id_cliente: id_cliente,
+      fecha_desde_alquiler: fecha_desde_alquiler,
+      fecha_hasta_alquiler: fecha_hasta_alquiler,
+      importe_neto: importe_neto,
+      importe_iva: importe_iva,
+      importe_total: importe_total,
+      id_forma_cobro_alquiler: id_forma_cobro_alquiler,
+      NroAsiento: NroAsiento,
+      observacion: observacion,
+      id_contrato: id_contrato,
+      transaction: transaction_giama_renting,
+    });
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({ status: false, message: "Error al insertar alquiler" });
+    return res.send({
+      status: false,
+      message: error.message || "Error al insertar alquiler",
+    });
   }
   //movimientos contables
   try {
@@ -300,6 +342,17 @@ export const postContratoAlquiler = async (req, res) => {
   let fecha_hasta_alquiler_parseada = formatearFechaISO(fecha_hasta_alquiler);
   let fecha_desde_contrato_parseada = formatearFechaISO(fecha_desde_contrato);
   let fecha_hasta_contrato_parseada = formatearFechaISO(fecha_hasta_contrato);
+  //buscar el estado del cliente
+  try {
+    let estadoCliente = await verificarCliente(id_cliente);
+    if (estadoCliente?.length)
+      return res.send({ status: false, message: estadoCliente });
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Hubo un error al verificar el estado del cliente",
+    });
+  }
   //buscar si el vehiculo está vendido
   try {
     const result = await giama_renting.query(
@@ -442,43 +495,27 @@ export const postContratoAlquiler = async (req, res) => {
   }
   //inserto alquiler
   try {
-    await giama_renting.query(
-      `INSERT INTO alquileres 
-    (id_vehiculo,
-    id_cliente,
-    fecha_desde,
-    fecha_hasta,
-    importe_neto,
-    importe_iva,
-    importe_total,
-    id_forma_cobro,
-    fecha_cobro,
-    nro_asiento,
-    observacion,
-    id_contrato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          id_vehiculo,
-          id_cliente,
-          fecha_desde_alquiler_parseada,
-          fecha_hasta_alquiler_parseada,
-          importe_neto,
-          importe_iva,
-          importe_total,
-          id_forma_cobro_alquiler,
-          getTodayDate(),
-          NroAsiento,
-          observacion ? observacion : null,
-          idContrato,
-        ],
-        transaction: transaction_giama_renting,
-      }
-    );
+    await insertAlquiler({
+      id_vehiculo: id_vehiculo,
+      id_cliente: id_cliente,
+      fecha_desde_alquiler: fecha_desde_alquiler_parseada,
+      fecha_hasta_alquiler: fecha_hasta_alquiler_parseada,
+      importe_neto: importe_neto,
+      importe_iva: importe_iva,
+      importe_total: importe_total,
+      id_forma_cobro_alquiler: id_forma_cobro_alquiler,
+      NroAsiento: NroAsiento,
+      observacion: observacion,
+      id_contrato: idContrato,
+      transaction: transaction_pa7_giama_renting,
+    });
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
+    return res.send({
+      status: false,
+      message: error.message || "Error al insertar alquiler",
+    });
   }
   //movimientos contables
   try {

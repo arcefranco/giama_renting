@@ -24,7 +24,7 @@ alquileresRouter.use((req, res, next) => {
   next();
 });
 alquileresRouter.post("/contrato", auth, postContratoAlquiler);
-alquileresRouter.post("/postAlquiler", auth, postAlquiler);
+alquileresRouter.post("/postAlquiler", /* auth, */ postAlquiler);
 alquileresRouter.post("/formaDeCobro", auth, postFormaCobro);
 alquileresRouter.get("/formaDeCobro", auth, getFormasCobro);
 alquileresRouter.post("/idVehiculo", auth, getAlquileresByIdVehiculo);
