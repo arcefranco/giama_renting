@@ -21,6 +21,7 @@ import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
+import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 
 export const getVehiculos = async (req, res) => {
   const hoy = getTodayDate();
@@ -124,6 +125,16 @@ export const postVehiculo = async (req, res) => {
   let meses_amortizacion;
   const importe_iva = parseFloat(costo) * 0.21; //
   const importe_total = importe_iva + parseFloat(costo);
+  const camposObligatorios = ["modelo", "costo", "sucursal"];
+  const mensajeError = validarCamposObligatorios(
+    req.body,
+    camposObligatorios,
+    "vehículo"
+  );
+
+  if (mensajeError) {
+    return res.send({ status: false, message: mensajeError });
+  }
   if (!dominio && !dominio_provisorio)
     return res.send({
       status: false,

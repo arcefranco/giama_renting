@@ -85,9 +85,20 @@ export const createPass = async (req, res) => {
 
 export const recoveryPass = async (req, res) => {
   const { email } = req.body;
+  let emailExistente;
   if (!email) {
     return res.send({ status: false, message: "Faltan campos" });
   }
+  emailExistente = await giama_renting.query(
+    "SELECT * FROM usuarios WHERE email = ?",
+    {
+      type: QueryTypes.SELECT,
+      replacements: [email],
+    }
+  );
+  if (!emailExistente.length)
+    return res.send({ status: false, message: "Email no registrado" });
+
   const payload = {
     email: email,
   };
@@ -123,6 +134,8 @@ export const logIn = async (req, res) => {
       message: JSON.stringify(error),
     });
   }
+  if (!user.length)
+    return res.send({ status: false, message: "Email no registrado" });
   try {
     let result = await bcrypt.compare(password, user[0].password);
     if (result) {

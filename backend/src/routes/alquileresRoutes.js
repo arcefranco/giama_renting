@@ -31,7 +31,7 @@ alquileresRouter.post("/idVehiculo", auth, getAlquileresByIdVehiculo);
 alquileresRouter.post("/contrato/idVehiculo", auth, getContratosByIdVehiculo);
 alquileresRouter.post("/id", getAlquilerByIdContrato);
 alquileresRouter.post("/contrato/id", auth, getContratoById);
-alquileresRouter.post("/", getAlquileres);
+alquileresRouter.post("/", auth, getAlquileres);
 alquileresRouter.post("/contratos", auth, getContratos);
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
 alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);

@@ -3,7 +3,7 @@ import { giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
 import { handleSqlError } from "../../helpers/handleSqlError.js";
-import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
+import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import {
   PutObjectCommand,
@@ -71,11 +71,15 @@ export const postCliente = async (req, res) => {
     "mail",
     "libre_de_deuda",
   ];
-  const campoFaltante = verificarCamposObligatorios(
+  const mensajeError = validarCamposObligatorios(
     req.body,
-    camposObligatorios
+    camposObligatorios,
+    "cliente"
   );
 
+  if (mensajeError) {
+    return res.send({ status: false, message: mensajeError });
+  }
   if (campoFaltante) {
     return res.send({
       status: false,
