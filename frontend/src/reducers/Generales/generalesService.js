@@ -40,9 +40,13 @@ const getEstados = async () => {
 const getParametroAMRT = async () => {
   try {
     const response = await axios.get(
-      import.meta.env.VITE_REACT_APP_HOST + "generales/AMRT"
+      import.meta.env.VITE_REACT_APP_HOST + "generales/AMRT",
+      {
+        withCredentials: true,
+      }
     );
     let parametro = response.data;
+    console.log(response.data);
     if (parametro.hasOwnProperty("AMRT")) {
       return response.data;
     } else {

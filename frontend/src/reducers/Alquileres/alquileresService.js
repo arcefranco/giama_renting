@@ -30,7 +30,10 @@ const getAlquileres = async (form) => {
   try {
     const response = await axios.post(
       import.meta.env.VITE_REACT_APP_HOST + "alquileres/",
-      form
+      form,
+      {
+        withCredentials: true,
+      }
     );
     if (Array.isArray(response.data)) {
       return response.data;
@@ -46,7 +49,10 @@ const getContratos = async (form) => {
   try {
     const response = await axios.post(
       import.meta.env.VITE_REACT_APP_HOST + "alquileres/contratos",
-      form
+      form,
+      {
+        withCredentials: true,
+      }
     );
     if (Array.isArray(response.data)) {
       return response.data;
@@ -62,7 +68,10 @@ const getAnulaciones = async (form) => {
   try {
     const response = await axios.post(
       import.meta.env.VITE_REACT_APP_HOST + "alquileres/getAnulaciones",
-      form
+      form,
+      {
+        withCredentials: true,
+      }
     );
     if (Array.isArray(response.data)) {
       return response.data;

@@ -539,6 +539,7 @@ return (
           type="file"
           ref={fileInputRef}
           multiple
+          accept="image/*"
           style={{ display: "none" }}
           onChange={handleFileChange}
         />

@@ -236,7 +236,7 @@ const handleSubmit = async (e) => {
         </div>
         <div className={styles.inputContainer}>
         <span>Meses amortización</span>
-        <input type="number" name='meses_amortizacion' disabled value={form["meses_amortizacion"]}
+        <input type="number" name='meses_amortizacion' value={form["meses_amortizacion"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
@@ -263,6 +263,7 @@ const handleSubmit = async (e) => {
     type="file"
     ref={fileInputRef}
     multiple
+    accept="image/*"
     style={{ display: "none" }}
     onChange={handleFileChange}
   />
