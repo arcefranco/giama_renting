@@ -2,9 +2,10 @@ import { QueryTypes } from "sequelize";
 import { giama_renting } from "../../helpers/connection.js";
 import { s3 } from "../../helpers/s3Connection.js";
 import { v4 as uuidv4 } from "uuid";
-import { handleSqlError } from "../../helpers/handleSqlError.js";
+import { acciones, handleError } from "../../helpers/handleError.js";
 import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import {
   PutObjectCommand,
   S3Client,
@@ -132,11 +133,7 @@ export const postCliente = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction.rollback();
-    const { status, body } = handleSqlError(
-      error,
-      "cliente",
-      "documento/licencia/direccion/celular"
-    );
+    const { body } = handleError(error, "cliente", acciones.post);
     return res.send(body);
   }
   const files = req.files;
@@ -155,7 +152,11 @@ export const postCliente = async (req, res) => {
       await s3.send(command);
     } catch (err) {
       transaction.rollback();
-      console.error("Error al subir imagen:", err);
+      console.error("Error al subir imagen: ", err);
+      return res.send({
+        status: false,
+        message: "Error al subir las imágenes",
+      });
     }
   }
   try {
@@ -209,11 +210,7 @@ export const postCliente = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction.rollback();
-    const { status, body } = handleSqlError(
-      error,
-      "cliente",
-      "documento/licencia/direccion/celular"
-    );
+    const { body } = handleError(error, "cliente", acciones.post);
     return res.send(body);
   }
   transaction.commit();
@@ -307,10 +304,8 @@ export const updateCliente = async (req, res) => {
     );
     existeCliente = result;
   } catch (error) {
-    return res.send({
-      status: false,
-      message: "Error al encontrar el cliente",
-    });
+    const { body } = handleError(error, "Datero del cliente", acciones.get);
+    return res.send(body);
   }
   try {
     let result = await giama_renting.query(
@@ -322,12 +317,9 @@ export const updateCliente = async (req, res) => {
     );
     existeDatero = result;
   } catch (error) {
-    return res.send({
-      status: false,
-      message: "Error al encontrar el cliente",
-    });
+    const { body } = handleError(error, "Cliente", acciones.get);
+    return res.send(body);
   }
-  console.log(existeCliente);
   if (!existeCliente.length)
     return res.send({ status: false, message: "El cliente no existe" });
   resolucion_datero_final =
@@ -386,11 +378,7 @@ export const updateCliente = async (req, res) => {
   } catch (error) {
     transaction.rollback();
     console.log(error);
-    const { status, body } = handleSqlError(
-      error,
-      "cliente",
-      "documento/licencia/direccion/celular"
-    );
+    const { body } = handleError(error, "Cliente", acciones.update);
     return res.send(body);
   }
   if (!existeDatero.length) {
@@ -445,11 +433,7 @@ export const updateCliente = async (req, res) => {
     } catch (error) {
       console.log(error);
       transaction.rollback();
-      const { status, body } = handleSqlError(
-        error,
-        "cliente",
-        "documento/licencia/direccion/celular"
-      );
+      const { body } = handleError(error, "Datero del cliente", acciones.post);
       return res.send(body);
     }
   } else {
@@ -502,13 +486,12 @@ export const updateCliente = async (req, res) => {
         }
       );
     } catch (error) {
-      transaction.rollback();
       console.log(error);
       transaction.rollback();
-      const { status, body } = handleSqlError(
+      const { body } = handleError(
         error,
-        "cliente",
-        "documento/licencia/direccion/celular"
+        "Datero del cliente",
+        acciones.update
       );
       return res.send(body);
     }
@@ -527,7 +510,8 @@ export const getClientes = async (req, res) => {
     });
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "Clientes", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -543,7 +527,8 @@ export const getClientesById = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "Cliente", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -570,6 +555,8 @@ export const getEstadoCliente = async (req, res) => {
 
 export const getDateroByIdCliente = async (req, res) => {
   const { id_cliente } = req.body;
+  if (!id_cliente)
+    return res.send({ status: false, message: "No hay cliente especificado" });
   try {
     const resultado = await giama_renting.query(
       "SELECT * FROM datero_clientes WHERE id_cliente = ?",
@@ -580,7 +567,8 @@ export const getDateroByIdCliente = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "Datero del cliente", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -624,7 +612,10 @@ export const getImagenesClientes = async (req, res) => {
     res.json(archivos);
   } catch (error) {
     console.error("Error al obtener imágenes del cliente:", error);
-    res.status(500).json({ error: "Error al obtener las imágenes" });
+    return res.send({
+      status: false,
+      message: "Error al obtener las imágenes",
+    });
   }
 };
 
@@ -641,13 +632,9 @@ export const eliminarImagenes = async (req, res) => {
     const command = new DeleteObjectCommand(params);
     await s3.send(command);
 
-    return res
-      .status(200)
-      .json({ status: true, message: "Imagen eliminada con éxito" });
+    return res.send({ status: true, message: "Imagen eliminada con éxito" });
   } catch (error) {
     console.error("Error al eliminar imagen:", error);
-    return res
-      .status(500)
-      .json({ status: false, message: "Error al eliminar imagen" });
+    return res.send({ status: false, message: "Error al eliminar imagen" });
   }
 };

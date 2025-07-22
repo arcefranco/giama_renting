@@ -12,7 +12,11 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { handleSqlError } from "../../helpers/handleSqlError.js";
+import {
+  handleError,
+  acciones,
+  validateArray,
+} from "../../helpers/handleError.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { normalizarFecha } from "../../helpers/normalizarFecha.js";
 import { diferenciaDias } from "../../helpers/diferenciaDias.js";
@@ -49,7 +53,8 @@ export const getVehiculos = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "vehículos", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -72,7 +77,8 @@ export const getVehiculosById = async (req, res) => {
       );
       return res.send(resultado);
     } catch (error) {
-      return res.send(error);
+      const { body } = handleError(error, "vehículos", acciones.get);
+      return res.send(body);
     }
   }
   if (fecha) {
@@ -91,7 +97,8 @@ export const getVehiculosById = async (req, res) => {
       );
       return res.send(resultado);
     } catch (error) {
-      return res.send(error);
+      const { body } = handleError(error, "vehículos", acciones.get);
+      return res.send(body);
     }
   }
 };
@@ -123,15 +130,12 @@ export const postVehiculo = async (req, res) => {
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let insertId;
   let meses_amortizacion;
-  const importe_iva = parseFloat(costo) * 0.21; //
-  const importe_total = importe_iva + parseFloat(costo);
   const camposObligatorios = ["modelo", "costo", "sucursal"];
   const mensajeError = validarCamposObligatorios(
     req.body,
     camposObligatorios,
     "vehículo"
   );
-
   if (mensajeError) {
     return res.send({ status: false, message: mensajeError });
   }
@@ -143,6 +147,8 @@ export const postVehiculo = async (req, res) => {
   let concepto = `Ingreso del vehiculo - ${
     dominio ? dominio : dominio_provisorio
   }`;
+  const importe_iva = parseFloat(costo) * 0.21; //
+  const importe_total = importe_iva + parseFloat(costo);
   try {
     meses_amortizacion = await getParametro("AMRT");
     cuentaRODN = await getParametro("RODN");
@@ -152,14 +158,16 @@ export const postVehiculo = async (req, res) => {
     cuentaRDN2 = await getParametro("RDN2");
     cuentaRDT2 = await getParametro("RDT2");
   } catch (error) {
-    return res.send({ status: false, message: error });
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
   }
   //buscar numeros de asiento y asiento secundario
   try {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    return res.send({ status: false, message: error.message });
+    const { body } = handleError(error, "número de asiento");
+    return res.send(body);
   }
   try {
     const result = await giama_renting.query(
@@ -194,14 +202,15 @@ export const postVehiculo = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    const { status, body } = handleSqlError(
-      error,
-      "vehículo",
-      "dominio/nro_chasis/nro_motor"
-    );
+    const { body } = handleError(error, "vehículo", acciones.post);
     return res.send(body);
   }
   const files = req.files;
+  if (!Array.isArray(files))
+    return res.send({
+      status: false,
+      message: "Error al cargar archivos de imágenes",
+    });
   const folderPath = `giama_renting/vehiculos/${insertId}`;
 
   for (const file of files) {
@@ -218,6 +227,10 @@ export const postVehiculo = async (req, res) => {
     } catch (err) {
       transaction_giama_renting.rollback();
       console.error("Error al subir imagen:", err);
+      return res.send({
+        status: false,
+        message: "Error al guardar las imágenes del vehículo",
+      });
     }
   }
   //asientos
@@ -282,10 +295,8 @@ export const postVehiculo = async (req, res) => {
     console.log(error);
     transaction_giama_renting.rollback();
     transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al generar el asiento contable",
-    });
+    const { body } = handleError(error);
+    return res.send(body);
   }
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
@@ -337,7 +348,10 @@ export const getImagenesVehiculos = async (req, res) => {
     res.json(archivos);
   } catch (error) {
     console.error("Error al obtener imágenes del vehículo:", error);
-    res.status(500).json({ error: "Error al obtener las imágenes" });
+    return res.send({
+      status: false,
+      message: "Error al obtener imágenes del vehículo",
+    });
   }
 };
 
@@ -354,14 +368,10 @@ export const eliminarImagenes = async (req, res) => {
     const command = new DeleteObjectCommand(params);
     await s3.send(command);
 
-    return res
-      .status(200)
-      .json({ status: true, message: "Imagen eliminada con éxito" });
+    return res.send({ status: true, message: "Imagen eliminada con éxito" });
   } catch (error) {
     console.error("Error al eliminar imagen:", error);
-    return res
-      .status(500)
-      .json({ status: false, message: "Error al eliminar imagen" });
+    return res.send({ status: false, message: "Error al eliminar imagen" });
   }
 };
 
@@ -386,7 +396,6 @@ export const updateVehiculo = async (req, res) => {
     cubre_asiento,
     usuario,
   } = req.body;
-  console.log(req.body);
   let vehiculoAnterior;
   let fechaDePreparacion;
 
@@ -399,9 +408,16 @@ export const updateVehiculo = async (req, res) => {
       }
     );
   } catch (error) {
-    return res.send({ status: false, message: "Error al buscar el vehiculo" });
+    const { body } = handleError(error, "vehículo", acciones.get);
+    return res.send(body);
   }
-
+  const validationVehiculoAnterior = validateArray(
+    vehiculoAnterior,
+    "vehiculos"
+  );
+  if (validationVehiculoAnterior) {
+    return res.send(validationVehiculoAnterior);
+  }
   let preparadoAntes = vehiculoAnterior[0]["estado_actual"] == 2 ? true : false;
   let preparadoAhora = estado == 2 ? true : false;
   if (preparadoAntes && !preparadoAhora) {
@@ -414,44 +430,42 @@ export const updateVehiculo = async (req, res) => {
 
   try {
     await giama_renting.query(
-      `UPDATE vehiculos SET modelo = ?, dominio = ?, nro_chasis = ?, nro_motor = ?,
-        kilometros_actuales = ?, proveedor_gps = ?, nro_serie_gps = ?,
-        dispositivo_peaje = ?, meses_amortizacion = ?, color = ?,
-        calcomania = ?, gnc = ?, fecha_preparacion = ?, sucursal = ?, estado_actual = ?,
-        polarizado = ?, cubre_asiento = ?,
-        usuario_ultima_modificacion = ?
-        WHERE id = ?`,
+      `UPDATE vehiculos SET modelo = :modelo, dominio = :dominio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
+        kilometros_actuales = :kilometros, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
+        dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
+        calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, sucursal = :sucursal, 
+        estado_actual = :estado,
+        polarizado = :polarizado, cubre_asiento = :cubre_asiento,
+        usuario_ultima_modificacion = :usuario
+        WHERE id = :id`,
       {
         type: QueryTypes.UPDATE,
-        replacements: [
+        replacements: {
           modelo,
-          dominio ? dominio : null,
+          dominio: dominio ? dominio : null,
           nro_chasis,
           nro_motor,
           kilometros,
-          proveedor_gps ? proveedor_gps : null,
-          nro_serie_gps,
-          dispositivo,
+          proveedor_gps: proveedor_gps ? proveedor_gps : null,
+          nro_serie_gps: nro_serie_gps ? nro_serie_gps : null,
+          dispositivo: dispositivo ? dispositivo : null,
           meses_amortizacion,
           color,
           calcomania,
           gnc,
-          fechaDePreparacion ? fechaDePreparacion : null,
+          fechaDePreparacion: fechaDePreparacion ? fechaDePreparacion : null,
           sucursal,
           estado,
           polarizado,
           cubre_asiento,
           usuario,
           id,
-        ],
+        },
       }
     );
   } catch (error) {
-    console.log(error);
-    return res.send({
-      status: false,
-      message: "Error al actualizar en base de datos",
-    });
+    const { body } = handleError(error, "vehículo", acciones.update);
+    return res.send(body);
   }
   return res.send({
     status: true,
@@ -484,20 +498,20 @@ export const getCostosPeriodo = async (req, res) => {
         }
       );
       const agrupado = {};
-
-      result.forEach((costo) => {
+      const validatorResult = validateArray(result, "costos");
+      if (validatorResult) {
+        return res.send(validatorResult);
+      }
+      result?.forEach((costo) => {
         const nombre = costo.nombre;
         if (!agrupado[nombre]) agrupado[nombre] = [];
         agrupado[nombre].push(costo);
       });
-      console.log(agrupado);
       return res.send(agrupado);
     } catch (error) {
       console.log(error);
-      return res.send({
-        status: false,
-        message: "Hubo un error al obtener la ficha de costos del vehículo",
-      });
+      const { body } = handleError(error, "ficha del vehículo", acciones.get);
+      return res.send(body);
     }
   } else if (mes && anio) {
     try {
@@ -520,8 +534,11 @@ export const getCostosPeriodo = async (req, res) => {
         }
       );
       const agrupado = {};
-
-      result.forEach((costo) => {
+      const validatorResult = validateArray(result, "costos");
+      if (validatorResult) {
+        return res.send(validatorResult);
+      }
+      result?.forEach((costo) => {
         const nombre = costo.nombre;
         if (!agrupado[nombre]) agrupado[nombre] = [];
         agrupado[nombre].push(costo);
@@ -530,10 +547,8 @@ export const getCostosPeriodo = async (req, res) => {
       return res.send(agrupado);
     } catch (error) {
       console.log(error);
-      return res.send({
-        status: false,
-        message: "Hubo un error al obtener la ficha de costos del vehículo",
-      });
+      const { body } = handleError(error, "ficha del vehículo", acciones.get);
+      return res.send(body);
     }
   }
 };
@@ -583,10 +598,12 @@ export const getCostoNetoVehiculo = async (req, res) => {
     return res.send(result || { costo_neto_total: 0 });
   } catch (error) {
     console.error(error);
-    return res.send({
-      status: false,
-      message: "Error al calcular el costo neto del vehículo",
-    });
+    const { body } = handleError(
+      error,
+      "costo neto del vehículo",
+      acciones.get
+    );
+    return res.send(body);
   }
 };
 
@@ -632,7 +649,13 @@ export const getSituacionFlota = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
-    console.log(resultado);
+    const validatorResult = validateArray(
+      resultado,
+      "estados de los vehículos"
+    );
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
 
     const resumen = {
       alquilados: 0,
@@ -646,7 +669,7 @@ export const getSituacionFlota = async (req, res) => {
     }
 
     // Completar con datos reales
-    resultado.forEach((row) => {
+    resultado?.forEach((row) => {
       resumen[row.estado] = row.cantidad;
     });
 
@@ -657,8 +680,13 @@ export const getSituacionFlota = async (req, res) => {
 
     return res.send(resumen);
   } catch (error) {
-    console.error("Error en getSituacionFlota:", error);
-    return res.status(500).json({ error: "Error interno del servidor" });
+    console.log(error);
+    const { body } = handleError(
+      error,
+      "estados de los vehículos",
+      acciones.get
+    );
+    return res.send(body);
   }
 };
 
@@ -689,9 +717,12 @@ export const getAlquileresPeriodo = async (req, res) => {
             : [id_vehiculo],
       }
     );
-
+    const validatorResult = validateArray(alquileres, "alquileres");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     if (!mes || !anio) {
-      const resultados = alquileres.map((e) => {
+      const resultados = alquileres?.map((e) => {
         const fechaDesde = normalizarFecha(e.fecha_desde);
         const fechaHasta = normalizarFecha(e.fecha_hasta);
         const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
@@ -734,8 +765,7 @@ export const getAlquileresPeriodo = async (req, res) => {
         };
       });
 
-      // es si querés mostrarlos en el frontend
-      const total = resultados.reduce(
+      const total = resultados?.reduce(
         (acc, curr) => {
           acc.importe_neto_total += curr.importe_neto;
           acc.importe_iva_total += curr.importe_iva;
@@ -746,15 +776,13 @@ export const getAlquileresPeriodo = async (req, res) => {
 
       return res.json({
         alquileres: resultados,
-        totales: total, // o simplemente `resultados` si no te interesa este total
+        totales: total,
       });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: false,
-      message: "Hubo un error al buscar los alquileres",
-    });
+    const { body } = handleError(error, "alquileres", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -769,9 +797,14 @@ export const getAllCostosPeriodo = async (req, res) => {
     arrayAllIds = result;
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al obtener vehiculos" });
+    const { body } = handleError(error, "vehículos", acciones.get);
+    return res.send(body);
   }
-  arrayAllIds = arrayAllIds.map((item) => item.id);
+  const validatorResult = validateArray(result, "vehículos");
+  if (validatorResult) {
+    return res.send(validatorResult);
+  }
+  arrayAllIds = arrayAllIds?.map((item) => item.id);
   if (!mes && !anio) {
     for (let i = 0; i < arrayAllIds.length; i++) {
       try {
@@ -799,10 +832,12 @@ export const getAllCostosPeriodo = async (req, res) => {
         }
       } catch (error) {
         console.log(error);
-        return res.send({
-          status: false,
-          message: "Hubo un error al obtener la ficha de costos del vehículo",
-        });
+        const { body } = handleError(
+          error,
+          "ficha de costos del vehículo",
+          acciones.get
+        );
+        return res.send(body);
       }
     }
   } else if (mes && anio) {
@@ -833,10 +868,12 @@ export const getAllCostosPeriodo = async (req, res) => {
         }
       } catch (error) {
         console.log(error);
-        return res.send({
-          status: false,
-          message: "Hubo un error al obtener la ficha de costos del vehículo",
-        });
+        const { body } = handleError(
+          error,
+          "ficha de costos del vehículo",
+          acciones.get
+        );
+        return res.send(body);
       }
     }
   }
@@ -864,6 +901,10 @@ export const getAllAlquileresPeriodo = async (req, res) => {
     console.log(error);
     return res.send({ status: false, message: "Error al obtener vehículos" });
   }
+  const validatorResult = validateArray(vehiculos, "vehículos");
+  if (validatorResult) {
+    return res.send(validatorResult);
+  }
 
   if (!mes || !anio) {
     // Sin filtro por mes y año
@@ -876,8 +917,11 @@ export const getAllAlquileresPeriodo = async (req, res) => {
             replacements: [vehiculo.id],
           }
         );
-
-        const normalizados = alquileres.map((e) => {
+        const validatorResult = validateArray(alquileres, "alquileres");
+        if (validatorResult) {
+          return res.send(validatorResult);
+        }
+        const normalizados = alquileres?.map((e) => {
           const fechaDesde = normalizarFecha(e.fecha_desde);
           const fechaHasta = normalizarFecha(e.fecha_hasta);
           const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
@@ -904,10 +948,8 @@ export const getAllAlquileresPeriodo = async (req, res) => {
               ]
         );
       } catch (error) {
-        return res.send({
-          status: false,
-          message: "Hubo un error al buscar los alquileres",
-        });
+        const { body } = handleError(error, "alquileres", acciones.get);
+        return res.send(body);
       }
     }
   } else {
@@ -930,7 +972,10 @@ export const getAllAlquileresPeriodo = async (req, res) => {
             ],
           }
         );
-
+        const validatorResult = validateArray(alquileres, "alquileres");
+        if (validatorResult) {
+          return res.send(validatorResult);
+        }
         const resultados = alquileres.map((alquiler) => {
           const fechaDesde = normalizarFecha(alquiler.fecha_desde);
           const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
@@ -968,7 +1013,8 @@ export const getAllAlquileresPeriodo = async (req, res) => {
         );
       } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Error al obtener alquileres" });
+        const { body } = handleError(error, "alquileres", acciones.get);
+        return res.send(body);
       }
     }
   }
@@ -977,13 +1023,12 @@ export const getAllAlquileresPeriodo = async (req, res) => {
 };
 
 export const getAmortizacion = async (req, res) => {
-  const { id, fecha } = req.body;
+  const { id } = req.body;
   let precio_inicial;
   let meses_amortizacion;
   let sum_gastos_activables;
   let precio_inicial_total;
   let dias_diferencia;
-  let fechaIngreso;
   let result;
   try {
     result = await giama_renting.query(
@@ -1002,6 +1047,10 @@ export const getAmortizacion = async (req, res) => {
         replacements: [getTodayDate(), id],
       }
     );
+    const validatorResult = validateArray(result, "amortización");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     dias_diferencia = result[0]["dias_diferencia"];
     precio_inicial = result[0]["precio_inicial"];
     meses_amortizacion = result[0]["meses_amortizacion"];
@@ -1011,7 +1060,12 @@ export const getAmortizacion = async (req, res) => {
     precio_inicial_total = parseFloat(precio_inicial) + sum_gastos_activables;
   } catch (error) {
     console.log(error);
-    return res.send(error);
+    const { body } = handleError(
+      error,
+      "amortización del vehículo",
+      acciones.get
+    );
+    return res.send(body);
   }
   let meses_amortizacion_anual = 30 * meses_amortizacion;
   return res.send({
@@ -1076,7 +1130,12 @@ export const getAllAmortizaciones = async (req, res) => {
       }
     } catch (error) {
       console.log(error);
-      return res.send(error);
+      const { body } = handleError(
+        error,
+        "amortizaciones de los vehículos",
+        acciones.get
+      );
+      return res.send(body);
     }
   }
   return res.send(arrayAmortizaciones);
@@ -1214,8 +1273,11 @@ LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR
       type: QueryTypes.SELECT,
       replacements,
     });
-
-    const fichas = result.map((row) => {
+    const validatorResult = validateArray(result, "fichas");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
+    const fichas = result?.map((row) => {
       const costosRaw = Array.isArray(row.costos_detallados)
         ? row.costos_detallados
         : JSON.parse(row.costos_detallados || "[]");
@@ -1258,6 +1320,11 @@ LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR
     return res.send(fichas);
   } catch (error) {
     console.error("Error en getFichas:", error);
-    return res.status(500).json({ error: "Error interno del servidor" });
+    const { body } = handleError(
+      error,
+      "fichas de los vehículos",
+      acciones.get
+    );
+    return res.send(body);
   }
 };

@@ -11,6 +11,8 @@ import {
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
 import { verificarCliente } from "../../helpers/verificarCliente.js";
+import { handleError, acciones } from "../../helpers/handleError.js";
+import { validateArray } from "../../helpers/handleError.js";
 
 const insertAlquiler = async (body) => {
   const {
@@ -64,7 +66,11 @@ const insertAlquiler = async (body) => {
     return true;
   } catch (error) {
     console.log(error);
-    throw new Error("Error al insertar alquiler");
+    throw new Error(
+      `Error al insertar alquiler${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
+    );
   }
 };
 
@@ -75,7 +81,8 @@ export const getFormasCobro = async (req, res) => {
     });
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "Formas de cobro", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -94,7 +101,8 @@ export const postFormaCobro = async (req, res) => {
       message: "Forma de cobro insertada correctamente!",
     });
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Formas de cobro", acciones.post);
+    return res.send(body);
   }
 };
 
@@ -132,10 +140,8 @@ export const postAlquiler = async (req, res) => {
     if (estadoCliente?.length)
       return res.send({ status: false, message: estadoCliente });
   } catch (error) {
-    return res.send({
-      status: false,
-      message: "Hubo un error al verificar el estado del cliente",
-    });
+    const { body } = handleError(error, "Estado del cliente", acciones.get);
+    return res.send(body);
   }
   //buscar si el vehiculo está vendido
   try {
@@ -153,7 +159,12 @@ export const postAlquiler = async (req, res) => {
       });
     }
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(
+      error,
+      "Fecha de venta del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
   }
   //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
   try {
@@ -188,7 +199,12 @@ export const postAlquiler = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(
+      error,
+      "Alquileres del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
   }
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU Y ALQU_2(cuenta secundaria)
   try {
@@ -198,13 +214,16 @@ export const postAlquiler = async (req, res) => {
     cuentaALQU_2 = await getParametro("ALQ2");
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: error.message });
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
   }
   try {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    return res.send({ status: false, message: error.message });
+    console.log(error);
+    const { body } = handleError(error, "número de asiento");
+    return res.send(body);
   }
   //inserto alquiler
   try {
@@ -225,10 +244,12 @@ export const postAlquiler = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: error.message || "Error al insertar alquiler",
-    });
+    const { body } = handleError(
+      error,
+      "Semana adelantada de alquiler",
+      acciones.post
+    );
+    return res.send(body);
   }
   //movimientos contables
   try {
@@ -291,7 +312,8 @@ export const postAlquiler = async (req, res) => {
     console.log(error);
     transaction_giama_renting.rollback();
     transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error);
+    return res.send(body);
   }
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
@@ -348,10 +370,8 @@ export const postContratoAlquiler = async (req, res) => {
     if (estadoCliente?.length)
       return res.send({ status: false, message: estadoCliente });
   } catch (error) {
-    return res.send({
-      status: false,
-      message: "Hubo un error al verificar el estado del cliente",
-    });
+    const { body } = handleError(error, "Estado del cliente", acciones.get);
+    return res.send(body);
   }
   //buscar si el vehiculo está vendido
   try {
@@ -370,7 +390,12 @@ export const postContratoAlquiler = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(
+      error,
+      "Fecha de venta del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
   }
   //buscar si el vehiculo está reservado (en la tabla contratos por id) en las fechas seleccionadas
   try {
@@ -405,7 +430,8 @@ export const postContratoAlquiler = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Reservas del vehiculo", acciones.get);
+    return res.send(body);
   }
   //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
   try {
@@ -440,7 +466,12 @@ export const postContratoAlquiler = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(
+      error,
+      "Alquileres del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
   }
   //buscar el estado del cliente !!!
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU, ALQU_2, DEPO Y DEP2
@@ -453,14 +484,16 @@ export const postContratoAlquiler = async (req, res) => {
     cuentaDEP2 = await getParametro("DEP2");
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: error.message });
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
   }
   try {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: error.message });
+    const { body } = handleError(error, "número de asiento");
+    return res.send(body);
   }
   //inserto contrato
   try {
@@ -483,15 +516,12 @@ export const postContratoAlquiler = async (req, res) => {
         transaction: transaction_giama_renting,
       }
     );
-    idContrato = result; // <- aquí está el ID autogenerado
-    console.log("ID DEL CONTRATO: ", idContrato);
+    idContrato = result;
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al insertar el contrato",
-    });
+    const { body } = handleError(error, "Contrato de alquiler", acciones.post);
+    return res.send(body);
   }
   //inserto alquiler
   try {
@@ -507,15 +537,17 @@ export const postContratoAlquiler = async (req, res) => {
       NroAsiento: NroAsiento,
       observacion: observacion,
       id_contrato: idContrato,
-      transaction: transaction_pa7_giama_renting,
+      transaction: transaction_giama_renting,
     });
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: error.message || "Error al insertar alquiler",
-    });
+    const { body } = handleError(
+      error,
+      "Semana adelantada de alquiler",
+      acciones.post
+    );
+    return res.send(body);
   }
   //movimientos contables
   try {
@@ -616,10 +648,8 @@ export const postContratoAlquiler = async (req, res) => {
     console.log(error);
     transaction_giama_renting.rollback();
     transaction_pa7_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error a insertar movimiento contable",
-    });
+    const { body } = handleError(error);
+    return res.send(body);
   }
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
@@ -631,6 +661,11 @@ export const postContratoAlquiler = async (req, res) => {
 
 export const getAlquileresByIdVehiculo = async (req, res) => {
   const { id } = req.body;
+  if (!id)
+    return res.send({
+      statuts: false,
+      message: "No se encontró el id del vehículo",
+    });
   try {
     const result = await giama_renting.query(
       "SELECT * FROM alquileres WHERE id_vehiculo = ?",
@@ -641,12 +676,22 @@ export const getAlquileresByIdVehiculo = async (req, res) => {
     );
     return res.send(result);
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(
+      error,
+      "Alquileres del vehículo",
+      acciones.get
+    );
+    return res.send(body);
   }
 };
 
 export const getContratosByIdVehiculo = async (req, res) => {
   const { id } = req.body;
+  if (!id)
+    return res.send({
+      statuts: false,
+      message: "No se encontró el id del vehículo",
+    });
   try {
     const result = await giama_renting.query(
       `SELECT * 
@@ -660,12 +705,18 @@ export const getContratosByIdVehiculo = async (req, res) => {
     );
     return res.send(result);
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Contratos del vehículo", acciones.get);
+    return res.send(body);
   }
 };
 
 export const getAlquilerByIdContrato = async (req, res) => {
   const { id } = req.body;
+  if (!id)
+    return res.send({
+      statuts: false,
+      message: "No se encontró el id del alquiler",
+    });
   try {
     const result = await giama_renting.query(
       "SELECT * FROM alquileres WHERE id_contrato = ?",
@@ -676,7 +727,12 @@ export const getAlquilerByIdContrato = async (req, res) => {
     );
     return res.send(result);
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(
+      error,
+      "Alquileres del contrato",
+      acciones.get
+    );
+    return res.send(body);
   }
 };
 
@@ -689,7 +745,8 @@ export const getAlquileres = async (req, res) => {
       });
       return res.send(result);
     } catch (error) {
-      return res.send({ status: false, message: JSON.stringify(error) });
+      const { body } = handleError(error, "Alquileres", acciones.get);
+      return res.send(body);
     }
   }
   if (fecha_desde && fecha_hasta) {
@@ -703,7 +760,8 @@ export const getAlquileres = async (req, res) => {
       );
       return res.send(result);
     } catch (error) {
-      return res.send({ status: false, message: JSON.stringify(error) });
+      const { body } = handleError(error, "Alquileres", acciones.get);
+      return res.send(body);
     }
   }
 };
@@ -720,7 +778,8 @@ export const getContratos = async (req, res) => {
       );
       return res.send(result);
     } catch (error) {
-      return res.send({ status: false, message: JSON.stringify(error) });
+      const { body } = handleError(error, "Contratos", acciones.get);
+      return res.send(body);
     }
   }
   if (fecha_desde && fecha_hasta) {
@@ -734,13 +793,19 @@ export const getContratos = async (req, res) => {
       );
       return res.send(result);
     } catch (error) {
-      return res.send({ status: false, message: JSON.stringify(error) });
+      const { body } = handleError(error, "Contratos", acciones.get);
+      return res.send(body);
     }
   }
 };
 
 export const getContratoById = async (req, res) => {
   const { id } = req.body;
+  if (!id)
+    return res.send({
+      status: false,
+      message: "No se encontró el id del contrato",
+    });
   try {
     const result = await giama_renting.query(
       "SELECT * FROM contratos_alquiler WHERE id = ?",
@@ -751,7 +816,8 @@ export const getContratoById = async (req, res) => {
     );
     return res.send(result);
   } catch (error) {
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Contrato", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -768,14 +834,16 @@ export const anulacionContrato = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
+    const validatorResult = validateArray(result, "Contrato");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     contratoAnterior = result[0];
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al buscar el contrato" });
+    const { body } = handleError(error, "Contrato", acciones.get);
+    return res.send(body);
   }
-  console.log("Contrato anterior: ", contratoAnterior);
-  console.log("fecha_desde_nueva: ", formatearFechaISO(fecha_desde_contrato));
-  console.log("fecha_hasta_nueva: ", formatearFechaISO(fecha_hasta_contrato));
 
   const originalDesde = parseISO(contratoAnterior.fecha_desde);
   const originalHasta = parseISO(contratoAnterior.fecha_hasta);
@@ -826,10 +894,12 @@ export const anulacionContrato = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al insertar contrato al historial",
-    });
+    const { body } = handleError(
+      error,
+      "Historial de anulaciones",
+      acciones.post
+    );
+    return res.send(body);
   }
 
   //actualizo el contrato en tabla contratos_alquiler
@@ -851,10 +921,8 @@ export const anulacionContrato = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({
-      status: false,
-      message: "Error al insertar actualizar contrato",
-    });
+    const { body } = handleError(error, "Contrato", acciones.update);
+    return res.send(body);
   }
   transaction_giama_renting.commit();
   return res.send({
@@ -900,10 +968,15 @@ export const anulacionAlquiler = async (req, res) => {
         replacements: [id_forma_cobro],
       }
     );
+    const validatorResult = validateArray(result, "Cuenta contable");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     cuenta_contable_forma_cobro = result[0]["cuenta_contable"];
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
+    const { body } = handleError(error, "Cuenta contable", acciones.get);
+    return res.send(body);
   }
   try {
     const result = await giama_renting.query(
@@ -913,10 +986,15 @@ export const anulacionAlquiler = async (req, res) => {
         replacements: [id_forma_cobro],
       }
     );
+    const validatorResult = validateArray(result, "Cuenta secundaria");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
+    const { body } = handleError(error, "Cuenta secundaria", acciones.get);
+    return res.send(body);
   }
   try {
     const result = await giama_renting.query(
@@ -926,10 +1004,15 @@ export const anulacionAlquiler = async (req, res) => {
         replacements: [id_cliente],
       }
     );
+    const validatorResult = validateArray(result, "Cliente");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     apellido_cliente = result[0]["apellido"];
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
+    const { body } = handleError(error, "Apellido del cliente", acciones.get);
+    return res.send(body);
   }
 
   try {
@@ -940,11 +1023,20 @@ export const anulacionAlquiler = async (req, res) => {
         replacements: [id_alquiler],
       }
     );
+    const validatorResult = validateArray(result, "Alquiler");
+    if (validatorResult) {
+      return res.send(validatorResult);
+    }
     fechaLimite = result[0]["fecha_hasta"];
     esAnulacion = result[0]["id_alquiler_original"];
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
+    const { body } = handleError(
+      error,
+      "Fechas del alquiler original",
+      acciones.get
+    );
+    return res.send(body);
   }
   if (esAnulacion) {
     return res.send({
@@ -959,102 +1051,24 @@ export const anulacionAlquiler = async (req, res) => {
     });
   }
   concepto = `Anulacion alquiler - ${apellido_cliente} - desde: ${fecha_hasta_actual} hasta: ${fecha_hasta_anterior}`;
-  //CHEQUEAR QUE EL ALQUILER ESTÉ VIGENTE (EN CURSO O A COMENZAR)
-  try {
-    const result = await giama_renting.query(
-      `SELECT apellido FROM clientes WHERE id = ?`,
-      {
-        type: QueryTypes.SELECT,
-        replacements: [id_cliente],
-      }
-    );
-    apellido_cliente = result[0]["apellido"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
   //obtengo parametros IVA21/22, ALQU Y ALQ2
   try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "IV21"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaIV21 = result[0]["valor_str"];
+    cuentaIV21 = await getParametro("IV21");
+    cuentaIV21_2 = await getParametro("IV22");
+    cuentaALQU = await getParametro("ALQU");
+    cuentaALQU_2 = await getParametro("ALQ2");
   } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
   }
+
+  //obtengo numero de asiento y asiento secundario
   try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "IV22"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaIV21_2 = result[0]["valor_str"];
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "ALQU"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaALQU = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  try {
-    const result = await giama_renting.query(
-      `SELECT valor_str FROM parametros WHERE codigo = "ALQ2"`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    cuentaALQU_2 = result[0]["valor_str"];
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al buscar un parámetro" });
-  }
-  //obtengo numero de asiento
-  try {
-    const result = await pa7_giama_renting.query(
-      `
-        SET @nro_asiento = 0;
-        CALL net_getnumeroasiento(@nro_asiento);
-        SELECT @nro_asiento AS nroAsiento;
-      `,
-      { type: QueryTypes.SELECT }
-    );
-    NroAsiento = result[2][0].nroAsiento;
-  } catch (error) {
-    return res.send({
-      status: false,
-      message: "Error al obtener numero de asiento",
-    });
-  }
-  //obtengo numero de asiento secundario
-  try {
-    const result = await pa7_giama_renting.query(
-      `
-        SET @nro_asiento = 0;
-        CALL net_getnumeroasientosecundario(@nro_asiento);
-        SELECT @nro_asiento AS nroAsiento;
-      `,
-      { type: QueryTypes.SELECT }
-    );
-    NroAsientoSecundario = result[2][0].nroAsiento;
-  } catch (error) {
-    return res.send({
-      status: false,
-      message: "Error al obtener numero de asiento",
-    });
+    const { body } = handleError(error, "número de asiento");
+    return res.send(body);
   }
   //alquiler negativo
   try {
@@ -1094,7 +1108,8 @@ export const anulacionAlquiler = async (req, res) => {
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
-    return res.send({ status: false, message: "Error al insertar alquiler" });
+    const { body } = handleError(error, "Alquiler", acciones.post);
+    return res.send(body);
   }
   //movimientos contables
   try {
@@ -1107,14 +1122,6 @@ export const anulacionAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  //movimiento 2
-  try {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
@@ -1124,14 +1131,6 @@ export const anulacionAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  //movimiento 3
-  try {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
@@ -1141,14 +1140,7 @@ export const anulacionAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  //movimientos contables en C2_MOVIMIENTOS
-  try {
+    //movimientos contables en C2_MOVIMIENTOS
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
@@ -1158,14 +1150,6 @@ export const anulacionAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  //movimiento 2
-  try {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
@@ -1175,14 +1159,6 @@ export const anulacionAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting
     );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
-  }
-  //movimiento 3
-  try {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
@@ -1196,7 +1172,8 @@ export const anulacionAlquiler = async (req, res) => {
     console.log(error);
     transaction_giama_renting.rollback();
     transaction_pa7_giama_renting.rollback();
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Asiento contable", acciones.post);
+    return res.send(body);
   }
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
@@ -1205,6 +1182,11 @@ export const anulacionAlquiler = async (req, res) => {
 
 export const getAnulaciones = async (req, res) => {
   const { id_alquiler } = req.body;
+  if (!id_alquiler)
+    return res.send({
+      statuts: false,
+      message: "No se encontró el id del alquiler",
+    });
   let anulaciones;
   try {
     anulaciones = await giama_renting.query(
@@ -1216,7 +1198,8 @@ export const getAnulaciones = async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: "Error al obtener anulaciones" });
+    const { body } = handleError(error, "Anulaciones", acciones.get);
+    return res.send(body);
   }
 
   return res.send(anulaciones);

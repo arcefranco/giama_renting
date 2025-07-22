@@ -6,6 +6,7 @@ import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
+import { handleError, acciones } from "../../helpers/handleError.js";
 
 export const getCuentasContables = async (req, res) => {
   try {
@@ -17,7 +18,8 @@ export const getCuentasContables = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "cuentas contables", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -56,7 +58,8 @@ export const postConceptoCostos = async (req, res) => {
     return res.send({ status: true, message: "Concepto ingresado con éxito" });
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Concepto de costo", acciones.post);
+    return res.send(body);
   }
 };
 
@@ -68,10 +71,10 @@ export const getConceptosCostos = async (req, res) => {
         type: QueryTypes.SELECT,
       }
     );
-    console.log(resultado);
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "Conceptos de costos", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -87,7 +90,8 @@ export const getConceptosCostosById = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "Conceptos de costos", acciones.get);
+    return res.send(body);
   }
 };
 
@@ -140,7 +144,8 @@ export const updateConceptoCostos = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: JSON.stringify(error) });
+    const { body } = handleError(error, "Conceptos de costos", acciones.update);
+    return res.send(body);
   }
 };
 //CONCEPTOS
@@ -157,7 +162,8 @@ export const getCostosIngresosByIdVehiculo = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    return res.send(error);
+    const { body } = handleError(error, "costo/ingreso", acciones.get);
+    return res.send(body);
   }
 };
 //FUNCION AUXILIAR
@@ -180,28 +186,32 @@ const asientos_costos_ingresos = async (
   let cuentaTOT2;
   let NroAsiento;
   let NroAsientoSecundario;
+  if (!ingreso_egreso)
+    throw new Error("Error al decodificar si es ingreso o egreso");
   const dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   const dhTotal = ingreso_egreso === "I" ? "D" : "H";
-  //OBTENGO CUENTA IC21 Y TOTC
-  if (ingreso_egreso === "E") cuentaIVA = await getParametro("IC21");
-  if (ingreso_egreso === "I") cuentaIVA = await getParametro("IV21");
-  cuentaTOTC = await getParametro("TOTC");
-  //OBTENGO  CUENTA IC22/IV22 Y TOT2 SI HAY CUENTA SECUNDARIA
-  if (CuentaSecundaria) {
-    if (ingreso_egreso === "E")
-      cuentaSecundariaIVA = await getParametro("IC22");
-    if (ingreso_egreso === "I")
-      cuentaSecundariaIVA = await getParametro("IV22");
-    if (!ingreso_egreso)
-      throw new Error("Error al decodificar si es ingreso o egreso");
-    cuentaTOT2 = await getParametro("TOT2");
+  try {
+    if (ingreso_egreso === "E") cuentaIVA = await getParametro("IC21");
+    if (ingreso_egreso === "I") cuentaIVA = await getParametro("IV21");
+    cuentaTOTC = await getParametro("TOTC");
+    //OBTENGO  CUENTA IC22/IV22 Y TOT2 SI HAY CUENTA SECUNDARIA
+    if (CuentaSecundaria) {
+      if (ingreso_egreso === "E")
+        cuentaSecundariaIVA = await getParametro("IC22");
+      if (ingreso_egreso === "I")
+        cuentaSecundariaIVA = await getParametro("IV22");
+      cuentaTOT2 = await getParametro("TOT2");
+    }
+  } catch (error) {
+    throw error;
   }
+  //OBTENGO CUENTA IC21 Y TOTC
   try {
     NroAsiento = await getNumeroAsiento();
     if (CuentaSecundaria)
       NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    return res.send({ status: false, message: error.message });
+    throw error;
   }
   try {
     await asientoContable(
@@ -274,7 +284,7 @@ const asientos_costos_ingresos = async (
     }
   } catch (error) {
     console.log(error);
-    throw new Error(`Hubo un error en la inserción del asiento: ${error}`);
+    throw error;
   }
   return NroAsiento;
 };
@@ -297,18 +307,24 @@ async function registrarCostoIngresoIndividual({
   let NroAsiento;
   try {
     const result = await giama_renting.query(
-      `SELECT ingreso_egreso FROM conceptos_costos WHERE cuenta_contable = ?`,
+      `SELECT ingreso_egreso FROM conceptos_costos WHERE cuenta_contable = :cuenta`,
       {
         type: QueryTypes.SELECT,
-        replacements: [cuenta],
+        replacements: { cuenta },
       }
     );
+    if (!result.length)
+      throw new Error("No se encontró el concepto especificado");
     ingreso_egreso = result[0]["ingreso_egreso"];
   } catch (error) {
     console.log(error);
     await transaction_asientos.rollback();
     await transaction_costos_ingresos.rollback();
-    throw new Error("Error al buscar cuenta contable");
+    throw new Error(
+      `Error al buscar una cuenta contable ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
+    );
   }
   try {
     NroAsiento = await asientos_costos_ingresos(
@@ -326,7 +342,7 @@ async function registrarCostoIngresoIndividual({
   } catch (error) {
     await transaction_asientos.rollback();
     transaction_costos_ingresos.rollback();
-    throw new Error(error.message);
+    throw error;
   }
   //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
   //(solo asiento primario)
@@ -371,7 +387,12 @@ export const postCostos_Ingresos = async (req, res) => {
     return res.send({ status: true, message: "Ingresado correctamente" });
   } catch (error) {
     console.log(error);
-    return res.send({ status: false, message: error.message });
+    const { body } = handleError(
+      error,
+      "Costo/ingreso del vehículo",
+      acciones.post
+    );
+    return res.send(body);
   }
 };
 
@@ -415,7 +436,12 @@ export const prorrateoIE = async (req, res) => {
         cuenta,
       });
     } catch (error) {
-      return res.send({ status: false, message: JSON.stringify(error) });
+      const { body } = handleError(
+        error,
+        "registrar costo/ingreso",
+        acciones.post
+      );
+      return res.send(body);
     }
   }
 
