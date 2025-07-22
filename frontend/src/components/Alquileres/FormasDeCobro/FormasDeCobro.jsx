@@ -5,7 +5,7 @@ import { getCuentasContables } from '../../../reducers/Costos/costosSlice'
 import {postFormaCobro, reset} from '../../../reducers/Alquileres/alquileresSlice'
 import { ClipLoader } from "react-spinners";
 import styles from "./FormasDeCobro.module.css"
-
+import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
 const FormasDeCobro = () => {
 const dispatch = useDispatch()
 const {isError, isSuccess, isLoading, message} = useSelector((state) => state.alquileresReducer)
@@ -20,40 +20,21 @@ Promise.all([
     dispatch(getCuentasContables())
 ])
 }, [])
-useEffect(() => {
 
-  if(isError){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-    if(isSuccess){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-        setForm({
-            nombre: '',
-            cuenta_contable: '',
-        })
-    }
+useToastFeedback({
+  isError, 
+  isSuccess,
+  message,
+  resetAction: reset,
+  onSuccess: () => {  
+  dispatch(reset())
+  setForm({
+    nombre: '',
+    cuenta_contable: '',
+  })
+  }
+})
 
-}, [isError, isSuccess]) 
 const handleChange = (e) => {
 const { name, value } = e.target;
 if(name === "cuenta_contable"){

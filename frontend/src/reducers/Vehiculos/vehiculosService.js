@@ -1,6 +1,7 @@
 import {
   getFunction,
   postArrayFunction,
+  postFunction,
   postObjectFunction,
 } from "../axios/axiosFunctions";
 import axios from "axios";
@@ -8,72 +9,14 @@ import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
 const getVehiculos = async () => {
   return getFunction("vehiculos/getVehiculos");
 };
-const getVehiculosById = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getVehiculosById",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (Array.isArray(response.data)) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getVehiculosById");
-  }
+const getVehiculosById = async (form) => {
+  return postArrayFunction("vehiculos/getVehiculosById", form);
 };
 const postVehiculo = async (form) => {
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/postVehiculo",
-      form,
-      {
-        headers:
-          form instanceof FormData
-            ? {}
-            : { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
-    );
-    if (response.data.hasOwnProperty("status") && response.data.status) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/postVehiculo");
-  }
+  return postFunction("vehiculos/postVehiculo", form);
 };
 const updateVehiculo = async (form) => {
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/updateVehiculo",
-      form,
-      {
-        headers:
-          form instanceof FormData
-            ? {}
-            : { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
-    );
-    if (response.data.hasOwnProperty("status") && response.data.status) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/updateVehiculo");
-  }
+  return postFunction("vehiculos/updateVehiculo", form);
 };
 const getImagenesVehiculos = async (form) => {
   return postArrayFunction("vehiculos/getImagenesVehiculos", form);
@@ -174,46 +117,10 @@ const getAlquileresPeriodo = async (data) => {
   }
 };
 const getAllCostosPeriodo = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getAllCostosPeriodo",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (Array.isArray(response.data)) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getAllCostosPeriodo");
-  }
+  return postArrayFunction("vehiculos/getAllCostosPeriodo", data);
 };
 const getAllAlquileresPeriodo = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getAllAlquileresPeriodo",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (Array.isArray(response.data)) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getAllAlquileresPeriodo");
-  }
+  return postArrayFunction("vehiculos/getAllAlquileresPeriodo", data);
 };
 const getAmortizacion = async (data) => {
   let header = {};

@@ -6,11 +6,10 @@ import {
 import axios from "axios";
 import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
 
-const postCliente = async (form) => {
-  console.log(form);
+const postFunctionImages = async (route, form) => {
   try {
     const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "clientes/postCliente",
+      import.meta.env.VITE_REACT_APP_HOST + route,
       form,
       {
         headers:
@@ -27,8 +26,12 @@ const postCliente = async (form) => {
       throw response.data;
     }
   } catch (error) {
-    return ServiceErrorHandler(error, "clientes/postCliente");
+    return ServiceErrorHandler(error, route);
   }
+};
+
+const postCliente = async (form) => {
+  return postFunctionImages("clientes/postCliente", form);
 };
 const getClientes = async () => {
   return getFunction("clientes/getClientes");
@@ -65,48 +68,10 @@ const getEstadoCliente = async (form) => {
 };
 
 const eliminarImagenes = async (key) => {
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "clientes/eliminarImagenes",
-      key,
-      {
-        headers:
-          key instanceof FormData ? {} : { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
-    );
-    if (response.data.hasOwnProperty("status") && response.data.status) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "clientes/eliminarImagenes");
-  }
+  return postFunctionImages("clientes/eliminarImagenes", key);
 };
 const updateCliente = async (form) => {
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "clientes/updateCliente",
-      form,
-      {
-        headers:
-          form instanceof FormData
-            ? {}
-            : { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
-    );
-    if (response.data.hasOwnProperty("status") && response.data.status) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "clientes/updateCliente");
-  }
+  return postFunctionImages("clientes/updateCliente", form);
 };
 const clientesService = {
   postCliente,

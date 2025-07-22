@@ -8,6 +8,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import SelectEstados from '../../../utils/SelectEstados';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
+import { useToastFeedback } from '../../../customHooks/useToastFeedback';
 
 const UpdateVehiculo = () => {
   const { id } = useParams();
@@ -69,16 +70,12 @@ const UpdateVehiculo = () => {
     }
   }, [vehiculo]);
 
-  useEffect(() => {
-    if (isError) {
-      toast.error(message);
-      dispatch(reset())
-    }
-    if (isSuccess) {
-      toast.success(message);
-      dispatch(reset());
-    }
-  }, [isError, isSuccess]);
+useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset,
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -113,7 +110,7 @@ const UpdateVehiculo = () => {
         {isLoading && (
           <div className={styles.spinnerOverlay}>
             <ClipLoader size={60} color="#800020" loading={true} />
-            <p className={styles.loadingText}>Actualizando vehículo...</p>
+            <p className={styles.loadingText}>Cargando...</p>
           </div>
         )}
         <h2 style={{display: "flex", alignItems: "center"}}>

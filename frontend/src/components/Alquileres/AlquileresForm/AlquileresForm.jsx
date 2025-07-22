@@ -19,6 +19,7 @@ import { parseISO } from 'date-fns';
 import Select from 'react-select';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo.jsx';
 import { toLocalDateOnly } from '../../../helpers/toLocalDateOnly.js';
+import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   minDateContrato, maxDateContrato }) => {
@@ -30,9 +31,11 @@ Promise.all([
     dispatch(getClientes()),
     dispatch(getModelos()),
     dispatch(getFormasDeCobro()),
-    dispatch(getAlquilerByIdContrato({id: idContrato})),
-    dispatch(getContratoById({id: idContrato}))
 ])
+if(idContrato){
+  dispatch(getAlquilerByIdContrato({id: idContrato})),
+  dispatch(getContratoById({id: idContrato}))
+}
 }, [])
 const {isError, isSuccess, isLoading, 
   message, formasDeCobro, alquilerByIdContrato, contratoById} = useSelector((state) => state.alquileresReducer)
@@ -75,47 +78,29 @@ const [form, setForm] = useState({
     cuenta_contable_forma_cobro_alquiler: '',
     cuenta_secundaria_forma_cobro_alquiler: ''
 })
-useEffect(() => {
-  if(isError){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
+if(!modoContrato){
+  useToastFeedback({
+    isError, 
+    isSuccess,
+    message,
+    resetAction: reset,
+    onSuccess: () => {
+    Promise.all([
+      dispatch(reset()),
+      dispatch(getAlquilerByIdContrato({id: idContrato}))
+    ])
+    setForm({
+    ...form,
+    id_contrato: idContrato,
+    importe_neto: '',
+    importe_iva: '',
+    importe_total: '',
+    id_forma_cobro_alquiler: '',
+    cuenta_contable_forma_cobro_alquiler: ''
+    })
     }
-    if(isSuccess){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        Promise.all([
-          dispatch(reset()),
-          dispatch(getAlquilerByIdContrato({id: idContrato}))
-        ])
-        setForm({
-        ...form,
-        id_contrato: idContrato,
-        importe_neto: '',
-        importe_iva: '',
-        importe_total: '',
-        id_forma_cobro_alquiler: '',
-        cuenta_contable_forma_cobro_alquiler: ''
-        })
-    }
-
-}, [isError, isSuccess]) 
+  })
+}
 
 useEffect(() => {
   if(alquilerByIdContrato?.length && contratoById?.length && !modoContrato){
@@ -251,7 +236,10 @@ const handleSubmit = async (e) => {
 
   return (
         <div className={styles.container}>
-            <ToastContainer /> 
+          {
+            !modoContrato && <ToastContainer />
+          }
+             
               {isLoading && (
           <div className={styles.spinnerOverlay}>
             <ClipLoader

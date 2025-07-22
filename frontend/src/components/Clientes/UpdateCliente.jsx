@@ -7,6 +7,7 @@ import styles from './UpdateCliente.module.css';
 import { paises } from '../../paises.js';
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
+import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 
 const UpdateCliente = () => {
   const { id } = useParams();
@@ -126,15 +127,12 @@ const UpdateCliente = () => {
     }
   }, [cliente, datero]);
 
-  useEffect(() => {
-    if (isError) {
-      toast.error(message);
-    }
-    if (isSuccess) {
-      toast.success(message);
-      dispatch(reset());
-    }
-  }, [isError, isSuccess]);
+useToastFeedback({
+  isError,
+  isSuccess,
+  message,
+  resetAction: reset
+})
   useEffect(() => {
     const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') || 
     (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));
@@ -251,30 +249,6 @@ const handleSubmit = (e) => {
     e.preventDefault();
     const body = { ...form, id: id };
     dispatch(updateCliente(body));
-    setFormData({
-      nombre: '',
-      apellido: '',
-      razon_social: '',
-      fecha_nacimiento: '',
-      nacionalidad: '',
-      tipo_contribuyente: '',
-      tipo_documento: '',
-      nro_documento: '',
-      doc_expedido_por: '',
-      licencia: '',
-      lic_expedida_por: '',
-      fecha_vencimiento: '',
-      direccion: '',
-      nro_direccion: '',
-      piso: '',
-      depto: '',
-      codigo_postal: '',
-      provincia: '',
-      celular: '',
-      ciudad: '',
-      mail: '',
-      notas:'',
-      })
 };
 const handlePrint = () => {
   const formContent = formRef.current;

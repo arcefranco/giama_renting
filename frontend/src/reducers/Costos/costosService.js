@@ -1,36 +1,20 @@
-import { getFunction, postFunction } from "../axios/axiosFunctions";
-import axios from "axios";
+import {
+  getFunction,
+  postArrayFunction,
+  postFunction,
+} from "../axios/axiosFunctions";
 
 const getCuentasContables = async () => {
   return getFunction("costos/cuentasContables");
 };
-
 const postConceptoCostos = async (form) => {
   return postFunction("costos/concepto", form);
 };
 const updateConcepto = async (form) => {
   return postFunction("costos/updateConcepto", form);
 };
-const getConceptosCostosById = async (form, header = {}) => {
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "costos/getConceptosCostosById",
-      form,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (Array.isArray(response.data)) {
-      console.log("response: ", response);
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "costos/getConceptosCostosById");
-  }
+const getConceptosCostosById = async (form) => {
+  return postArrayFunction("costos/getConceptosCostosById", form);
 };
 const deleteConceptosCostos = async (form) => {
   return postFunction("costos/deleteConcepto", form);
@@ -43,26 +27,7 @@ const postCostos_Ingresos = async (form) => {
 };
 
 const getCostosIngresosByIdVehiculo = async (id, header = {}) => {
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST +
-        "costos/costos_ingresos_id_vehiculo",
-      id,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (Array.isArray(response.data)) {
-      console.log("response: ", response);
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "costos/getConceptosCostosById");
-  }
+  return postArrayFunction("costos/costos_ingresos_id_vehiculo", id);
 };
 
 const prorrateoIE = async (form) => {

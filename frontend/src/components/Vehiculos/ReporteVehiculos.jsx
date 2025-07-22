@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import DataGrid, {Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging} from "devextreme-react/data-grid"
-import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
+import { getVehiculos, reset } from '../../reducers/Vehiculos/vehiculosSlice';
 import { getModelos, getProveedoresGPS , getSucursales, getEstados} from '../../reducers/Generales/generalesSlice';
 import styles from "./ReporteVehiculos.module.css"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
+import { useToastFeedback } from '../../customHooks/useToastFeedback';
+import { ToastContainer } from 'react-toastify';
 const ReporteVehiculos = () => {
 const dispatch = useDispatch();
 useEffect(() => {
@@ -30,7 +32,12 @@ const {
 } = useSelector((state) => state.vehiculosReducer)
 const {modelos, proveedoresGPS, sucursales, estados} = useSelector(state => state.generalesReducer)
 const [vehiculosConEstado, setVehiculosConEstado] = useState(null)
-
+useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset
+  });
 useEffect(() => {
   if (vehiculos && estados?.length) {
     setVehiculosConEstado(
@@ -138,6 +145,7 @@ const renderDominio = (data) => {
 
 return (
 <div className={styles.container}>
+  <ToastContainer/>
 {isLoading && (
     <div className={styles.spinnerOverlay}>
     <ClipLoader
@@ -188,17 +196,7 @@ return (
         <Column
         dataField="dominio_visible"
         caption="Dominio"
-        cellRender={({ data }) => {
-          return (
-            data.dominio ? (
-              <span>{data.dominio}</span>
-            ) : data.dominio_provisorio ? (
-              <span>{data.dominio_provisorio}</span>
-            ) : (
-              <span>SIN DOMINIO</span>
-            )
-          );
-        }}
+        cellRender={renderDominio}
         />
         <Column dataField="nro_chasis" caption="Nro. Chasis" />
         <Column dataField="nro_motor" caption="Nro. Motor" />

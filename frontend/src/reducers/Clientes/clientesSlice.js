@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import clientesService from "./clientesService";
-
+import { handleAsyncThunk, responses } from "../../helpers/handleAsyncThunk.js";
 const initialState = {
   clientes: [],
   cliente: [],
@@ -16,63 +16,52 @@ const initialState = {
 
 export const postCliente = createAsyncThunk(
   "postCliente",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.postCliente(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.postCliente(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 
 export const getClientes = createAsyncThunk(
   "getClientes",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.getClientes();
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.getClientes(),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const getClientesById = createAsyncThunk(
   "getClientessById",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.getClientesById(data);
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.getClientesById(data),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const getDateroByIdCliente = createAsyncThunk(
   "getDateroByIdCliente",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.getDateroByIdCliente(data);
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.getDateroByIdCliente(data),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const getImagenesClientes = createAsyncThunk(
   "getImagenesClientes",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.getImagenesClientes(data);
-    console.log(result);
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.getImagenesClientes(data),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const getEstadoCliente = createAsyncThunk(
@@ -89,26 +78,22 @@ export const getEstadoCliente = createAsyncThunk(
 
 export const eliminarImagenes = createAsyncThunk(
   "eliminarImagenes",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.eliminarImagenes(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.eliminarImagenes(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 
 export const updateCliente = createAsyncThunk(
   "updateCliente",
-  async (data, { rejectWithValue }) => {
-    const result = await clientesService.updateCliente(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.updateCliente(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 
 export const clientesSlice = createSlice({
@@ -140,8 +125,8 @@ export const clientesSlice = createSlice({
     });
     builder.addCase(postCliente.rejected, (state, action) => {
       state.isLoading = false;
-      state.isSuccess = false;
       state.isError = true;
+      state.isSuccess = false;
       state.message = action.payload.message;
     });
     builder.addCase(getClientes.pending, (state) => {
@@ -149,19 +134,25 @@ export const clientesSlice = createSlice({
     });
     builder.addCase(getClientes.fulfilled, (state, action) => {
       state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
       state.clientes = action.payload;
     });
     builder.addCase(getClientes.rejected, (state, action) => {
       state.isLoading = false;
-      state.clientes = [];
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
     builder.addCase(getClientesById.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getClientesById.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isSuccess = action.payload.status;
-      state.message = action.payload.message;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
       state.cliente = action.payload;
     });
     builder.addCase(getClientesById.rejected, (state, action) => {
@@ -177,6 +168,7 @@ export const clientesSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
+      state.message = "";
       state.imagenes = action.payload;
     });
     builder.addCase(getImagenesClientes.rejected, (state, action) => {
@@ -192,7 +184,7 @@ export const clientesSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.message = action.payload.message;
+      state.message = "";
       state.datero = action.payload;
     });
     builder.addCase(getDateroByIdCliente.rejected, (state, action) => {
@@ -222,8 +214,8 @@ export const clientesSlice = createSlice({
     });
     builder.addCase(eliminarImagenes.fulfilled, (state, action) => {
       state.isLoading = false;
+      state.isSuccess = true;
       state.isError = false;
-      state.isSuccess = action.payload.status;
       state.message = action.payload.message;
     });
     builder.addCase(eliminarImagenes.rejected, (state, action) => {
@@ -237,8 +229,8 @@ export const clientesSlice = createSlice({
     });
     builder.addCase(updateCliente.fulfilled, (state, action) => {
       state.isLoading = false;
+      state.isSuccess = true;
       state.isError = false;
-      state.isSuccess = action.payload.status;
       state.message = action.payload.message;
     });
     builder.addCase(updateCliente.rejected, (state, action) => {

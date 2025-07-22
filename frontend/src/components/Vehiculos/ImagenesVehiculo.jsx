@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
+import { useToastFeedback } from '../../customHooks/useToastFeedback';
 
 
 const ImagenesVehiculo = () => {
@@ -25,16 +26,12 @@ const ImagenesVehiculo = () => {
     ])
 
   }, [id]);
-    useEffect(() => {
-      if (isError && message) {
-        toast.error(message);
-      }
-      if (isSuccess && message) {
-        toast.success(message);
-        dispatch(reset());
-        dispatch(getImagenesVehiculos({id: id}))
-      }
-    }, [isError, isSuccess]);
+  useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset
+  });
   const handleEliminarImagen = async (key) => {
     try {
       dispatch(eliminarImagenes({key: key}))
@@ -67,7 +64,7 @@ const ImagenesVehiculo = () => {
       {isLoading && (
           <div className={styles.spinnerOverlay}>
             <ClipLoader size={60} color="#800020" loading={true} />
-            <p className={styles.loadingText}>Eliminando imagen...</p>
+            <p className={styles.loadingText}>Cargando...</p>
           </div>
         )} 
       {vehiculo?.length && (

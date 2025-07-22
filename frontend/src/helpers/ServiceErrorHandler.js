@@ -1,28 +1,17 @@
 import axios, { AxiosError } from "axios";
 
-export const ServiceErrorHandler = (error, table) => {
-  let errorMessage = "Error desconocido";
-  console.log("ServiceErrorHandler: ", error);
-  // Verifica si el error es un error de Axios
+export const ServiceErrorHandler = (error, route) => {
+  let message = "Error desconocido";
+
   if (axios.isAxiosError(error)) {
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = error.response.data.message;
-    } else {
-      errorMessage = error.message;
-    }
+    message = error.response?.data?.message || error.message;
   } else if (error.message) {
-    // Verifica si el error tiene la propiedad `message`
-    errorMessage = error.message;
-  } else if (error.name) {
-    // Verifica si el error tiene la propiedad `name`
-    errorMessage = error.name;
+    message = error.message;
   } else if (typeof error === "string") {
-    // Si el error es un string
-    errorMessage = error;
+    message = error;
   } else {
-    // Para cualquier otro tipo de error, intenta convertirlo a string
-    errorMessage = JSON.stringify(error);
+    message = JSON.stringify(error);
   }
 
-  return { status: false, message: `${errorMessage} (${table})` };
+  return { status: false, message: `${message} (${route})` };
 };

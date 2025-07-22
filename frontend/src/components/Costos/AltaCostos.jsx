@@ -9,6 +9,7 @@ reset, getConceptosCostos, deleteConcepto } from '../../reducers/Costos/costosSl
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import Swal from 'sweetalert2';
+import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 
 const AltaCostos = () => {
 const dispatch = useDispatch()
@@ -28,43 +29,22 @@ const [form, setForm] = useState({
     ingreso_egreso: '',
     activable: 0
 })
-useEffect(() => {
+useToastFeedback({
+  isError,
+  isSuccess,
+  message,
+  resetAction: reset,
+  onSuccess: () => {
+    setForm({
+        nombre: '',
+        cuenta_contable: '',
+        cuenta_secundaria: '',
+        ingreso_egreso: '',
+        activable: 0
+    })
+  }
+})
 
-  if(isError && message){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-    if(isSuccess && message){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-        setForm({
-            nombre: '',
-            cuenta_contable: '',
-            cuenta_secundaria: '',
-            ingreso_egreso: '',
-            activable: 0
-        })
-    }
-
-  }, [isError, isSuccess]) 
 const handleChange = (e) => {
     const { name, value } = e.target;
     if(name === "cuenta_contable"){

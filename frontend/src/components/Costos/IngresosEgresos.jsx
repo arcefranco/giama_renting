@@ -13,6 +13,7 @@ import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import Select from 'react-select';
+import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 
 
 
@@ -61,35 +62,12 @@ useEffect(() => {
     dispatch(resetVehiculo())
   }
 }, [])
-useEffect(() => {
-
-  if(isError){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(getCostosIngresosByIdVehiculo({id: id}))
-  }
-  if(isSuccess && !message){
-    dispatch(reset())
-  }
-  if(isSuccess && message){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
+useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset,
+    onSuccess: () => {
         if(id){
           setForm({
           id_vehiculo: id,
@@ -117,9 +95,8 @@ useEffect(() => {
           cuenta_secundaria: ''
           })
         }
-  }
-
-}, [isError, isSuccess]) 
+    }
+});
 
 useEffect(() => {
   if(vehiculos?.length){

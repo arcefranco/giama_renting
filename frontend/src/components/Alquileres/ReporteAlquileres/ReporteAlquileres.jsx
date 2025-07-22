@@ -1,17 +1,16 @@
 import React, {useEffect, useState} from 'react'
-import {getAlquileres} from "./../../../reducers/Alquileres/alquileresSlice"
+import {getAlquileres, reset} from "./../../../reducers/Alquileres/alquileresSlice"
 import {getVehiculos} from "./../../../reducers/Vehiculos/vehiculosSlice"
 import {getClientes} from "./../../../reducers/Clientes/clientesSlice"
 import {getModelos} from "./../../../reducers/Generales/generalesSlice"
 import {useDispatch, useSelector} from "react-redux"
 import DataGrid, {Column, Scrolling, Paging, TotalItem, Summary} from "devextreme-react/data-grid"
 import styles from "./ReporteAlquileres.module.css"
-import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
-import { esAnteriorAHoy } from '../../../helpers/esAnteriorAHoy'
 import {redondear} from "../../../helpers/redondear"
-
+import { ToastContainer, toast } from 'react-toastify';
+import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
 const ReporteAlquileres = () => {
 const dispatch = useDispatch()
 
@@ -38,7 +37,12 @@ const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
 })
-
+useToastFeedback({
+  isError, 
+  isSuccess,
+  message,
+  resetAction: reset,
+})
 const handleActualizar = ( ) => {
   dispatch(getAlquileres({fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"]}))
 }
@@ -105,6 +109,7 @@ if (e.name === "importeTotal") {
 };
   return (
     <div className={styles.container}>
+      <ToastContainer/>
 {isLoading && (
     <div className={styles.spinnerOverlay}>
     <ClipLoader

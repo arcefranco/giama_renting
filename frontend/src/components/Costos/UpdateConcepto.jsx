@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import styles from "./AltaCostos.module.css"
 import { getCuentasContables, getConceptosCostosById, updateConcepto, reset } from '../../reducers/Costos/costosSlice'
-
+import { useToastFeedback } from '../../customHooks/useToastFeedback';
 const  UpdateConcepto = () => {
 const { id } = useParams();
 const dispatch = useDispatch()
@@ -25,36 +25,12 @@ const [form, setForm] = useState({
     activable: 0,
     id: id
 })
-useEffect(() => {
-
-  if(isError && message){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-    if(isSuccess && message){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-
-}, [isError, isSuccess]) 
+useToastFeedback({
+  isError,
+  isSuccess,
+  message,
+  resetAction: reset
+})
 useEffect(() => {
 if(concepto){
     setForm({

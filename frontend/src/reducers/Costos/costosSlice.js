@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import costosService from "./costosService.js";
+import { handleAsyncThunk, responses } from "../../helpers/handleAsyncThunk.js";
 
 const initialState = {
   cuentasContables: [],
@@ -15,111 +16,89 @@ const initialState = {
 
 export const getCuentasContables = createAsyncThunk(
   "getCuentasContables",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.getCuentasContables();
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.getCuentasContables(),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const postConceptoCostos = createAsyncThunk(
   "postConceptoCostos",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.postConceptoCostos(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.postConceptoCostos(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 export const updateConcepto = createAsyncThunk(
   "updateConcepto",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.updateConcepto(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.updateConcepto(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 export const deleteConcepto = createAsyncThunk(
   "deleteConcepto",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.deleteConceptosCostos(data);
-    /*  {status: true, message: 'Concepto eliminado correctamente'} */
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.deleteConceptosCostos(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 export const getConceptosCostos = createAsyncThunk(
   "getConceptosCostos",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.getConceptosCostos();
-    console.log(result);
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.getConceptosCostos(),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const getConceptosCostosById = createAsyncThunk(
   "getConceptosCostosById",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.getConceptosCostosById(data);
-    console.log(result);
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.getConceptosCostosById(data),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const postCostos_Ingresos = createAsyncThunk(
   "postCostos_Ingresos",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.postCostos_Ingresos(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.postCostos_Ingresos(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 
 export const getCostosIngresosByIdVehiculo = createAsyncThunk(
   "getCostosIngresosByIdVehiculo",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.getCostosIngresosByIdVehiculo(data);
-    console.log(result);
-    if (Array.isArray(result)) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.getCostosIngresosByIdVehiculo(data),
+      responses.array,
+      rejectWithValue
+    )
 );
 
 export const prorrateoIE = createAsyncThunk(
   "prorrateoIE",
-  async (data, { rejectWithValue }) => {
-    const result = await costosService.prorrateoIE(data);
-    if (result.hasOwnProperty("status") && result.status) {
-      return result;
-    } else {
-      return rejectWithValue(result);
-    }
-  }
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.prorrateoIE(data),
+      responses.successObject,
+      rejectWithValue
+    )
 );
 
 export const costosSlice = createSlice({
@@ -142,13 +121,15 @@ export const costosSlice = createSlice({
     });
     builder.addCase(getCuentasContables.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isSuccess = action.payload.status;
-      state.message = action.payload.message;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
       state.cuentasContables = action.payload;
     });
     builder.addCase(getCuentasContables.rejected, (state, action) => {
       state.isLoading = false;
-      state.isError = action.payload.status;
+      state.isError = true;
+      state.isSuccess = false;
       state.message = action.payload.message;
     });
     builder.addCase(postConceptoCostos.pending, (state) => {
@@ -156,8 +137,8 @@ export const costosSlice = createSlice({
     });
     builder.addCase(postConceptoCostos.fulfilled, (state, action) => {
       state.isLoading = false;
+      state.isSuccess = true;
       state.isError = false;
-      state.isSuccess = action.payload.status;
       state.message = action.payload.message;
     });
     builder.addCase(postConceptoCostos.rejected, (state, action) => {
@@ -200,15 +181,16 @@ export const costosSlice = createSlice({
       state.isLoading = true;
     });
     builder.addCase(getConceptosCostos.fulfilled, (state, action) => {
-      console.log("PAYLOAD: ", action.payload);
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
+      state.message = "";
       state.conceptos = action.payload;
     });
     builder.addCase(getConceptosCostos.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
+      state.isSuccess = false;
       state.message = action.payload.message;
     });
     builder.addCase(getConceptosCostosById.pending, (state) => {
@@ -218,21 +200,22 @@ export const costosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.message = action.payload.message;
+      state.message = "";
       state.concepto = action.payload;
     });
     builder.addCase(getConceptosCostosById.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
+      state.message = action.payload.message;
     });
     builder.addCase(postCostos_Ingresos.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(postCostos_Ingresos.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isError = false;
       state.isSuccess = true;
+      state.isError = false;
       state.message = action.payload.message;
     });
     builder.addCase(postCostos_Ingresos.rejected, (state, action) => {
@@ -250,7 +233,7 @@ export const costosSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.isError = false;
-        state.message = action.payload.message;
+        state.message = "";
         state.costos_ingresos_vehiculo = action.payload;
       }
     );
@@ -258,14 +241,15 @@ export const costosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
+      state.message = action.payload.message;
     });
     builder.addCase(prorrateoIE.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(prorrateoIE.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isError = false;
       state.isSuccess = true;
+      state.isError = false;
       state.message = action.payload.message;
     });
     builder.addCase(prorrateoIE.rejected, (state, action) => {

@@ -3,10 +3,10 @@ import { useSelector, useDispatch } from 'react-redux'
 import styles from './ClientesForm.module.css'
 import { postCliente, reset } from '../../reducers/Clientes/clientesSlice'
 import {getProvincias, getTiposDocumento, getTiposResponsable, getTiposSexo} from '../../reducers/Generales/generalesSlice'
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import { paises } from '../../paises.js'
-
+import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 const ClientesForm = () => {
 const dispatch = useDispatch()
   useEffect(() => {
@@ -100,33 +100,12 @@ const handleFileClick = () => {
 const eliminarImagen = (index) => {
   setImagenes((prev) => prev.filter((_, i) => i !== index));
 };
-useEffect(() => {
-
-  if(isError){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-    if(isSuccess){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
+useToastFeedback({
+  isError, 
+  isSuccess,
+  message,
+  resetAction: reset,
+  onSuccess: () => {
         setFormData({
           nombre: '',
           apellido: '',
@@ -169,9 +148,8 @@ useEffect(() => {
           observacion_perfil: ""
         })
         setImagenes([])
-    }
-
-}, [isError, isSuccess]) 
+  }
+})
   useEffect(() => {
     const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') || 
     (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));

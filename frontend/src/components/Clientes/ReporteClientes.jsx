@@ -10,6 +10,9 @@ import { ClipLoader } from "react-spinners";
 import sinResolucionIcon from "../../assets/sin_resolucion.png"
 import rechazadoIcon from "../../assets/rechazado.png"
 import aprobadoIcon from "../../assets/aprobado.png"
+import { ToastContainer } from 'react-toastify';
+import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
+import { reset } from '../../reducers/Costos/costosSlice.js';
 const ReporteClientes = () => {
 const dispatch = useDispatch();
 useEffect(() => {
@@ -29,6 +32,12 @@ const {
     isSuccess,
     isLoading
 } = useSelector((state) => state.clientesReducer)
+useToastFeedback({
+  isError,
+  isSuccess,
+  message,
+  resetAction: reset
+})
 const {
     provincias,
     tipos_responsable,
@@ -67,7 +76,7 @@ const renderImagenesCell = (data) => {
         onClick={() => window.open(`/clientes/imagenes/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        Ver
+        Ver imágenes
       </button>
     );
 };
@@ -111,6 +120,7 @@ const renderResolucion = ({ data }) => {
 };
 return (
 <div className={styles.container}>
+<ToastContainer /> 
 {isLoading && (
     <div className={styles.spinnerOverlay}>
     <ClipLoader
@@ -174,7 +184,7 @@ return (
         <Column dataField="mail" caption="Mail" width={90}/>
         <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="resolucion_datero" caption="Res. datero" width={200} cellRender={renderResolucion}/>
-        <Column dataField="id" caption="Imágenes" width={100} alignment="center" cellRender={renderImagenesCell} />
+        <Column dataField="id" caption="" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column
         dataField="id"

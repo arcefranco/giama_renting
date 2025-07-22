@@ -1,18 +1,18 @@
 import React, {useEffect, useState} from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
-import { getCuentasContables, reset, prorrateoIE, getConceptosCostos } from '../../reducers/Costos/costosSlice'
+import { reset, prorrateoIE, getConceptosCostos } from '../../reducers/Costos/costosSlice'
 import {getModelos} from '../../reducers/Generales/generalesSlice'
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import styles from './ProrrateoIE.module.css'
+import { useToastFeedback } from '../../customHooks/useToastFeedback';
 
 const ProrrateoIE = () => {
 const dispatch = useDispatch();
 useEffect(() => {
     Promise.all([
         dispatch(getVehiculos()),
-        dispatch(getCuentasContables()),
         dispatch(getConceptosCostos()),
         dispatch(getModelos())
     ])
@@ -67,47 +67,13 @@ const handleChange = (e) => {
 const handleSubmit = () => {
   dispatch(prorrateoIE(form))
 }
-useEffect(() => {
+useToastFeedback({
+  isError,
+  isSuccess,
+  message,
+  resetAction: reset
+})
 
-  if(isError){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-    if(isSuccess){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-        setForm({
-  arrayVehiculos: [],
-  fecha: '',
-  id_concepto: '',
-  comprobante: '',
-  importe_neto: '',
-  importe_iva: '',
-  importe_total: '',
-  observacion: '',
-  cuenta: ''
-        })
-    }
-
-}, [isError, isSuccess]) 
 
 
 const [seleccionados, setSeleccionados] = useState([]); // IDs

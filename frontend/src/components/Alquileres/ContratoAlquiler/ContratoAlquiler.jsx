@@ -23,7 +23,7 @@ import { getToday } from "../../../helpers/getTodayDate.js";
 import sinResolucionIcon from "../../../assets/sin_resolucion.png"
 import rechazadoIcon from "../../../assets/rechazado.png"
 import aprobadoIcon from "../../../assets/aprobado.png"
-
+import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
 const ContratoAlquiler = () => {
 
 const dispatch = useDispatch();
@@ -38,6 +38,7 @@ useEffect(() => {
 
   ])
   if(id && !isNaN(id)){
+    console.log(id)
     dispatch(getContratoById({id: id}))
   }
 }, [])
@@ -62,46 +63,26 @@ const [formContrato, setFormContrato] = useState({
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes, estado_cliente} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
-
-useEffect(() => {
-    if(isError && message){
-        toast.error(message, {
-          position: "bottom-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-          })
-          dispatch(reset())
-      }
-      if(isSuccess && message){
-        toast.success(message, {
-          position: "bottom-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-          })
-          setFormContrato({
-          id_vehiculo: '',
-          id_cliente: '',
-          apellido_cliente: '',
-          deposito: '',
-          id_forma_cobro_contrato: '',
-          fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
-          fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
-          cuenta_contable_forma_cobro_contrato: '',
-          cuenta_secundaria_forma_cobro_contrato: '',
-          })
-          dispatch(reset())
-      }
-}, [isError, isSuccess]) 
+useToastFeedback({
+  isError, 
+  isSuccess,
+  message,
+  resetAction: reset,
+  onSuccess: () => {          
+  setFormContrato({
+  id_vehiculo: '',
+  id_cliente: '',
+  apellido_cliente: '',
+  deposito: '',
+  id_forma_cobro_contrato: '',
+  fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
+  fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+  cuenta_contable_forma_cobro_contrato: '',
+  cuenta_secundaria_forma_cobro_contrato: '',
+  })
+  dispatch(reset())
+  }
+})
 
 useEffect(() => {
 if (id && contratoById.length) { //si estoy modificando un contrato
