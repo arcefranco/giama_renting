@@ -66,7 +66,7 @@ export const getTiposSexo = createAsyncThunk(
 export const getSucursales = createAsyncThunk(
   "getSucursales",
   async (_, { rejectWithValue }) => {
-    const result = await generalesService.getTiposSexo();
+    const result = await generalesService.getSucursales();
     return result.status ? result.data : rejectWithValue(result);
   }
 );
