@@ -134,8 +134,9 @@
   }
 .gridContainer {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   margin: 1rem;
+  align-self: center;
 }
 .column {
   background-color: #c1c1c112;;

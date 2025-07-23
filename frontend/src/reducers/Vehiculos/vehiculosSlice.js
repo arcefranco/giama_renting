@@ -98,7 +98,7 @@ export const getCostosPeriodo = createAsyncThunk(
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
       () => vehiculosService.getCostosPeriodo(data),
-      responses.array,
+      responses.object,
       rejectWithValue
     )
 );
@@ -157,7 +157,7 @@ export const getAmortizacion = createAsyncThunk(
   "getAmortizacion",
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
-      () => vehiculosService.getAllCostosPeriodo(data),
+      () => vehiculosService.getAmortizacion(data),
       responses.object,
       rejectWithValue
     )
@@ -346,7 +346,7 @@ export const vehiculosSlice = createSlice({
       state.isSuccess = true;
       state.isError = false;
       state.message = "";
-      state.costo_neto_vehiculo = action.payload;
+      state.costo_neto_vehiculo = action.payload.costo_neto_total;
     });
     builder.addCase(getCostoNetoVehiculo.rejected, (state, action) => {
       state.isLoading = false;

@@ -85,25 +85,18 @@ setForm({
 }, [seleccionados])
 const [busquedaGeneral, setBusquedaGeneral] = useState('');
 const [busquedaColumna, setBusquedaColumna] = useState({
-  sinPreparar: '', preparados: '', alquilados: '', vendidos: ''
+  restantes: '', alquilados: '', vendidos: ''
 });
 const clasificarVehiculos = (vehiculos) => {
-    const vehiculosFiltrados = vehiculos?.filter(v => //FILTRO GENERAL
+  const vehiculosFiltrados = vehiculos?.filter(v => //FILTRO GENERAL
   v["dominio"]?.toLowerCase().includes(busquedaGeneral.toLowerCase()) ||
 /*   v["id"]?.toString().includes(busquedaGeneral) || DOMINIO PROVISORIO PROX */
   modelos.find(e => e.id === v["modelo"])?.nombre.toLowerCase().includes(busquedaGeneral.toLowerCase()) 
 );
-  const sinPreparar = vehiculosFiltrados.filter(v => (v.proveedor_gps == 0 || //FILTRO POR CATEGORIA
-    v.nro_serie_gps === null ||
-    v.calcomania == 0 ||
-    v.gnc == 0) && v.fecha_venta === null && v.vehiculo_alquilado == 0);
-  const preparados = vehiculosFiltrados.filter(v => v.proveedor_gps == 1 &&
-    v.nro_serie_gps !== null &&
-    v.calcomania == 1 &&
-    v.gnc == 1 && v.vehiculo_alquilado == 0 && v.fecha_venta == null);
+  const restantes =  vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 0 && !vehiculos.fecha_venta);
   const alquilados = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 1);
   const vendidos = vehiculosFiltrados.filter(v => v.fecha_venta);
-  return { sinPreparar, preparados, alquilados, vendidos };
+  return { restantes, alquilados, vendidos };
 };
 const ordenarPorDominio = (a, b) => {
   if (a.dominio < b.dominio) {
@@ -118,7 +111,7 @@ const categorias = clasificarVehiculos(vehiculos);
 const filtrarVehiculos = (vehiculos, filtro) => {
   return vehiculos.sort(ordenarPorDominio).filter((v) =>
   /* PROX DOMINIO PROVISORIO ${v.id} -  */  
-  `${v.dominio || ''} - ${v.modelo}`.toLowerCase().includes(filtro.toLowerCase())
+  `${v.dominio || v.dominio_provisorio || ''} - ${v.modelo}`.toLowerCase().includes(filtro.toLowerCase())
   );
 };
 const toggleSeleccion = (id) => {
@@ -186,7 +179,7 @@ const todosSeleccionados = () => {
   />
 </div>
 <div className={styles.gridContainer}>
-  {['sinPreparar', 'preparados', 'alquilados', 'vendidos'].map(col => (
+  {['restantes', 'alquilados', 'vendidos'].map(col => (
     <div key={col} className={styles.column}>
       <div className={styles.columnHeader}>
         <input
@@ -196,8 +189,7 @@ const todosSeleccionados = () => {
           checked={todasSeleccionadas(col)}
         />
         <span style={{color: "#800020"}}>{
-        col == "sinPreparar" && "Sin preparar" ||
-        col == "preparados" && "Preparados" ||
+        col == "restantes" && "Restantes" ||
         col == "alquilados" && "Alquilados" ||
         col == "vendidos" && "Vendidos" 
         }</span>
@@ -217,7 +209,7 @@ const todosSeleccionados = () => {
               onChange={() => toggleSeleccion(vehiculo.id)}
             />
             <span>
-            {vehiculo.dominio || "sin dominio"} - {modelos.find(e=> e.id == vehiculo.modelo)?.nombre}
+            {vehiculo.dominio || vehiculo.dominio_provisorio ||"sin dominio"} - {modelos.find(e=> e.id == vehiculo.modelo)?.nombre}
             </span>
           </div>
         ))}

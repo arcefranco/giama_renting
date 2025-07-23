@@ -230,7 +230,7 @@ return (
           }
         }}/>
         <Column dataField="fecha_preparacion" caption="Fecha de preparación" alignment="center" cellRender={renderFecha}/>
-        <Column dataField="id"  width={100} alignment="center" cellRender={renderImagenesCell} />
+        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderFichaCell} />

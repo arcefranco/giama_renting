@@ -1,7 +1,7 @@
 import React, {useEffect, useState, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux';
 import { getCostosIngresosByIdVehiculo, getConceptosCostos, 
-  postCostos_Ingresos, reset, resetCostosVehiculo } from '../../reducers/Costos/costosSlice.js';
+  postCostos_Ingresos, reset as resetCostosSlice, resetCostosVehiculo } from '../../reducers/Costos/costosSlice.js';
 import {getVehiculos, getVehiculosById, resetVehiculo} from '../../reducers/Vehiculos/vehiculosSlice'
 import {getModelos} from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
@@ -10,12 +10,10 @@ import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css"
 import { ClipLoader } from "react-spinners";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
-
-
 
 const IngresosEgresos = () => {  
 
@@ -45,7 +43,35 @@ useEffect(() => {
     gridRef.current.instance.pageIndex(pageCount - 1); // ir a la última página
   }
 }, [costos_ingresos_vehiculo]);
+
 useEffect(() => {
+dispatch(getConceptosCostos());
+dispatch(getModelos());
+dispatch(getVehiculos());
+locale("es");
+
+return () => {
+  // cleanup global al desmontar REAL
+  dispatch(resetCostosSlice());
+  dispatch(resetCostosVehiculo());
+  dispatch(resetVehiculo());
+};
+}, [dispatch])
+
+  useEffect(() => {
+    if (id) {
+      // cargar datos del vehículo de la URL
+      dispatch(getCostosIngresosByIdVehiculo({ id: id }));
+      dispatch(getVehiculosById({ id: id }));
+      setForm((f) => ({ ...f, id_vehiculo: id }));
+    } else {
+      // sin id en URL: limpiar lo específico del vehículo previo
+      dispatch(resetVehiculo());
+      dispatch(resetCostosVehiculo?.());
+      setForm((f) => ({ ...f, id_vehiculo: "" }));
+    }
+  }, [id, dispatch]);
+/* useEffect(() => {
   Promise.all([
     dispatch(getConceptosCostos()),
     dispatch(getModelos()),
@@ -60,13 +86,25 @@ useEffect(() => {
     dispatch(reset())
     dispatch(resetCostosVehiculo())
     dispatch(resetVehiculo())
+    setForm({
+    id_vehiculo: "",
+    fecha: '',
+    id_concepto: '',
+    comprobante: '',
+    importe_neto: '',
+    importe_iva: '',
+    importe_total: '',
+    observacion: '',
+    cuenta: '',
+    cuenta_secundaria: ''
+})
   }
-}, [])
+}, []) */
 useToastFeedback({
     isError,
     isSuccess,
     message,
-    resetAction: reset,
+    resetAction: resetCostosSlice,
     onSuccess: () => {
         if(id){
           setForm({

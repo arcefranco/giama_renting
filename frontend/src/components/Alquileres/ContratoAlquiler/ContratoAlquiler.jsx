@@ -298,6 +298,7 @@ const clienteOptions = clientes.map(cliente => ({
     </div>
   ),
   isDisabled: cliente.resolucion_datero === 2,
+  searchKey: `${cliente.nombre} ${cliente.apellido}`.toLowerCase(),
 }));
 
 
@@ -362,6 +363,9 @@ const clienteOptions = clientes.map(cliente => ({
             });
             }}
             isDisabled={id ? true : false}
+            filterOption={(option, inputValue) =>
+            option.data.searchKey.includes(inputValue.toLowerCase())
+            }
             />
             <p style={{fontSize: "11px"}}>Los clientes con su datero rechazado se encuentran inhabilitados</p>
         </div>

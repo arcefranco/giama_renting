@@ -200,7 +200,7 @@ const handleCustomSummary = (e) => {
         <Column dataField="fecha_desde" caption="Desde" cellRender={renderFecha} alignment="center"/>
         <Column dataField="fecha_hasta" caption="Hasta" cellRender={renderFecha} alignment="center"/>
         <Column dataField="deposito_garantia" alignment="right"caption="Depósito" 
-        customizeText={(e) => Math.trunc(e.value).toLocaleString()}/>
+        customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")}/>
         <Column caption="" cellRender={renderModificar} alignment="center"/>
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center"/>
         <Summary calculateCustomSummary={handleCustomSummary}>

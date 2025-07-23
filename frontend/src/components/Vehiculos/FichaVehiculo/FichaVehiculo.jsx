@@ -68,14 +68,14 @@ setTotalCostos(sumaTotal)
 
 useEffect(() => {
   const filas = [];
-  if (fichaAlquileres?.length) {
+  if (fichaAlquileres && fichaAlquileres?.length) {
   const totalDias = fichaAlquileres?.reduce((acc, a) => {
   const importe = Number(a.importe_neto);
   const dias = Number(a.dias_en_mes);
 
   return acc + (importe < 0 ? -dias : dias);
 }, 0);
-    const totalNeto = fichaAlquileres?.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
+  const totalNeto = fichaAlquileres?.reduce((acc, a) => acc + parseFloat(a.importe_neto), 0);
 
   filas.push({
     tipo: "alquiler", 
@@ -128,7 +128,7 @@ useEffect(() => {
     const diffTime = fechaLimite - fechaIngreso;
     const diasEnFlota = diffTime > 0 ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
 
-    const diasAlquilado = fichaAlquileres?.reduce((acc, alquiler) => {
+    const diasAlquilado = fichaAlquileres?.length && fichaAlquileres?.reduce((acc, alquiler) => {
       return acc + Number(alquiler.dias_en_mes || 0);
     }, 0);
 

@@ -46,52 +46,10 @@ const postImagenesVehiculo = async (data) => {
   return postFunction("vehiculos/postImagenesVehiculo", data);
 };
 const getCostosPeriodo = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getCostosPeriodo",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (
-      typeof response.data === "object" &&
-      response.data !== null &&
-      !Array.isArray(response.data)
-    ) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getCostosPeriodo");
-  }
+  return postObjectFunction("vehiculos/getCostosPeriodo", data);
 };
 const getCostoNetoVehiculo = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getCostoNetoVehiculo",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    let resultado = response.data;
-    console.log("costo_neto_vehiculo: ", response.data);
-    if (resultado.hasOwnProperty("costo_neto_total")) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getCostoNetoVehiculo");
-  }
+  return postObjectFunction("vehiculos/getCostoNetoVehiculo", data);
 };
 
 const getSituacionFlota = async (data) => {
@@ -99,25 +57,7 @@ const getSituacionFlota = async (data) => {
 };
 
 const getAlquileresPeriodo = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getAlquileresPeriodo",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    if (response.data.hasOwnProperty("alquileres")) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getAlquileresPeriodo");
-  }
+  return postArrayFunction("vehiculos/getAlquileresPeriodo", data);
 };
 const getAllCostosPeriodo = async (data) => {
   return postArrayFunction("vehiculos/getAllCostosPeriodo", data);
@@ -126,26 +66,7 @@ const getAllAlquileresPeriodo = async (data) => {
   return postArrayFunction("vehiculos/getAllAlquileresPeriodo", data);
 };
 const getAmortizacion = async (data) => {
-  let header = {};
-  try {
-    const response = await axios.post(
-      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getAmortizacion",
-      data,
-      {
-        ...header,
-        withCredentials: true,
-      }
-    );
-    let resultado = response.data;
-    if (resultado.hasOwnProperty("amortizacion")) {
-      return response.data;
-    } else {
-      console.log("response: ", response);
-      throw response.data;
-    }
-  } catch (error) {
-    return ServiceErrorHandler(error, "vehiculos/getAmortizacion");
-  }
+  return postObjectFunction("vehiculos/getAmortizacion", data);
 };
 const getAllAmortizaciones = async () => {
   return getFunction("vehiculos/getAllAmortizaciones");
