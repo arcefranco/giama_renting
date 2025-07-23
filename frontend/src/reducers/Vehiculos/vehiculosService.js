@@ -42,6 +42,9 @@ const eliminarImagenes = async (key) => {
     return ServiceErrorHandler(error, "vehiculos/eliminarImagenes");
   }
 };
+const postImagenesVehiculo = async (data) => {
+  return postFunction("vehiculos/postImagenesVehiculo", data);
+};
 const getCostosPeriodo = async (data) => {
   let header = {};
   try {
@@ -159,6 +162,7 @@ const vehiculosService = {
   updateVehiculo,
   getImagenesVehiculos,
   eliminarImagenes,
+  postImagenesVehiculo,
   getCostosPeriodo,
   getCostoNetoVehiculo,
   getSituacionFlota,

@@ -54,6 +54,16 @@ export const getDateroByIdCliente = createAsyncThunk(
     )
 );
 
+export const postImagenesCliente = createAsyncThunk(
+  "postImagenesCliente",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => clientesService.postImagenesCliente(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const getImagenesClientes = createAsyncThunk(
   "getImagenesClientes",
   async (data, { rejectWithValue }) =>
@@ -156,6 +166,21 @@ export const clientesSlice = createSlice({
       state.cliente = action.payload;
     });
     builder.addCase(getClientesById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postImagenesCliente.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postImagenesCliente.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postImagenesCliente.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

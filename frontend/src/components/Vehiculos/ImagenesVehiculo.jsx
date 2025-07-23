@@ -4,17 +4,16 @@ import { useParams } from 'react-router-dom';
 import styles from './ImagenesVehiculo.module.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { getModelos } from '../../reducers/Generales/generalesSlice';
-import { eliminarImagenes, reset, getVehiculosById, getImagenesVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
+import { eliminarImagenes, reset, getVehiculosById, getImagenesVehiculos, postImagenesVehiculo } from '../../reducers/Vehiculos/vehiculosSlice';
 import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
-
+import ImageUploader from '../../utils/ImageUploader/ImageUploader';
 
 const ImagenesVehiculo = () => {
   const { id } = useParams();
-  const [imagenesState, setImagenesState] = useState([]);
   const dispatch = useDispatch();
   const { isError, isSuccess, isLoading, message, vehiculo, imagenes } = useSelector(state => state.vehiculosReducer);
   const {modelos} = useSelector(state => state.generalesReducer)
@@ -26,17 +25,20 @@ const ImagenesVehiculo = () => {
     ])
 
   }, [id]);
+
   useToastFeedback({
     isError,
     isSuccess,
     message,
-    resetAction: reset
+    resetAction: reset,
+    onSuccess: () => {
+    dispatch(getImagenesVehiculos({id: id}))
+    }
   });
   const handleEliminarImagen = async (key) => {
     try {
       dispatch(eliminarImagenes({key: key}))
       // Luego actualizá tu estado o hacé refetch de las imágenes
-      setImagenesState(prev => prev.filter(img => img.Key !== key));
     } catch (err) {
       console.error(err);
       alert('Error al eliminar la imagen');
@@ -73,9 +75,12 @@ const ImagenesVehiculo = () => {
     vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
         </h2>
       )}
-
+      <ImageUploader
+      idVehiculo={id} 
+      dispatchAction={postImagenesVehiculo}
+      />
       <div className={styles.grid}>
-        {imagenesState?.length ? imagenesState?.map((img, index) => (
+        {imagenes?.length ? imagenes?.map((img, index) => (
           <div key={index} className={styles.card}>
             <img
               src={img.url}

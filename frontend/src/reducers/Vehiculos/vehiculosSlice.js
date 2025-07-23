@@ -83,6 +83,16 @@ export const eliminarImagenes = createAsyncThunk(
     )
 );
 
+export const postImagenesVehiculo = createAsyncThunk(
+  "postImagenesVehiculo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.postImagenesVehiculo(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const getCostosPeriodo = createAsyncThunk(
   "getCostosPeriodo",
   async (data, { rejectWithValue }) =>
@@ -276,6 +286,21 @@ export const vehiculosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(eliminarImagenes.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postImagenesVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postImagenesVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postImagenesVehiculo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

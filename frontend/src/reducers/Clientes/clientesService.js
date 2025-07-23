@@ -43,6 +43,10 @@ const getDateroByIdCliente = async (data) => {
   return postArrayFunction("clientes/getDateroByIdCliente", data);
 };
 
+const postImagenesCliente = async (data) => {
+  return postFunction("clientes/postImagenesCliente", data);
+};
+
 const getImagenesClientes = async (data) => {
   return postArrayFunction("clientes/getImagenesclientes", data);
 };
@@ -80,6 +84,7 @@ const clientesService = {
   getClientesById,
   getDateroByIdCliente,
   updateCliente,
+  postImagenesCliente,
   getImagenesClientes,
   getEstadoCliente,
 };

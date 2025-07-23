@@ -2,18 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styles from './ImagenesClientes.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { eliminarImagenes, reset, getClientesById, getImagenesClientes } from '../../reducers/Clientes/clientesSlice';
+import { eliminarImagenes, reset, getClientesById, getImagenesClientes, postImagenesCliente } from '../../reducers/Clientes/clientesSlice';
 import Swal from 'sweetalert2';
 import { ClipLoader } from 'react-spinners';
 import { ToastContainer, toast } from 'react-toastify';
-
-
+import ImageUploader from '../../utils/ImageUploader/ImageUploader';
+import { useToastFeedback } from '../../customHooks/useToastFeedback';
 
 const ImagenesClientes = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { isError, isSuccess, isLoading, message, cliente, imagenes } = useSelector(state => state.clientesReducer);
-  const [imagenesState, setImagenesState] = useState([])
   useEffect(() => {
     Promise.all([
         dispatch(getImagenesClientes({id: id})),
@@ -21,24 +20,20 @@ const ImagenesClientes = () => {
     ])
 
   }, [id]);
-  useEffect(() => {
-      if (isError && message) {
-        toast.error(message);
-      }
-      if (isSuccess && message) {
-        toast.success(message);
-        dispatch(reset());
-        dispatch(getImagenesClientes({id: id}))
-      }
-  }, [isError, isSuccess]);
+  useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset,
+    onSuccess: () => {
+    dispatch(getImagenesClientes({id: id}))
+    }
+  });
 const handleEliminarImagen = async (key) => {
     try {
       dispatch(eliminarImagenes({key: key}))
-      // Luego actualizá tu estado o hacé refetch de las imágenes
-      setImagenesState(prev => prev.filter(img => img.Key !== key));
     } catch (err) {
       console.error(err);
-      alert('Error al eliminar la imagen');
     }
 };
   const handleDeleteClick = (imagen) => {
@@ -63,7 +58,7 @@ const handleEliminarImagen = async (key) => {
       {isLoading && (
           <div className={styles.spinnerOverlay}>
             <ClipLoader size={60} color="#800020" loading={true} />
-            <p className={styles.loadingText}>Eliminando imagen...</p>
+            <p className={styles.loadingText}>Cargando...</p>
           </div>
         )}
       {cliente?.length && (
@@ -72,9 +67,12 @@ const handleEliminarImagen = async (key) => {
 
         </h2>
       )}
-
+      <ImageUploader
+      idVehiculo={id}
+      dispatchAction={postImagenesCliente}
+      />
       <div className={styles.grid}>
-        {imagenesState.length ? imagenesState?.map((img, index) => (
+        {imagenes.length ? imagenes?.map((img, index) => (
           <div key={index} className={styles.card}>
             <img
               src={img.url}
