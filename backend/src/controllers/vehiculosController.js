@@ -65,15 +65,25 @@ export const getVehiculosById = async (req, res) => {
   if (!fecha) {
     try {
       const resultado = await giama_renting.query(
-        `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado
-        FROM vehiculos
-        LEFT JOIN 
-        (SELECT alquileres.id_vehiculo FROM alquileres WHERE ? BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
-        AS alq ON vehiculos.id = alq.id_vehiculo
-        WHERE id = ?`,
+        `SELECT 
+      vehiculos.*, 
+      (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
+      (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
+   FROM vehiculos
+   LEFT JOIN (
+     SELECT id_vehiculo 
+     FROM alquileres 
+     WHERE ? BETWEEN fecha_desde AND fecha_hasta
+   ) AS alq ON vehiculos.id = alq.id_vehiculo
+   LEFT JOIN (
+     SELECT id_vehiculo 
+     FROM contratos_alquiler 
+     WHERE ? BETWEEN fecha_desde AND fecha_hasta
+   ) AS con ON vehiculos.id = con.id_vehiculo
+   WHERE vehiculos.id = ?`,
         {
           type: QueryTypes.SELECT,
-          replacements: [hoy, id],
+          replacements: [hoy, hoy, id],
         }
       );
       return res.send(resultado);
@@ -85,15 +95,26 @@ export const getVehiculosById = async (req, res) => {
   if (fecha) {
     try {
       const resultado = await giama_renting.query(
-        `SELECT vehiculos.*, (IFNULL(alq.id_vehiculo,0) <> 0) AS vehiculo_alquilado, DATEDIFF(?, fecha_ingreso) AS dias_diferencia
-        FROM vehiculos
-        LEFT JOIN 
-        (SELECT alquileres.id_vehiculo FROM alquileres WHERE ? BETWEEN alquileres.fecha_desde AND alquileres.fecha_hasta)
-        AS alq ON vehiculos.id = alq.id_vehiculo
-        WHERE id = ?`,
+        `SELECT 
+      vehiculos.*, 
+      (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
+      (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado,
+      DATEDIFF(?, fecha_ingreso) AS dias_diferencia
+   FROM vehiculos
+   LEFT JOIN (
+     SELECT id_vehiculo 
+     FROM alquileres 
+     WHERE ? BETWEEN fecha_desde AND fecha_hasta
+   ) AS alq ON vehiculos.id = alq.id_vehiculo
+   LEFT JOIN (
+     SELECT id_vehiculo 
+     FROM contratos_alquiler 
+     WHERE ? BETWEEN fecha_desde AND fecha_hasta
+   ) AS con ON vehiculos.id = con.id_vehiculo
+   WHERE vehiculos.id = ?`,
         {
           type: QueryTypes.SELECT,
-          replacements: [fecha, hoy, id],
+          replacements: [fecha, hoy, hoy, id],
         }
       );
       return res.send(resultado);
@@ -608,12 +629,15 @@ export const getCostoNetoVehiculo = async (req, res) => {
   `;
 
   try {
-    const [result] = await giama_renting.query(query, {
+    const result = await giama_renting.query(query, {
       type: QueryTypes.SELECT,
       replacements: [fechaLimite, id_vehiculo],
     });
-
-    return res.send(result || { costo_neto_total: 0 });
+    return res.send(
+      { costo_neto_total: result[0]["costo_neto_total"] } || {
+        costo_neto_total: 0,
+      }
+    );
   } catch (error) {
     console.error(error);
     const { body } = handleError(
@@ -710,7 +734,7 @@ export const getSituacionFlota = async (req, res) => {
 
 export const getAlquileresPeriodo = async (req, res) => {
   const { id_vehiculo, mes, anio } = req.body;
-
+  console.log(req.body);
   const inicioMes = new Date(anio, mes - 1, 1);
   const finMes = new Date(anio, mes, 0);
 
@@ -756,7 +780,7 @@ export const getAlquileresPeriodo = async (req, res) => {
         };
       });
 
-      return res.send({ alquileres: resultados });
+      return res.send(resultados);
     } else {
       const resultados = alquileres.map((alquiler) => {
         const fechaDesde = normalizarFecha(alquiler.fecha_desde);
@@ -791,11 +815,8 @@ export const getAlquileresPeriodo = async (req, res) => {
         },
         { importe_neto_total: 0, importe_iva_total: 0 }
       );
-
-      return res.json({
-        alquileres: resultados,
-        totales: total,
-      });
+      console.log(resultados);
+      return res.send(resultados);
     }
   } catch (error) {
     console.error(error);
@@ -808,8 +829,9 @@ export const getAllCostosPeriodo = async (req, res) => {
   const { mes, anio } = req.body;
   let arrayAllCostos = [];
   let arrayAllIds = [];
+  let result;
   try {
-    let result = await giama_renting.query("SELECT id FROM vehiculos", {
+    result = await giama_renting.query("SELECT id FROM vehiculos", {
       type: QueryTypes.SELECT,
     });
     arrayAllIds = result;

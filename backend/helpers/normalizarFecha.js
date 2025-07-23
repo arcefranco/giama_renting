@@ -1,5 +1,4 @@
 export const normalizarFecha = (fecha) => {
-  console.log("normalizarFecha fecha: ", fecha, typeof fecha);
   if (fecha) {
     let fechaAnio = parseInt(fecha?.split("-")[0]);
     let fechaMes = parseInt(fecha?.split("-")[1]);
