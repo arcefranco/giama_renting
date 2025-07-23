@@ -26,6 +26,7 @@ import {
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
 import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
+import { uploadImagesToS3 } from "../../helpers/s3Services.js";
 
 export const getVehiculos = async (req, res) => {
   const hoy = getTodayDate();
@@ -304,6 +305,23 @@ export const postVehiculo = async (req, res) => {
     status: true,
     message: "El vehículo ha sido cargado con éxito",
   });
+};
+
+export const postImagenesVehiculo = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const files = req.files;
+
+    const uploadResult = await uploadImagesToS3(
+      files,
+      `giama_renting/vehiculos/${id}`
+    );
+
+    return res.send(uploadResult);
+  } catch (error) {
+    console.error(error);
+    return res.send({ status: false, message: "Error al subir imágenes" });
+  }
 };
 
 export const getImagenesVehiculos = async (req, res) => {

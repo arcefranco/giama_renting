@@ -9,6 +9,7 @@ import {
   updateCliente,
   getDateroByIdCliente,
   getEstadoCliente,
+  postImagenesCliente,
 } from "../controllers/clientesController.js";
 import { auth } from "../middlewares/auth.js";
 const clientesRouter = Router();
@@ -20,6 +21,12 @@ clientesRouter.use((req, res, next) => {
   next();
 });
 clientesRouter.post("/postCliente", upload.array("images"), auth, postCliente);
+clientesRouter.post(
+  "/postImagenesCliente",
+  upload.array("images"),
+  auth,
+  postImagenesCliente
+);
 clientesRouter.get("/getClientes", auth, getClientes);
 clientesRouter.post("/getclientesById", auth, getClientesById);
 clientesRouter.post("/getDateroByIdCliente", auth, getDateroByIdCliente);

@@ -15,6 +15,7 @@ import {
   getCostoNetoVehiculo,
   getSituacionFlota,
   getFichas,
+  postImagenesVehiculo,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 import { auth } from "../middlewares/auth.js";
@@ -35,6 +36,12 @@ vehiculosRouter.post(
   auth,
   upload.array("images"),
   postVehiculo
+);
+vehiculosRouter.post(
+  "/postImagenesVehiculo",
+  auth,
+  upload.array("images"),
+  postImagenesVehiculo
 );
 vehiculosRouter.post("/getImagenesVehiculos", auth, getImagenesVehiculos);
 vehiculosRouter.post("/eliminarImagenes", auth, eliminarImagenes);

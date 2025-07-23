@@ -14,6 +14,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { uploadImagesToS3 } from "../../helpers/s3Services.js";
 
 export const postCliente = async (req, res) => {
   const {
@@ -512,6 +513,23 @@ export const getClientes = async (req, res) => {
   } catch (error) {
     const { body } = handleError(error, "Clientes", acciones.get);
     return res.send(body);
+  }
+};
+
+export const postImagenesCliente = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const files = req.files;
+
+    const uploadResult = await uploadImagesToS3(
+      files,
+      `giama_renting/clientes/${id}`
+    );
+
+    return res.send(uploadResult);
+  } catch (error) {
+    console.error(error);
+    return res.send({ status: false, message: "Error al subir imágenes" });
   }
 };
 
