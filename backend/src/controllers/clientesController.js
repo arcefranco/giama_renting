@@ -71,17 +71,13 @@ export const postCliente = async (req, res) => {
     "codigo_postal",
     "celular",
     "mail",
-    "libre_de_deuda",
   ];
-  const mensajeError = validarCamposObligatorios(
+  const campoFaltante = verificarCamposObligatorios(
     req.body,
     camposObligatorios,
     "cliente"
   );
 
-  if (mensajeError) {
-    return res.send({ status: false, message: mensajeError });
-  }
   if (campoFaltante) {
     return res.send({
       status: false,
@@ -193,7 +189,7 @@ export const postCliente = async (req, res) => {
           score_veraz,
           nivel_deuda,
           situacion_deuda,
-          libre_de_deuda,
+          libre_de_deuda ? libre_de_deuda : 0,
           antecedentes_penales,
           fecha_antecedentes ? fecha_antecedentes : null,
           cantidad_viajes_uber,
