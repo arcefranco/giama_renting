@@ -1,6 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { giama_renting } from "../../helpers/connection.js";
 import { handleError, acciones } from "../../helpers/handleError.js";
+import { validateArray } from "../../helpers/handleError.js";
 
 export const getProveedoresGPS = async (req, res) => {
   try {
