@@ -89,7 +89,7 @@ export const getEstados = createAsyncThunk(
 
 export const getParametroAMRT = createAsyncThunk(
   "getParametroAMRT",
-  async (data, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     const result = await generalesService.getParametroAMRT();
     console.log(result);
     if (result.hasOwnProperty("AMRT")) {
