@@ -2,7 +2,10 @@ import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { esAnteriorAHoy } from "../../helpers/esAnteriorAHoy.js";
-import { formatearFechaISO } from "../../helpers/formatearFechaISO.js";
+import {
+  formatearFechaISO,
+  formatearFechaISOText,
+} from "../../helpers/formatearFechaISO.js";
 import { addDays, subDays, parseISO } from "date-fns";
 import { asientoContable } from "../../helpers/asientoContable.js";
 import { getParametro } from "../../helpers/getParametro.js";
@@ -133,9 +136,9 @@ export const postAlquiler = async (req, res) => {
   let cuentaALQU_2;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISO(
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_alquiler
-  )} hasta: ${formatearFechaISO(fecha_hasta_alquiler)}`;
+  )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
   //buscar el estado del cliente
   try {
     let estadoCliente = await verificarCliente(id_cliente);
@@ -359,12 +362,12 @@ export const postContratoAlquiler = async (req, res) => {
   let idContrato;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISO(
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_alquiler
-  )} hasta: ${formatearFechaISO(fecha_hasta_alquiler)}`;
-  let conceptoDeposito = `Deposito en garantía - ${apellido_cliente} - desde: ${formatearFechaISO(
+  )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
+  let conceptoDeposito = `Deposito en garantía - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_contrato
-  )} hasta: ${formatearFechaISO(fecha_hasta_contrato)}`;
+  )} hasta: ${formatearFechaISOText(fecha_hasta_contrato)}`;
   let contratosVigentes;
   let fecha_desde_alquiler_parseada = formatearFechaISO(fecha_desde_alquiler);
   let fecha_hasta_alquiler_parseada = formatearFechaISO(fecha_hasta_alquiler);
@@ -1056,7 +1059,10 @@ export const anulacionAlquiler = async (req, res) => {
       message: "Se ha excedido el tiempo límite para modificar el alquiler",
     });
   }
-  concepto = `Anulacion alquiler - ${apellido_cliente} - desde: ${fecha_hasta_actual} hasta: ${fecha_hasta_anterior}`;
+  concepto = `Anulacion alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
+    fecha_hasta_actual
+  )} hasta: 
+  ${formatearFechaISOText(fecha_hasta_anterior)}`;
   //obtengo parametros IVA21/22, ALQU Y ALQ2
   try {
     cuentaIV21 = await getParametro("IV21");

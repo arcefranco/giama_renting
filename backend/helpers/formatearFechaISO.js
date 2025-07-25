@@ -9,3 +9,15 @@ export function formatearFechaISO(isoString) {
 
   return `${año}-${mes}-${dia}`;
 }
+
+export function formatearFechaISOText(isoString) {
+  const fecha = new Date(isoString);
+  if (isNaN(fecha.getTime())) {
+    return isoString;
+  }
+  const año = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // Mes: 0-11
+  const dia = String(fecha.getDate()).padStart(2, "0");
+
+  return `${dia}-${mes}-${año}`;
+}
