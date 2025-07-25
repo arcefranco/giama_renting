@@ -357,8 +357,12 @@ export const postContratoAlquiler = async (req, res) => {
   let idContrato;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde_alquiler} hasta: ${fecha_hasta_alquiler}`;
-  let conceptoDeposito = `Deposito en garantía - ${apellido_cliente} - desde: ${fecha_desde_contrato} hasta: ${fecha_hasta_contrato}`;
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISO(
+    fecha_desde_alquiler
+  )} hasta: ${formatearFechaISO(fecha_hasta_alquiler)}`;
+  let conceptoDeposito = `Deposito en garantía - ${apellido_cliente} - desde: ${formatearFechaISO(
+    fecha_desde_contrato
+  )} hasta: ${formatearFechaISO(fecha_hasta_contrato)}`;
   let contratosVigentes;
   let fecha_desde_alquiler_parseada = formatearFechaISO(fecha_desde_alquiler);
   let fecha_hasta_alquiler_parseada = formatearFechaISO(fecha_hasta_alquiler);
