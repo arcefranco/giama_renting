@@ -133,7 +133,9 @@ export const postAlquiler = async (req, res) => {
   let cuentaALQU_2;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fecha_desde_alquiler} hasta: ${fecha_hasta_alquiler}`;
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISO(
+    fecha_desde_alquiler
+  )} hasta: ${formatearFechaISO(fecha_hasta_alquiler)}`;
   //buscar el estado del cliente
   try {
     let estadoCliente = await verificarCliente(id_cliente);
