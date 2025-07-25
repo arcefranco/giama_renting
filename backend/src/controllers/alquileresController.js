@@ -382,6 +382,19 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(error, "Estado del cliente", acciones.get);
     return res.send(body);
   }
+  //buscar si el cliente tiene un contrato vigente
+  try {
+    let result = await giama_renting.query(
+      `SELECT fecha_desde, fecha_hasta from contratos_alquiler
+      WHERE id_cliente = ?`,
+      {
+        replacements: [id_cliente],
+      }
+    );
+  } catch (error) {
+    const { body } = handleError(error, "Contratos del cliente", acciones.get);
+    return res.send(body);
+  }
   //buscar si el vehiculo está vendido
   try {
     const result = await giama_renting.query(
@@ -482,7 +495,6 @@ export const postContratoAlquiler = async (req, res) => {
     );
     return res.send(body);
   }
-  //buscar el estado del cliente !!!
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU, ALQU_2, DEPO Y DEP2
   try {
     cuentaIV21 = await getParametro("IV21");

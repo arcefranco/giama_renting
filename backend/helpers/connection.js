@@ -12,6 +12,13 @@ export const giama_renting = new Sequelize(
     dialectOptions: {
       multipleStatements: true,
     },
+    logging: console.log, // 🔍 habilita el log
+    pool: {
+      max: 15,
+      min: 2,
+      acquire: 30000, // espera máxima 30s
+      idle: 10000,
+    },
   }
 );
 
@@ -24,6 +31,13 @@ export const pa7_giama_renting = new Sequelize(
     dialect: "mysql",
     dialectOptions: {
       multipleStatements: true,
+    },
+    logging: console.log, // 🔍 habilita el log
+    pool: {
+      max: 15,
+      min: 2,
+      acquire: 30000, // espera máxima 30s
+      idle: 10000,
     },
   }
 );
