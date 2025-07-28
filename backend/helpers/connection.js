@@ -12,7 +12,7 @@ export const giama_renting = new Sequelize(
     dialectOptions: {
       multipleStatements: true,
     },
-    logging: console.log, // 🔍 habilita el log
+    logging: console.log,
     pool: {
       max: 15,
       min: 2,
@@ -32,7 +32,7 @@ export const pa7_giama_renting = new Sequelize(
     dialectOptions: {
       multipleStatements: true,
     },
-    logging: console.log, // 🔍 habilita el log
+    logging: console.log,
     pool: {
       max: 15,
       min: 2,
