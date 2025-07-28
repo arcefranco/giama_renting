@@ -65,6 +65,7 @@ const [minDate, setMinDate] = useState(null)
 const [maxDate, setMaxDate] = useState(null)
 const [form, setForm] = useState({
     id_contrato: idContrato ? idContrato : "",
+    ingresa_alquiler: 1,
     apellido_cliente: '',
     id_vehiculo: "",
     id_cliente: '',
@@ -255,7 +256,27 @@ const handleSubmit = async (e) => {
                 <h2>Semana adelantada de alquiler</h2> : 
                 <h2>Alta de alquiler</h2>
                 }
-                <form action="" enctype="multipart/form-data">
+                {
+                  modoContrato && 
+                  <div>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <input
+                  type="checkbox"
+                  id="sinGarantia"
+                  checked={form.ingresa_alquiler === 0}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      ingresa_alquiler: e.target.checked ? 0 : 1,
+                    })
+                  }
+                  />
+                  <label htmlFor="sinGarantia" style={{ marginLeft: '0.5rem' }}>No ingresa semana adelantada de alquiler</label>
+                  </div>
+                  </div>
+                  
+                }
+                <form action="" encType="multipart/form-data" className={`${form.ingresa_alquiler === 0 ? styles.disabledForm : ''}`}>
                 {
                   !modoContrato &&
                   <div className={styles.form2Inputs}>

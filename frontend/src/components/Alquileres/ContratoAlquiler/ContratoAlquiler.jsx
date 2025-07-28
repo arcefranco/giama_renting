@@ -53,6 +53,7 @@ const [formContrato, setFormContrato] = useState({
     id_vehiculo: '',
     id_cliente: '',
     apellido_cliente: '',
+    ingresa_deposito: 1,
     deposito: '',
     id_forma_cobro_contrato: '',
     fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
@@ -121,9 +122,7 @@ fechaHastaPickers.setHours(0, 0, 0, 0);
 }
 }, [contratoById, id]);
 
-const opcionesVehiculos = vehiculos
-  ?.filter((v) => !v.fecha_venta)
-  .map((e) => {
+const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta).map((e) => {
     const dominio = e.dominio || e.dominio_provisorio || "";
     const modeloNombre = modelos.find((m) => m.id == e.modelo)?.nombre || "";
 
@@ -137,7 +136,7 @@ const opcionesVehiculos = vehiculos
       ),
       searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
     };
-  });
+});
 const customStyles = {
   container: (provided) => ({
     ...provided,
@@ -411,8 +410,22 @@ const clienteOptions = clientes.map(cliente => ({
     }
     </div>
     <div className={styles.container} style={{height: "20rem"}}>
+    <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+    <input
+      type="checkbox"
+      id="sinGarantia"
+      checked={formContrato.ingresa_deposito === 0}
+      onChange={(e) =>
+        setFormContrato({
+          ...formContrato,
+          ingresa_deposito: e.target.checked ? 0 : 1,
+        })
+      }
+    />
+    <label htmlFor="sinGarantia" style={{ marginLeft: '0.5rem' }}>No presenta garantía</label>
+  </div>
     <h2>Depósito en garantía</h2>
-      <form action="" className={styles.form}>
+      <form action="" className={`${styles.form} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
       <div className={styles.inputContainer}>
         <span>Importe total</span>
         <input

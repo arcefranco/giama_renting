@@ -26,10 +26,8 @@
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
     padding: 2rem;
-/*     max-height: 70vh;  */
     justify-items: anchor-center;
     position: relative;
-/*     height: 22rem; */
   }
 
   .form2Inputs{
@@ -48,6 +46,12 @@
     justify-items: anchor-center;
     position: relative;
   }
+
+  .disabledForm {
+  opacity: 0.3;
+  pointer-events: none;
+  filter: grayscale(0.6);
+}
 
 .inputContainer{
     display: flex;
