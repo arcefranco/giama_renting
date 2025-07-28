@@ -2,13 +2,15 @@ import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import { getCuentasContables } from '../../../reducers/Costos/costosSlice'
-import {postFormaCobro, reset} from '../../../reducers/Alquileres/alquileresSlice'
+import {getFormasDeCobro, postFormaCobro, reset} from '../../../reducers/Alquileres/alquileresSlice'
 import { ClipLoader } from "react-spinners";
 import styles from "./FormasDeCobro.module.css"
 import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
+import DataGrid, {Column} from "devextreme-react/data-grid"
+
 const FormasDeCobro = () => {
 const dispatch = useDispatch()
-const {isError, isSuccess, isLoading, message} = useSelector((state) => state.alquileresReducer)
+const {isError, isSuccess, isLoading, message, formasDeCobro} = useSelector((state) => state.alquileresReducer)
 const {cuentasContables} = useSelector((state) => state.costosReducer)
 const [form, setForm] = useState({
     nombre: '',
@@ -17,7 +19,8 @@ const [form, setForm] = useState({
 })
 useEffect(() => {
 Promise.all([
-    dispatch(getCuentasContables())
+    dispatch(getCuentasContables()),
+    dispatch(getFormasDeCobro())
 ])
 }, [])
 
@@ -70,6 +73,20 @@ const handleSubmit = async (e) => {
         <p className={styles.loadingText}>Cargando...</p>
       </div>
     )}
+    <h2>Formas de cobro</h2>
+      <DataGrid
+        className={styles.dataGrid}
+        dataSource={formasDeCobro || []}
+        showBorders={true}
+        style={{fontFamily: "IBM"}}
+        rowAlternationEnabled={true}
+        allowColumnResizing={true}
+        height={300}
+        columnAutoWidth={true}>
+          <Column dataField="nombre" caption="Nombre"/>
+          <Column dataField="cuenta_contable" caption="Cuenta contable"/>
+          <Column dataField="cuenta_secundaria" caption="Cuenta secundaria"/>
+      </DataGrid>
             <h2>Alta de formas de cobro</h2>
             <form action="" enctype="multipart/form-data" className={styles.form}>
             <div className={styles.inputContainer}>

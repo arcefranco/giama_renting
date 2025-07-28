@@ -162,6 +162,10 @@ const renderEliminarCell = (data) => {
         alignment="center" cellRender={(data) => {
           return data.data.activable == 1 ? "Sí" : "No"
         }}/>
+        <Column dataField="ingreso_egreso" width={100} caption="Es ingreso/egreso" 
+        alignment="center" cellRender={(data) => {
+          return data.data.ingreso_egreso == "I" ? "Ingreso" : data.data.ingreso_egreso == "E" ? "Egreso" : null
+        }}/>
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
       </DataGrid>
