@@ -457,14 +457,14 @@ export const updateVehiculo = async (req, res) => {
   if (validationVehiculoAnterior) {
     return res.send(validationVehiculoAnterior);
   }
-  let preparadoAntes = vehiculoAnterior[0]["estado_actual"] == 2 ? true : false;
-  let preparadoAhora = estado == 2 ? true : false;
-  if (preparadoAntes && !preparadoAhora) {
-    fechaDePreparacion = null;
-  } else if (!preparadoAntes && preparadoAhora) {
+
+  let preparadoAhora =
+    estado == 2 && vehiculoAnterior[0]["estado_actual"] == 1 ? true : false;
+
+  if (!vehiculoAnterior[0]["fecha_preparacion"] && preparadoAhora) {
     fechaDePreparacion = getTodayDate();
   } else {
-    fechaDePreparacion = vehiculoAnterior.fecha_preparacion;
+    fechaDePreparacion = vehiculoAnterior[0]["fecha_preparacion"];
   }
 
   try {
@@ -492,7 +492,7 @@ export const updateVehiculo = async (req, res) => {
           color,
           calcomania,
           gnc,
-          fechaDePreparacion: fechaDePreparacion ? fechaDePreparacion : null,
+          fechaDePreparacion,
           sucursal,
           estado,
           polarizado,
@@ -1074,7 +1074,7 @@ export const getAmortizacion = async (req, res) => {
     result = await giama_renting.query(
       `SELECT vehiculos.id, conceptos_costos.nombre, 
         SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
-        DATEDIFF(?, vehiculos.fecha_ingreso) AS dias_diferencia, 
+        DATEDIFF(?, vehiculos.fecha_preparacion) AS dias_diferencia, 
         conceptos_costos.activable
         FROM vehiculos
         LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
@@ -1131,7 +1131,7 @@ export const getAllAmortizaciones = async (req, res) => {
       const amortizacion = await giama_renting.query(
         `SELECT vehiculos.id, conceptos_costos.nombre, 
         SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
-        DATEDIFF(?, vehiculos.fecha_ingreso) AS dias_diferencia, 
+        DATEDIFF(?, vehiculos.fecha_preparacion) AS dias_diferencia, 
         conceptos_costos.activable
         FROM vehiculos
         LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
@@ -1208,6 +1208,7 @@ export const getFichas = async (req, res) => {
   v.id AS vehiculo,
   v.dominio,
   v.fecha_ingreso,
+  v.fecha_preparacion,
   v.dominio_provisorio,
 
   -- Alquiler y días prorrateados desde subconsulta
@@ -1223,7 +1224,7 @@ export const getFichas = async (req, res) => {
     / v.meses_amortizacion
   , 2) AS amortizacion,
 
-  -- Costos detallados (esto puede requerir ajuste también)
+  -- Costos detallados 
   JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
 
 FROM vehiculos v
@@ -1276,13 +1277,14 @@ GROUP BY v.id, v.dominio, v.dominio_provisorio,
         v.id AS vehiculo,
         v.dominio,
         v.fecha_ingreso,
+        v.fecha_preparacion,
         v.dominio_provisorio,
         COALESCE(a.alquiler, 0) AS alquiler,
         COALESCE(a.dias_en_mes, 0) AS dias_en_mes,
 ROUND(
   (
     (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) / (v.meses_amortizacion * 30)
-  ) * DATEDIFF(CURDATE(), v.fecha_ingreso),
+  ) * DATEDIFF(CURDATE(), v.fecha_preparacion),
   2
 ) AS amortizacion,
         JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
@@ -1346,6 +1348,7 @@ LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR
 
       return {
         vehiculo: row.vehiculo,
+        fecha_preparacion: row.fecha_preparacion,
         fecha_ingreso: row.fecha_ingreso,
         dominio: row.dominio,
         dominio_provisorio: row.dominio_provisorio,

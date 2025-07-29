@@ -16,6 +16,8 @@ import {
 import { verificarCliente } from "../../helpers/verificarCliente.js";
 import { handleError, acciones } from "../../helpers/handleError.js";
 import { validateArray } from "../../helpers/handleError.js";
+import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
+import { insertRecibo } from "../../helpers/insertRecibo.js";
 
 const insertAlquiler = async (body) => {
   const {
@@ -30,6 +32,7 @@ const insertAlquiler = async (body) => {
     NroAsiento,
     observacion,
     id_contrato,
+    nro_recibo,
     transaction,
   } = body;
   try {
@@ -46,7 +49,8 @@ const insertAlquiler = async (body) => {
     fecha_cobro,
     nro_asiento,
     observacion,
-    id_contrato) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    id_contrato,
+    nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -62,6 +66,7 @@ const insertAlquiler = async (body) => {
           NroAsiento,
           observacion ? observacion : "",
           id_contrato,
+          nro_recibo,
         ],
         transaction: transaction,
       }
@@ -327,6 +332,7 @@ export const postAlquiler = async (req, res) => {
 
 export const postContratoAlquiler = async (req, res) => {
   const {
+    usuario,
     //datos del cliente para el concepto:
     apellido_cliente,
     //contrato
@@ -337,6 +343,7 @@ export const postContratoAlquiler = async (req, res) => {
     deposito,
     ingresa_deposito,
     id_forma_cobro_contrato,
+    sucursal_vehiculo,
     //alquiler
     ingresa_alquiler,
     fecha_desde_alquiler,
@@ -371,6 +378,8 @@ export const postContratoAlquiler = async (req, res) => {
     fecha_desde_contrato
   )} hasta: ${formatearFechaISOText(fecha_hasta_contrato)}`;
   let contratosVigentes;
+  let nro_recibo_alquiler;
+  let nro_recibo_deposito;
   let fecha_desde_alquiler_parseada = formatearFechaISO(fecha_desde_alquiler);
   let fecha_hasta_alquiler_parseada = formatearFechaISO(fecha_hasta_alquiler);
   let fecha_desde_contrato_parseada = formatearFechaISO(fecha_desde_contrato);
@@ -487,11 +496,27 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(error, "Reservas del vehiculo", acciones.get);
     return res.send(body);
   }
-  //chequear que se explicite el no ingreso del deposito
+  //chequear que se explicite el no ingreso del deposito/alquiler
   if (ingresa_deposito == 1 && !deposito) {
     return res.send({
       status: false,
-      message: "Debe especificar que no ingresa depósito en garantía",
+      message:
+        "Debe especificar que no ingresa depósito en garantía. Faltan datos para el ingreso del mismo.",
+    });
+  }
+  if (
+    ingresa_alquiler == 1 &&
+    (!fecha_desde_alquiler ||
+      !fecha_hasta_alquiler ||
+      !id_forma_cobro_alquiler ||
+      !importe_neto ||
+      !importe_iva ||
+      !importe_total)
+  ) {
+    return res.send({
+      status: false,
+      message:
+        "Debe especificar que no ingresa alquiler. Faltan datos para el ingreso del mismo.",
     });
   }
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU, ALQU_2, DEPO Y DEP2
@@ -555,7 +580,51 @@ export const postContratoAlquiler = async (req, res) => {
       NroAsientoSecundario = await getNumeroAsientoSecundario();
     } catch (error) {
       console.log(error);
+
       const { body } = handleError(error, "número de asiento");
+      return res.send(body);
+    }
+  }
+  //inserto recibo alquiler
+  if (ingresa_alquiler == 1) {
+    try {
+      const detalle = `Inicio nuevo alquiler. Entrega: ${sucursal_vehiculo}`;
+      nro_recibo_alquiler = await insertRecibo(
+        getTodayDate(),
+        detalle,
+        importe_total,
+        usuario,
+        id_cliente,
+        id_vehiculo,
+        null,
+        null,
+        transaction_giama_renting
+      );
+    } catch (error) {
+      console.log(error);
+
+      const { body } = handleError(error, "Recibo de alquiler", acciones.post);
+      return res.send(body);
+    }
+  }
+  //inserto recibo contrato
+  if (ingresa_deposito == 1) {
+    try {
+      const detalle = `Pago depósito en garantía. Entrega: ${sucursal_vehiculo}`;
+      nro_recibo_deposito = await insertRecibo(
+        getTodayDate(),
+        detalle,
+        deposito,
+        usuario,
+        id_cliente,
+        id_vehiculo,
+        null,
+        null,
+        transaction_giama_renting
+      );
+    } catch (error) {
+      console.log(error);
+      const { body } = handleError(error, "Recibo de alquiler", acciones.post);
       return res.send(body);
     }
   }
@@ -564,7 +633,7 @@ export const postContratoAlquiler = async (req, res) => {
     const [result] = await giama_renting.query(
       `INSERT INTO contratos_alquiler 
       (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia,
-      id_forma_cobro, fecha_cobro, nro_asiento) VALUES (?,?,?,?,?,?,?,?)`,
+      id_forma_cobro, fecha_cobro, nro_asiento, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -576,6 +645,7 @@ export const postContratoAlquiler = async (req, res) => {
           id_forma_cobro_contrato,
           getTodayDate(),
           NroAsiento ? NroAsiento : null,
+          nro_recibo_deposito ? nro_recibo_deposito : null,
         ],
         transaction: transaction_giama_renting,
       }
@@ -583,10 +653,10 @@ export const postContratoAlquiler = async (req, res) => {
     idContrato = result;
   } catch (error) {
     console.log(error);
-    transaction_giama_renting.rollback();
     const { body } = handleError(error, "Contrato de alquiler", acciones.post);
     return res.send(body);
   }
+  //inserto alquiler
   if (ingresa_alquiler == 1) {
     try {
       await insertAlquiler({
@@ -601,11 +671,11 @@ export const postContratoAlquiler = async (req, res) => {
         NroAsiento: NroAsiento,
         observacion: observacion,
         id_contrato: idContrato,
+        nro_recibo: nro_recibo_alquiler ? nro_recibo_alquiler : null,
         transaction: transaction_giama_renting,
       });
     } catch (error) {
       console.log(error);
-      transaction_giama_renting.rollback();
       const { body } = handleError(
         error,
         "Semana adelantada de alquiler",
@@ -674,8 +744,7 @@ export const postContratoAlquiler = async (req, res) => {
       );
     } catch (error) {
       console.log(error);
-      transaction_giama_renting.rollback();
-      transaction_pa7_giama_renting.rollback();
+
       const { body } = handleError(error);
       return res.send(body);
     }
@@ -731,6 +800,8 @@ export const postContratoAlquiler = async (req, res) => {
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
   return res.send({
+    nro_recibo_alquiler: nro_recibo_alquiler,
+    nro_recibo_deposito: nro_recibo_deposito,
     status: true,
     message: "Contrato y alquiler ingresados con éxito",
   });
@@ -978,9 +1049,7 @@ export const anulacionContrato = async (req, res) => {
     );
     return res.send(body);
   }
-
   //actualizo el contrato en tabla contratos_alquiler
-
   try {
     await giama_renting.query(
       `UPDATE contratos_alquiler SET fecha_desde = ?, 
