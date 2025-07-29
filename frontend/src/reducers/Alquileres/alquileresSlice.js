@@ -12,6 +12,8 @@ const initialState = {
   contratoById: [],
   contratosVehiculo: [],
   anulaciones: [],
+  nro_recibo_alquiler: null,
+  nro_recibo_deposito: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -179,6 +181,8 @@ export const alquileresSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
+      state.nro_recibo_alquiler = action.payload.nro_recibo_alquiler;
+      state.nro_recibo_deposito = action.payload.nro_recibo_deposito;
       state.message = action.payload.message;
     });
     builder.addCase(postContratoAlquiler.rejected, (state, action) => {

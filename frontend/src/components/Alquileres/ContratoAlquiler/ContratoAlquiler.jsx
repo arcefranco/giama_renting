@@ -4,9 +4,9 @@ import { useParams} from 'react-router-dom';
 import AlquileresForm from "../AlquileresForm/AlquileresForm.jsx";
 import { postContratoAlquiler, getFormasDeCobro, getContratosByIdVehiculo, 
   getContratoById, anulacionContrato, reset } from "../../../reducers/Alquileres/alquileresSlice.js";
-import { getVehiculos } from "../../../reducers/Vehiculos/vehiculosSlice.js";
-import { getModelos } from "../../../reducers/Generales/generalesSlice.js";
-import { getClientes, getEstadoCliente, resetEstadoCliente } from "../../../reducers/Clientes/clientesSlice.js";
+import { getVehiculos, getVehiculosById } from "../../../reducers/Vehiculos/vehiculosSlice.js";
+import { getModelos, getSucursales } from "../../../reducers/Generales/generalesSlice.js";
+import { getClientes, getEstadoCliente } from "../../../reducers/Clientes/clientesSlice.js";
 import styles from "../AlquileresForm/AlquileresForm.module.css"
 import DatePicker from "react-datepicker";
 import Select from 'react-select';
@@ -34,7 +34,8 @@ useEffect(() => {
     dispatch(getFormasDeCobro()),
     dispatch(getVehiculos()),
     dispatch(getModelos()),
-    dispatch(getClientes())
+    dispatch(getClientes()),
+    dispatch(getSucursales())
 
   ])
   if(id && !isNaN(id)){
@@ -49,6 +50,7 @@ const fechaHastaPorDefecto = addDaysHelper(fechaDesdePorDefecto, 90);
 
 const {isError, isSuccess, isLoading, 
   message, formasDeCobro, contratosVehiculo, contratoById } = useSelector((state) => state.alquileresReducer)
+const {username} = useSelector((state) => state.loginReducer)
 const [formContrato, setFormContrato] = useState({
     id_vehiculo: '',
     id_cliente: '',
@@ -56,14 +58,16 @@ const [formContrato, setFormContrato] = useState({
     ingresa_deposito: 1,
     deposito: '',
     id_forma_cobro_contrato: '',
+    usuario: username,
+    sucursal_vehiculo: "",
     fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
     fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
     cuenta_contable_forma_cobro_contrato: '',
     cuenta_secundaria_forma_cobro_contrato: '',
 });
-const {vehiculos} = useSelector((state) => state.vehiculosReducer)
+const {vehiculos, vehiculo} = useSelector((state) => state.vehiculosReducer)
 const {clientes, estado_cliente} = useSelector((state) => state.clientesReducer)
-const {modelos} = useSelector((state) => state.generalesReducer)
+const {modelos, sucursales} = useSelector((state) => state.generalesReducer)
 useToastFeedback({
   isError, 
   isSuccess,
@@ -74,8 +78,11 @@ useToastFeedback({
   id_vehiculo: '',
   id_cliente: '',
   apellido_cliente: '',
+  ingresa_deposito: 1,
   deposito: '',
   id_forma_cobro_contrato: '',
+  usuario: username,
+  sucursal_vehiculo: "",
   fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
   fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
   cuenta_contable_forma_cobro_contrato: '',
@@ -112,8 +119,11 @@ fechaHastaPickers.setHours(0, 0, 0, 0);
   setFormContrato({
     id_vehiculo: '',
     id_cliente: '',
+    ingresa_deposito: 1,
     deposito: '',
     id_forma_cobro_contrato: '',
+    usuario: username,
+    sucursal_vehiculo: '',
     fecha_desde_contrato: fechaDesdePorDefecto,
     fecha_hasta_contrato: fechaHastaPorDefecto,
     cuenta_contable_forma_cobro_contrato: '',
@@ -167,8 +177,18 @@ else if(value && name === "id_cliente"){
 useEffect(() => { //obtengo contratos del vehiculo seleccionado
 if(formContrato.id_vehiculo && !isNaN(formContrato.id_vehiculo)){
 dispatch(getContratosByIdVehiculo({id: formContrato["id_vehiculo"]}))
+dispatch(getVehiculosById({id: formContrato["id_vehiculo"]}))
 }
 }, [formContrato["id_vehiculo"]])
+
+useEffect(() => {
+if(formContrato["id_vehiculo"] && sucursales?.length && vehiculo?.length){
+  setFormContrato({
+    ...formContrato,
+    sucursal_vehiculo: sucursales?.find(e => e.id == vehiculo[0]?.sucursal)?.nombre
+  })
+}
+}, [formContrato["id_vehiculo"], sucursales, vehiculo])
 
 useEffect(() => { //obtengo estado del cliente seleccionado
 if(formContrato.id_cliente && !isNaN(formContrato.id_cliente)){

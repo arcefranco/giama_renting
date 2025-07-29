@@ -6,6 +6,14 @@ export const getTodayDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+export const calcularDiferenciaDias = (fechaIngresoStr) => {
+  const fechaIngreso = new Date(fechaIngresoStr);
+  const hoy = new Date(getTodayDate()); // Esto asegura formato YYYY-MM-DD
+  const diferenciaMs = hoy - fechaIngreso;
+  const dias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
+  return dias >= 0 ? dias : 0; // Por si acaso, evitar negativos
+};
+
 export const getToday = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0); // elimina horas

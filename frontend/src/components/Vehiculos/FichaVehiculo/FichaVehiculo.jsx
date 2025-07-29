@@ -6,7 +6,7 @@ getAlquileresPeriodo, getAmortizacion, getCostoNetoVehiculo} from '../../../redu
 import {getModelos} from '../../../reducers/Generales/generalesSlice'
 import { getConceptosCostos } from '../../../reducers/Costos/costosSlice';
 import styles from './FichaVehiculo.module.css'
-import { getTodayDate } from '../../../helpers/getTodayDate';
+import { getTodayDate, calcularDiferenciaDias } from '../../../helpers/getTodayDate';
 import { formatearFecha } from '../../../helpers/formatearFecha';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
 import { generarPeriodos } from '../../../helpers/generarPeriodos';
@@ -124,9 +124,7 @@ useEffect(() => {
     fechaIngreso.setHours(0, 0, 0, 0);
     fechaLimite.setHours(0, 0, 0, 0);
 
-    // Asegurarse de no generar negativos
-    const diffTime = fechaLimite - fechaIngreso;
-    const diasEnFlota = diffTime > 0 ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
+    const diasEnFlota = calcularDiferenciaDias(vehiculo[0]["fecha_ingreso"])
 
     const diasAlquilado = fichaAlquileres?.length && fichaAlquileres?.reduce((acc, alquiler) => {
       return acc + Number(alquiler.dias_en_mes || 0);
@@ -358,7 +356,7 @@ function esNegativo(numero) {
                   <b>Desde:</b>{" "}
                   {form["mes"] && form["anio"]
                     ? `${formatearFecha(`${form["anio"]}-${String(form["mes"]).padStart(2, "0")}-01`)}`
-                    : formatearFecha(vehiculo[0]["fecha_ingreso"])}{" "}
+                    : `${formatearFecha(vehiculo[0]["fecha_preparacion"])} (preparación)`}
                   - <b>Hasta:</b> {form["mes"] && form["anio"] ? formatearFecha(getLastDayOfMonth(form["anio"], form["mes"])) : formatearFecha(getTodayDate())}
                 </span>
                 <span></span>

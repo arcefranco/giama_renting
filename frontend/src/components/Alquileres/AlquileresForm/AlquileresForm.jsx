@@ -94,6 +94,7 @@ if(!modoContrato){
     ...form,
     id_contrato: idContrato,
     importe_neto: '',
+    ingresa_alquiler: 1,
     importe_iva: '',
     importe_total: '',
     id_forma_cobro_alquiler: '',
