@@ -8,7 +8,7 @@ import loginRouter from "./src/routes/loginRoutes.js";
 import clientesRouter from "./src/routes/clientesRoutes.js";
 import costosRouter from "./src/routes/costosRoutes.js";
 import alquileresRouter from "./src/routes/alquileresRoutes.js";
-
+import recibosRouter from "./src/routes/recibosRoutes.js";
 dotenv.config();
 const app = express();
 const corsOptions = {
@@ -25,10 +25,11 @@ app.listen(process.env.PORT, (error) => {
 app.get("/", (req, res) => {
   return res.send("API giama_renting");
 });
-
+app.use("/public", express.static("public"));
 app.use("/login", loginRouter);
 app.use("/generales", generalesRouter);
 app.use("/vehiculos", vehiculosRouter);
 app.use("/clientes", clientesRouter);
 app.use("/costos", costosRouter);
 app.use("/alquileres", alquileresRouter);
+app.use("/recibos", recibosRouter);

@@ -598,6 +598,7 @@ export const postContratoAlquiler = async (req, res) => {
         id_vehiculo,
         null,
         null,
+        id_forma_cobro_alquiler,
         transaction_giama_renting
       );
     } catch (error) {
@@ -620,6 +621,7 @@ export const postContratoAlquiler = async (req, res) => {
         id_vehiculo,
         null,
         null,
+        id_forma_cobro_contrato,
         transaction_giama_renting
       );
     } catch (error) {
