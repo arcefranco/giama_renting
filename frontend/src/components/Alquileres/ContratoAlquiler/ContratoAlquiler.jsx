@@ -24,6 +24,7 @@ import sinResolucionIcon from "../../../assets/sin_resolucion.png"
 import rechazadoIcon from "../../../assets/rechazado.png"
 import aprobadoIcon from "../../../assets/aprobado.png"
 import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
+import {getReciboAlquilerById, getReciboDepositoById} from "../../../reducers/Recibos/recibosSlice.js"
 const ContratoAlquiler = () => {
 
 const dispatch = useDispatch();
@@ -49,7 +50,9 @@ const fechaDesdePorDefecto = getNextWednesday(hoy);
 const fechaHastaPorDefecto = addDaysHelper(fechaDesdePorDefecto, 90);
 
 const {isError, isSuccess, isLoading, 
-  message, formasDeCobro, contratosVehiculo, contratoById } = useSelector((state) => state.alquileresReducer)
+  message, formasDeCobro, contratosVehiculo, contratoById, nro_recibo_alquiler,
+nro_recibo_deposito } = useSelector((state) => state.alquileresReducer)
+const { html_recibo_alquiler, html_recibo_deposito } = useSelector((state) => state.recibosReducer);
 const {username} = useSelector((state) => state.loginReducer)
 const [formContrato, setFormContrato] = useState({
     id_vehiculo: '',
@@ -268,6 +271,35 @@ useEffect(() => { /* fechas por defecto */
   }
 }, [formContrato.id_vehiculo, contratosVehiculo]);
 
+useEffect(() => {
+  if (nro_recibo_alquiler) {
+    dispatch(getReciboAlquilerById({ id: nro_recibo_alquiler }));
+  }
+  if (nro_recibo_deposito) {
+    dispatch(getReciboDepositoById({ id: nro_recibo_deposito }));
+  }
+}, [nro_recibo_alquiler, nro_recibo_deposito]);
+
+useEffect(() => {
+  if (html_recibo_alquiler) {
+    const win = window.open("", "_blank");
+    win.document.write(html_recibo_alquiler);
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+}, [html_recibo_alquiler]);
+
+useEffect(() => {
+  if (html_recibo_deposito) {
+    const win = window.open("", "_blank");
+    win.document.write(html_recibo_deposito);
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+}, [html_recibo_deposito]);
+
 const obtenerRangosOcupados = (alquileres) =>
   alquileres
     ?.filter((a) => {
@@ -442,7 +474,7 @@ const clienteOptions = clientes.map(cliente => ({
         })
       }
     />
-    <label htmlFor="sinGarantia" style={{ marginLeft: '0.5rem' }}>No presenta garantía</label>
+    <label htmlFor="sinGarantia" style={{ marginLeft: '0.5rem' }}>Sin depósito en garantía</label>
   </div>
     <h2>Depósito en garantía</h2>
       <form action="" className={`${styles.form} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
