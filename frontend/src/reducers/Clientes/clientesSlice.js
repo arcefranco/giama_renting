@@ -116,7 +116,7 @@ export const clientesSlice = createSlice({
       state.isError = false;
       state.message = "";
     },
-    resetEstadoCliente: () => {
+    resetEstadoCliente: (state) => {
       state.estado_cliente = null;
       state.isError = false;
       state.isSuccess = false;

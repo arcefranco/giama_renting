@@ -3,10 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { useParams} from 'react-router-dom';
 import AlquileresForm from "../AlquileresForm/AlquileresForm.jsx";
 import { postContratoAlquiler, getFormasDeCobro, getContratosByIdVehiculo, 
-  getContratoById, anulacionContrato, reset } from "../../../reducers/Alquileres/alquileresSlice.js";
+  getContratoById, anulacionContrato, reset, reset_nro_recibo } from "../../../reducers/Alquileres/alquileresSlice.js";
 import { getVehiculos, getVehiculosById } from "../../../reducers/Vehiculos/vehiculosSlice.js";
 import { getModelos, getSucursales } from "../../../reducers/Generales/generalesSlice.js";
-import { getClientes, getEstadoCliente } from "../../../reducers/Clientes/clientesSlice.js";
+import { getClientes, getEstadoCliente, resetEstadoCliente } from "../../../reducers/Clientes/clientesSlice.js";
 import styles from "../AlquileresForm/AlquileresForm.module.css"
 import DatePicker from "react-datepicker";
 import Select from 'react-select';
@@ -24,7 +24,9 @@ import sinResolucionIcon from "../../../assets/sin_resolucion.png"
 import rechazadoIcon from "../../../assets/rechazado.png"
 import aprobadoIcon from "../../../assets/aprobado.png"
 import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
-import {getReciboAlquilerById, getReciboDepositoById} from "../../../reducers/Recibos/recibosSlice.js"
+import {getReciboAlquilerById, getReciboDepositoById, 
+  resetAlquiler, resetDeposito} from "../../../reducers/Recibos/recibosSlice.js"
+import Swal from 'sweetalert2';
 const ContratoAlquiler = () => {
 
 const dispatch = useDispatch();
@@ -36,12 +38,16 @@ useEffect(() => {
     dispatch(getVehiculos()),
     dispatch(getModelos()),
     dispatch(getClientes()),
-    dispatch(getSucursales())
-
+    dispatch(getSucursales()),
   ])
   if(id && !isNaN(id)){
-    console.log(id)
     dispatch(getContratoById({id: id}))
+  }
+  return () => {
+    dispatch(resetAlquiler())
+    dispatch(resetDeposito())
+    dispatch(reset_nro_recibo())
+    dispatch(resetEstadoCliente())
   }
 }, [])
 const hoy = getToday();
@@ -281,24 +287,59 @@ useEffect(() => {
 }, [nro_recibo_alquiler, nro_recibo_deposito]);
 
 useEffect(() => {
-  if (html_recibo_alquiler) {
-    const win = window.open("", "_blank");
-    win.document.write(html_recibo_alquiler);
-    win.document.close();
-    win.focus();
-    win.print();
-  }
-}, [html_recibo_alquiler]);
+  const preguntarRecibo = async () => {
+    const mostrarSwal = async ({ tipo, html }) => {
+      const titulo =
+        tipo === 'alquiler'
+          ? '¿Desea imprimir el recibo del alquiler?'
+          : '¿Desea imprimir el recibo del depósito?';
 
-useEffect(() => {
-  if (html_recibo_deposito) {
-    const win = window.open("", "_blank");
-    win.document.write(html_recibo_deposito);
-    win.document.close();
-    win.focus();
-    win.print();
+      const res = await Swal.fire({
+        title: titulo,
+        showCancelButton: true,
+        confirmButtonText: 'Sí',
+        cancelButtonText: 'Cancelar',
+        icon: 'warning',
+        didOpen: () => {
+          document.body.classList.remove('swal2-height-auto');
+        },
+      });
+
+      if (res.isConfirmed && html) {
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        win.focus();
+        win.print();
+      } 
+    };
+    const pasos = [];
+    if (html_recibo_alquiler) {
+      pasos.push(() =>
+        mostrarSwal({
+          tipo: 'alquiler',
+          html: html_recibo_alquiler,
+        })
+      );
+    }
+    if (html_recibo_deposito) {
+      pasos.push(() =>
+        mostrarSwal({
+          tipo: 'deposito',
+          html: html_recibo_deposito,
+        })
+      );
+    }
+    for (const paso of pasos) {
+      await paso();
+    }
+  };
+
+  if (html_recibo_alquiler || html_recibo_deposito) {
+    preguntarRecibo();
   }
-}, [html_recibo_deposito]);
+}, [html_recibo_alquiler, html_recibo_deposito, dispatch]);
+
 
 const obtenerRangosOcupados = (alquileres) =>
   alquileres
@@ -311,7 +352,7 @@ const obtenerRangosOcupados = (alquileres) =>
     .map((a) => ({
       start: new Date(a.fecha_desde),
       end: addDaysHelper(new Date(a.fecha_hasta), 1), // incluir fecha final
-}));
+})); 
 
 
 

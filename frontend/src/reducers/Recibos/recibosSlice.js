@@ -42,8 +42,11 @@ export const recibosSlice = createSlice({
       state.isError = false;
       state.message = "";
     },
-    resetHtml: () => {
-      state.html = false;
+    resetDeposito: (state) => {
+      state.html_recibo_deposito = null;
+    },
+    resetAlquiler: (state) => {
+      state.html_recibo_alquiler = null;
     },
   },
   extraReducers: (builder) => {
@@ -79,5 +82,5 @@ export const recibosSlice = createSlice({
     });
   },
 });
-export const { reset, resetHtml } = recibosSlice.actions;
+export const { reset, resetAlquiler, resetDeposito } = recibosSlice.actions;
 export default recibosSlice.reducer;

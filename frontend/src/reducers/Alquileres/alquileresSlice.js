@@ -157,6 +157,10 @@ export const alquileresSlice = createSlice({
       state.isError = false;
       state.message = "";
     },
+    reset_nro_recibo: (state) => {
+      state.nro_recibo_alquiler = null;
+      state.nro_recibo_deposito = null;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(postAlquiler.pending, (state) => {
@@ -366,5 +370,5 @@ export const alquileresSlice = createSlice({
     });
   },
 });
-export const { reset } = alquileresSlice.actions;
+export const { reset, reset_nro_recibo } = alquileresSlice.actions;
 export default alquileresSlice.reducer;
