@@ -52,6 +52,15 @@
     align-self: self-start;
   }
   
+  .inputContainer input[type="date"] {
+    border: none;
+    border-bottom: 2px solid #800000; 
+    padding: 8px;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+    background-color: transparent;
+  }
   .inputContainer select {
     border: none;
     border-bottom: 2px solid #800000;

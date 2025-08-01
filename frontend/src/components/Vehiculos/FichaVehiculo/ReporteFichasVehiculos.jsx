@@ -7,6 +7,7 @@ import { ClipLoader } from 'react-spinners';
 import DataGrid, {Column, Summary, TotalItem, FilterRow} from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
+import { formatearFecha } from '../../../helpers/formatearFecha';
 
 const ReporteFichasVehiculos = () => {
 const dispatch = useDispatch()
@@ -167,12 +168,16 @@ const renderDominio = (data) => {
     <FilterRow visible={true} />
 
   <Column dataField="dominio" caption="Dominio" cellRender={renderDominio} />
-  <Column dataField="fecha_ingreso" caption="Fecha ingreso" customizeText={(e) => {
+{/*<Column dataField="fecha_ingreso" caption="Fecha ingreso" customizeText={(e) => {
     const date = new Date(e.value);
     return `${date.getDate().toString().padStart(2, '0')}/${
       (date.getMonth() + 1).toString().padStart(2, '0')
     }/${date.getFullYear()}`;
-  }} />
+  }} /> */}
+  <Column dataField="fecha_inicio_amortizacion" caption="Fecha amortización" width={125} customizeText={(e) => {
+    const date = new Date(e.value);
+    return e.value ? `${formatearFecha(e.value)}` : 'Sin fecha';
+  }} /> 
   <Column dataField="dias_en_mes" caption="Días alquilado" />
   <Column dataField="dias_ocupacion" caption="Días ocupación" />
   <Column dataField="porcentaje_ocupacion" width={90} caption="% ocupación" customizeText={(e) => `${Math.round(e.value)}%`} />

@@ -133,7 +133,7 @@ export const getAlquileresPeriodo = createAsyncThunk(
     )
 );
 
-export const getAllCostosPeriodo = createAsyncThunk(
+/* export const getAllCostosPeriodo = createAsyncThunk(
   "getAllCostosPeriodo",
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
@@ -151,7 +151,7 @@ export const getAllAlquileresPeriodo = createAsyncThunk(
       responses.array,
       rejectWithValue
     )
-);
+); */
 
 export const getAmortizacion = createAsyncThunk(
   "getAmortizacion",
@@ -163,7 +163,7 @@ export const getAmortizacion = createAsyncThunk(
     )
 );
 
-export const getAllAmortizaciones = createAsyncThunk(
+/* export const getAllAmortizaciones = createAsyncThunk(
   "getAllAmortizaciones",
   async (_, { rejectWithValue }) =>
     handleAsyncThunk(
@@ -171,7 +171,7 @@ export const getAllAmortizaciones = createAsyncThunk(
       responses.array,
       rejectWithValue
     )
-);
+); */
 
 export const getFichas = createAsyncThunk(
   "getFichas",
@@ -388,7 +388,7 @@ export const vehiculosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
-    builder.addCase(getAllAlquileresPeriodo.pending, (state) => {
+    /*     builder.addCase(getAllAlquileresPeriodo.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getAllAlquileresPeriodo.fulfilled, (state, action) => {
@@ -403,8 +403,8 @@ export const vehiculosSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
-    });
-    builder.addCase(getAllCostosPeriodo.pending, (state) => {
+    }); */
+    /*     builder.addCase(getAllCostosPeriodo.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getAllCostosPeriodo.fulfilled, (state, action) => {
@@ -419,7 +419,7 @@ export const vehiculosSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
-    });
+    }); */
     builder.addCase(getAmortizacion.pending, (state) => {
       state.isLoading = true;
     });
@@ -437,7 +437,7 @@ export const vehiculosSlice = createSlice({
       state.message = action.payload.message;
       state.amortizacion = null;
     });
-    builder.addCase(getAllAmortizaciones.pending, (state) => {
+    /*     builder.addCase(getAllAmortizaciones.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getAllAmortizaciones.fulfilled, (state, action) => {
@@ -452,7 +452,7 @@ export const vehiculosSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
-    });
+    }); */
   },
 });
 export const { reset, resetVehiculo } = vehiculosSlice.actions;

@@ -20,6 +20,7 @@ const UpdateVehiculo = () => {
   const [form, setForm] = useState({
     usuario: username,
     modelo: '',
+    fecha_inicio_amortizacion: '',
     nro_chasis: '',
     nro_motor: '',
     kilometros: '',
@@ -51,6 +52,7 @@ const UpdateVehiculo = () => {
         usuario: username,
         modelo: vehiculo[0].modelo || '',
         nro_chasis: vehiculo[0].nro_chasis || '',
+        fecha_inicio_amortizacion: vehiculo[0].fecha_inicio_amortizacion || '',
         nro_motor: vehiculo[0].nro_motor || '',
         kilometros: vehiculo[0].kilometros_actuales || '',
         proveedor_gps: vehiculo[0].proveedor_gps || '',
@@ -170,6 +172,12 @@ useToastFeedback({
           <div className={styles.inputContainer}>
             <span>Dispositivo Peaje</span>
             <input type="text" name="dispositivo" value={form.dispositivo} onChange={handleChange} />
+          </div>
+
+          <div className={styles.inputContainer}>
+            <span>Fecha inicio de amortización</span>
+            <input type="date" name="fecha_inicio_amortizacion" value={form.fecha_inicio_amortizacion} 
+            disabled={vehiculo?.length && vehiculo[0]["fecha_inicio_amortizacion"] ? true : false} onChange={handleChange} />
           </div>
 
           <div className={styles.inputContainer}>

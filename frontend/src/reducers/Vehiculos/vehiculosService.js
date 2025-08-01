@@ -59,17 +59,18 @@ const getSituacionFlota = async (data) => {
 const getAlquileresPeriodo = async (data) => {
   return postArrayFunction("vehiculos/getAlquileresPeriodo", data);
 };
-const getAllCostosPeriodo = async (data) => {
+/* const getAllCostosPeriodo = async (data) => {
   return postArrayFunction("vehiculos/getAllCostosPeriodo", data);
-};
-const getAllAlquileresPeriodo = async (data) => {
+}; */
+/* const getAllAlquileresPeriodo = async (data) => {
   return postArrayFunction("vehiculos/getAllAlquileresPeriodo", data);
-};
+}; */
+/* const getAllAmortizaciones = async () => {
+  return getFunction("vehiculos/getAllAmortizaciones");
+}; */
+
 const getAmortizacion = async (data) => {
   return postObjectFunction("vehiculos/getAmortizacion", data);
-};
-const getAllAmortizaciones = async () => {
-  return getFunction("vehiculos/getAllAmortizaciones");
 };
 
 const getFichas = async (data) => {
@@ -88,10 +89,10 @@ const vehiculosService = {
   getCostoNetoVehiculo,
   getSituacionFlota,
   getAlquileresPeriodo,
-  getAllAlquileresPeriodo,
-  getAllCostosPeriodo,
+  /*   getAllAlquileresPeriodo, */
+  /*   getAllCostosPeriodo, */
   getAmortizacion,
-  getAllAmortizaciones,
+  /*   getAllAmortizaciones, */
   getFichas,
 };
 export default vehiculosService;

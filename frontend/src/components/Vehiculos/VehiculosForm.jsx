@@ -5,6 +5,7 @@ import { getModelos, getSucursales, getPreciosModelos, getParametroAMRT } from '
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
+import { useToastFeedback } from '../../customHooks/useToastFeedback'
 const VehiculosForm = () => {
 const dispatch = useDispatch()
   useEffect(() => {
@@ -22,6 +23,7 @@ const dispatch = useDispatch()
     modelo: '',
     dominio: '',
     dominio_provisorio: '',
+    fecha_inicio_amortizacion: '',
     nro_chasis: '',
     nro_motor: '',
     kilometros: '',
@@ -49,52 +51,32 @@ const eliminarImagen = (index) => {
   setImagenes((prev) => prev.filter((_, i) => i !== index));
 };
 
-useEffect(() => {
+useToastFeedback({
+  isError,
+  isSuccess,
+  message,
+  resetAction: reset,
+  onSuccess: () => {
+  setFormData({
+    modelo: '',
+    dominio: '',
+    fecha_inicio_amortizacion: '',
+    nro_chasis: '',
+    nro_motor: '',
+    kilometros: '',
+    proveedor_gps: '',
+    costo: '',
+    nro_serie_gps: '',
+    dispositivo: '',
+    meses_amortizacion: '',
+    color: '',
+    sucursal: '',
+    nro_factura_compra: ''
+  })
+  setImagenes([])
+  }
+})
 
-  if(isError){
-      toast.error(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-    }
-    if(isSuccess){
-      toast.success(message, {
-        position: "bottom-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        })
-        dispatch(reset())
-        setFormData({
-          modelo: '',
-          dominio: '',
-          nro_chasis: '',
-          nro_motor: '',
-          kilometros: '',
-          proveedor_gps: '',
-          costo: '',
-          nro_serie_gps: '',
-          dispositivo: '',
-          meses_amortizacion: '',
-          color: '',
-          sucursal: '',
-          nro_factura_compra: ''
-        })
-        setImagenes([])
-    }
-
-}, [isError, isSuccess]) 
 
 useEffect(() => {
 if(AMRT) {
@@ -232,6 +214,11 @@ const handleSubmit = async (e) => {
         <div className={styles.inputContainer}>
         <span>Dispositivo Peaje</span>
         <input type="number" name='dispositivo' value={form["dispositivo"]}
+        onChange={handleChange} />
+        </div>
+        <div className={styles.inputContainer}>
+        <span>Fecha inicio de amortización</span>
+        <input type="date" name='fecha_inicio_amortizaion' value={form["fecha_inicio_amortizaion"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>

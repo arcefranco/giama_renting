@@ -30,7 +30,7 @@ const [ocupacion, setOcupacion] = useState({
 useEffect(() => {
 Promise.all([
     dispatch(getVehiculosById({id: id, fecha: getTodayDate()})),
-    dispatch(getAmortizacion({id: id})),
+    dispatch(getAmortizacion({id_vehiculo: id})),
     dispatch(getCostoNetoVehiculo(form)),
     dispatch(getModelos()),
     dispatch(getAlquileresPeriodo(form)),
@@ -55,12 +55,12 @@ const [totalCostos, setTotalCostos] = useState(null)
 
 useEffect(( ) => {
 let sumaTotal = 0;
-if(Object.keys(fichaCostos)?.length){
+if(fichaCostos && Object.keys(fichaCostos)?.length){
 for (const key in fichaCostos) {
   const items = fichaCostos[key];
-  for (const item of items) {
-    sumaTotal += parseFloat(item.importe_neto);
-  }
+    for (const item of items) {
+      sumaTotal += parseFloat(item.importe_neto);
+    }
 }
 }
 setTotalCostos(sumaTotal)
@@ -112,6 +112,7 @@ useEffect(() => {
   if (vehiculo?.[0]?.fecha_ingreso) {
     const fechaIngreso = new Date(vehiculo[0].fecha_ingreso);
     let fechaLimite;
+    let diasEnFlota;
 
     if (form.mes && form.anio) {
       // Si hay período, usamos el último día del mes especificado
@@ -123,8 +124,13 @@ useEffect(() => {
 
     fechaIngreso.setHours(0, 0, 0, 0);
     fechaLimite.setHours(0, 0, 0, 0);
+    if(!form["mes"] && !form["anio"]){
+      diasEnFlota = calcularDiferenciaDias(vehiculo[0]["fecha_ingreso"])
+    }else if(form["mes"] && form["anio"]){
+      const finMes = new Date(form["anio"], form["mes"], 0);
+      diasEnFlota = calcularDiferenciaDias(vehiculo[0]["fecha_ingreso"], finMes)
+    }
 
-    const diasEnFlota = calcularDiferenciaDias(vehiculo[0]["fecha_ingreso"])
 
     const diasAlquilado = fichaAlquileres?.length && fichaAlquileres?.reduce((acc, alquiler) => {
       return acc + Number(alquiler.dias_en_mes || 0);
@@ -146,7 +152,8 @@ useEffect(() => {
     Promise.all([
         dispatch(getCostosPeriodo(form)),
         dispatch(getAlquileresPeriodo(form)),
-        dispatch(getCostoNetoVehiculo(form))
+        dispatch(getCostoNetoVehiculo(form)),
+        dispatch(getAmortizacion(form))
     ])
 }, [form["mes"], form["anio"]])
 
@@ -287,7 +294,7 @@ function esNegativo(numero) {
 })}
 
 {fichaCostos && Object.entries(fichaCostos)?.map(([nombre, items]) => {
-      const total = items.reduce((acc, c) => acc + parseFloat(c.importe_neto), 0);
+      const total = items.length ? items?.reduce((acc, c) => acc + parseFloat(c.importe_neto), 0) : 0;
       return (
         <React.Fragment key={nombre}>
           <tr
@@ -323,14 +330,14 @@ function esNegativo(numero) {
       );
     })}
   {filas?.map((fila, i) => {
-  const esPositivo = fila.importe >= 0;
+  const esPositivo = fila.importe > 0;
   const estilo = {
     color: esPositivo ? "green" : "red",
     fontWeight: 500
   };
   const importeFormateado = esPositivo
     ? fila.importe?.toLocaleString("es-AR")
-    : `(${Math.abs(fila.importe).toLocaleString("es-AR")})`;
+    : fila.importe == 0 ? "0" : `(${Math.abs(fila.importe).toLocaleString("es-AR")})`;
 
   const esAmortizacion = fila.tipo === 'amortizacion';
   
@@ -360,7 +367,7 @@ function esNegativo(numero) {
                   - <b>Hasta:</b> {form["mes"] && form["anio"] ? formatearFecha(getLastDayOfMonth(form["anio"], form["mes"])) : formatearFecha(getTodayDate())}
                 </span>
                 <span></span>
-                <span>{fila.importe?.toLocaleString("es-AR")}</span>
+                <span>{fila.importe?.toLocaleString("es-AR") == 0 ? "0" : fila.importe?.toLocaleString("es-AR")}</span>
               </div>
             </div>
           </td>
