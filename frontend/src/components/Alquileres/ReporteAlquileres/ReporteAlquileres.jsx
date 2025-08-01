@@ -4,7 +4,8 @@ import {getVehiculos} from "./../../../reducers/Vehiculos/vehiculosSlice"
 import {getClientes} from "./../../../reducers/Clientes/clientesSlice"
 import {getModelos} from "./../../../reducers/Generales/generalesSlice"
 import {useDispatch, useSelector} from "react-redux"
-import DataGrid, {Column, Scrolling, Paging, TotalItem, Summary} from "devextreme-react/data-grid"
+import DataGrid, {Column, Scrolling, Paging, TotalItem, Summary, 
+SearchPanel, HeaderFilter, FilterRow} from "devextreme-react/data-grid"
 import styles from "./ReporteAlquileres.module.css"
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
@@ -37,12 +38,36 @@ const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
 })
+const [alquileresConDatos, setAlquileresConDatos] = useState([]);
 useToastFeedback({
   isError, 
   isSuccess,
   message,
   resetAction: reset,
 })
+useEffect(() => {
+  if (!alquileres || !vehiculos || !clientes || !modelos) return;
+
+  const mapeado = alquileres.map(a => {
+    const vehiculo = vehiculos.find(v => v.id === a.id_vehiculo);
+    const cliente = clientes.find(c => c.id === a.id_cliente);
+    const modelo = modelos.find(m => m.id === vehiculo?.modelo);
+
+    const dominio = vehiculo?.dominio || vehiculo?.dominio_provisorio || "SIN DOMINIO";
+    const modeloNombre = modelo?.nombre || "";
+    const vehiculoTexto = `${dominio} ${modeloNombre}`
+
+    const clienteTexto = `${cliente?.nombre || ""} ${cliente?.apellido || ""}`
+
+    return {
+      ...a,
+      vehiculo_texto: vehiculoTexto,
+      cliente_texto: clienteTexto,
+    };
+  });
+
+  setAlquileresConDatos(mapeado);
+}, [alquileres, vehiculos, clientes, modelos]);
 const handleActualizar = ( ) => {
   dispatch(getAlquileres({fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"]}))
 }
@@ -141,7 +166,7 @@ if (e.name === "importeTotal") {
     </button>
       <DataGrid
         className={styles.dataGrid}
-        dataSource={alquileres || []}
+        dataSource={alquileresConDatos || []}
         showBorders={true}
         style={{fontFamily: "IBM"}}
         rowAlternationEnabled={true}
@@ -149,13 +174,15 @@ if (e.name === "importeTotal") {
         columnAutoWidth={true}
         height={400}
         >
+        <SearchPanel visible={true} highlightCaseSensitive={true} />
+        <HeaderFilter visible={true} />
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
-        <Column dataField="id_vehiculo" caption="Vehículo" cellRender={renderVehiculo} alignment="center"/>
-        <Column dataField="id_cliente" caption="Cliente" cellRender={renderCliente} alignment="center"/>
-        <Column dataField="fecha_desde" caption="Desde" cellRender={renderFecha} alignment="center"/>
-        <Column dataField="fecha_hasta" caption="Hasta" cellRender={renderFecha} alignment="center"/>
-        <Column dataField="importe_neto" alignment="right"caption="Importe neto" customizeText={(e) => Math.trunc(e.value).toLocaleString()}/>
+        <Column dataField="vehiculo_texto" caption="Vehículo" dataType="string" alignment="center" />
+        <Column dataField="cliente_texto" caption="Cliente"  dataType="string" alignment="center" />
+        <Column dataField="fecha_desde" allowSearch={false} allowHeaderFiltering={false} caption="Desde" cellRender={renderFecha} alignment="center"/>
+        <Column dataField="fecha_hasta" allowSearch={false} allowHeaderFiltering={false} caption="Hasta" cellRender={renderFecha} alignment="center"/>
+        <Column dataField="importe_neto" allowSearch={false} allowHeaderFiltering={false} alignment="right"caption="Importe neto" customizeText={(e) => Math.trunc(e.value).toLocaleString()}/>
         <Summary calculateCustomSummary={handleCustomSummary}>
         <TotalItem
           name="importeTotal"

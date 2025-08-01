@@ -8,6 +8,7 @@ const initialState = {
   conceptos: [],
   concepto: [],
   costos_ingresos_vehiculo: [],
+  nro_recibo_ingreso: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -114,6 +115,9 @@ export const costosSlice = createSlice({
     resetCostosVehiculo: (state) => {
       state.costos_ingresos_vehiculo = [];
     },
+    reset_nro_recibo_ingreso: (state) => {
+      state.nro_recibo_ingreso = null;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getCuentasContables.pending, (state) => {
@@ -216,6 +220,7 @@ export const costosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
+      state.nro_recibo_ingreso = action.payload.nro_recibo_ingreso;
       state.message = action.payload.message;
     });
     builder.addCase(postCostos_Ingresos.rejected, (state, action) => {
@@ -260,5 +265,6 @@ export const costosSlice = createSlice({
     });
   },
 });
-export const { reset, resetCostosVehiculo } = costosSlice.actions;
+export const { reset, resetCostosVehiculo, reset_nro_recibo_ingreso } =
+  costosSlice.actions;
 export default costosSlice.reducer;

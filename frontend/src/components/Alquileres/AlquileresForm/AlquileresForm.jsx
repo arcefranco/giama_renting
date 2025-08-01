@@ -183,21 +183,14 @@ const customStyles = {
 };
 const handleChange = (e) => {
 const { name, value } = e.target;
-if(value && name === "importe_neto"){
+if(value && name === "importe_total"){
         setForm({
        ...form,
        [name]: parseFloat(value),
        "importe_iva": parseFloat(value) * 0.21,
-       "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
+       "importe_neto": parseFloat(value) - (parseFloat(value) * 0.21)
      }); 
   }
-else if(value && name === "importe_iva"){
-      setForm({
-     ...form,
-     [name]: value,
-     "importe_total": parseFloat(value) + parseFloat(form["importe_neto"])
-   }); 
-}
 else if(value && name === "id_forma_cobro_alquiler"){
       setForm({
      ...form,
@@ -349,18 +342,18 @@ const handleSubmit = async (e) => {
                     />
                 </div>
                 <div className={styles.inputContainer}>
+                    <span>Importe total</span>
+                    <input type="number" name='importe_total'  value={form["importe_total"]} 
+                  onChange={handleChange}/>
+                </div>
+                <div className={styles.inputContainer}>
                     <span>Importe neto</span>
-                    <input type="number" name='importe_neto' value={form["importe_neto"]} 
+                    <input type="number" name='importe_neto' disabled value={form["importe_neto"]} 
                   onChange={handleChange}/>
                 </div>
                 <div className={styles.inputContainer}>
                     <span>IVA</span>
-                    <input type="number" name='importe_iva' value={form["importe_iva"]} 
-                  onChange={handleChange}/>
-                </div>
-                <div className={styles.inputContainer}>
-                    <span>Importe total</span>
-                    <input type="number" name='importe_total' disabled value={form["importe_total"]} 
+                    <input type="number" name='importe_iva' disabled value={form["importe_iva"]} 
                   onChange={handleChange}/>
                 </div>
                 <div className={styles.inputContainer}>

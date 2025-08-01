@@ -141,21 +141,6 @@ fechaHastaPickers.setHours(0, 0, 0, 0);
 }
 }, [contratoById, id]);
 
-const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta).map((e) => {
-    const dominio = e.dominio || e.dominio_provisorio || "";
-    const modeloNombre = modelos.find((m) => m.id == e.modelo)?.nombre || "";
-
-    return {
-      value: e.id,
-      label: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: '15px' }}>
-          <span>{dominio} - {modeloNombre}</span>
-          {renderEstadoVehiculo(e, 'chico')}
-        </div>
-      ),
-      searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
-    };
-});
 const customStyles = {
   container: (provided) => ({
     ...provided,
@@ -190,7 +175,7 @@ dispatch(getVehiculosById({id: formContrato["id_vehiculo"]}))
 }
 }, [formContrato["id_vehiculo"]])
 
-useEffect(() => {
+useEffect(() => { //obtengo sucursal del vehiculo (para ingresar en recibos)
 if(formContrato["id_vehiculo"] && sucursales?.length && vehiculo?.length){
   setFormContrato({
     ...formContrato,
@@ -354,8 +339,6 @@ const obtenerRangosOcupados = (alquileres) =>
       end: addDaysHelper(new Date(a.fecha_hasta), 1), // incluir fecha final
 })); 
 
-
-
 const handleFinalSubmit = (formAlquiler) => {
   const payload = {
     ...formAlquiler,
@@ -381,6 +364,23 @@ const getIconFromResolucion = (valor) => {
   };
   return opciones[valor] || sinResolucionIcon;
 };
+
+const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta).map((e) => {
+    const dominio = e.dominio || e.dominio_provisorio || "";
+    const modeloNombre = modelos.find((m) => m.id == e.modelo)?.nombre || "";
+
+    return {
+      value: e.id,
+      label: (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: '15px' }}>
+          <span>{dominio} - {modeloNombre}</span>
+          {renderEstadoVehiculo(e, 'chico')}
+        </div>
+      ),
+      isDisabled: e.estado_actual !== 2,
+      searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
+    };
+});
 const clienteOptions = clientes.map(cliente => ({
   value: cliente.id,
   label: (
@@ -389,7 +389,7 @@ const clienteOptions = clientes.map(cliente => ({
       {`${cliente.nro_documento} - ${cliente.nombre} ${cliente.apellido}`}
     </div>
   ),
-  isDisabled: cliente.resolucion_datero === 2,
+  isDisabled: cliente.resolucion_datero === 2 || cliente.resolucion_datero === 0,
   searchKey: `${cliente.nombre} ${cliente.apellido}`.toLowerCase(),
 }));
 

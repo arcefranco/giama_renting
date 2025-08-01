@@ -17,6 +17,7 @@
     "devextreme": "^22.2.5",
     "devextreme-react": "^22.2.5",
     "globalize": "^1.7.0",
+    "pg-hstore": "^2.3.4",
     "react": "^18.2.0",
     "react-datepicker": "^8.3.0",
     "react-dom": "^18.2.0",

@@ -163,3 +163,34 @@
   .sendBtn:hover {
     background-color: #a52a2a;
   }
+
+  .inputContainer input[type="checkbox"] {
+    align-self: center;
+  }
+
+  .inputWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 14rem;
+  margin: 0.5rem;
+  padding: 0.5rem;
+}
+
+.selectWithIcon {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 22rem;
+}
+
+.selectWithIcon select {
+  border: none;
+  border-bottom: 2px solid #800000;
+  padding: 8px;
+  outline: none;
+  background-color: transparent;
+  font-size: 14px;
+  color: #000000;
+  width: 100%;
+  cursor: pointer;
+}

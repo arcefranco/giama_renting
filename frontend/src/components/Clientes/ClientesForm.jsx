@@ -477,7 +477,7 @@ return (
         <span>Resolución datero</span>
         <select name="resolucion_datero" value={form["resolucion_datero"]}
         onChange={handleChange} id="">
-          <option value={0}>Sin resolución</option>
+          <option value={0}>Pendiente de aprobación</option>
           <option value={1}>Aprobado</option>
           <option value={2}>Rechazado</option>
         </select>

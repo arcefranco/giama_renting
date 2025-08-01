@@ -104,7 +104,7 @@ const renderResolucion = ({ data }) => {
   const valor = data.resolucion_datero;
 
   const opciones = {
-    0: { label: 'Sin resolución', icon: sinResolucionIcon },
+    0: { label: 'Pendiente de aprobación', icon: sinResolucionIcon },
     1: { label: 'Aprobado', icon: aprobadoIcon },
     2: { label: 'Rechazado', icon: rechazadoIcon }
   };

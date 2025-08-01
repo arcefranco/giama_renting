@@ -6,6 +6,7 @@ import recibosService from "./recibosService.js";
 const initialState = {
   html_recibo_alquiler: null,
   html_recibo_deposito: null,
+  html_recibo_ingreso: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -32,6 +33,16 @@ export const getReciboDepositoById = createAsyncThunk(
     )
 );
 
+export const getReciboIngresoById = createAsyncThunk(
+  "getReciboIngresoById",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => recibosService.getReciboById(data),
+      responses.object,
+      rejectWithValue
+    )
+);
+
 export const recibosSlice = createSlice({
   name: "recibos",
   initialState,
@@ -47,6 +58,9 @@ export const recibosSlice = createSlice({
     },
     resetAlquiler: (state) => {
       state.html_recibo_alquiler = null;
+    },
+    resetIngreso: (state) => {
+      state.html_recibo_ingreso = null;
     },
   },
   extraReducers: (builder) => {
@@ -80,7 +94,23 @@ export const recibosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
+    builder.addCase(getReciboIngresoById.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getReciboIngresoById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.html_recibo_ingreso = action.payload.data.html;
+    });
+    builder.addCase(getReciboIngresoById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
   },
 });
-export const { reset, resetAlquiler, resetDeposito } = recibosSlice.actions;
+export const { reset, resetAlquiler, resetDeposito, resetIngreso } =
+  recibosSlice.actions;
 export default recibosSlice.reducer;

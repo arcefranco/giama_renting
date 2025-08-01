@@ -1,8 +1,10 @@
 import React, {useEffect, useState, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux';
 import { getCostosIngresosByIdVehiculo, getConceptosCostos, 
-  postCostos_Ingresos, reset as resetCostosSlice, resetCostosVehiculo } from '../../reducers/Costos/costosSlice.js';
+  postCostos_Ingresos, reset as resetCostosSlice, resetCostosVehiculo, reset_nro_recibo_ingreso } from '../../reducers/Costos/costosSlice.js';
 import {getVehiculos, getVehiculosById, resetVehiculo} from '../../reducers/Vehiculos/vehiculosSlice'
+import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
+import {getFormasDeCobro} from "../../reducers/Alquileres/alquileresSlice.js"
 import {getModelos} from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
 import DataGrid, {Column, Scrolling, Summary, TotalItem} from "devextreme-react/data-grid"
@@ -10,10 +12,12 @@ import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css"
 import { ClipLoader } from "react-spinners";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
+import { getReciboIngresoById, resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
+import Swal from 'sweetalert2';
 
 const IngresosEgresos = () => {  
 
@@ -21,22 +25,31 @@ const { id } = useParams();
 const gridRef = useRef(null);
 const dispatch = useDispatch()
 const {isError, isSuccess, isLoading, message, 
-costos_ingresos_vehiculo, conceptos} = useSelector((state) => state.costosReducer)
+costos_ingresos_vehiculo, conceptos, nro_recibo_ingreso} = useSelector((state) => state.costosReducer)
 const {vehiculo, vehiculos} = useSelector((state) => state.vehiculosReducer)
+const {clientes} = useSelector((state) => state.clientesReducer)
+const {formasDeCobro} = useSelector((state) => state.alquileresReducer)
+const {username} = useSelector((state) => state.loginReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
+const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
 const [form, setForm] = useState({
     id_vehiculo: id ? id : "",
     fecha: '',
     id_concepto: '',
+    id_forma_cobro: '',
+    id_cliente: '',
     comprobante: '',
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
     observacion: '',
     cuenta: '',
-    cuenta_secundaria: ''
+    genera_recibo: 1,
+    cuenta_secundaria: '',
+    usuario: username,
 })
 const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
+const [inputGeneraRecibo, setInputGeneraRecibo] = useState(false)
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
     const pageCount = Math.ceil(costos_ingresos_vehiculo.length / 5);
@@ -48,13 +61,16 @@ useEffect(() => {
 dispatch(getConceptosCostos());
 dispatch(getModelos());
 dispatch(getVehiculos());
+dispatch(getClientes())
+dispatch(getFormasDeCobro())
 locale("es");
 
 return () => {
-  // cleanup global al desmontar REAL
   dispatch(resetCostosSlice());
   dispatch(resetCostosVehiculo());
   dispatch(resetVehiculo());
+  dispatch(resetIngreso());
+  dispatch(reset_nro_recibo_ingreso())
 };
 }, [dispatch])
 
@@ -71,35 +87,7 @@ return () => {
       setForm((f) => ({ ...f, id_vehiculo: "" }));
     }
   }, [id, dispatch]);
-/* useEffect(() => {
-  Promise.all([
-    dispatch(getConceptosCostos()),
-    dispatch(getModelos()),
-    dispatch(getVehiculos()),
-    locale('es')
-  ])
-  if(id){
-    dispatch(getCostosIngresosByIdVehiculo({id: id})),
-    dispatch(getVehiculosById({id: id}))
-  }
-  return () => {
-    dispatch(reset())
-    dispatch(resetCostosVehiculo())
-    dispatch(resetVehiculo())
-    setForm({
-    id_vehiculo: "",
-    fecha: '',
-    id_concepto: '',
-    comprobante: '',
-    importe_neto: '',
-    importe_iva: '',
-    importe_total: '',
-    observacion: '',
-    cuenta: '',
-    cuenta_secundaria: ''
-})
-  }
-}, []) */
+
 useToastFeedback({
     isError,
     isSuccess,
@@ -110,6 +98,8 @@ useToastFeedback({
           setForm({
           id_vehiculo: id,
           fecha: '',
+          id_cliente: '',
+          id_forma_cobro: '',
           id_concepto: '',
           comprobante: '',
           importe_neto: '',
@@ -117,11 +107,15 @@ useToastFeedback({
           importe_total: '',
           observacion: '',
           cuenta: '',
-          cuenta_secundaria: ''
+          cuenta_secundaria: '',
+          genera_recibo: 1,
+          usuario: username
           })
         }else if (!id){
           setForm({
           id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
+          id_cliente: '',
+          id_forma_cobro: '',
           fecha: '',
           id_concepto: '',
           comprobante: '',
@@ -130,7 +124,9 @@ useToastFeedback({
           importe_total: '',
           observacion: '',
           cuenta: '',
-          cuenta_secundaria: ''
+          cuenta_secundaria: '',
+          genera_recibo: 1,
+          usuario: username
           })
         }
     }
@@ -160,6 +156,45 @@ useEffect(() => {
     dispatch(getVehiculosById({id: form.id_vehiculo}))
   }
 }, [form.id_vehiculo])
+
+useEffect(() => {
+  if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "I"){
+    setInputGeneraRecibo(true)
+  }else{
+    setInputGeneraRecibo(false)
+  }
+}, [form.id_concepto, conceptos])
+
+useEffect(() => {
+  if (nro_recibo_ingreso) {
+    dispatch(getReciboIngresoById({ id: nro_recibo_ingreso }));
+  }
+}, [nro_recibo_ingreso])
+
+useEffect(() => {
+  if(html_recibo_ingreso){
+    Swal.fire({
+      title: '¿Desea imprimir el recibo?',
+      showCancelButton: true,
+      confirmButtonText: 'Sí',
+      cancelButtonText: 'Cancelar',
+      icon: 'warning',
+      didOpen: () => {
+        document.body.classList.remove('swal2-height-auto');
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const win = window.open('', '_blank');
+        win.document.write(html_recibo_ingreso);
+        win.document.close();
+        win.focus();
+        win.print();
+      }
+    }).finally(() => {
+      dispatch(resetIngreso())
+    });
+  }
+}, [html_recibo_ingreso])
 
 const handleActualizar = ( ) => {
   if(!id){
@@ -203,7 +238,19 @@ const handleChange = (e) => {
 };
 
 const handleSubmit = () => {
-  dispatch(postCostos_Ingresos(form))
+  if(conceptos.find(e => e.id == form.id_concepto).ingreso_egreso == "I" && !form.id_cliente){
+    toast.error("Si elige un ingreso debe seleccionar un cliente", {
+        position: "bottom-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
+  }else{
+    dispatch(postCostos_Ingresos(form))
+  }
 }
 const renderFecha = (data) => {
   let fechaSplit = data.value.split("-")
@@ -334,6 +381,23 @@ return (
           <input type="text" name='comprobante' value={form["comprobante"]} 
         onChange={handleChange}/>
       </div>
+    <div className={styles.inputWrapper} >
+      <span>Clientes</span>
+      <div className={styles.selectWithIcon} style={{
+        width: "20rem"
+      }}>
+        <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
+          <option value={""} selected>{"Seleccione un cliente"}</option>
+          {
+            clientes?.length && clientes.map(e => (
+              <option key={e.id} value={e.id}>
+                {e.nro_documento} - {e.nombre} {e.apellido}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+      </div>
       <div className={styles.inputContainer}>
           <span>Importe neto</span>
           <input type="number" name='importe_neto' value={form["importe_neto"]} 
@@ -347,6 +411,18 @@ return (
       <div className={styles.inputContainer}>
           <span>Total</span>
           <input type="number" name='importe_total' value={form["importe_total"]} disabled/>
+      </div>
+      <div className={styles.inputContainer}>
+        <span>Formas de cobro</span>
+        <select name="id_forma_cobro"  value={form["id_forma_cobro"]} 
+        onChange={handleChange} id="">
+          <option value={""} disabled selected>{"Seleccione una opción"}</option>
+          {
+            formasDeCobro?.length && formasDeCobro?.map(e => {
+              return <option key={e.id} value={e.id}>{e.nombre}</option>
+            })
+          }
+        </select>
       </div>
       <div className={styles.inputContainer}>
           <span>Observacion</span>
@@ -365,6 +441,23 @@ return (
           }
         </select>
       </div>
+      {
+        inputGeneraRecibo && 
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", height: "3rem"}}>
+      <label style={{fontSize: "15px"}}>Genera recibo y factura</label>
+      <input
+        type="checkbox"
+        checked={form.genera_recibo}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            genera_recibo: e.target.checked ? 1 : 0,
+          })
+        }
+        />
+
+      </div>
+      }
       </form>
       <button 
       className={styles.sendBtn} 
