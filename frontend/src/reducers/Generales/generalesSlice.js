@@ -12,6 +12,7 @@ const initialState = {
   sucursales: [],
   preciosModelos: [],
   estados: [],
+  plan_cuentas: [],
   AMRT: null,
 };
 
@@ -83,6 +84,14 @@ export const getEstados = createAsyncThunk(
   "getEstados",
   async (_, { rejectWithValue }) => {
     const result = await generalesService.getEstados();
+    return result.status ? result.data : rejectWithValue(result);
+  }
+);
+
+export const getPlanCuentas = createAsyncThunk(
+  "getPlanCuentas",
+  async (_, { rejectWithValue }) => {
+    const result = await generalesService.getPlanCuentas();
     return result.status ? result.data : rejectWithValue(result);
   }
 );
@@ -257,6 +266,22 @@ export const generalesSlice = createSlice({
       state.estados = action.payload;
     });
     builder.addCase(getEstados.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getPlanCuentas.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getPlanCuentas.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.plan_cuentas = action.payload;
+    });
+    builder.addCase(getPlanCuentas.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

@@ -37,6 +37,10 @@ const getEstados = async () => {
   return getFunction("generales/estados");
 };
 
+const getPlanCuentas = async () => {
+  return getFunction("generales/plan_cuentas");
+};
+
 const getParametroAMRT = async () => {
   try {
     const response = await axios.get(
@@ -67,6 +71,7 @@ const generalesService = {
   getSucursales,
   getPreciosModelos,
   getParametroAMRT,
+  getPlanCuentas,
   getEstados,
 };
 export default generalesService;

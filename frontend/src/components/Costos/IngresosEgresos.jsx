@@ -413,7 +413,7 @@ return (
           <input type="number" name='importe_total' value={form["importe_total"]} disabled/>
       </div>
       <div className={styles.inputContainer}>
-        <span>Formas de cobro</span>
+        <span>Forma de cobro</span>
         <select name="id_forma_cobro"  value={form["id_forma_cobro"]} 
         onChange={handleChange} id="">
           <option value={""} disabled selected>{"Seleccione una opción"}</option>

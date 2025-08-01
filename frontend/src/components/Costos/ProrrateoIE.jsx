@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
 import { reset, prorrateoIE, getConceptosCostos } from '../../reducers/Costos/costosSlice'
+import {getFormasDeCobro} from "../../reducers/Alquileres/alquileresSlice.js"
 import {getModelos} from '../../reducers/Generales/generalesSlice'
 import { ToastContainer } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
@@ -14,7 +15,8 @@ useEffect(() => {
     Promise.all([
         dispatch(getVehiculos()),
         dispatch(getConceptosCostos()),
-        dispatch(getModelos())
+        dispatch(getModelos()),
+        dispatch(getFormasDeCobro())
     ])
     
 }, [])
@@ -27,11 +29,14 @@ const [form, setForm] = useState({
     importe_iva: '',
     importe_total: '',
     observacion: '',
-    cuenta: ''
+    cuenta: '',
+    id_forma_cobro: '',
 })
 const { vehiculos } = useSelector((state) => state.vehiculosReducer)
 const { modelos } = useSelector((state) => state.generalesReducer)
 const {isError, isSuccess, isLoading, message, conceptos} = useSelector((state) => state.costosReducer)
+const {formasDeCobro} = useSelector((state) => state.alquileresReducer)
+const [conceptosFiltrados, setConceptosFiltrados] = useState(null)
 const handleChange = (e) => {
   const { name, value } = e.target;
   if(value && name === "importe_neto"){
@@ -74,7 +79,11 @@ useToastFeedback({
   resetAction: reset
 })
 
-
+useEffect(() => {
+  if(conceptos.length){
+    setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso !== "I"))
+  }
+}, [conceptos])
 
 const [seleccionados, setSeleccionados] = useState([]); // IDs
 useEffect(() => {
@@ -161,7 +170,7 @@ const todosSeleccionados = () => {
             <span className={styles.loadingText}>Cargando...</span>
             </div>
         )}
-        <h2>Prorrateo Ingresos/Egresos</h2>
+        <h2>Prorrateo Egresos</h2>
 <div className={styles.generalControls}>
   <div>
   <input
@@ -245,6 +254,18 @@ const todosSeleccionados = () => {
                   <input type="number" name='importe_total' value={form["importe_total"]} disabled/>
               </div>
               <div className={styles.inputContainer}>
+                <span>Forma de cobro</span>
+                <select name="id_forma_cobro"  value={form["id_forma_cobro"]} 
+                onChange={handleChange} id="">
+                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  {
+                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                      return <option key={e.id} value={e.id}>{e.nombre}</option>
+                    })
+                  }
+                </select>
+              </div>
+              <div className={styles.inputContainer}>
                   <span>Observacion</span>
                   <textarea type="text" name='observacion' value={form["observacion"]} 
                 onChange={handleChange}/>
@@ -255,7 +276,7 @@ const todosSeleccionados = () => {
                 onChange={handleChange} id="">
                   <option value={""} disabled selected>{"Seleccione un concepto"}</option>
                   {
-                    conceptos?.length && conceptos?.map(e => {
+                    conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
                     return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
                     })
                   }

@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
-import { getModelos, getSucursales, getPreciosModelos, getParametroAMRT } from '../../reducers/Generales/generalesSlice'
+import { getModelos, getSucursales, getPreciosModelos, getParametroAMRT, getPlanCuentas } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
@@ -13,7 +13,8 @@ const dispatch = useDispatch()
       dispatch(getModelos()),
       dispatch(getSucursales()),
       dispatch(getPreciosModelos()),
-      dispatch(getParametroAMRT())
+      dispatch(getParametroAMRT()),
+      dispatch(getPlanCuentas())
     ])
   }, [])
   
@@ -35,11 +36,13 @@ const dispatch = useDispatch()
     color: '',
     sucursal: '',
     nro_factura_compra: '',
+    cuenta_contable: '',
+    cuenta_secundaria: '',
     usuario: username
     
   })
 
-  const {modelos, sucursales, preciosModelos, AMRT} = useSelector((state) => state.generalesReducer)
+  const {modelos, sucursales, preciosModelos, AMRT, plan_cuentas} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
@@ -71,7 +74,9 @@ useToastFeedback({
     meses_amortizacion: '',
     color: '',
     sucursal: '',
-    nro_factura_compra: ''
+    nro_factura_compra: '',
+    cuenta_contable: '',
+    cuenta_secundaria: ''
   })
   setImagenes([])
   }
@@ -87,6 +92,14 @@ if(AMRT) {
 }
 }, [AMRT])
 
+useEffect(() => {
+if(form.cuenta_contable) {
+  setFormData({
+    ...form,
+     "cuenta_secundaria": plan_cuentas?.find(e => e.Codigo == form.cuenta_contable)?.CuentaSecundaria
+  })
+}
+}, [form.cuenta_contable, plan_cuentas])
 
 const handleChange = (e) => {
 const { name, value } = e.target;
@@ -113,9 +126,9 @@ const handleFileChange = (e) => {
 };
 const handleSubmit = async (e) => {
     e.preventDefault();
-    if(!form.modelo || (!form.dominio && !form.dominio_provisorio)){
+/*     if(!form.modelo || (!form.dominio && !form.dominio_provisorio)){
       alert("Faltan datos")
-    }else{
+    }else{ */
     const formData = new FormData();
     // Agregás los campos normales
     Object.entries(form).forEach(([key, value]) => {
@@ -127,7 +140,7 @@ const handleSubmit = async (e) => {
       formData.append("images", img);
     });
     dispatch(postVehiculo(formData))
-    }
+/*     } */
 }
 
   return (
@@ -202,6 +215,18 @@ const handleSubmit = async (e) => {
         onChange={handleChange} />
         </div> */}
         <div className={styles.inputContainer}>
+          <span>Cuenta contable</span>
+          <select name="cuenta_contable" value={form["cuenta_contable"]}
+          onChange={handleChange} id="">
+            <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
+            {
+              plan_cuentas?.length && plan_cuentas?.map(e => {
+                return <option value={e.Codigo}>{e.Nombre}</option>
+              })
+            }
+          </select>
+        </div>
+        <div className={styles.inputContainer}>
         <span>Costo neto del vehículo</span>
         <input type="number" name='costo' value={form["costo"]}
         onChange={handleChange} />
@@ -270,7 +295,7 @@ const handleSubmit = async (e) => {
 </div>
         </form>
         {
-        (!form.modelo || (!form.dominio && !form.dominio_provisorio)) ?
+        (!form.modelo || !form.cuenta_contable) ?
         <button 
         className={styles.sendBtn} 
         disabled
