@@ -11,13 +11,16 @@ export const verificarCliente = async (id_cliente) => {
     );
     if (!result.length) throw new Error("Cliente no registrado");
     if (result[0]["resolucion_datero"] == 2)
-      throw new Error(
-        `El cliente tiene su datero rechazado${
-          error.message ? `${" :"}${error.message}` : ""
-        }`
-      );
+      return `El cliente tiene su datero rechazado`;
+    if (result[0]["resolucion_datero"] == 0)
+      return `El cliente tiene su datero pendiente de aprobación`;
     return null;
   } catch (error) {
-    throw error;
+    console.log(error);
+    throw new Error(
+      `Error al verificar el estado del cliente ${
+        error.message ? `${" :"}${error.message}` : ""
+      } `
+    );
   }
 };

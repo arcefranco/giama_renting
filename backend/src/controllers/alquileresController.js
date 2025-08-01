@@ -18,6 +18,7 @@ import { handleError, acciones } from "../../helpers/handleError.js";
 import { validateArray } from "../../helpers/handleError.js";
 import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
+import { verificarEstadoVehiculo } from "../../helpers/verificarEstadoVehiculo.js";
 
 const insertAlquiler = async (body) => {
   const {
@@ -151,6 +152,15 @@ export const postAlquiler = async (req, res) => {
       return res.send({ status: false, message: estadoCliente });
   } catch (error) {
     const { body } = handleError(error, "Estado del cliente", acciones.get);
+    return res.send(body);
+  }
+  //buscar el estado del vehículo
+  try {
+    let estadoVehiculo = await verificarEstadoVehiculo(id_vehiculo);
+    if (estadoVehiculo?.length)
+      return res.send({ status: false, message: estadoCliente });
+  } catch (error) {
+    const { body } = handleError(error, "Estado del vehículo", acciones.get);
     return res.send(body);
   }
   //buscar si el vehiculo está vendido
@@ -407,6 +417,15 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(error, "Estado del cliente", acciones.get);
     return res.send(body);
   }
+  //buscar el estado del vehículo
+  try {
+    let estadoVehiculo = await verificarEstadoVehiculo(id_vehiculo);
+    if (estadoVehiculo?.length)
+      return res.send({ status: false, message: estadoVehiculo });
+  } catch (error) {
+    const { body } = handleError(error, "Estado del vehículo", acciones.get);
+    return res.send(body);
+  }
   //buscar si el cliente tiene un contrato vigente en fechas seleccionadas
   try {
     const result = await giama_renting.query(
@@ -656,6 +675,20 @@ export const postContratoAlquiler = async (req, res) => {
   } catch (error) {
     console.log(error);
     const { body } = handleError(error, "Contrato de alquiler", acciones.post);
+    return res.send(body);
+  }
+  //cambio el estado del vehiculo a "sin preparar" (1)
+  try {
+    await giama_renting.query(
+      "UPDATE vehiculos SET estado_actual = 1 WHERE id = ?",
+      {
+        type: QueryTypes.UPDATE,
+        replacements: [id_vehiculo],
+        transaction: transaction_giama_renting,
+      }
+    );
+  } catch (error) {
+    const { body } = handleError(error, "Estado del vehiculo", acciones.update);
     return res.send(body);
   }
   //inserto alquiler
