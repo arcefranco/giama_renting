@@ -11,5 +11,5 @@ recibosRouter.use((req, res, next) => {
   next();
 });
 recibosRouter.use("/public", express.static("public"));
-recibosRouter.post("/getReciboById" /* , auth */, getReciboById);
+recibosRouter.post("/getReciboById", auth, getReciboById);
 export default recibosRouter;

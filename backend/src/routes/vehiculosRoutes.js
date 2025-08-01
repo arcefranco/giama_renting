@@ -8,10 +8,10 @@ import {
   eliminarImagenes,
   getCostosPeriodo,
   getAlquileresPeriodo,
-  getAllCostosPeriodo,
+  /*   getAllCostosPeriodo,
   getAllAlquileresPeriodo,
+  getAllAmortizaciones, */
   getAmortizacion,
-  getAllAmortizaciones,
   getCostoNetoVehiculo,
   getSituacionFlota,
   getFichas,
@@ -43,6 +43,10 @@ vehiculosRouter.post(
   upload.array("images"),
   postImagenesVehiculo
 );
+/* vehiculosRouter.post("/getAllCostosPeriodo", auth, getAllCostosPeriodo);
+vehiculosRouter.post("/getAllAlquileresPeriodo", auth, getAllAlquileresPeriodo);
+vehiculosRouter.get("/getAllAmortizaciones", auth, getAllAmortizaciones); */
+
 vehiculosRouter.post("/getImagenesVehiculos", auth, getImagenesVehiculos);
 vehiculosRouter.post("/eliminarImagenes", auth, eliminarImagenes);
 vehiculosRouter.post("/updateVehiculo", auth, updateVehiculo);
@@ -50,10 +54,7 @@ vehiculosRouter.post("/getCostosPeriodo", auth, getCostosPeriodo);
 vehiculosRouter.post("/getCostoNetoVehiculo", auth, getCostoNetoVehiculo);
 vehiculosRouter.post("/getSituacionFlota", auth, getSituacionFlota);
 vehiculosRouter.post("/getAlquileresPeriodo", auth, getAlquileresPeriodo);
-vehiculosRouter.post("/getAllCostosPeriodo", auth, getAllCostosPeriodo);
-vehiculosRouter.post("/getAllAlquileresPeriodo", auth, getAllAlquileresPeriodo);
-vehiculosRouter.post("/getAmortizacion", auth, getAmortizacion);
-vehiculosRouter.get("/getAllAmortizaciones", auth, getAllAmortizaciones);
+vehiculosRouter.post("/getAmortizacion" /* , auth */, getAmortizacion);
 vehiculosRouter.post("/getFichas", auth, getFichas);
 
 export default vehiculosRouter;

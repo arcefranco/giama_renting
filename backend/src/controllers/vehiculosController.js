@@ -28,6 +28,308 @@ import {
 import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
 
+/*FUNCIONES DEPRECADAS */
+/* export const getAllCostosPeriodo = async (req, res) => {
+  const { mes, anio } = req.body;
+  let arrayAllCostos = [];
+  let arrayAllIds = [];
+  let result;
+  try {
+    result = await giama_renting.query("SELECT id FROM vehiculos", {
+      type: QueryTypes.SELECT,
+    });
+    arrayAllIds = result;
+  } catch (error) {
+    console.log(error);
+    const { body } = handleError(error, "vehículos", acciones.get);
+    return res.send(body);
+  }
+  const validatorResult = validateArray(result, "vehículos");
+  if (validatorResult) {
+    return res.send(validatorResult);
+  }
+  arrayAllIds = arrayAllIds?.map((item) => item.id);
+  if (!mes && !anio) {
+    for (let i = 0; i < arrayAllIds.length; i++) {
+      try {
+        let result = await giama_renting.query(
+          `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
+        SUM(costos_ingresos.importe_neto)
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [arrayAllIds[i]],
+          }
+        );
+        if (result.length === 0) {
+          arrayAllCostos.push([
+            {
+              id_vehiculo: arrayAllIds[i],
+            },
+          ]);
+        } else {
+          arrayAllCostos.push(result);
+        }
+      } catch (error) {
+        console.log(error);
+        const { body } = handleError(
+          error,
+          "ficha de costos del vehículo",
+          acciones.get
+        );
+        return res.send(body);
+      }
+    }
+  } else if (mes && anio) {
+    for (let i = 0; i < arrayAllIds.length; i++) {
+      try {
+        let result = await giama_renting.query(
+          `
+        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, SUM(costos_ingresos.importe_neto)
+        FROM costos_ingresos
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE costos_ingresos.id_vehiculo = ?
+        AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [arrayAllIds[i], anio, mes],
+          }
+        );
+        if (result.length === 0) {
+          arrayAllCostos.push([
+            {
+              id_vehiculo: arrayAllIds[i],
+            },
+          ]);
+        } else {
+          arrayAllCostos.push(result);
+        }
+      } catch (error) {
+        console.log(error);
+        const { body } = handleError(
+          error,
+          "ficha de costos del vehículo",
+          acciones.get
+        );
+        return res.send(body);
+      }
+    }
+  }
+  return res.send(arrayAllCostos);
+}; */
+/* export const getAllAlquileresPeriodo = async (req, res) => {
+  const { mes, anio } = req.body;
+
+  let arrayAllAlquileres = [];
+
+  let inicioMes = new Date(anio, mes - 1, 1); // Ej: 2025-02-01 si mes=3
+  let finMes = new Date(anio, mes, 0); // Ej: 2025-02-28 si mes=3
+
+  let vehiculos = [];
+
+  try {
+    vehiculos = await giama_renting.query(
+      "SELECT id, dominio, dominio_provisorio FROM vehiculos",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener vehículos" });
+  }
+  const validatorResult = validateArray(vehiculos, "vehículos");
+  if (validatorResult) {
+    return res.send(validatorResult);
+  }
+
+  if (!mes || !anio) {
+    // Sin filtro por mes y año
+    for (const vehiculo of vehiculos) {
+      try {
+        const alquileres = await giama_renting.query(
+          `SELECT * FROM alquileres WHERE id_vehiculo = ?`,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [vehiculo.id],
+          }
+        );
+        const validatorResult = validateArray(alquileres, "alquileres");
+        if (validatorResult) {
+          return res.send(validatorResult);
+        }
+        const normalizados = alquileres?.map((e) => {
+          const fechaDesde = normalizarFecha(e.fecha_desde);
+          const fechaHasta = normalizarFecha(e.fecha_hasta);
+          const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
+
+          return {
+            id_vehiculo: vehiculo.id,
+            dominio: vehiculo.dominio,
+            dominio_provisorio: vehiculo.dominio_provisorio,
+            importe_neto: e.importe_neto,
+            importe_iva: e.importe_iva,
+            dias_en_mes: diasEnMes,
+          };
+        });
+
+        arrayAllAlquileres.push(
+          normalizados.length > 0
+            ? normalizados
+            : [
+                {
+                  id_vehiculo: vehiculo.id,
+                  dominio: vehiculo.dominio,
+                  dominio_provisorio: vehiculo.dominio_provisorio,
+                },
+              ]
+        );
+      } catch (error) {
+        const { body } = handleError(error, "alquileres", acciones.get);
+        return res.send(body);
+      }
+    }
+  } else {
+    // Con filtro de mes y año
+    for (const vehiculo of vehiculos) {
+      try {
+        const alquileres = await giama_renting.query(
+          `
+          SELECT * FROM alquileres
+          WHERE id_vehiculo = ?
+            AND fecha_desde <= ?
+            AND fecha_hasta >= ?
+          `,
+          {
+            type: QueryTypes.SELECT,
+            replacements: [
+              vehiculo.id,
+              finMes.toISOString().split("T")[0],
+              inicioMes.toISOString().split("T")[0],
+            ],
+          }
+        );
+        const validatorResult = validateArray(alquileres, "alquileres");
+        if (validatorResult) {
+          return res.send(validatorResult);
+        }
+        const resultados = alquileres.map((alquiler) => {
+          const fechaDesde = normalizarFecha(alquiler.fecha_desde);
+          const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
+
+          const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
+          const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
+
+          const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
+          const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
+
+          const importe_neto =
+            (alquiler.importe_neto / diasTotales) * diasEnMes;
+          const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
+
+          return {
+            id_vehiculo: vehiculo.id,
+            dominio: vehiculo.dominio,
+            fecha_desde: alquiler.fecha_desde,
+            fecha_hasta: alquiler.fecha_hasta,
+            dias_en_mes: diasEnMes,
+            importe_neto,
+            importe_iva,
+          };
+        });
+
+        arrayAllAlquileres.push(
+          resultados.length > 0
+            ? resultados
+            : [
+                {
+                  id_vehiculo: vehiculo.id,
+                  dominio: vehiculo.dominio,
+                },
+              ]
+        );
+      } catch (error) {
+        console.error(error);
+        const { body } = handleError(error, "alquileres", acciones.get);
+        return res.send(body);
+      }
+    }
+  }
+
+  return res.send(arrayAllAlquileres.flat());
+}; */
+/* export const getAllAmortizaciones = async (req, res) => {
+  let vehiculos = [];
+  let arrayAmortizaciones = [];
+  try {
+    vehiculos = await giama_renting.query("SELECT id, dominio FROM vehiculos", {
+      type: QueryTypes.SELECT,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener vehículos" });
+  }
+  for (const vehiculo of vehiculos) {
+    try {
+      const amortizacion = await giama_renting.query(
+        `SELECT vehiculos.id, conceptos_costos.nombre, 
+        SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
+        DATEDIFF(?, vehiculos.fecha_preparacion) AS dias_diferencia, 
+        conceptos_costos.activable
+        FROM vehiculos
+        LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
+        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+        WHERE vehiculos.id = ?
+        GROUP BY costos_ingresos.id_concepto
+        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [getTodayDate(), vehiculo.id],
+        }
+      );
+      if (amortizacion.length) {
+        const precio_inicial = amortizacion[0]["precio_inicial"];
+        const meses_amortizacion = amortizacion[0]["meses_amortizacion"];
+        const sum_gastos_activables = amortizacion.reduce((total, item) => {
+          return item.activable === 1 ? total + Math.abs(item.importe) : total;
+        }, 0);
+        const precio_inicial_total =
+          parseFloat(precio_inicial) + sum_gastos_activables;
+        const meses_amortizacion_anual = 30 * meses_amortizacion;
+        const dias_diferencia = amortizacion[0]["dias_diferencia"];
+
+        arrayAmortizaciones.push({
+          id: vehiculo.id,
+          amortizacion: precio_inicial_total / meses_amortizacion,
+          amortizacion_todos_movimientos:
+            (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
+        });
+      } else {
+        arrayAmortizaciones.push({
+          id: vehiculo.id,
+          amortizacion: null,
+          amortizacion_todos_movimientos: null,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      const { body } = handleError(
+        error,
+        "amortizaciones de los vehículos",
+        acciones.get
+      );
+      return res.send(body);
+    }
+  }
+  return res.send(arrayAmortizaciones);
+}; */
+
 export const getVehiculos = async (req, res) => {
   const hoy = getTodayDate();
   try {
@@ -130,6 +432,7 @@ export const postVehiculo = async (req, res) => {
     modelo,
     dominio,
     dominio_provisorio,
+    fecha_inicio_amortizacion,
     nro_chasis,
     nro_motor,
     kilometros,
@@ -193,7 +496,8 @@ export const postVehiculo = async (req, res) => {
   }
   try {
     const result = await giama_renting.query(
-      `INSERT INTO vehiculos (modelo, fecha_ingreso, precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
+      `INSERT INTO vehiculos (modelo, fecha_ingreso, fecha_inicio_amortizacion,
+        precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
         kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, 
         nro_factura_compra, estado_actual, usuario_ultima_modificacion)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -202,6 +506,7 @@ export const postVehiculo = async (req, res) => {
         replacements: [
           modelo,
           getTodayDate(),
+          fecha_inicio_amortizacion ? fecha_inicio_amortizacion : null,
           costo,
           dominio,
           dominio_provisorio,
@@ -419,6 +724,7 @@ export const updateVehiculo = async (req, res) => {
     id,
     modelo,
     nro_chasis,
+    fecha_inicio_amortizacion,
     nro_motor,
     kilometros,
     proveedor_gps,
@@ -437,6 +743,7 @@ export const updateVehiculo = async (req, res) => {
   } = req.body;
   let vehiculoAnterior;
   let fechaDePreparacion;
+  let fechaDeAmortizacion;
 
   try {
     vehiculoAnterior = await giama_renting.query(
@@ -467,13 +774,24 @@ export const updateVehiculo = async (req, res) => {
     fechaDePreparacion = vehiculoAnterior[0]["fecha_preparacion"];
   }
 
+  if (
+    !vehiculoAnterior[0]["fecha_inicio_amortizacion"] &&
+    fecha_inicio_amortizacion
+  ) {
+    fechaDeAmortizacion = fecha_inicio_amortizacion;
+  } else if (vehiculoAnterior[0]["fecha_inicio_amortizacion"]) {
+    fechaDeAmortizacion = vehiculoAnterior[0]["fecha_inicio_amortizacion"];
+  } else {
+    fechaDeAmortizacion = null;
+  }
+
   try {
     await giama_renting.query(
       `UPDATE vehiculos SET modelo = :modelo, dominio = :dominio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
         kilometros_actuales = :kilometros, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
-        calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, sucursal = :sucursal, 
-        estado_actual = :estado,
+        calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
+        fecha_inicio_amortizacion = :fechaDeAmortizacion, sucursal = :sucursal, estado_actual = :estado,
         polarizado = :polarizado, cubre_asiento = :cubre_asiento,
         usuario_ultima_modificacion = :usuario
         WHERE id = :id`,
@@ -493,6 +811,7 @@ export const updateVehiculo = async (req, res) => {
           calcomania,
           gnc,
           fechaDePreparacion,
+          fechaDeAmortizacion,
           sucursal,
           estado,
           polarizado,
@@ -573,9 +892,8 @@ export const getCostosPeriodo = async (req, res) => {
         }
       );
       const agrupado = {};
-      const validatorResult = validateArray(result, "costos");
-      if (validatorResult) {
-        return res.send(validatorResult);
+      if (!result.length) {
+        return res.send({});
       }
       result?.forEach((costo) => {
         const nombre = costo.nombre;
@@ -598,7 +916,9 @@ export const getCostoNetoVehiculo = async (req, res) => {
   if (!id_vehiculo) {
     return res.send({ status: false, message: "Falta id del vehículo" });
   }
-
+  let precio_inicial;
+  let sum_gastos_activables;
+  let precio_inicial_total;
   let fechaLimite = null;
   if (mes && anio) {
     // Construir último día del mes
@@ -615,17 +935,17 @@ export const getCostoNetoVehiculo = async (req, res) => {
     SELECT
       v.id AS id_vehiculo,
       v.precio_inicial,
-      COALESCE(SUM(ci.importe_neto), 0) AS total_costos_activables,
-      v.precio_inicial + COALESCE(SUM(ABS(ci.importe_neto)), 0) AS costo_neto_total
+      cc.activable,
+      COALESCE(SUM(ci.importe_neto), 0) AS importe_neto
     FROM vehiculos v
     LEFT JOIN costos_ingresos ci 
       ON ci.id_vehiculo = v.id
       AND ci.fecha <= ?
     LEFT JOIN conceptos_costos cc 
       ON ci.id_concepto = cc.id
-      AND cc.activable = 1
     WHERE v.id = ?
-    GROUP BY v.id
+    AND cc.activable = 1
+    GROUP BY ci.id;
   `;
 
   try {
@@ -633,11 +953,17 @@ export const getCostoNetoVehiculo = async (req, res) => {
       type: QueryTypes.SELECT,
       replacements: [fechaLimite, id_vehiculo],
     });
-    return res.send(
-      { costo_neto_total: result[0]["costo_neto_total"] } || {
-        costo_neto_total: 0,
-      }
-    );
+    if (!result.length) {
+      return res.send({ costo_neto_total: 0 });
+    }
+    precio_inicial = result[0]["precio_inicial"];
+    sum_gastos_activables = result.reduce((total, item) => {
+      return item.activable === 1 ? total + Math.abs(item.importe_neto) : total;
+    }, 0);
+    precio_inicial_total = parseFloat(precio_inicial) + sum_gastos_activables;
+    return res.send({
+      costo_neto_total: precio_inicial_total,
+    });
   } catch (error) {
     console.error(error);
     const { body } = handleError(
@@ -645,6 +971,99 @@ export const getCostoNetoVehiculo = async (req, res) => {
       "costo neto del vehículo",
       acciones.get
     );
+    return res.send(body);
+  }
+};
+
+export const getAlquileresPeriodo = async (req, res) => {
+  const { id_vehiculo, mes, anio } = req.body;
+  console.log(req.body);
+  const inicioMes = new Date(anio, mes - 1, 1);
+  const finMes = new Date(anio, mes, 0);
+
+  try {
+    const alquileres = await giama_renting.query(
+      `
+      SELECT a.*, c.nombre, c.apellido
+      FROM alquileres a
+      JOIN clientes c ON a.id_cliente = c.id
+      WHERE a.id_vehiculo = ?
+        ${mes && anio ? `AND a.fecha_desde <= ? AND a.fecha_hasta >= ?` : ""}
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements:
+          mes && anio
+            ? [
+                id_vehiculo,
+                finMes.toISOString().split("T")[0],
+                inicioMes.toISOString().split("T")[0],
+              ]
+            : [id_vehiculo],
+      }
+    );
+    const validatorResult = validateArray(alquileres, "alquileres");
+    if (validatorResult) {
+      return res.send([]);
+    }
+    if (!mes || !anio) {
+      const resultados = alquileres?.map((e) => {
+        const fechaDesde = normalizarFecha(e.fecha_desde);
+        const fechaHasta = normalizarFecha(e.fecha_hasta);
+        const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
+
+        return {
+          nombre: e.nombre,
+          apellido: e.apellido,
+          fecha_desde: e.fecha_desde,
+          fecha_hasta: e.fecha_hasta,
+          importe_neto: e.importe_neto,
+          importe_iva: e.importe_iva,
+          dias_en_mes: diasEnMes,
+        };
+      });
+
+      return res.send(resultados);
+    } else {
+      const resultados = alquileres.map((alquiler) => {
+        const fechaDesde = normalizarFecha(alquiler.fecha_desde);
+        const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
+
+        const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
+        const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
+
+        const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
+        const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
+
+        const importe_neto = (alquiler.importe_neto / diasTotales) * diasEnMes;
+        const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
+
+        return {
+          id_alquiler: alquiler.id_alquiler,
+          nombre: alquiler.nombre,
+          apellido: alquiler.apellido,
+          fecha_desde: alquiler.fecha_desde,
+          fecha_hasta: alquiler.fecha_hasta,
+          dias_en_mes: diasEnMes,
+          importe_neto: importe_neto,
+          importe_iva: importe_iva,
+        };
+      });
+
+      const total = resultados?.reduce(
+        (acc, curr) => {
+          acc.importe_neto_total += curr.importe_neto;
+          acc.importe_iva_total += curr.importe_iva;
+          return acc;
+        },
+        { importe_neto_total: 0, importe_iva_total: 0 }
+      );
+      console.log(resultados);
+      return res.send(resultados);
+    }
+  } catch (error) {
+    console.error(error);
+    const { body } = handleError(error, "alquileres", acciones.get);
     return res.send(body);
   }
 };
@@ -732,372 +1151,98 @@ export const getSituacionFlota = async (req, res) => {
   }
 };
 
-export const getAlquileresPeriodo = async (req, res) => {
-  const { id_vehiculo, mes, anio } = req.body;
-  console.log(req.body);
-  const inicioMes = new Date(anio, mes - 1, 1);
-  const finMes = new Date(anio, mes, 0);
-
-  try {
-    const alquileres = await giama_renting.query(
-      `
-      SELECT a.*, c.nombre, c.apellido
-      FROM alquileres a
-      JOIN clientes c ON a.id_cliente = c.id
-      WHERE a.id_vehiculo = ?
-        ${mes && anio ? `AND a.fecha_desde <= ? AND a.fecha_hasta >= ?` : ""}
-      `,
-      {
-        type: QueryTypes.SELECT,
-        replacements:
-          mes && anio
-            ? [
-                id_vehiculo,
-                finMes.toISOString().split("T")[0],
-                inicioMes.toISOString().split("T")[0],
-              ]
-            : [id_vehiculo],
-      }
-    );
-    const validatorResult = validateArray(alquileres, "alquileres");
-    if (validatorResult) {
-      return res.send(validatorResult);
-    }
-    if (!mes || !anio) {
-      const resultados = alquileres?.map((e) => {
-        const fechaDesde = normalizarFecha(e.fecha_desde);
-        const fechaHasta = normalizarFecha(e.fecha_hasta);
-        const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
-
-        return {
-          nombre: e.nombre,
-          apellido: e.apellido,
-          fecha_desde: e.fecha_desde,
-          fecha_hasta: e.fecha_hasta,
-          importe_neto: e.importe_neto,
-          importe_iva: e.importe_iva,
-          dias_en_mes: diasEnMes,
-        };
-      });
-
-      return res.send(resultados);
-    } else {
-      const resultados = alquileres.map((alquiler) => {
-        const fechaDesde = normalizarFecha(alquiler.fecha_desde);
-        const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
-
-        const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
-        const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
-
-        const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
-        const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
-
-        const importe_neto = (alquiler.importe_neto / diasTotales) * diasEnMes;
-        const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
-
-        return {
-          id_alquiler: alquiler.id_alquiler,
-          nombre: alquiler.nombre,
-          apellido: alquiler.apellido,
-          fecha_desde: alquiler.fecha_desde,
-          fecha_hasta: alquiler.fecha_hasta,
-          dias_en_mes: diasEnMes,
-          importe_neto: importe_neto,
-          importe_iva: importe_iva,
-        };
-      });
-
-      const total = resultados?.reduce(
-        (acc, curr) => {
-          acc.importe_neto_total += curr.importe_neto;
-          acc.importe_iva_total += curr.importe_iva;
-          return acc;
-        },
-        { importe_neto_total: 0, importe_iva_total: 0 }
-      );
-      console.log(resultados);
-      return res.send(resultados);
-    }
-  } catch (error) {
-    console.error(error);
-    const { body } = handleError(error, "alquileres", acciones.get);
-    return res.send(body);
-  }
-};
-
-export const getAllCostosPeriodo = async (req, res) => {
-  const { mes, anio } = req.body;
-  let arrayAllCostos = [];
-  let arrayAllIds = [];
-  let result;
-  try {
-    result = await giama_renting.query("SELECT id FROM vehiculos", {
-      type: QueryTypes.SELECT,
-    });
-    arrayAllIds = result;
-  } catch (error) {
-    console.log(error);
-    const { body } = handleError(error, "vehículos", acciones.get);
-    return res.send(body);
-  }
-  const validatorResult = validateArray(result, "vehículos");
-  if (validatorResult) {
-    return res.send(validatorResult);
-  }
-  arrayAllIds = arrayAllIds?.map((item) => item.id);
-  if (!mes && !anio) {
-    for (let i = 0; i < arrayAllIds.length; i++) {
-      try {
-        let result = await giama_renting.query(
-          `SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, 
-        SUM(costos_ingresos.importe_neto)
-        FROM costos_ingresos
-        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        WHERE costos_ingresos.id_vehiculo = ?
-        GROUP BY costos_ingresos.id_concepto
-        ORDER BY conceptos_costos.ingreso_egreso DESC`,
-          {
-            type: QueryTypes.SELECT,
-            replacements: [arrayAllIds[i]],
-          }
-        );
-        if (result.length === 0) {
-          arrayAllCostos.push([
-            {
-              id_vehiculo: arrayAllIds[i],
-            },
-          ]);
-        } else {
-          arrayAllCostos.push(result);
-        }
-      } catch (error) {
-        console.log(error);
-        const { body } = handleError(
-          error,
-          "ficha de costos del vehículo",
-          acciones.get
-        );
-        return res.send(body);
-      }
-    }
-  } else if (mes && anio) {
-    for (let i = 0; i < arrayAllIds.length; i++) {
-      try {
-        let result = await giama_renting.query(
-          `
-        SELECT costos_ingresos.id_vehiculo, conceptos_costos.nombre, SUM(costos_ingresos.importe_neto)
-        FROM costos_ingresos
-        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        WHERE costos_ingresos.id_vehiculo = ?
-        AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
-        GROUP BY costos_ingresos.id_concepto
-        ORDER BY conceptos_costos.ingreso_egreso DESC`,
-          {
-            type: QueryTypes.SELECT,
-            replacements: [arrayAllIds[i], anio, mes],
-          }
-        );
-        if (result.length === 0) {
-          arrayAllCostos.push([
-            {
-              id_vehiculo: arrayAllIds[i],
-            },
-          ]);
-        } else {
-          arrayAllCostos.push(result);
-        }
-      } catch (error) {
-        console.log(error);
-        const { body } = handleError(
-          error,
-          "ficha de costos del vehículo",
-          acciones.get
-        );
-        return res.send(body);
-      }
-    }
-  }
-  return res.send(arrayAllCostos);
-};
-
-export const getAllAlquileresPeriodo = async (req, res) => {
-  const { mes, anio } = req.body;
-
-  let arrayAllAlquileres = [];
-
-  let inicioMes = new Date(anio, mes - 1, 1); // Ej: 2025-02-01 si mes=3
-  let finMes = new Date(anio, mes, 0); // Ej: 2025-02-28 si mes=3
-
-  let vehiculos = [];
-
-  try {
-    vehiculos = await giama_renting.query(
-      "SELECT id, dominio, dominio_provisorio FROM vehiculos",
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al obtener vehículos" });
-  }
-  const validatorResult = validateArray(vehiculos, "vehículos");
-  if (validatorResult) {
-    return res.send(validatorResult);
-  }
-
-  if (!mes || !anio) {
-    // Sin filtro por mes y año
-    for (const vehiculo of vehiculos) {
-      try {
-        const alquileres = await giama_renting.query(
-          `SELECT * FROM alquileres WHERE id_vehiculo = ?`,
-          {
-            type: QueryTypes.SELECT,
-            replacements: [vehiculo.id],
-          }
-        );
-        const validatorResult = validateArray(alquileres, "alquileres");
-        if (validatorResult) {
-          return res.send(validatorResult);
-        }
-        const normalizados = alquileres?.map((e) => {
-          const fechaDesde = normalizarFecha(e.fecha_desde);
-          const fechaHasta = normalizarFecha(e.fecha_hasta);
-          const diasEnMes = diferenciaDias(fechaDesde, fechaHasta);
-
-          return {
-            id_vehiculo: vehiculo.id,
-            dominio: vehiculo.dominio,
-            dominio_provisorio: vehiculo.dominio_provisorio,
-            importe_neto: e.importe_neto,
-            importe_iva: e.importe_iva,
-            dias_en_mes: diasEnMes,
-          };
-        });
-
-        arrayAllAlquileres.push(
-          normalizados.length > 0
-            ? normalizados
-            : [
-                {
-                  id_vehiculo: vehiculo.id,
-                  dominio: vehiculo.dominio,
-                  dominio_provisorio: vehiculo.dominio_provisorio,
-                },
-              ]
-        );
-      } catch (error) {
-        const { body } = handleError(error, "alquileres", acciones.get);
-        return res.send(body);
-      }
-    }
-  } else {
-    // Con filtro de mes y año
-    for (const vehiculo of vehiculos) {
-      try {
-        const alquileres = await giama_renting.query(
-          `
-          SELECT * FROM alquileres
-          WHERE id_vehiculo = ?
-            AND fecha_desde <= ?
-            AND fecha_hasta >= ?
-          `,
-          {
-            type: QueryTypes.SELECT,
-            replacements: [
-              vehiculo.id,
-              finMes.toISOString().split("T")[0],
-              inicioMes.toISOString().split("T")[0],
-            ],
-          }
-        );
-        const validatorResult = validateArray(alquileres, "alquileres");
-        if (validatorResult) {
-          return res.send(validatorResult);
-        }
-        const resultados = alquileres.map((alquiler) => {
-          const fechaDesde = normalizarFecha(alquiler.fecha_desde);
-          const fechaHasta = normalizarFecha(alquiler.fecha_hasta);
-
-          const inicioPeriodo = fechaDesde > inicioMes ? fechaDesde : inicioMes;
-          const finPeriodo = fechaHasta < finMes ? fechaHasta : finMes;
-
-          const diasTotales = diferenciaDias(fechaDesde, fechaHasta);
-          const diasEnMes = diferenciaDias(inicioPeriodo, finPeriodo);
-
-          const importe_neto =
-            (alquiler.importe_neto / diasTotales) * diasEnMes;
-          const importe_iva = (alquiler.importe_iva / diasTotales) * diasEnMes;
-
-          return {
-            id_vehiculo: vehiculo.id,
-            dominio: vehiculo.dominio,
-            fecha_desde: alquiler.fecha_desde,
-            fecha_hasta: alquiler.fecha_hasta,
-            dias_en_mes: diasEnMes,
-            importe_neto,
-            importe_iva,
-          };
-        });
-
-        arrayAllAlquileres.push(
-          resultados.length > 0
-            ? resultados
-            : [
-                {
-                  id_vehiculo: vehiculo.id,
-                  dominio: vehiculo.dominio,
-                },
-              ]
-        );
-      } catch (error) {
-        console.error(error);
-        const { body } = handleError(error, "alquileres", acciones.get);
-        return res.send(body);
-      }
-    }
-  }
-
-  return res.send(arrayAllAlquileres.flat());
-};
-
 export const getAmortizacion = async (req, res) => {
-  const { id } = req.body;
+  const { id_vehiculo, mes, anio } = req.body;
   let precio_inicial;
   let meses_amortizacion;
   let sum_gastos_activables;
   let precio_inicial_total;
-  let dias_diferencia;
   let result;
+  let dias_totales_amortizacion;
+  let dias_transcurridos_amortizacion;
+  let amortizacion;
   try {
     result = await giama_renting.query(
-      `SELECT vehiculos.id, conceptos_costos.nombre, 
-        SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
-        DATEDIFF(?, vehiculos.fecha_preparacion) AS dias_diferencia, 
-        conceptos_costos.activable
-        FROM vehiculos
-        LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
-        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        WHERE vehiculos.id = ?
-        GROUP BY costos_ingresos.id_concepto
-        ORDER BY conceptos_costos.ingreso_egreso DESC`,
+      `SELECT 
+  vehiculos.id, 
+  conceptos_costos.nombre, 
+  vehiculos.fecha_inicio_amortizacion,
+  SUM(IFNULL(costos_ingresos.importe_neto, 0)) AS importe, 
+  vehiculos.precio_inicial, 
+  vehiculos.meses_amortizacion,
+  DATEDIFF(?, vehiculos.fecha_inicio_amortizacion) AS dias_diferencia, 
+  DATEDIFF(
+    LAST_DAY(vehiculos.fecha_inicio_amortizacion), 
+    vehiculos.fecha_inicio_amortizacion
+  ) + 1 AS dias_diferencia_mes_amortizacion,
+  DATEDIFF(
+    LAST_DAY(vehiculos.fecha_inicio_amortizacion), 
+    DATE_FORMAT(vehiculos.fecha_inicio_amortizacion, '%Y-%m-01')
+  ) + 1 AS dias_totales_mes_amortizacion,
+  DATE_ADD(
+    vehiculos.fecha_inicio_amortizacion, 
+    INTERVAL vehiculos.meses_amortizacion MONTH
+  ) AS fecha_final_amortizacion,
+  DATEDIFF(
+    DATE_ADD(vehiculos.fecha_inicio_amortizacion, INTERVAL vehiculos.meses_amortizacion MONTH), 
+    vehiculos.fecha_inicio_amortizacion
+  ) AS dias_totales_amortizacion,
+  DATEDIFF(?, vehiculos.fecha_inicio_amortizacion) AS dias_transcurridos_amortizacion,
+  conceptos_costos.activable
+  FROM vehiculos
+  LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
+  LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
+  WHERE vehiculos.id = ?
+GROUP BY costos_ingresos.id_concepto
+ORDER BY conceptos_costos.ingreso_egreso DESC;`,
       {
         type: QueryTypes.SELECT,
-        replacements: [getTodayDate(), id],
+        replacements: [getTodayDate(), getTodayDate(), id_vehiculo],
       }
     );
     const validatorResult = validateArray(result, "amortización");
     if (validatorResult) {
       return res.send(validatorResult);
     }
-    dias_diferencia = result[0]["dias_diferencia"];
+    if (!result[0]["dias_diferencia"]) {
+      return res.send({
+        amortizacion: 0,
+        amortizacion_todos_movimientos: 0,
+      });
+    }
+
     precio_inicial = result[0]["precio_inicial"];
     meses_amortizacion = result[0]["meses_amortizacion"];
     sum_gastos_activables = result.reduce((total, item) => {
       return item.activable === 1 ? total + Math.abs(item.importe) : total;
     }, 0);
     precio_inicial_total = parseFloat(precio_inicial) + sum_gastos_activables;
+    dias_totales_amortizacion = result[0]["dias_totales_amortizacion"];
+    dias_transcurridos_amortizacion =
+      result[0]["dias_transcurridos_amortizacion"];
+
+    let mesAmortizacion = result[0]["fecha_inicio_amortizacion"]
+      ? parseInt(result[0]["fecha_inicio_amortizacion"].split("-")[1])
+      : null;
+    let anioAmortizacion = result[0]["fecha_inicio_amortizacion"]
+      ? parseInt(result[0]["fecha_inicio_amortizacion"].split("-")[0])
+      : null;
+
+    if (mes < mesAmortizacion && anio <= anioAmortizacion) {
+      //si el mes/anio que se busca es menor al mes/anio amrt, amrt es 0
+      amortizacion = 0;
+    } else if (mes == mesAmortizacion && anio == anioAmortizacion) {
+      amortizacion =
+        (precio_inicial_total /
+          meses_amortizacion /
+          result[0]["dias_totales_mes_amortizacion"]) *
+        result[0]["dias_diferencia_mes_amortizacion"];
+    } else if (
+      (mes >= mesAmortizacion && anio >= anioAmortizacion) ||
+      (!mes && !anio)
+    ) {
+      amortizacion = precio_inicial_total / meses_amortizacion;
+    }
   } catch (error) {
     console.log(error);
     const { body } = handleError(
@@ -1107,78 +1252,19 @@ export const getAmortizacion = async (req, res) => {
     );
     return res.send(body);
   }
-  let meses_amortizacion_anual = 30 * meses_amortizacion;
+
+  console.log(
+    precio_inicial_total,
+    dias_totales_amortizacion,
+    dias_transcurridos_amortizacion
+  );
+
   return res.send({
-    amortizacion: precio_inicial_total / meses_amortizacion,
+    amortizacion: amortizacion,
     amortizacion_todos_movimientos:
-      (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
+      (precio_inicial_total / dias_totales_amortizacion) *
+      dias_transcurridos_amortizacion,
   });
-};
-
-export const getAllAmortizaciones = async (req, res) => {
-  let vehiculos = [];
-  let arrayAmortizaciones = [];
-  try {
-    vehiculos = await giama_renting.query("SELECT id, dominio FROM vehiculos", {
-      type: QueryTypes.SELECT,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.send({ status: false, message: "Error al obtener vehículos" });
-  }
-  for (const vehiculo of vehiculos) {
-    try {
-      const amortizacion = await giama_renting.query(
-        `SELECT vehiculos.id, conceptos_costos.nombre, 
-        SUM(IFNULL(costos_ingresos.importe_neto,0)) AS importe, vehiculos.precio_inicial, vehiculos.meses_amortizacion,
-        DATEDIFF(?, vehiculos.fecha_preparacion) AS dias_diferencia, 
-        conceptos_costos.activable
-        FROM vehiculos
-        LEFT JOIN costos_ingresos ON vehiculos.id = costos_ingresos.id_vehiculo
-        LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
-        WHERE vehiculos.id = ?
-        GROUP BY costos_ingresos.id_concepto
-        ORDER BY conceptos_costos.ingreso_egreso DESC`,
-        {
-          type: QueryTypes.SELECT,
-          replacements: [getTodayDate(), vehiculo.id],
-        }
-      );
-      if (amortizacion.length) {
-        const precio_inicial = amortizacion[0]["precio_inicial"];
-        const meses_amortizacion = amortizacion[0]["meses_amortizacion"];
-        const sum_gastos_activables = amortizacion.reduce((total, item) => {
-          return item.activable === 1 ? total + Math.abs(item.importe) : total;
-        }, 0);
-        const precio_inicial_total =
-          parseFloat(precio_inicial) + sum_gastos_activables;
-        const meses_amortizacion_anual = 30 * meses_amortizacion;
-        const dias_diferencia = amortizacion[0]["dias_diferencia"];
-
-        arrayAmortizaciones.push({
-          id: vehiculo.id,
-          amortizacion: precio_inicial_total / meses_amortizacion,
-          amortizacion_todos_movimientos:
-            (precio_inicial_total / meses_amortizacion_anual) * dias_diferencia,
-        });
-      } else {
-        arrayAmortizaciones.push({
-          id: vehiculo.id,
-          amortizacion: null,
-          amortizacion_todos_movimientos: null,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-      const { body } = handleError(
-        error,
-        "amortizaciones de los vehículos",
-        acciones.get
-      );
-      return res.send(body);
-    }
-  }
-  return res.send(arrayAmortizaciones);
 };
 
 export const getFichas = async (req, res) => {
@@ -1195,7 +1281,7 @@ export const getFichas = async (req, res) => {
     const fechaFin = filtroPorPeriodo
       ? moment(fechaInicio).endOf("month").format("YYYY-MM-DD")
       : moment().format("YYYY-MM-DD");
-
+    console.log(fechaInicio, fechaFin);
     const conceptos = await giama_renting.query(
       `SELECT nombre FROM conceptos_costos`,
       { type: QueryTypes.SELECT }
@@ -1208,6 +1294,7 @@ export const getFichas = async (req, res) => {
   v.id AS vehiculo,
   v.dominio,
   v.fecha_ingreso,
+  v.fecha_inicio_amortizacion,
   v.fecha_preparacion,
   v.dominio_provisorio,
 
@@ -1218,11 +1305,30 @@ export const getFichas = async (req, res) => {
   -- Costos activables para amortización
   COALESCE(activos.total_activables, 0) AS total_activables,
 
-  -- Amortización mensual
-  ROUND(
-    (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2))
-    / v.meses_amortizacion
-  , 2) AS amortizacion,
+ -- Amortización mensual
+CASE
+  -- CASO 1: periodo anterior al inicio de amortización → 0
+  WHEN :fechaFin < v.fecha_inicio_amortizacion OR v.fecha_inicio_amortizacion IS NULL THEN 0
+
+  -- CASO 2: periodo incluye el mes de inicio de amortización → cálculo proporcional
+  WHEN :fechaInicio <= v.fecha_inicio_amortizacion AND :fechaFin >= v.fecha_inicio_amortizacion THEN
+    ROUND(
+      (
+        (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) 
+        / v.meses_amortizacion
+        / (DATEDIFF(LAST_DAY(v.fecha_inicio_amortizacion), DATE_FORMAT(v.fecha_inicio_amortizacion, '%Y-%m-01')) + 1)
+      )
+      * (DATEDIFF(:fechaFin, v.fecha_inicio_amortizacion) + 1),
+      2
+    )
+
+  -- CASO 3: periodo posterior al inicio de amortización → amortización completa
+  ELSE
+    ROUND(
+      (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) / v.meses_amortizacion,
+      2
+    )
+END AS amortizacion,
 
   -- Costos detallados 
   JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
@@ -1273,18 +1379,20 @@ GROUP BY v.id, v.dominio, v.dominio_provisorio,
 `;
 
     const querySinPeriodo = `
-      SELECT
+     SELECT
         v.id AS vehiculo,
         v.dominio,
         v.fecha_ingreso,
         v.fecha_preparacion,
+        v.fecha_inicio_amortizacion,
         v.dominio_provisorio,
         COALESCE(a.alquiler, 0) AS alquiler,
         COALESCE(a.dias_en_mes, 0) AS dias_en_mes,
 ROUND(
   (
-    (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) / (v.meses_amortizacion * 30)
-  ) * DATEDIFF(CURDATE(), v.fecha_preparacion),
+    (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) /
+    DATEDIFF(DATE_ADD(v.fecha_inicio_amortizacion, INTERVAL v.meses_amortizacion MONTH), v.fecha_inicio_amortizacion)
+  ) * DATEDIFF(CURDATE(), v.fecha_inicio_amortizacion),
   2
 ) AS amortizacion,
         JSON_ARRAYAGG(JSON_OBJECT('nombre', cc.nombre, 'importe', ci.importe_neto)) AS costos_detallados
@@ -1350,6 +1458,7 @@ LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR
         vehiculo: row.vehiculo,
         fecha_preparacion: row.fecha_preparacion,
         fecha_ingreso: row.fecha_ingreso,
+        fecha_inicio_amortizacion: row.fecha_inicio_amortizacion,
         dominio: row.dominio,
         dominio_provisorio: row.dominio_provisorio,
         alquiler,
