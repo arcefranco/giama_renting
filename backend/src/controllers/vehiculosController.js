@@ -442,6 +442,8 @@ export const postVehiculo = async (req, res) => {
     sucursal,
     nro_factura_compra,
     usuario,
+    cuenta_contable,
+    cuenta_secundaria,
   } = req.body;
   let cuentaRODN;
   let cuentaRODT;
@@ -464,13 +466,18 @@ export const postVehiculo = async (req, res) => {
   if (mensajeError) {
     return res.send({ status: false, message: mensajeError });
   }
-  if (!dominio && !dominio_provisorio)
+  /*   if (!dominio && !dominio_provisorio)
     return res.send({
       status: false,
       message: "El vehículo debe tener dominio o dominio provisorio",
+    }); */
+  if (!cuenta_contable)
+    return res.send({
+      status: false,
+      message: "Debe especificar una cuenta contable",
     });
   let concepto = `Ingreso del vehiculo - ${
-    dominio ? dominio : dominio_provisorio
+    dominio ? dominio : dominio_provisorio ? dominio_provisorio : "SIN DOMINIO"
   }`;
   const importe_iva = parseFloat(costo) * 0.21; //
   const importe_total = importe_iva + parseFloat(costo);
@@ -508,8 +515,8 @@ export const postVehiculo = async (req, res) => {
           getTodayDate(),
           fecha_inicio_amortizacion ? fecha_inicio_amortizacion : null,
           costo,
-          dominio,
-          dominio_provisorio,
+          dominio ? dominio : null,
+          dominio_provisorio ? dominio_provisorio : null,
           nro_chasis,
           nro_motor,
           kilometros,
@@ -584,7 +591,7 @@ export const postVehiculo = async (req, res) => {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
-      cuentaRODT,
+      cuenta_contable,
       "H",
       importe_total,
       concepto,
@@ -594,7 +601,7 @@ export const postVehiculo = async (req, res) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
-      cuentaRDN2,
+      cuenta_secundaria,
       "D",
       costo, //costo neto vehiculo
       concepto,
@@ -612,7 +619,7 @@ export const postVehiculo = async (req, res) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
-      cuentaRDT2,
+      cuentaRDT2 /**nueva cuenta */,
       "H",
       importe_total,
       concepto,

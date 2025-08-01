@@ -1,5 +1,5 @@
 import { QueryTypes } from "sequelize";
-import { giama_renting } from "../../helpers/connection.js";
+import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { handleError, acciones } from "../../helpers/handleError.js";
 import { validateArray } from "../../helpers/handleError.js";
 
@@ -150,6 +150,21 @@ export const getEstados = async (req, res) => {
       "Estados de los vehículos",
       acciones.get
     );
+    return res.send(body);
+  }
+};
+
+export const getPlanCuentas = async (req, res) => {
+  try {
+    const resultado = await pa7_giama_renting.query(
+      "SELECT Codigo, Nombre, CuentaSecundaria FROM c_plancuentas",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "Cuentas contables", acciones.get);
     return res.send(body);
   }
 };

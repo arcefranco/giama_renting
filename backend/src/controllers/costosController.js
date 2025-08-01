@@ -182,7 +182,9 @@ const asientos_costos_ingresos = async (
   observacion,
   comprobante,
   ingreso_egreso,
-  transaction
+  transaction,
+  nro_asiento_prorrateo,
+  nro_asiento_secundario_prorrateo
 ) => {
   let cuentaIVA;
   let cuentaSecundariaIVA;
@@ -204,14 +206,26 @@ const asientos_costos_ingresos = async (
   } catch (error) {
     throw error;
   }
-
-  try {
-    NroAsiento = await getNumeroAsiento();
-    if (cuenta_secundaria_concepto)
-      NroAsientoSecundario = await getNumeroAsientoSecundario();
-  } catch (error) {
-    throw error;
+  if (nro_asiento_prorrateo) {
+    NroAsiento = nro_asiento_prorrateo;
+  } else {
+    try {
+      NroAsiento = await getNumeroAsiento();
+    } catch (error) {
+      throw error;
+    }
   }
+
+  if (nro_asiento_secundario_prorrateo) {
+    NroAsientoSecundario = nro_asiento_secundario_prorrateo;
+  } else {
+    try {
+      NroAsientoSecundario = await getNumeroAsientoSecundario();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   try {
     await asientoContable(
       "c_movimientos",
@@ -301,6 +315,8 @@ async function registrarCostoIngresoIndividual({
   genera_recibo,
   usuario,
   id_cliente,
+  nro_asiento_prorrateo,
+  nro_asiento_secundario_prorrateo,
 }) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
@@ -369,7 +385,9 @@ async function registrarCostoIngresoIndividual({
       observacion,
       comprobante,
       ingreso_egreso,
-      transaction_asientos
+      transaction_asientos,
+      nro_asiento_prorrateo,
+      nro_asiento_secundario_prorrateo
     );
   } catch (error) {
     await transaction_asientos.rollback();
@@ -421,7 +439,7 @@ async function registrarCostoIngresoIndividual({
           observacion,
           NroAsiento,
           id_forma_cobro,
-          id_cliente,
+          id_cliente ? id_cliente : null,
           nro_recibo ? nro_recibo : null,
         ],
         transaction: transaction_costos_ingresos,
@@ -466,9 +484,17 @@ export const prorrateoIE = async (req, res) => {
     importe_iva,
     importe_total,
     observacion,
-    cuenta,
+    id_forma_cobro,
+    usuario,
   } = req.body;
-
+  let NroAsiento;
+  let NroAsientoSecundario;
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    throw error;
+  }
   if (!arrayVehiculos?.length) {
     return res.send({
       status: false,
@@ -493,7 +519,12 @@ export const prorrateoIE = async (req, res) => {
         importe_iva: ivaDividido,
         importe_total: totalDividido,
         observacion,
-        cuenta,
+        id_forma_cobro,
+        genera_recibo: 0,
+        id_cliente: null,
+        usuario: usuario,
+        nro_asiento_prorrateo: NroAsiento,
+        nro_asiento_secundario_prorrateo: NroAsientoSecundario,
       });
     } catch (error) {
       const { body } = handleError(
