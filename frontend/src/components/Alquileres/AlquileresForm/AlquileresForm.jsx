@@ -6,7 +6,8 @@ import {getModelos} from '../../../reducers/Generales/generalesSlice.js'
 import {getFormasDeCobro, reset, 
   postAlquiler,
   getAlquilerByIdContrato,
-  getContratoById} from '../../../reducers/Alquileres/alquileresSlice.js'
+  getContratoById,
+  reset_nro_recibo} from '../../../reducers/Alquileres/alquileresSlice.js'
 import {getVehiculos} from '../../../reducers/Vehiculos/vehiculosSlice.js'
 import {getClientes} from '../../../reducers/Clientes/clientesSlice.js'
 import { ClipLoader } from "react-spinners";
@@ -20,6 +21,8 @@ import Select from 'react-select';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo.jsx';
 import { toLocalDateOnly } from '../../../helpers/toLocalDateOnly.js';
 import {useToastFeedback} from '../../../customHooks/useToastFeedback.jsx'
+import {getReciboAlquilerById, resetAlquiler} from "../../../reducers/Recibos/recibosSlice.js"
+import Swal from 'sweetalert2';
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   minDateContrato, maxDateContrato }) => {
@@ -36,13 +39,19 @@ if(idContrato){
   dispatch(getAlquilerByIdContrato({id: idContrato})),
   dispatch(getContratoById({id: idContrato}))
 }
+return () => {
+  dispatch(reset_nro_recibo())
+  dispatch(resetAlquiler())
+  dispatch(reset())
+}
 }, [])
 const {isError, isSuccess, isLoading, 
-  message, formasDeCobro, alquilerByIdContrato, contratoById} = useSelector((state) => state.alquileresReducer)
+  message, formasDeCobro, alquilerByIdContrato, contratoById, nro_recibo_alquiler} = useSelector((state) => state.alquileresReducer)
+const { html_recibo_alquiler } = useSelector((state) => state.recibosReducer);
 const {vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
 const {modelos} = useSelector((state) => state.generalesReducer)
-
+const {username} = useSelector((state) => state.loginReducer)
 registerLocale("es", es);
 const getNextWednesday = (fromDate) => {
   const date = new Date(fromDate);
@@ -75,6 +84,7 @@ const [form, setForm] = useState({
     importe_iva: '',
     importe_total: '',
     id_forma_cobro_alquiler: '',
+    usuario: username,
     observacion: '',
     cuenta_contable_forma_cobro_alquiler: '',
     cuenta_secundaria_forma_cobro_alquiler: ''
@@ -96,6 +106,7 @@ if(!modoContrato){
     importe_neto: '',
     ingresa_alquiler: 1,
     importe_iva: '',
+    usuario: username,
     importe_total: '',
     id_forma_cobro_alquiler: '',
     cuenta_contable_forma_cobro_alquiler: ''
@@ -156,6 +167,37 @@ if(contratoById?.length && clientes?.length){
   })
 }
 }, [contratoById, clientes])
+
+useEffect(() => {
+  if (nro_recibo_alquiler && !modoContrato) {
+    dispatch(getReciboAlquilerById({ id: nro_recibo_alquiler }));
+  }
+}, [nro_recibo_alquiler]);
+
+useEffect(() => {
+  if(html_recibo_alquiler && !modoContrato){
+    Swal.fire({
+      title: '¿Desea imprimir el recibo?',
+      showCancelButton: true,
+      confirmButtonText: 'Sí',
+      cancelButtonText: 'Cancelar',
+      icon: 'warning',
+      didOpen: () => {
+        document.body.classList.remove('swal2-height-auto');
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const win = window.open('', '_blank');
+        win.document.write(html_recibo_alquiler);
+        win.document.close();
+        win.focus();
+        win.print();
+      }
+    }).finally(() => {
+      dispatch(resetAlquiler())
+    });
+  }
+}, [html_recibo_alquiler])
 
 const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
   alquileres?.map(a => ({

@@ -170,7 +170,6 @@
 .inputWrapper {
   display: flex;
   flex-direction: column;
-  width: 14rem;
   margin: 0.5rem;
   padding: 0.5rem;
 }

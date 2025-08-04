@@ -170,6 +170,7 @@ export const alquileresSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
+      state.nro_recibo_alquiler = action.payload.data;
       state.message = action.payload.message;
     });
     builder.addCase(postAlquiler.rejected, (state, action) => {
