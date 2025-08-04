@@ -121,6 +121,7 @@ export const postAlquiler = async (req, res) => {
     //datos del cliente para el concepto:
     apellido_cliente,
     //no incluye fecha_cobro, hasta ahora se coloca fecha de hoy
+    usuario,
     id_vehiculo,
     id_cliente,
     fecha_desde_alquiler,
@@ -133,6 +134,10 @@ export const postAlquiler = async (req, res) => {
     cuenta_contable_forma_cobro_alquiler,
     cuenta_secundaria_forma_cobro_alquiler,
   } = req.body;
+  console.log(fecha_desde_alquiler);
+  console.log(fecha_hasta_alquiler);
+  let fechaDesdeSplit = fecha_desde_alquiler.split("-");
+  let fechaHastaSplit = fecha_hasta_alquiler.split("-");
   let alquileresVigentes;
   let NroAsiento;
   let NroAsientoSecundario;
@@ -142,27 +147,21 @@ export const postAlquiler = async (req, res) => {
   let cuentaALQU_2;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
-    fecha_desde_alquiler
-  )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
+  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]}`;
+  let nro_recibo;
+  let estadoCliente;
+
   //buscar el estado del cliente
   try {
-    let estadoCliente = await verificarCliente(id_cliente);
-    if (estadoCliente?.length)
+    estadoCliente = await verificarCliente(id_cliente);
+    if (estadoCliente)
       return res.send({ status: false, message: estadoCliente });
   } catch (error) {
     const { body } = handleError(error, "Estado del cliente", acciones.get);
     return res.send(body);
   }
-  //buscar el estado del vehículo
-  try {
-    let estadoVehiculo = await verificarEstadoVehiculo(id_vehiculo);
-    if (estadoVehiculo?.length)
-      return res.send({ status: false, message: estadoCliente });
-  } catch (error) {
-    const { body } = handleError(error, "Estado del vehículo", acciones.get);
-    return res.send(body);
-  }
+
   //buscar si el vehiculo está vendido
   try {
     const result = await giama_renting.query(
@@ -186,6 +185,33 @@ export const postAlquiler = async (req, res) => {
     );
     return res.send(body);
   }
+  //buscar si las fechas se exceden del limite permitido
+  try {
+    let contrato = await giama_renting.query(
+      "SELECT fecha_desde, fecha_hasta FROM contratos_alquiler WHERE id = ?",
+      {
+        replacements: [id_contrato],
+        type: QueryTypes.SELECT,
+      }
+    );
+    const { fecha_desde, fecha_hasta } = contrato[0];
+    if (fecha_desde_alquiler < fecha_desde) {
+      return res.send({
+        status: false,
+        message: "La fecha desde del alquiler es anterior a la del contrato.",
+      });
+    }
+
+    if (fecha_hasta_alquiler > fecha_hasta) {
+      return res.send({
+        status: false,
+        message: "La fecha hasta del alquiler es posterior a la del contrato.",
+      });
+    }
+  } catch (error) {
+    const { body } = handleError(error, "Fechas del contrato", acciones.get);
+    return res.send(body);
+  }
   //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
   try {
     const result = await giama_renting.query(
@@ -199,7 +225,8 @@ export const postAlquiler = async (req, res) => {
     const parseDate = (str) => new Date(str);
     const nuevaDesde = parseDate(fecha_desde_alquiler);
     const nuevaHasta = parseDate(fecha_hasta_alquiler);
-
+    console.log(nuevaDesde);
+    console.log(nuevaHasta);
     // Recorremos los alquileres existentes y verificamos si se superponen
     const hayConflicto = alquileresVigentes?.some(
       ({ fecha_desde, fecha_hasta }) => {
@@ -226,6 +253,7 @@ export const postAlquiler = async (req, res) => {
     );
     return res.send(body);
   }
+  return;
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU Y ALQU_2(cuenta secundaria)
   try {
     cuentaIV21 = await getParametro("IV21");
@@ -245,6 +273,26 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(error, "número de asiento");
     return res.send(body);
   }
+  //inserto recibo
+  try {
+    nro_recibo = await insertRecibo(
+      getTodayDate(),
+      concepto,
+      importe_total,
+      usuario,
+      id_cliente,
+      id_vehiculo,
+      id_contrato,
+      null,
+      id_forma_cobro_alquiler,
+      transaction_giama_renting
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    const { body } = handleError(error, "Recibo de alquiler", acciones.post);
+    return res.send(body);
+  }
   //inserto alquiler
   try {
     await insertAlquiler({
@@ -260,6 +308,7 @@ export const postAlquiler = async (req, res) => {
       observacion: observacion,
       id_contrato: id_contrato,
       transaction: transaction_giama_renting,
+      nro_recibo: nro_recibo,
     });
   } catch (error) {
     console.log(error);
@@ -337,7 +386,11 @@ export const postAlquiler = async (req, res) => {
   }
   transaction_giama_renting.commit();
   transaction_pa7_giama_renting.commit();
-  return res.send({ status: true, message: "Alquiler ingresado con éxito" });
+  return res.send({
+    status: true,
+    message: "Alquiler ingresado con éxito",
+    data: nro_recibo,
+  });
 };
 
 export const postContratoAlquiler = async (req, res) => {

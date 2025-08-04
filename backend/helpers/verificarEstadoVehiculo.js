@@ -10,7 +10,7 @@ export const verificarEstadoVehiculo = async (id_vehiculo) => {
         replacements: [id_vehiculo],
       }
     );
-
+    console.log(result);
     if (result[0]["estado_actual"] !== 2) {
       console.log(result[0]["estado_actual"]);
       return `El vehículo debe estar listo para alquilar`;

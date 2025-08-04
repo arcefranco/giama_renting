@@ -9,6 +9,7 @@ export const verificarCliente = async (id_cliente) => {
         replacements: [id_cliente],
       }
     );
+    console.log(result);
     if (!result.length) throw new Error("Cliente no registrado");
     if (result[0]["resolucion_datero"] == 2)
       return `El cliente tiene su datero rechazado`;
