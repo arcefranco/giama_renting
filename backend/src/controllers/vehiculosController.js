@@ -1240,9 +1240,7 @@ ORDER BY conceptos_costos.ingreso_egreso DESC;`,
       amortizacion = 0;
     } else if (mes == mesAmortizacion && anio == anioAmortizacion) {
       amortizacion =
-        (precio_inicial_total /
-          meses_amortizacion /
-          result[0]["dias_totales_mes_amortizacion"]) *
+        (precio_inicial_total / result[0]["dias_totales_amortizacion"]) *
         result[0]["dias_diferencia_mes_amortizacion"];
     } else if (
       (mes >= mesAmortizacion && anio >= anioAmortizacion) ||
@@ -1321,9 +1319,11 @@ CASE
   WHEN :fechaInicio <= v.fecha_inicio_amortizacion AND :fechaFin >= v.fecha_inicio_amortizacion THEN
     ROUND(
       (
-        (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) 
-        / v.meses_amortizacion
-        / (DATEDIFF(LAST_DAY(v.fecha_inicio_amortizacion), DATE_FORMAT(v.fecha_inicio_amortizacion, '%Y-%m-01')) + 1)
+        (v.precio_inicial + ROUND(ABS(COALESCE(activos.total_activables, 0)), 2)) /
+        DATEDIFF(
+        DATE_ADD(v.fecha_inicio_amortizacion, INTERVAL v.meses_amortizacion MONTH), 
+        v.fecha_inicio_amortizacion
+        )
       )
       * (DATEDIFF(:fechaFin, v.fecha_inicio_amortizacion) + 1),
       2

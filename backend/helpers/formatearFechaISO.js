@@ -12,12 +12,10 @@ export function formatearFechaISO(isoString) {
 
 export function formatearFechaISOText(isoString) {
   console.log(isoString);
-  let fecha;
-  fecha = new Date(isoString);
+  const fecha = new Date(isoString);
   if (isNaN(fecha.getTime())) {
     return isoString;
   }
-  fecha.toLocaleDateString("es-AR");
   const año = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // Mes: 0-11
   const dia = String(fecha.getDate()).padStart(2, "0");
