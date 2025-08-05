@@ -401,7 +401,8 @@ export const getVehiculosById = async (req, res) => {
       vehiculos.*, 
       (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
       (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado,
-      DATEDIFF(?, fecha_ingreso) AS dias_diferencia
+      DATEDIFF(?, fecha_ingreso) AS dias_diferencia,
+      DATEDIFF(?, fecha_inicio_amortizacion) AS dias_diferencia_amortizacion
    FROM vehiculos
    LEFT JOIN (
      SELECT id_vehiculo 
@@ -416,7 +417,7 @@ export const getVehiculosById = async (req, res) => {
    WHERE vehiculos.id = ?`,
         {
           type: QueryTypes.SELECT,
-          replacements: [fecha, hoy, hoy, id],
+          replacements: [fecha, hoy, hoy, hoy, id],
         }
       );
       return res.send(resultado);

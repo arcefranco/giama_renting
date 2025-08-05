@@ -147,11 +147,10 @@ export const postAlquiler = async (req, res) => {
   let cuentaALQU_2;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
-  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]}`;
   let nro_recibo;
   let estadoCliente;
-
+  let dominio;
+  let concepto;
   //buscar el estado del cliente
   try {
     estadoCliente = await verificarCliente(id_cliente);
@@ -162,10 +161,10 @@ export const postAlquiler = async (req, res) => {
     return res.send(body);
   }
 
-  //buscar si el vehiculo está vendido
+  //buscar si el vehiculo está vendido // dominio
   try {
     const result = await giama_renting.query(
-      "SELECT fecha_venta FROM vehiculos WHERE id = ?",
+      "SELECT fecha_venta, dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
@@ -177,6 +176,10 @@ export const postAlquiler = async (req, res) => {
         message: "El vehículo se encuentra vendido",
       });
     }
+    if (result[0]["dominio"]) dominio = result[0]["dominio"];
+    if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+      dominio = result[0]["dominio_provisorio"];
+    else dominio = "SIN DOMINIO";
   } catch (error) {
     const { body } = handleError(
       error,
@@ -253,7 +256,6 @@ export const postAlquiler = async (req, res) => {
     );
     return res.send(body);
   }
-  return;
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU Y ALQU_2(cuenta secundaria)
   try {
     cuentaIV21 = await getParametro("IV21");
@@ -273,6 +275,8 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(error, "número de asiento");
     return res.send(body);
   }
+  concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio}`;
   //inserto recibo
   try {
     nro_recibo = await insertRecibo(
@@ -437,9 +441,6 @@ export const postContratoAlquiler = async (req, res) => {
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_alquiler
   )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
-  let conceptoDeposito = `Deposito en garantía - ${apellido_cliente} - desde: ${formatearFechaISOText(
-    fecha_desde_contrato
-  )} hasta: ${formatearFechaISOText(fecha_hasta_contrato)}`;
   let contratosVigentes;
   let nro_recibo_alquiler;
   let nro_recibo_deposito;
@@ -454,7 +455,7 @@ export const postContratoAlquiler = async (req, res) => {
     camposObligatorios,
     "cliente"
   );
-
+  let dominio;
   if (campoFaltante) {
     return res.send({
       status: false,
@@ -508,10 +509,10 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(error, "Contratos del cliente", acciones.get);
     return res.send(body);
   }
-  //buscar si el vehiculo está vendido
+  //buscar si el vehiculo está vendido // dominio del vehiculo
   try {
     const result = await giama_renting.query(
-      "SELECT fecha_venta FROM vehiculos WHERE id = ?",
+      "SELECT fecha_venta, dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
@@ -523,6 +524,10 @@ export const postContratoAlquiler = async (req, res) => {
         message: "El vehículo se encuentra vendido",
       });
     }
+    if (result[0]["dominio"]) dominio = result[0]["dominio"];
+    if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+      dominio = result[0]["dominio_provisorio"];
+    else dominio = "SIN DOMINIO";
   } catch (error) {
     console.log(error);
     const { body } = handleError(
@@ -660,7 +665,11 @@ export const postContratoAlquiler = async (req, res) => {
   //inserto recibo alquiler
   if (ingresa_alquiler == 1) {
     try {
-      const detalle = `Inicio nuevo alquiler. Entrega: ${sucursal_vehiculo}`;
+      const detalle = `Alquiler desde ${formatearFechaISOText(
+        fecha_desde_alquiler
+      )} hasta ${formatearFechaISOText(
+        fecha_hasta_alquiler
+      )} Dominio: ${dominio}`;
       nro_recibo_alquiler = await insertRecibo(
         getTodayDate(),
         detalle,
@@ -680,13 +689,13 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send(body);
     }
   }
-  //inserto recibo contrato
+  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio}`;
+  //inserto recibo del depósito del contrato
   if (ingresa_deposito == 1) {
     try {
-      const detalle = `Pago depósito en garantía. Entrega: ${sucursal_vehiculo}`;
       nro_recibo_deposito = await insertRecibo(
         getTodayDate(),
-        detalle,
+        conceptoDeposito,
         deposito,
         usuario,
         id_cliente,

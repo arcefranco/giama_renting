@@ -2,6 +2,8 @@ import { QueryTypes } from "sequelize";
 import { giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { formatearFechaISOText } from "../../helpers/formatearFechaISO.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const getReciboById = async (req, res) => {
   const { id } = req.body;
