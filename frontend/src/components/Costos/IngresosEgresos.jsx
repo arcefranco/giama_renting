@@ -381,6 +381,20 @@ return (
           <input type="text" name='comprobante' value={form["comprobante"]} 
         onChange={handleChange}/>
       </div>
+      <div className={styles.inputContainer}>
+        <span>Concepto</span>
+        <select name="id_concepto" style={{width: "130%"}}  value={form["id_concepto"]} 
+        onChange={handleChange} id="">
+          <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+          {
+            conceptos?.length && conceptos?.map(e => {
+            return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
+            })
+          }
+        </select>
+      </div>
+      {
+        inputGeneraRecibo &&
     <div className={styles.inputWrapper} >
       <span>Clientes</span>
       <div className={styles.selectWithIcon} style={{
@@ -398,6 +412,7 @@ return (
         </select>
       </div>
       </div>
+      }
       <div className={styles.inputContainer}>
           <span>Importe neto</span>
           <input type="number" name='importe_neto' value={form["importe_neto"]} 
@@ -428,18 +443,6 @@ return (
           <span>Observacion</span>
           <textarea type="text" name='observacion' value={form["observacion"]} 
         onChange={handleChange}/>
-      </div>
-      <div className={styles.inputContainer}>
-        <span>Concepto</span>
-        <select name="id_concepto" style={{width: "130%"}}  value={form["id_concepto"]} 
-        onChange={handleChange} id="">
-          <option value={""} disabled selected>{"Seleccione un concepto"}</option>
-          {
-            conceptos?.length && conceptos?.map(e => {
-            return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
-            })
-          }
-        </select>
       </div>
       {
         inputGeneraRecibo && 

@@ -94,7 +94,7 @@ if (vehiculo?.length && form["mes"] && form["anio"]) {
 } else if (vehiculo?.length && !form["mes"] && !form["anio"]) {
   filas.push({
     tipo: "amortizacion",
-    concepto: `Amortización ${vehiculo[0]["dias_diferencia"]} dias`,
+    concepto: `Amortización ${vehiculo[0]["dias_diferencia_amortizacion"]} dias`,
     importe:
       vehiculo[0]["dias_diferencia"] == 0 && amortizacion_todos_movimientos == 0
         ? 0
@@ -219,7 +219,7 @@ function esNegativo(numero) {
   <div className={styles.tanteador}>
     <div>
       <div style={{ fontWeight: 'bold' }}>{ocupacion.dias_en_flota}</div>
-      <div style={{ color: '#555' }}>Días ocupación</div>
+      <div style={{ color: '#555' }}>Días en flota</div>
     </div>
     <div>
       <div style={{ fontWeight: 'bold' }}>{ocupacion.dias_alquilado}</div>
@@ -328,7 +328,7 @@ function esNegativo(numero) {
           }
         </React.Fragment>
       );
-    })}
+})}
   {filas?.map((fila, i) => {
   const esPositivo = fila.importe > 0;
   const estilo = {
@@ -363,7 +363,7 @@ function esNegativo(numero) {
                   <b>Desde:</b>{" "}
                   {form["mes"] && form["anio"]
                     ? `${formatearFecha(`${form["anio"]}-${String(form["mes"]).padStart(2, "0")}-01`)}`
-                    : `${formatearFecha(vehiculo[0]["fecha_preparacion"])} (preparación)`}
+                    : `${formatearFecha(vehiculo[0]["fecha_inicio_amortizacion"])}`}
                   - <b>Hasta:</b> {form["mes"] && form["anio"] ? formatearFecha(getLastDayOfMonth(form["anio"], form["mes"])) : formatearFecha(getTodayDate())}
                 </span>
                 <span></span>
