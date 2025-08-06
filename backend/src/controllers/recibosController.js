@@ -74,6 +74,8 @@ AAAAAAAAAAAAAAAwEeUUZTJjlnZMQAAAABJRU5ErkJggg==`;
 
 export const getReciboById = async (req, res) => {
   const { id } = req.body;
+  const serverURL = process.env.SERVER;
+  const imageURL = `${serverURL}/public/images/Vector.png`;
   try {
     const data = await giama_renting.query(
       `SELECT 
@@ -119,7 +121,7 @@ export const getReciboById = async (req, res) => {
       <div style="font-family: Arial; max-width: 700px; margin: 0 auto; padding: 20px; border: 1px solid #ccc">
         <h4 style="text-align: center;">Recibo de Pago</h4>
            <h3 style="text-align: center;">DOUMENTO NO VÁLIDO COMO FACTURA</h3>
-        <img src="${imageBase64}" alt="Logo" style="height: 180px; margin: 10px auto; display: block;" />
+        <img src="${imageURL}" alt="Logo" style="height: 180px; margin: 10px auto; display: block;" />
         <div style="display: grid; grid-template-columns: 1fr 1fr; justify-content: space-between; margin-bottom: 20px; font-size: 11px">
           <div>           
             <h4>Emisor</h4>
