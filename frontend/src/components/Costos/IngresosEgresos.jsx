@@ -183,13 +183,18 @@ useEffect(() => {
         document.body.classList.remove('swal2-height-auto');
       }
     }).then((result) => {
-      if (result.isConfirmed) {
-        const win = window.open('', '_blank');
-        win.document.write(html_recibo_ingreso);
-        win.document.close();
-        win.focus();
-        win.print();
-      }
+    if (result.isConfirmed) {
+    const win = window.open('', '_blank');
+    win.document.write(html_recibo_ingreso);
+    win.document.close();
+  setTimeout(() => {
+    win.focus();
+    win.print();
+    win.onafterprint = () => {
+      win.close();
+    };
+  }, 500);
+    }
     }).finally(() => {
       dispatch(resetIngreso())
     });

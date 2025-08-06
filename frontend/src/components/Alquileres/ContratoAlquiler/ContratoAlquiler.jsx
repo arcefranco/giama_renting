@@ -289,14 +289,19 @@ useEffect(() => {
           document.body.classList.remove('swal2-height-auto');
         },
       });
-
       if (res.isConfirmed && html) {
-        const win = window.open('', '_blank');
-        win.document.write(html);
-        win.document.close();
-        win.focus();
-        win.print();
-      } 
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => {
+      win.focus();
+      win.print();
+      win.onafterprint = () => {
+      win.close();
+    };
+    }, 500); // Ajustá el delay si fuera necesario
+    }
+
     };
     const pasos = [];
     if (html_recibo_alquiler) {

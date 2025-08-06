@@ -34,6 +34,7 @@ Promise.all([
     dispatch(getClientes()),
     dispatch(getModelos()),
     dispatch(getFormasDeCobro()),
+    dispatch(getReciboAlquilerById({ id: 85 }))
 ])
 if(idContrato){
   dispatch(getAlquilerByIdContrato({id: idContrato})),
@@ -186,13 +187,22 @@ useEffect(() => {
         document.body.classList.remove('swal2-height-auto');
       }
     }).then((result) => {
-      if (result.isConfirmed) {
-        const win = window.open('', '_blank');
-        win.document.write(html_recibo_alquiler);
-        win.document.close();
-        win.focus();
-        win.print();
-      }
+    if (result.isConfirmed) {
+  const win = window.open('', '_blank');
+  win.document.write(html_recibo_alquiler);
+  win.document.close();
+
+  // Esperamos un poco para que cargue todo el HTML (incluida la imagen)
+  setTimeout(() => {
+    win.focus();
+    win.print();
+
+    // Opcional: cerrar automáticamente después de imprimir
+    win.onafterprint = () => {
+      win.close();
+    };
+  }, 500); // Ajustá el delay si fuera necesario
+    }
     }).finally(() => {
       dispatch(resetAlquiler())
     });
