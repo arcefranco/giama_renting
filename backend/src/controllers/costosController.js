@@ -573,7 +573,7 @@ export const prorrateoIE = async (req, res) => {
       "c_movimientos",
       NroAsiento,
       cuentaIVA,
-      "H",
+      "D",
       importe_iva,
       observacion,
       transaction_asientos,
@@ -584,7 +584,7 @@ export const prorrateoIE = async (req, res) => {
       "c2_movimientos",
       NroAsientoSecundario,
       cuentaSecundariaIVA,
-      "H",
+      "D",
       importe_iva,
       observacion,
       transaction_asientos,
@@ -595,7 +595,7 @@ export const prorrateoIE = async (req, res) => {
       "c_movimientos",
       NroAsiento,
       cuenta_forma_cobro,
-      "D",
+      "H",
       importe_total,
       observacion,
       transaction_asientos,
@@ -606,7 +606,7 @@ export const prorrateoIE = async (req, res) => {
       "c2_movimientos",
       NroAsientoSecundario,
       cuenta_secundaria_forma_cobro,
-      "D",
+      "H",
       importe_total,
       observacion,
       transaction_asientos,
@@ -618,12 +618,15 @@ export const prorrateoIE = async (req, res) => {
   }
 
   const diferencia = importe_neto - netoDividido * cantidad;
-
+  const totalDividido = importe_total / cantidad;
+  const ivaDividido = importe_iva / cantidad;
   for (const [index, id_vehiculo] of arrayVehiculos.entries()) {
     let importeAUsar = netoDividido;
+    let importeTotalAusar = totalDividido;
     let dominio;
     if (index === cantidad - 1) {
       importeAUsar += diferencia;
+      importeTotalAusar = importeAUsar + ivaDividido;
     }
     try {
       let result = await giama_renting.query(
@@ -688,8 +691,8 @@ export const prorrateoIE = async (req, res) => {
             id_concepto,
             comprobante,
             importeAUsar,
-            importe_iva / cantidad,
-            importe_total / cantidad,
+            ivaDividido,
+            importeTotalAusar,
             observacion + ` (${dominio})`,
             NroAsiento,
             id_forma_cobro,
@@ -715,6 +718,6 @@ export const prorrateoIE = async (req, res) => {
   //registro en costos_ingresos
   return res.send({
     status: true,
-    message: "Se prorratearon los costos/ingresos correctamente",
+    message: "Se ingresaron los egresos correctamente",
   });
 };

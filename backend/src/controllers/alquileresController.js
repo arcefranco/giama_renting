@@ -177,7 +177,7 @@ export const postAlquiler = async (req, res) => {
       });
     }
     if (result[0]["dominio"]) dominio = result[0]["dominio"];
-    if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+    else if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
       dominio = result[0]["dominio_provisorio"];
     else dominio = "SIN DOMINIO";
   } catch (error) {
@@ -525,7 +525,7 @@ export const postContratoAlquiler = async (req, res) => {
       });
     }
     if (result[0]["dominio"]) dominio = result[0]["dominio"];
-    if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+    else if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
       dominio = result[0]["dominio_provisorio"];
     else dominio = "SIN DOMINIO";
   } catch (error) {
