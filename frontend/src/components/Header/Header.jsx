@@ -55,7 +55,7 @@ const menuItems = [
   {
    title: "Costos/Ingresos",
    items: [
-     { label: "Ingresos/egresos prorrateados", to: "/costos/prorrateoIE" },
+     { label: "Egresos prorrateados", to: "/costos/prorrateoIE" },
      { label: "Carga ingresos/egresos", to: "/costos/ingresos_egresos" },
    ]
  },

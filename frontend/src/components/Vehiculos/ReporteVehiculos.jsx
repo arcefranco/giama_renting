@@ -132,7 +132,7 @@ const renderFecha = (data) => {
     let fechaSplit = data.value?.split("-")
     return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
   }else{
-    return ""
+    return "sin fecha"
   }
 }
 const renderDominio = (data) => {
@@ -229,7 +229,7 @@ return (
             return "No"
           }
         }}/>
-        <Column dataField="fecha_preparacion" caption="Fecha de preparación" alignment="center" cellRender={renderFecha}/>
+        <Column dataField="fecha_inicio_amortizacion" caption="Fecha amortización" alignment="center" cellRender={renderFecha}/>
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
