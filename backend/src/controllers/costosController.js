@@ -9,6 +9,7 @@ import {
 import { handleError, acciones } from "../../helpers/handleError.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { insertFactura } from "../../helpers/insertFactura.js";
 export const getCuentasContables = async (req, res) => {
   try {
     const resultado = await pa7_giama_renting.query(
@@ -182,13 +183,12 @@ const asientos_costos_ingresos = async (
   comprobante,
   ingreso_egreso,
   transaction,
-  nro_asiento_prorrateo,
-  nro_asiento_secundario_prorrateo
+  NroAsiento,
+  NroAsientoSecundario
 ) => {
   let cuentaIVA;
   let cuentaSecundariaIVA;
-  let NroAsiento;
-  let NroAsientoSecundario;
+
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
   const dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
@@ -204,25 +204,6 @@ const asientos_costos_ingresos = async (
     }
   } catch (error) {
     throw error;
-  }
-  if (nro_asiento_prorrateo) {
-    NroAsiento = nro_asiento_prorrateo;
-  } else {
-    try {
-      NroAsiento = await getNumeroAsiento();
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  if (nro_asiento_secundario_prorrateo) {
-    NroAsientoSecundario = nro_asiento_secundario_prorrateo;
-  } else {
-    try {
-      NroAsientoSecundario = await getNumeroAsientoSecundario();
-    } catch (error) {
-      throw error;
-    }
   }
 
   try {
@@ -314,13 +295,12 @@ async function registrarCostoIngresoIndividual({
   genera_recibo,
   usuario,
   id_cliente,
-  nro_asiento_prorrateo,
-  nro_asiento_secundario_prorrateo,
 }) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
   let ingreso_egreso;
   let NroAsiento;
+  let NroAsientoSecundario;
   let cuenta_forma_cobro;
   let cuenta_secundaria_forma_cobro;
   let cuenta_concepto;
@@ -372,6 +352,12 @@ async function registrarCostoIngresoIndividual({
     );
   }
   try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    throw error;
+  }
+  try {
     NroAsiento = await asientos_costos_ingresos(
       fecha,
       cuenta_concepto,
@@ -385,8 +371,8 @@ async function registrarCostoIngresoIndividual({
       comprobante,
       ingreso_egreso,
       transaction_asientos,
-      nro_asiento_prorrateo,
-      nro_asiento_secundario_prorrateo
+      NroAsiento,
+      NroAsientoSecundario
     );
   } catch (error) {
     await transaction_asientos.rollback();
@@ -417,10 +403,28 @@ async function registrarCostoIngresoIndividual({
       );
     } catch (error) {
       console.log(error);
-      const { body } = handleError(error, "Recibo de ingreso", acciones.post);
-      return res.send(body);
+      throw error;
+    }
+    //factura
+    try {
+      await insertFactura(
+        id_cliente,
+        importeNetoFinal,
+        importeIvaFinal,
+        importeTotalFinal,
+        usuario,
+        NroAsiento,
+        NroAsientoSecundario,
+        observacion,
+        transaction_costos_ingresos,
+        transaction_asientos
+      );
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
   }
+
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 

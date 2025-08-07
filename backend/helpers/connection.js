@@ -9,6 +9,7 @@ export const giama_renting = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: "mysql",
+    timezone: "-03:00",
     dialectOptions: {
       multipleStatements: true,
     },
@@ -29,6 +30,7 @@ export const pa7_giama_renting = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: "mysql",
+    timezone: "-03:00",
     dialectOptions: {
       multipleStatements: true,
     },

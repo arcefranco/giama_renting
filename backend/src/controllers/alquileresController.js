@@ -19,6 +19,7 @@ import { validateArray } from "../../helpers/handleError.js";
 import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { verificarEstadoVehiculo } from "../../helpers/verificarEstadoVehiculo.js";
+import { insertFactura } from "../../helpers/insertFactura.js";
 
 const insertAlquiler = async (body) => {
   const {
@@ -295,6 +296,24 @@ export const postAlquiler = async (req, res) => {
     console.log(error);
     transaction_giama_renting.rollback();
     const { body } = handleError(error, "Recibo de alquiler", acciones.post);
+    return res.send(body);
+  }
+  //inserto factura
+  try {
+    await insertFactura(
+      id_cliente,
+      importe_neto,
+      importe_iva,
+      importe_total,
+      usuario,
+      NroAsiento,
+      NroAsientoSecundario,
+      concepto,
+      transaction_giama_renting,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    const { body } = handleError(error, "Factura", acciones.post);
     return res.send(body);
   }
   //inserto alquiler
@@ -662,17 +681,15 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send(body);
     }
   }
+  const detalle_alquiler = `Alquiler desde ${formatearFechaISOText(
+    fecha_desde_alquiler
+  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio}`;
   //inserto recibo alquiler
   if (ingresa_alquiler == 1) {
     try {
-      const detalle = `Alquiler desde ${formatearFechaISOText(
-        fecha_desde_alquiler
-      )} hasta ${formatearFechaISOText(
-        fecha_hasta_alquiler
-      )} Dominio: ${dominio}`;
       nro_recibo_alquiler = await insertRecibo(
         getTodayDate(),
-        detalle,
+        detalle_alquiler,
         importe_total,
         usuario,
         id_cliente,
@@ -686,6 +703,30 @@ export const postContratoAlquiler = async (req, res) => {
       console.log(error);
 
       const { body } = handleError(error, "Recibo de alquiler", acciones.post);
+      return res.send(body);
+    }
+  }
+  //inserto factura de la semana de alquiler
+  if (ingresa_alquiler == 1) {
+    try {
+      await insertFactura(
+        id_cliente,
+        importe_neto,
+        importe_iva,
+        importe_total,
+        usuario,
+        NroAsiento,
+        NroAsientoSecundario,
+        detalle_alquiler,
+        transaction_giama_renting,
+        transaction_pa7_giama_renting
+      );
+    } catch (error) {
+      const { body } = handleError(
+        error,
+        "Factura del alquiler",
+        acciones.post
+      );
       return res.send(body);
     }
   }
