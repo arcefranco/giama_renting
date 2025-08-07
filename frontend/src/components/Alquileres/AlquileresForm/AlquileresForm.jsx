@@ -34,7 +34,6 @@ Promise.all([
     dispatch(getClientes()),
     dispatch(getModelos()),
     dispatch(getFormasDeCobro()),
-    dispatch(getReciboAlquilerById({ id: 85 }))
 ])
 if(idContrato){
   dispatch(getAlquilerByIdContrato({id: idContrato})),
