@@ -706,12 +706,17 @@ export const prorrateoIE = async (req, res) => {
     arrayVehiculos,
     fecha,
     id_concepto,
-    comprobante,
     importe_neto,
     importe_iva,
     importe_total,
     observacion,
     id_forma_cobro,
+    cta_cte_proveedores,
+    cod_proveedor,
+    tipo_comprobante,
+    numero_comprobante_1,
+    numero_comprobante_2,
+    usuario,
   } = req.body;
   let NroAsiento;
   let NroAsientoSecundario;
@@ -723,6 +728,12 @@ export const prorrateoIE = async (req, res) => {
   let cuenta_secundaria_forma_cobro;
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
+  let FA_FC =
+    tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+  let comprobante = `${FA_FC}-${padWithZeros(
+    numero_comprobante_1,
+    5
+  )}-${padWithZeros(numero_comprobante_2, 8)}`;
   if (!arrayVehiculos?.length) {
     return res.send({
       status: false,
@@ -758,29 +769,50 @@ export const prorrateoIE = async (req, res) => {
       message: "Hubo un problema al buscar las cuentas contables",
     });
   }
-  //obtengo cuentas contables de la forma de cobro/pago para el TOTAL
-  try {
-    const result = await giama_renting.query(
-      "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
-      {
-        type: QueryTypes.SELECT,
-        replacements: [id_forma_cobro],
-      }
-    );
-    if (!result.length)
+  //obtengo cuentas contables de la forma de cobro/pago para el TOTAL (si es cta cte proveedores, se usan esas en su lugar)
+  if (cta_cte_proveedores == 1) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT codigo, valor_str FROM parametros WHERE codigo = "PROV" OR codigo = "PRO2"`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró la forma de cobro especificada");
+      cuenta_forma_cobro = result[0]["valor_str"];
+      cuenta_secundaria_forma_cobro = result[1]["valor_str"];
+    } catch (error) {
+      throw new Error(
+        `Error al buscar cuentas contables de la forma de cobro ${
+          error.message ? `: ${error.message}` : ""
+        }`
+      );
+    }
+  } else {
+    try {
+      const result = await giama_renting.query(
+        "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id_forma_cobro],
+        }
+      );
+      if (!result.length)
+        return res.send({
+          status: false,
+          message: "No se encontró la forma de cobro especificada",
+        });
+      cuenta_forma_cobro = result[0]["cuenta_contable"];
+      cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
+    } catch (error) {
       return res.send({
         status: false,
-        message: "No se encontró la forma de cobro especificada",
+        message: `Error al buscar cuentas contables de la forma de cobro ${
+          error.message ? `: ${error.message}` : ""
+        }`,
       });
-    cuenta_forma_cobro = result[0]["cuenta_contable"];
-    cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
-  } catch (error) {
-    return res.send({
-      status: false,
-      message: `Error al buscar cuentas contables de la forma de cobro ${
-        error.message ? `: ${error.message}` : ""
-      }`,
-    });
+    }
   }
   //obtengo cuentas IVA
   try {
@@ -792,7 +824,6 @@ export const prorrateoIE = async (req, res) => {
     return res.send(body);
   }
   const cantidad = arrayVehiculos.length;
-
   const netoDividido = Math.floor((importe_neto / cantidad) * 100) / 100;
   //insert movimientos fijos (TOTAL e IVA)
   try {
@@ -847,6 +878,32 @@ export const prorrateoIE = async (req, res) => {
   const diferencia = importe_neto - netoDividido * cantidad;
   const totalDividido = importe_total / cantidad;
   const ivaDividido = importe_iva / cantidad;
+  if (cta_cte_proveedores == 1) {
+    try {
+      await movimientosProveedores({
+        cod_proveedor,
+        tipo_comprobante,
+        numero_comprobante_1,
+        numero_comprobante_2,
+        importe_neto,
+        importe_total,
+        cuenta_concepto: cuenta_forma_cobro,
+        NroAsiento,
+        NroAsientoSecundario,
+        usuario,
+        transaction_asientos,
+      });
+    } catch (error) {
+      console.log(error);
+      transaction_costos_ingresos.rollback();
+      const { body } = handleError(
+        error,
+        "Movimientos proveedores",
+        acciones.post
+      );
+      return res.send(body);
+    }
+  }
   for (const [index, id_vehiculo] of arrayVehiculos.entries()) {
     let importeAUsar = netoDividido;
     let importeTotalAusar = totalDividido;
@@ -855,6 +912,7 @@ export const prorrateoIE = async (req, res) => {
       importeAUsar += diferencia;
       importeTotalAusar = importeAUsar + ivaDividido;
     }
+    //obtengo dominio del vehiculo
     try {
       let result = await giama_renting.query(
         "SELECT dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
@@ -872,6 +930,7 @@ export const prorrateoIE = async (req, res) => {
       const { body } = handleError(error, "Dominios", acciones.get);
       return res.send(body);
     }
+    //inserto asientos
     try {
       await asientoContable(
         "c_movimientos",
@@ -905,6 +964,8 @@ export const prorrateoIE = async (req, res) => {
       );
       return res.send(body);
     }
+
+    //inserto en costos_ingresos
     try {
       await giama_renting.query(
         `INSERT INTO costos_ingresos 
@@ -922,7 +983,7 @@ export const prorrateoIE = async (req, res) => {
             importeTotalAusar,
             observacion + ` (${dominio})`,
             NroAsiento,
-            id_forma_cobro,
+            id_forma_cobro ? id_forma_cobro : null,
             null,
           ],
           transaction: transaction_costos_ingresos,
