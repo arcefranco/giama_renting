@@ -10,6 +10,179 @@ import { handleError, acciones } from "../../helpers/handleError.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { insertFactura } from "../../helpers/insertFactura.js";
+import { padWithZeros } from "../../helpers/padWithZeros.js";
+
+//FUNCION AUXILIAR
+const movimientosProveedores = async ({
+  cod_proveedor,
+  tipo_comprobante,
+  numero_comprobante_1,
+  numero_comprobante_2,
+  importe_neto,
+  importe_total,
+  cuenta_concepto,
+  NroAsiento,
+  NroAsientoSecundario,
+  usuario,
+  transaction_asientos,
+}) => {
+  let FA_FC =
+    tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+  let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
+  let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
+  console.log(
+    "ESTO ES NUMERO COMPROBANTE FORMATEADO: ",
+    numero_comprobante_2_formateado
+  );
+  let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
+  let insertMovProv;
+  //c_movprov
+  try {
+    const result = await pa7_giama_renting.query(
+      `INSERT INTO c_movprov (Fecha, Proveedor, 
+      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, 
+      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          getTodayDate(),
+          cod_proveedor,
+          FA_FC,
+          NroComprobante,
+          getTodayDate(),
+          importe_neto,
+          21,
+          importe_total,
+        ],
+        transaction: transaction_asientos,
+      }
+    );
+    insertMovProv = result[0];
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      `Error al insertar registro en proveedores ${
+        error.message ? ` :${error.message}` : ""
+      }`
+    );
+  }
+  //c2_movprov
+  try {
+    await pa7_giama_renting.query(
+      `INSERT INTO c2_movprov (Fecha, Proveedor, 
+      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, 
+      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          getTodayDate(),
+          cod_proveedor,
+          FA_FC,
+          NroComprobante,
+          getTodayDate(),
+          importe_neto,
+          21,
+          importe_total,
+        ],
+        transaction: transaction_asientos,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      `Error al insertar registro en proveedores ${
+        error.message ? ` :${error.message}` : ""
+      }`
+    );
+  }
+  //c_movprovdetalles
+  try {
+    await pa7_giama_renting.query(
+      `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante,
+      CtaContable, Importe) VALUES (?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [insertMovProv, 3, cuenta_concepto, importe_neto],
+        transaction: transaction_asientos,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      `Error al insertar registro en proveedores ${
+        error.message ? ` :${error.message}` : ""
+      }`
+    );
+  }
+  //c_movprovctacte
+  try {
+    let A_C = tipo_comprobante == 1 ? "A" : tipo_comprobante == 3 ? "C" : null;
+    let DenomComprobante =
+      tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : null;
+    let ConceptoComprobante = `Factura "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
+    await pa7_giama_renting.query(
+      `INSERT INTO c_movprovctacte (IdProveedor, ConceptoComprobante,
+      DenomComprobante, NroComprobante, Fecha, TipoComprobante, IdComprobante, 
+      TipoAplicacion, IdAplicacion, Importe, NroAsiento, ConceptoAplicacion,
+      DenomAplicacion, NroAplicacion, ImporteTotalComprobante, ImporteTotalAplicacion, 
+      FechaAltaRegistro, UsuarioAltaRegistro) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          cod_proveedor,
+          ConceptoComprobante,
+          DenomComprobante,
+          NroComprobante,
+          getTodayDate(),
+          tipo_comprobante,
+          insertMovProv,
+          tipo_comprobante,
+          insertMovProv,
+          importe_total,
+          NroAsiento,
+          ConceptoComprobante,
+          DenomComprobante,
+          NroComprobante,
+          importe_total,
+          importe_total,
+          `${getTodayDate()} 00:00:00`,
+          usuario,
+        ],
+        transaction: transaction_asientos,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      `Error al insertar registro en proveedores ${
+        error.message ? ` :${error.message}` : ""
+      }`
+    );
+  }
+  //c_movprovrelaasiento
+  try {
+    await pa7_giama_renting.query(
+      `INSERT INTO c_movprovrelaasiento (IdMovProveedor, NroAsiento1, NroAsiento2) VALUES (?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          insertMovProv,
+          NroAsiento,
+          NroAsientoSecundario ? NroAsientoSecundario : null,
+        ],
+        transaction: transaction_asientos,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      `Error al insertar registro en proveedores ${
+        error.message ? ` :${error.message}` : ""
+      }`
+    );
+  }
+};
+
 export const getCuentasContables = async (req, res) => {
   try {
     const resultado = await pa7_giama_renting.query(
@@ -286,15 +459,19 @@ async function registrarCostoIngresoIndividual({
   id_vehiculo,
   fecha,
   id_concepto,
-  comprobante,
   importe_neto,
   importe_iva,
   importe_total,
   observacion,
   id_forma_cobro,
   genera_recibo,
+  cta_cte_proveedores,
   usuario,
   id_cliente,
+  cod_proveedor,
+  tipo_comprobante,
+  numero_comprobante_1,
+  numero_comprobante_2,
 }) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
@@ -306,9 +483,10 @@ async function registrarCostoIngresoIndividual({
   let cuenta_concepto;
   let cuenta_secundaria_concepto;
   let nro_recibo;
-  //si es ingreso solamente va recibo
+  let FA_FC;
+  let comprobante;
+  //obtengo si es ingreso o egreso
   try {
-    //obtengo si es ingreso o egreso
     const result = await giama_renting.query(
       `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto`,
       {
@@ -331,26 +509,48 @@ async function registrarCostoIngresoIndividual({
       }`
     );
   }
-  try {
-    //obtengo cuentas contables de la forma de cobro/pago
-    const result = await giama_renting.query(
-      "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
-      {
-        type: QueryTypes.SELECT,
-        replacements: [id_forma_cobro],
-      }
-    );
-    if (!result.length)
-      throw new Error("No se encontró la forma de cobro especificada");
-    cuenta_forma_cobro = result[0]["cuenta_contable"];
-    cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
-  } catch (error) {
-    throw new Error(
-      `Error al buscar cuentas contables de la forma de cobro ${
-        error.message ? `: ${error.message}` : ""
-      }`
-    );
+  //obtengo cuentas contables de la forma de cobro/pago (si es egreso y cta cte proveedores, las cuentas son PROV Y PRO2)
+  if (ingreso_egreso === "E" && cta_cte_proveedores === 1) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT codigo, valor_str FROM parametros WHERE codigo = "PROV" OR codigo = "PRO2"`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró la forma de cobro especificada");
+      cuenta_forma_cobro = result[0]["valor_str"];
+      cuenta_secundaria_forma_cobro = result[1]["valor_str"];
+    } catch (error) {
+      throw new Error(
+        `Error al buscar cuentas contables de la forma de cobro ${
+          error.message ? `: ${error.message}` : ""
+        }`
+      );
+    }
+  } else {
+    try {
+      const result = await giama_renting.query(
+        "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id_forma_cobro],
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró la forma de cobro especificada");
+      cuenta_forma_cobro = result[0]["cuenta_contable"];
+      cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
+    } catch (error) {
+      throw new Error(
+        `Error al buscar cuentas contables de la forma de cobro ${
+          error.message ? `: ${error.message}` : ""
+        }`
+      );
+    }
   }
+  //obtengo numero asiento
   try {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
@@ -424,7 +624,30 @@ async function registrarCostoIngresoIndividual({
       throw error;
     }
   }
-
+  if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
+    await movimientosProveedores({
+      cod_proveedor,
+      tipo_comprobante,
+      numero_comprobante_1,
+      numero_comprobante_2,
+      importe_neto,
+      importe_total,
+      cuenta_concepto,
+      NroAsiento,
+      NroAsientoSecundario,
+      usuario,
+      transaction_asientos,
+    });
+  }
+  if (ingreso_egreso === "E") {
+    FA_FC = tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+    comprobante = `${FA_FC}-${padWithZeros(
+      numero_comprobante_1,
+      5
+    )}-${padWithZeros(numero_comprobante_2, 8)}`;
+  } else {
+    comprobante = null;
+  }
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
@@ -436,13 +659,13 @@ async function registrarCostoIngresoIndividual({
           id_vehiculo,
           fecha,
           id_concepto,
-          comprobante,
+          comprobante ? comprobante : null,
           importeNetoFinal,
           importeIvaFinal,
           importeTotalFinal,
           observacion,
           NroAsiento,
-          id_forma_cobro,
+          id_forma_cobro ? id_forma_cobro : null,
           id_cliente ? id_cliente : null,
           nro_recibo ? nro_recibo : null,
         ],

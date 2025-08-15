@@ -11,6 +11,7 @@ import {
   getParametroAMRT,
   getEstados,
   getPlanCuentas,
+  getProveedores,
 } from "../controllers/generalesController.js";
 import { auth } from "../middlewares/auth.js";
 
@@ -34,5 +35,6 @@ generalesRouter.get("/sucursales", auth, getSucursales);
 generalesRouter.get("/precios_modelos", auth, getPreciosModelos);
 generalesRouter.get("/estados", auth, getEstados);
 generalesRouter.get("/plan_cuentas", auth, getPlanCuentas);
+generalesRouter.get("/proveedores", auth, getProveedores);
 generalesRouter.get("/AMRT", auth, getParametroAMRT);
 export default generalesRouter;
