@@ -5,7 +5,7 @@ import { getCostosIngresosByIdVehiculo, getConceptosCostos,
 import {getVehiculos, getVehiculosById, resetVehiculo} from '../../reducers/Vehiculos/vehiculosSlice'
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
 import {getFormasDeCobro} from "../../reducers/Alquileres/alquileresSlice.js"
-import {getModelos} from '../../reducers/Generales/generalesSlice'
+import {getModelos, getProveedores} from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
 import DataGrid, {Column, Scrolling, Summary, TotalItem} from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
@@ -30,7 +30,7 @@ const {vehiculo, vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
 const {formasDeCobro} = useSelector((state) => state.alquileresReducer)
 const {username} = useSelector((state) => state.loginReducer)
-const {modelos} = useSelector((state) => state.generalesReducer)
+const {modelos, proveedores} = useSelector((state) => state.generalesReducer)
 const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
 const [form, setForm] = useState({
     id_vehiculo: id ? id : "",
@@ -38,18 +38,24 @@ const [form, setForm] = useState({
     id_concepto: '',
     id_forma_cobro: '',
     id_cliente: '',
-    comprobante: '',
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
     observacion: '',
     cuenta: '',
+    ingreso_egreso: '',
     genera_recibo: 1,
+    cta_cte_proveedores: 1,
     cuenta_secundaria: '',
+    tipo_comprobante: '',
+    numero_comprobante_1: '',
+    numero_comprobante_2: '',
+    cod_proveedor: '',
     usuario: username,
 })
 const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
 const [inputGeneraRecibo, setInputGeneraRecibo] = useState(false)
+const [inputProveedores, setInputProveedores] = useState(false)
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
     const pageCount = Math.ceil(costos_ingresos_vehiculo.length / 5);
@@ -61,8 +67,9 @@ useEffect(() => {
 dispatch(getConceptosCostos());
 dispatch(getModelos());
 dispatch(getVehiculos());
-dispatch(getClientes())
-dispatch(getFormasDeCobro())
+dispatch(getClientes());
+dispatch(getFormasDeCobro());
+dispatch(getProveedores());
 locale("es");
 
 return () => {
@@ -101,14 +108,19 @@ useToastFeedback({
           id_cliente: '',
           id_forma_cobro: '',
           id_concepto: '',
-          comprobante: '',
           importe_neto: '',
           importe_iva: '',
           importe_total: '',
           observacion: '',
           cuenta: '',
           cuenta_secundaria: '',
+          ingreso_egreso: '',
           genera_recibo: 1,
+          cta_cte_proveedores: 1,
+          cod_proveedor: '',
+          tipo_comprobante: '',
+          numero_comprobante_1: '',
+          numero_comprobante_2: '',
           usuario: username
           })
         }else if (!id){
@@ -118,14 +130,19 @@ useToastFeedback({
           id_forma_cobro: '',
           fecha: '',
           id_concepto: '',
-          comprobante: '',
           importe_neto: '',
           importe_iva: '',
           importe_total: '',
           observacion: '',
           cuenta: '',
           cuenta_secundaria: '',
+          ingreso_egreso: '',
           genera_recibo: 1,
+          cta_cte_proveedores: 1,
+          cod_proveedor: '',
+          tipo_comprobante: '',
+          numero_comprobante_1: '',
+          numero_comprobante_2: '',
           usuario: username
           })
         }
@@ -162,6 +179,14 @@ useEffect(() => {
     setInputGeneraRecibo(true)
   }else{
     setInputGeneraRecibo(false)
+  }
+}, [form.id_concepto, conceptos])
+
+useEffect(() => {
+  if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "E"){
+    setInputProveedores(true)
+  }else{
+    setInputProveedores(false)
   }
 }, [form.id_concepto, conceptos])
 
@@ -211,26 +236,82 @@ const handleActualizar = ( ) => {
 const handleChange = (e) => {
   const { name, value } = e.target;
   if(value && name === "importe_neto"){
-        setForm({
+    if(!inputProveedores){
+      setForm({
        ...form,
        [name]: parseFloat(value),
        "importe_iva": parseFloat(value) * 0.21,
        "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
      }); 
+    }else if(inputProveedores){
+      if(form.tipo_comprobante == 3){
+      setForm({
+       ...form,
+       [name]: parseFloat(value),
+       "importe_iva": 0,
+       "importe_total": parseFloat(value)
+      }); 
+      }
+      else if(form.tipo_comprobante == 1){
+      setForm({
+       ...form,
+       [name]: parseFloat(value),
+       "importe_iva": parseFloat(value) * 0.21,
+       "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
+     }); 
+      }
+
+    }
   }
   else if(value && name === "id_concepto"){
       setForm({
      ...form,
      [name]: value,
      "cuenta": conceptos?.find(e => e.id == value)?.cuenta_contable,
-     "cuenta_secundaria": conceptos?.find(e => e.id == value)?.cuenta_secundaria
+     "cuenta_secundaria": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
+     "ingreso_egreso": conceptos.find(e => e.id == value)?.ingreso_egreso,
+     "id_forma_cobro": ""
    }); 
   }
-    else if(value && name === "importe_iva"){
+  else if(value && name === "importe_iva"){
       setForm({
      ...form,
      [name]: value,
      "importe_total": parseFloat(value) + parseFloat(form["importe_neto"])
+   }); 
+  }
+  else if(value && name == "numero_comprobante_1"){
+    if (value.length > 5) value = value.slice(0, 5)
+      setForm({
+     ...form,
+     [name]: value,
+   }); 
+  }
+  else if(value && name == "numero_comprobante_2"){
+    if (value.length > 8) value = value.slice(0, 8)
+      setForm({
+     ...form,
+     [name]: value,
+   }); 
+  }
+  else if(value && name == "cod_proveedor"){
+    setForm({
+     ...form,
+     [name]: value,
+     tipo_comprobante: proveedores?.find(e => e.Codigo == value)?.TipoResponsable == 1 ? 1 : 3,
+      importe_neto: 0,
+     importe_iva: 0,
+     importe_total: 0
+   }); 
+  }
+  else if(value && name == "tipo_comprobante"){
+      setForm({
+     ...form,
+     [name]: value,
+     importe_neto: 0,
+     importe_iva: 0,
+     importe_total: 0
+     
    }); 
   }
   else{
@@ -382,11 +463,6 @@ return (
         onChange={handleChange}/>
       </div>
       <div className={styles.inputContainer}>
-          <span>Comprobante</span>
-          <input type="text" name='comprobante' value={form["comprobante"]} 
-        onChange={handleChange}/>
-      </div>
-      <div className={styles.inputContainer}>
         <span>Concepto</span>
         <select name="id_concepto" style={{width: "130%"}}  value={form["id_concepto"]} 
         onChange={handleChange} id="">
@@ -398,6 +474,23 @@ return (
           }
         </select>
       </div>
+      {
+        inputProveedores && 
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", height: "3rem"}}>
+      <label style={{fontSize: "15px"}}>Cuenta corriente proveedores</label>
+      <input
+        type="checkbox"
+        checked={form.cta_cte_proveedores}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            cta_cte_proveedores: e.target.checked ? 1 : 0,
+          })
+        }
+        />
+
+      </div>
+      }
       {
         inputGeneraRecibo &&
     <div className={styles.inputWrapper} >
@@ -418,6 +511,49 @@ return (
       </div>
       </div>
       }
+      { inputProveedores && form.cta_cte_proveedores == 1 &&
+      <div className={styles.inputContainer}>
+        <span>Proveedores</span>
+        <select name="cod_proveedor" style={{width: "130%"}}  value={form["cod_proveedor"]} 
+        onChange={handleChange} id="">
+          <option value={""} disabled selected>{"Seleccione un proveedor"}</option>
+          {
+            proveedores?.length && proveedores?.map(e => {
+            return <option key={e.Codigo} value={e.Codigo}>{e.RazonSocial}</option>
+            })
+          }
+        </select>
+      </div>
+
+      }
+      { inputProveedores &&
+      <div className={styles.inputContainer}>
+        <span>Tipo comprobante</span>
+        <select name="tipo_comprobante" style={{width: "130%"}}  value={form["tipo_comprobante"]} 
+        onChange={handleChange} id="">
+          <option value={0}></option>
+          <option value={1}>FA</option>
+          <option value={3}>FC</option>
+        </select>
+      </div>
+
+      }
+      { inputProveedores &&
+      <div className={styles.inputContainer}>
+        <span>Punto de venta</span>
+        <input type="number" name='numero_comprobante_1' value={form.numero_comprobante_1}
+        onChange={handleChange} max="99999" />
+      </div>
+
+      }
+      { inputProveedores &&
+      <div className={styles.inputContainer}>
+        <span>Nº Comprobante</span>
+        <input type="number" name='numero_comprobante_2' value={form.numero_comprobante_2}
+        onChange={handleChange} max="99999999" />
+      </div>
+
+      }
       <div className={styles.inputContainer}>
           <span>Importe neto</span>
           <input type="number" name='importe_neto' value={form["importe_neto"]} 
@@ -426,6 +562,7 @@ return (
       <div className={styles.inputContainer}>
           <span>IVA</span>
           <input type="number" name='importe_iva' value={form["importe_iva"]} 
+          disabled={inputProveedores && form.cta_cte_proveedores == 1 && form.tipo_comprobante == 3 ? true : false}
           onChange={handleChange}/>
       </div>
       <div className={styles.inputContainer}>
@@ -434,7 +571,7 @@ return (
       </div>
       <div className={styles.inputContainer}>
         <span>Forma de cobro</span>
-        <select name="id_forma_cobro"  value={form["id_forma_cobro"]} 
+        <select name="id_forma_cobro" disabled={form.cta_cte_proveedores === 1 && form.ingreso_egreso === "E" ? true : false}  value={form["id_forma_cobro"]} 
         onChange={handleChange} id="">
           <option value={""} disabled selected>{"Seleccione una opción"}</option>
           {
