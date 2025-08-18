@@ -352,7 +352,11 @@ export const postAlquiler = async (req, res) => {
       "D",
       importe_total,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
     );
     await asientoContable(
       "c_movimientos",
@@ -361,7 +365,11 @@ export const postAlquiler = async (req, res) => {
       "H",
       importe_neto,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
     );
     await asientoContable(
       "c_movimientos",
@@ -370,7 +378,11 @@ export const postAlquiler = async (req, res) => {
       "H",
       importe_iva,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
     );
     //asientos secundarios
     await asientoContable(
@@ -389,7 +401,11 @@ export const postAlquiler = async (req, res) => {
       "H",
       importe_neto,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
     );
     await asientoContable(
       "c2_movimientos",
@@ -398,7 +414,11 @@ export const postAlquiler = async (req, res) => {
       "H",
       importe_iva,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
     );
   } catch (error) {
     console.log(error);

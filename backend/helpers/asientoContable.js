@@ -11,33 +11,71 @@ export const asientoContable = async (
   concepto,
   transaction,
   comprobante,
-  Fecha
+  Fecha,
+  AsientoSecundario,
+  TipoComprobante
 ) => {
-  try {
-    await pa7_giama_renting.query(
-      `INSERT INTO ${db} 
-    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante) VALUES (:Fecha,:NroAsiento,:cuenta_contable,
-    :DH,:importe,:concepto,:comprobante)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: {
-          Fecha: Fecha ? Fecha : getTodayDate(),
-          NroAsiento,
-          cuenta_contable,
-          DH,
-          importe,
-          concepto,
-          comprobante: comprobante ?? null,
-        },
-        transaction: transaction,
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    throw new Error(
-      `Error al generar un asiento ${
-        error.message ?? `${" :"}${error.message}`
-      }`
-    );
+  if (db === "c_movimientos") {
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO ${db} 
+    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, AsientoSecundario, TipoComprobante) 
+    VALUES (:Fecha,:NroAsiento,:cuenta_contable,
+    :DH,:importe,:concepto,:comprobante,:AsientoSecundario, :TipoComprobante)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: {
+            Fecha: Fecha ? Fecha : getTodayDate(),
+            NroAsiento,
+            cuenta_contable,
+            DH,
+            importe,
+            concepto,
+            comprobante: comprobante ?? null,
+            AsientoSecundario: AsientoSecundario ? AsientoSecundario : null,
+            TipoComprobante: TipoComprobante ? TipoComprobante : null,
+          },
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      throw new Error(
+        `Error al generar un asiento ${
+          error.message ?? `${" :"}${error.message}`
+        }`
+      );
+    }
+  }
+  if (db === "c2_movimientos") {
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO ${db} 
+    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, TipoComprobante) 
+    VALUES (:Fecha,:NroAsiento,:cuenta_contable,
+    :DH,:importe,:concepto,:comprobante, :TipoComprobante)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: {
+            Fecha: Fecha ? Fecha : getTodayDate(),
+            NroAsiento,
+            cuenta_contable,
+            DH,
+            importe,
+            concepto,
+            comprobante: comprobante ?? null,
+            TipoComprobante: TipoComprobante ? TipoComprobante : null,
+          },
+          transaction: transaction,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      throw new Error(
+        `Error al generar un asiento ${
+          error.message ?? `${" :"}${error.message}`
+        }`
+      );
+    }
   }
 };

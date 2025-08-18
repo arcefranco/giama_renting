@@ -578,7 +578,11 @@ export const postVehiculo = async (req, res) => {
       "D",
       costo, //costo neto vehiculo
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
     );
     await asientoContable(
       "c_movimientos",
@@ -587,7 +591,11 @@ export const postVehiculo = async (req, res) => {
       "D",
       importe_iva,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
     );
     await asientoContable(
       "c_movimientos",
@@ -596,7 +604,11 @@ export const postVehiculo = async (req, res) => {
       "H",
       importe_total,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
     );
     //asientos secundarios
     await asientoContable(
@@ -606,7 +618,11 @@ export const postVehiculo = async (req, res) => {
       "D",
       costo, //costo neto vehiculo
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
     );
     await asientoContable(
       "c2_movimientos",
@@ -615,7 +631,11 @@ export const postVehiculo = async (req, res) => {
       "D",
       importe_iva,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
     );
     await asientoContable(
       "c2_movimientos",
@@ -624,7 +644,11 @@ export const postVehiculo = async (req, res) => {
       "H",
       importe_total,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
     );
   } catch (error) {
     console.log(error);

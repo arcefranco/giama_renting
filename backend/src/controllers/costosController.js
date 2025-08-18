@@ -357,7 +357,8 @@ const asientos_costos_ingresos = async (
   ingreso_egreso,
   transaction,
   NroAsiento,
-  NroAsientoSecundario
+  NroAsientoSecundario,
+  TipoComprobante
 ) => {
   let cuentaIVA;
   let cuentaSecundariaIVA;
@@ -389,7 +390,9 @@ const asientos_costos_ingresos = async (
       observacion,
       transaction,
       comprobante,
-      Fecha
+      Fecha,
+      NroAsientoSecundario,
+      TipoComprobante
     );
     await asientoContable(
       "c_movimientos",
@@ -400,7 +403,9 @@ const asientos_costos_ingresos = async (
       observacion,
       transaction,
       comprobante,
-      Fecha
+      Fecha,
+      NroAsientoSecundario,
+      TipoComprobante
     );
     await asientoContable(
       "c_movimientos",
@@ -411,7 +416,9 @@ const asientos_costos_ingresos = async (
       observacion,
       transaction,
       comprobante,
-      Fecha
+      Fecha,
+      NroAsientoSecundario,
+      TipoComprobante
     );
     if (cuenta_secundaria_concepto) {
       await asientoContable(
@@ -423,7 +430,9 @@ const asientos_costos_ingresos = async (
         observacion,
         transaction,
         comprobante,
-        Fecha
+        Fecha,
+        null,
+        TipoComprobante
       );
       await asientoContable(
         "c2_movimientos",
@@ -434,7 +443,9 @@ const asientos_costos_ingresos = async (
         observacion,
         transaction,
         comprobante,
-        Fecha
+        Fecha,
+        null,
+        TipoComprobante
       );
       await asientoContable(
         "c2_movimientos",
@@ -445,7 +456,9 @@ const asientos_costos_ingresos = async (
         observacion,
         transaction,
         comprobante,
-        Fecha
+        Fecha,
+        null,
+        TipoComprobante
       );
     }
   } catch (error) {
@@ -550,6 +563,16 @@ async function registrarCostoIngresoIndividual({
       );
     }
   }
+  if (ingreso_egreso === "E") {
+    FA_FC = tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+    comprobante = `${FA_FC}-${padWithZeros(
+      numero_comprobante_1,
+      5
+    )}-${padWithZeros(numero_comprobante_2, 8)}`;
+  } else {
+    FA_FC = null;
+    comprobante = null;
+  }
   //obtengo numero asiento
   try {
     NroAsiento = await getNumeroAsiento();
@@ -572,7 +595,8 @@ async function registrarCostoIngresoIndividual({
       ingreso_egreso,
       transaction_asientos,
       NroAsiento,
-      NroAsientoSecundario
+      NroAsientoSecundario,
+      FA_FC
     );
   } catch (error) {
     await transaction_asientos.rollback();
@@ -638,15 +662,6 @@ async function registrarCostoIngresoIndividual({
       usuario,
       transaction_asientos,
     });
-  }
-  if (ingreso_egreso === "E") {
-    FA_FC = tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
-    comprobante = `${FA_FC}-${padWithZeros(
-      numero_comprobante_1,
-      5
-    )}-${padWithZeros(numero_comprobante_2, 8)}`;
-  } else {
-    comprobante = null;
   }
   try {
     await giama_renting.query(
@@ -730,6 +745,10 @@ export const prorrateoIE = async (req, res) => {
   let transaction_asientos = await pa7_giama_renting.transaction();
   let FA_FC =
     tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+  let numero_comprobante = `${padWithZeros(
+    numero_comprobante_1,
+    5
+  )}${padWithZeros(numero_comprobante_2, 8)}`;
   let comprobante = `${FA_FC}-${padWithZeros(
     numero_comprobante_1,
     5
@@ -835,8 +854,10 @@ export const prorrateoIE = async (req, res) => {
       importe_iva,
       observacion,
       transaction_asientos,
-      comprobante,
-      getTodayDate()
+      numero_comprobante,
+      getTodayDate(),
+      NroAsientoSecundario,
+      FA_FC
     );
     asientoContable(
       "c2_movimientos",
@@ -846,8 +867,10 @@ export const prorrateoIE = async (req, res) => {
       importe_iva,
       observacion,
       transaction_asientos,
-      comprobante,
-      getTodayDate()
+      numero_comprobante,
+      getTodayDate(),
+      null,
+      FA_FC
     );
     asientoContable(
       "c_movimientos",
@@ -857,8 +880,10 @@ export const prorrateoIE = async (req, res) => {
       importe_total,
       observacion,
       transaction_asientos,
-      comprobante,
-      getTodayDate()
+      numero_comprobante,
+      getTodayDate(),
+      NroAsientoSecundario,
+      FA_FC
     );
     asientoContable(
       "c2_movimientos",
@@ -868,8 +893,10 @@ export const prorrateoIE = async (req, res) => {
       importe_total,
       observacion,
       transaction_asientos,
-      comprobante,
-      getTodayDate()
+      numero_comprobante,
+      getTodayDate(),
+      null,
+      FA_FC
     );
   } catch (error) {
     return res.send({ status: false, message: error.message });
@@ -940,8 +967,10 @@ export const prorrateoIE = async (req, res) => {
         importeAUsar,
         observacion + ` (${dominio})`,
         transaction_asientos,
-        comprobante,
-        getTodayDate()
+        numero_comprobante,
+        getTodayDate(),
+        NroAsientoSecundario,
+        FA_FC
       );
       await asientoContable(
         "c2_movimientos",
@@ -951,8 +980,10 @@ export const prorrateoIE = async (req, res) => {
         importeAUsar,
         observacion + ` (${dominio})`,
         transaction_asientos,
-        comprobante,
-        getTodayDate()
+        numero_comprobante,
+        getTodayDate(),
+        null,
+        FA_FC
       );
     } catch (error) {
       transaction_costos_ingresos.rollback();
