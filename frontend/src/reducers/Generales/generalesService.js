@@ -45,6 +45,10 @@ const getProveedores = async () => {
   return getFunction("generales/proveedores");
 };
 
+const getProveedoresVehiculo = async () => {
+  return getFunction("generales/proveedores_vehiculo");
+};
+
 const getParametroAMRT = async () => {
   try {
     const response = await axios.get(
@@ -77,6 +81,7 @@ const generalesService = {
   getParametroAMRT,
   getPlanCuentas,
   getProveedores,
+  getProveedoresVehiculo,
   getEstados,
 };
 export default generalesService;

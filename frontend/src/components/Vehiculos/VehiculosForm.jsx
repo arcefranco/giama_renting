@@ -1,11 +1,13 @@
 import React, {useState, useEffect, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import styles from './VehiculosForm.module.css'
-import { getModelos, getSucursales, getPreciosModelos, getParametroAMRT, getPlanCuentas } from '../../reducers/Generales/generalesSlice'
+import { getModelos, getSucursales, getPreciosModelos, 
+  getParametroAMRT, getPlanCuentas, getProveedoresVehiculo } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import { useToastFeedback } from '../../customHooks/useToastFeedback'
+import Swal from "sweetalert2"
 const VehiculosForm = () => {
 const dispatch = useDispatch()
   useEffect(() => {
@@ -14,7 +16,8 @@ const dispatch = useDispatch()
       dispatch(getSucursales()),
       dispatch(getPreciosModelos()),
       dispatch(getParametroAMRT()),
-      dispatch(getPlanCuentas())
+      dispatch(getPlanCuentas()),
+      dispatch(getProveedoresVehiculo())
     ])
   }, [])
   
@@ -35,14 +38,17 @@ const dispatch = useDispatch()
     meses_amortizacion: '',
     color: '',
     sucursal: '',
-    nro_factura_compra: '',
+    numero_comprobante_1: '',
+    numero_comprobante_2: '',
     cuenta_contable: '',
     cuenta_secundaria: '',
+    proveedor_vehiculo: '',
     usuario: username
     
   })
 
-  const {modelos, sucursales, preciosModelos, AMRT, plan_cuentas} = useSelector((state) => state.generalesReducer)
+  const {modelos, sucursales, preciosModelos, 
+    AMRT, plan_cuentas, proveedores_vehiculo} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
@@ -74,14 +80,24 @@ useToastFeedback({
     meses_amortizacion: '',
     color: '',
     sucursal: '',
-    nro_factura_compra: '',
+    numero_comprobante_1: '',
+    numero_comprobante_2: '',
     cuenta_contable: '',
-    cuenta_secundaria: ''
+    cuenta_secundaria: '',
+    proveedor_vehiculo: '',
   })
   setImagenes([])
   }
 })
 
+useEffect(() => {
+if(proveedores_vehiculo){
+  setFormData({
+    ...form,
+    proveedor_vehiculo: proveedores_vehiculo.find(e => e.Codigo == 11)?.Codigo
+  })
+}
+}, [proveedores_vehiculo])
 
 useEffect(() => {
 if(AMRT) {
@@ -126,21 +142,22 @@ const handleFileChange = (e) => {
 };
 const handleSubmit = async (e) => {
     e.preventDefault();
-/*     if(!form.modelo || (!form.dominio && !form.dominio_provisorio)){
-      alert("Faltan datos")
-    }else{ */
-    const formData = new FormData();
-    // Agregás los campos normales
-    Object.entries(form).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
-  
-    // Agregás las imágenes
-    imagenes.forEach((img) => {
-      formData.append("images", img);
-    });
-    dispatch(postVehiculo(formData))
-/*     } */
+    if(!form.numero_comprobante_1 || !form.numero_comprobante_2){
+      Swal.fire("Debe especificar punto de venta y nº comprobante")
+    }else{
+      const formData = new FormData();
+      // Agrego los campos normales
+      Object.entries(form).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+    
+      // Agrego las imágenes
+      imagenes.forEach((img) => {
+        formData.append("images", img);
+      });
+      dispatch(postVehiculo(formData))
+
+    }
 }
 
   return (
@@ -232,8 +249,13 @@ const handleSubmit = async (e) => {
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
-        <span>Nro. Factura compra</span>
-        <input type="text" name='nro_factura_compra' value={form["nro_factura_compra"]}
+        <span>Punto de venta</span>
+        <input type="text" name='numero_comprobante_1' value={form["numero_comprobante_1"]}
+        onChange={handleChange} />
+        </div>
+        <div className={styles.inputContainer}>
+        <span>Nº comprobante</span>
+        <input type="text" name='numero_comprobante_2' value={form["numero_comprobante_2"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
@@ -243,7 +265,7 @@ const handleSubmit = async (e) => {
         </div>
         <div className={styles.inputContainer}>
         <span>Fecha inicio de amortización</span>
-        <input type="date" name='fecha_inicio_amortizaion' value={form["fecha_inicio_amortizaion"]}
+        <input type="date" name='fecha_inicio_amortizacion' value={form["fecha_inicio_amortizacion"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>
@@ -262,6 +284,14 @@ const handleSubmit = async (e) => {
             <option value="">Seleccione una sucursal</option>
             {sucursales.map((m) => (
               <option key={m.id} value={m.id}>{m.nombre}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.inputContainer}>
+          <span>Proveedor</span>
+          <select name="proveedor_vehiculo" value={form.proveedor_vehiculo} disabled>
+            {proveedores_vehiculo.map((m) => (
+              <option key={m.Codigo} value={m.Codigo}>{m.RazonSocial}</option>
             ))}
           </select>
         </div>
