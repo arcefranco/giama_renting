@@ -27,6 +27,8 @@ import {
 } from "../../helpers/getNumeroAsiento.js";
 import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
+import { movimientosProveedores } from "../../helpers/movimientosProveedores.js";
+import { padWithZeros } from "../../helpers/padWithZeros.js";
 
 /*FUNCIONES DEPRECADAS */
 /* export const getAllCostosPeriodo = async (req, res) => {
@@ -441,23 +443,27 @@ export const postVehiculo = async (req, res) => {
     costo,
     color,
     sucursal,
-    nro_factura_compra,
+    numero_comprobante_1,
+    numero_comprobante_2,
     usuario,
     cuenta_contable,
     cuenta_secundaria,
+    proveedor_vehiculo,
   } = req.body;
   let cuentaRODN;
-  let cuentaRODT;
   let cuentaIC21;
   let cuentaIC22;
   let cuentaRDN2;
-  let cuentaRDT2;
   let NroAsiento;
   let NroAsientoSecundario;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let insertId;
   let meses_amortizacion;
+  let numero_comprobante = `${padWithZeros(
+    numero_comprobante_1,
+    5
+  )}${padWithZeros(numero_comprobante_2, 8)}`;
   const camposObligatorios = ["modelo", "costo", "sucursal"];
   const mensajeError = validarCamposObligatorios(
     req.body,
@@ -485,11 +491,9 @@ export const postVehiculo = async (req, res) => {
   try {
     meses_amortizacion = await getParametro("AMRT");
     cuentaRODN = await getParametro("RODN");
-    cuentaRODT = await getParametro("RODT");
     cuentaIC21 = await getParametro("IC21");
     cuentaIC22 = await getParametro("IC22");
     cuentaRDN2 = await getParametro("RDN2");
-    cuentaRDT2 = await getParametro("RDT2");
   } catch (error) {
     const { body } = handleError(error, "parámetro");
     return res.send(body);
@@ -508,7 +512,7 @@ export const postVehiculo = async (req, res) => {
         precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
         kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, 
         nro_factura_compra, estado_actual, usuario_ultima_modificacion)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -526,7 +530,7 @@ export const postVehiculo = async (req, res) => {
           meses_amortizacion,
           color,
           sucursal,
-          nro_factura_compra,
+          numero_comprobante,
           1,
           usuario,
         ],
@@ -567,6 +571,30 @@ export const postVehiculo = async (req, res) => {
         message: "Error al guardar las imágenes del vehículo",
       });
     }
+  }
+  //movimiento proveedores
+  try {
+    await movimientosProveedores({
+      cod_proveedor: proveedor_vehiculo,
+      tipo_comprobante: 1,
+      numero_comprobante_1,
+      numero_comprobante_2,
+      importe_neto: costo,
+      importe_total: costo,
+      cuenta_concepto: cuenta_contable,
+      NroAsiento,
+      NroAsientoSecundario,
+      usuario: usuario,
+      transaction_asientos: transaction_pa7_giama_renting,
+    });
+  } catch (error) {
+    transaction_giama_renting.rollback();
+    const { body } = handleError(
+      error,
+      "Movimientos proveedores",
+      acciones.post
+    );
+    return res.send(body);
   }
   //asientos
   try {
@@ -640,7 +668,7 @@ export const postVehiculo = async (req, res) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
-      cuentaRDT2 /**nueva cuenta */,
+      cuenta_secundaria /**nueva cuenta */,
       "H",
       importe_total,
       concepto,

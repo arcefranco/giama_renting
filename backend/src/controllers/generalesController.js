@@ -183,3 +183,18 @@ export const getProveedores = async (req, res) => {
     return res.send(body);
   }
 };
+
+export const getProveedoresVehiculo = async (req, res) => {
+  try {
+    const resultado = await pa7_giama_renting.query(
+      "SELECT Codigo, RazonSocial, TipoResponsable FROM c_proveedores WHERE Codigo = 11",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "Cuentas contables", acciones.get);
+    return res.send(body);
+  }
+};
