@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 export const auth = (req, res, next) => {
   const token = req.cookies.authToken;
   if (!token) {
-    return res.send({ status: false, message: "No autorizado: falta token." });
+    return res.send({
+      status: false,
+      message: "No autorizado: vuelva a iniciar sesión",
+    });
   }
 
   try {

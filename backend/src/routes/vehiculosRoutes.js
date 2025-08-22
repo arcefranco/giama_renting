@@ -19,6 +19,7 @@ import {
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 import { auth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/roles.js";
 
 const vehiculosRouter = Router();
 
@@ -29,7 +30,7 @@ vehiculosRouter.use((req, res, next) => {
   );
   next();
 });
-vehiculosRouter.get("/getVehiculos", auth, getVehiculos);
+vehiculosRouter.get("/getVehiculos", auth, authorizeRoles("3"), getVehiculos);
 vehiculosRouter.post("/getVehiculosById", auth, getVehiculosById);
 vehiculosRouter.post(
   "/postVehiculo",

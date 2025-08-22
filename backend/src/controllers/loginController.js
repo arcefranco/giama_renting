@@ -142,7 +142,7 @@ export const logIn = async (req, res) => {
       const token = jwt.sign(
         {
           user: user[0].email,
-          /*           roles: roles.map((item) => item.codigo), */
+          roles: user[0].roles,
           id: user[0].id,
         },
         process.env.SECRET,
