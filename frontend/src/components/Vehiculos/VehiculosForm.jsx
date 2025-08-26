@@ -4,7 +4,7 @@ import styles from './VehiculosForm.module.css'
 import { getModelos, getSucursales, getPreciosModelos, 
   getParametroAMRT, getPlanCuentas, getProveedoresVehiculo } from '../../reducers/Generales/generalesSlice'
 import { postVehiculo, reset } from '../../reducers/Vehiculos/vehiculosSlice'
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import { useToastFeedback } from '../../customHooks/useToastFeedback'
 import Swal from "sweetalert2"
@@ -190,16 +190,6 @@ const handleSubmit = async (e) => {
           </select>
         </div>
         <div className={styles.inputContainer}>
-          <span>Dominio</span>
-          <input type="text" name='dominio' value={form["dominio"]}
-          onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Dominio provisorio</span>
-          <input type="text" name='dominio_provisorio' value={form["dominio_provisorio"]}
-          onChange={handleChange}/>
-        </div>
-        <div className={styles.inputContainer}>
           <span>Nro. Chasis</span>
           <input type="text" name='nro_chasis' value={form["nro_chasis"]}
           onChange={handleChange} />
@@ -244,7 +234,7 @@ const handleSubmit = async (e) => {
           </select>
         </div>
         <div className={styles.inputContainer}>
-        <span>Costo neto del vehículo</span>
+        <span>Costo total del vehículo</span>
         <input type="number" name='costo' value={form["costo"]}
         onChange={handleChange} />
         </div>
@@ -256,16 +246,6 @@ const handleSubmit = async (e) => {
         <div className={styles.inputContainer}>
         <span>Nº comprobante</span>
         <input type="text" name='numero_comprobante_2' value={form["numero_comprobante_2"]}
-        onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Dispositivo Peaje</span>
-        <input type="number" name='dispositivo' value={form["dispositivo"]}
-        onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Fecha inicio de amortización</span>
-        <input type="date" name='fecha_inicio_amortizacion' value={form["fecha_inicio_amortizacion"]}
         onChange={handleChange} />
         </div>
         <div className={styles.inputContainer}>

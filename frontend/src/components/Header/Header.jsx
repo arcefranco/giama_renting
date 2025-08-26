@@ -9,7 +9,8 @@ const menuItems = [
           { label: "Formulario de ingreso", to: "/vehiculos" },
           { label: "Listado vehículos", to: "/vehiculosReporte" },
           { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
-          { label: "Situación de la flota", to: "/vehiculos/situacionFlota" }
+          { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
+          { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva" }
         ],
 /*     submenus: [
       {

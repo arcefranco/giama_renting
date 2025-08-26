@@ -15,6 +15,15 @@ const getVehiculosById = async (form) => {
 const postVehiculo = async (form) => {
   return postFunction("vehiculos/postVehiculo", form);
 };
+const postVehiculosMasivos = async ({ file, usuario }) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("usuario", usuario);
+
+  return postFunction("vehiculos/postVehiculosMasivos", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
 const updateVehiculo = async (form) => {
   return postFunction("vehiculos/updateVehiculo", form);
 };
@@ -81,6 +90,7 @@ const vehiculosService = {
   getVehiculos,
   getVehiculosById,
   postVehiculo,
+  postVehiculosMasivos,
   updateVehiculo,
   getImagenesVehiculos,
   eliminarImagenes,

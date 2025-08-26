@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import vehiculosService from "./vehiculosService.js";
 import { handleAsyncThunk, responses } from "../../helpers/handleAsyncThunk.js";
+import axios from "axios";
 const initialState = {
   vehiculos: [],
   imagenes: [],
@@ -88,6 +89,16 @@ export const postImagenesVehiculo = createAsyncThunk(
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
       () => vehiculosService.postImagenesVehiculo(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const postVehiculosMasivos = createAsyncThunk(
+  "vehiculos/postVehiculosMasivos",
+  async (file, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.postVehiculosMasivos(file),
       responses.successObject,
       rejectWithValue
     )
@@ -245,6 +256,21 @@ export const vehiculosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
+    builder.addCase(postVehiculosMasivos.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postVehiculosMasivos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postVehiculosMasivos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
     builder.addCase(updateVehiculo.pending, (state) => {
       state.isLoading = true;
     });
@@ -388,38 +414,6 @@ export const vehiculosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
-    /*     builder.addCase(getAllAlquileresPeriodo.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(getAllAlquileresPeriodo.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.message = "";
-      state.fichaAllAlquileres = action.payload;
-    });
-    builder.addCase(getAllAlquileresPeriodo.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    }); */
-    /*     builder.addCase(getAllCostosPeriodo.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(getAllCostosPeriodo.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.message = "";
-      state.fichaAllCostos = action.payload;
-    });
-    builder.addCase(getAllCostosPeriodo.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    }); */
     builder.addCase(getAmortizacion.pending, (state) => {
       state.isLoading = true;
     });
@@ -437,22 +431,6 @@ export const vehiculosSlice = createSlice({
       state.message = action.payload.message;
       state.amortizacion = null;
     });
-    /*     builder.addCase(getAllAmortizaciones.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(getAllAmortizaciones.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.message = "";
-      state.fichaAllAmortizaciones = action.payload;
-    });
-    builder.addCase(getAllAmortizaciones.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    }); */
   },
 });
 export const { reset, resetVehiculo } = vehiculosSlice.actions;
