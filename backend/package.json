@@ -16,7 +16,8 @@
     "nodemailer-express-handlebars": "^7.0.0",
     "nodemon": "^3.1.9",
     "sequelize": "^6.37.7",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
   },
   "name": "backend",
   "version": "1.0.0",

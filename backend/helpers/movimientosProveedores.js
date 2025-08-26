@@ -9,6 +9,7 @@ export const movimientosProveedores = async ({
   numero_comprobante_1,
   numero_comprobante_2,
   importe_neto,
+  importe_iva,
   importe_total,
   cuenta_concepto,
   NroAsiento,
@@ -20,18 +21,14 @@ export const movimientosProveedores = async ({
     tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
   let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
-  console.log(
-    "ESTO ES NUMERO COMPROBANTE FORMATEADO: ",
-    numero_comprobante_2_formateado
-  );
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
   let insertMovProv;
   //c_movprov
   try {
     const result = await pa7_giama_renting.query(
       `INSERT INTO c_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, 
-      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?)`,
+      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, Iva1,
+      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -41,6 +38,7 @@ export const movimientosProveedores = async ({
           NroComprobante,
           getTodayDate(),
           importe_neto,
+          importe_iva,
           21,
           importe_total,
         ],
@@ -60,8 +58,8 @@ export const movimientosProveedores = async ({
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, 
-      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?)`,
+      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, Iva1,
+      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -71,6 +69,7 @@ export const movimientosProveedores = async ({
           NroComprobante,
           getTodayDate(),
           importe_neto,
+          importe_iva,
           21,
           importe_total,
         ],

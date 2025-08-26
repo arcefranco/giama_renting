@@ -29,6 +29,7 @@ import { validarCamposObligatorios } from "../../helpers/verificarCampoObligator
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
 import { movimientosProveedores } from "../../helpers/movimientosProveedores.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
+import * as xlsx from "xlsx";
 
 /*FUNCIONES DEPRECADAS */
 /* export const getAllCostosPeriodo = async (req, res) => {
@@ -332,6 +333,277 @@ import { padWithZeros } from "../../helpers/padWithZeros.js";
   return res.send(arrayAmortizaciones);
 }; */
 
+/* FUNCION AUXILIAR */
+export const insertVehiculo = async (req) => {
+  const {
+    modelo,
+    nro_chasis,
+    nro_motor,
+    kilometros,
+    costo,
+    color,
+    sucursal,
+    numero_comprobante_1,
+    numero_comprobante_2,
+    usuario,
+    proveedor_vehiculo,
+    transaction_1,
+    transaction_2,
+    importacion_masiva,
+    meses_amortizacion_masiva,
+  } = req.body;
+  let cuentaRODN;
+  let cuentaIC21;
+  let cuentaIC22;
+  let NroAsiento;
+  let NroAsientoSecundario;
+  let transaction_giama_renting;
+  let transaction_pa7_giama_renting;
+  let es_importacion_masiva;
+  let meses_amortizacion_final;
+  if (!importacion_masiva) {
+    es_importacion_masiva = false;
+  } else {
+    es_importacion_masiva = true;
+  }
+
+  if (!transaction_1 || !transaction_2) {
+    transaction_giama_renting = await giama_renting.transaction();
+    transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  } else {
+    transaction_giama_renting = transaction_1;
+    transaction_pa7_giama_renting = transaction_2;
+  }
+  let insertId;
+  let meses_amortizacion;
+  let numero_comprobante = `${padWithZeros(
+    numero_comprobante_1,
+    5
+  )}${padWithZeros(numero_comprobante_2, 8)}`;
+  const camposObligatorios = ["modelo", "costo", "sucursal"];
+  const mensajeError = validarCamposObligatorios(
+    req.body,
+    camposObligatorios,
+    "vehículo"
+  );
+  console.log(mensajeError);
+  if (mensajeError) {
+    return { status: false, message: mensajeError };
+  }
+  const importe_neto = costo / 1.21;
+  const importe_iva = costo - importe_neto;
+  try {
+    meses_amortizacion = await getParametro("AMRT");
+    cuentaRODN = await getParametro("RODN");
+    cuentaIC21 = await getParametro("IC21");
+    cuentaIC22 = await getParametro("IC22");
+  } catch (error) {
+    const { body } = handleError(error, "parámetro");
+    return body;
+  }
+  if (es_importacion_masiva) {
+    meses_amortizacion_final = meses_amortizacion_masiva;
+  } else {
+    meses_amortizacion_final = meses_amortizacion;
+  }
+  //buscar numeros de asiento y asiento secundario
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    const { body } = handleError(error, "número de asiento");
+    return body;
+  }
+  try {
+    const result = await giama_renting.query(
+      `INSERT INTO vehiculos (modelo, fecha_ingreso, 
+        precio_inicial, nro_chasis, nro_motor,
+        kilometros_iniciales, kilometros_actuales, meses_amortizacion, color, sucursal, 
+        nro_factura_compra, estado_actual, usuario_ultima_modificacion)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          modelo,
+          getTodayDate(),
+          costo,
+          nro_chasis,
+          nro_motor,
+          kilometros,
+          kilometros,
+          meses_amortizacion_final,
+          color,
+          sucursal,
+          numero_comprobante,
+          1,
+          usuario,
+        ],
+        transaction: transaction_giama_renting,
+      }
+    );
+    insertId = result[0]; // este es el id insertado
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    const { body } = handleError(error, "vehículo", acciones.post);
+    return body;
+  }
+  let concepto = `Ingreso de vehículo. ID: ${insertId}`;
+  if (!es_importacion_masiva) {
+    //ingreso imagenes
+    const files = req.files;
+    if (!Array.isArray(files))
+      return {
+        status: false,
+        message: "Error al cargar archivos de imágenes",
+      };
+    const folderPath = `giama_renting/vehiculos/${insertId}`;
+
+    for (const file of files) {
+      const key = `${folderPath}/${uuidv4()}_${file.originalname}`;
+      const command = new PutObjectCommand({
+        Bucket: "giama-bucket",
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      });
+
+      try {
+        await s3.send(command);
+      } catch (err) {
+        transaction_giama_renting.rollback();
+        console.error("Error al subir imagen:", err);
+        return {
+          status: false,
+          message: "Error al guardar las imágenes del vehículo",
+        };
+      }
+    }
+  }
+  //movimiento proveedores
+  try {
+    await movimientosProveedores({
+      cod_proveedor: proveedor_vehiculo,
+      tipo_comprobante: 1,
+      numero_comprobante_1,
+      numero_comprobante_2,
+      importe_neto: costo,
+      importe_iva: importe_iva,
+      importe_total: costo,
+      cuenta_concepto: "210110" /* FCA - Deuda autos */,
+      NroAsiento,
+      NroAsientoSecundario,
+      usuario: usuario,
+      transaction_asientos: transaction_pa7_giama_renting,
+    });
+  } catch (error) {
+    transaction_giama_renting.rollback();
+    const { body } = handleError(
+      error,
+      "Movimientos proveedores",
+      acciones.post
+    );
+    return body;
+  }
+  //asientos
+  try {
+    //asientos
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaRODN,
+      "D",
+      costo, //costo neto vehiculo
+      concepto,
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIC21,
+      "D",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      "210110" /* FCA - Deuda autos */,
+      "H",
+      costo,
+      concepto,
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      NroAsientoSecundario,
+      null
+    );
+    //asientos secundarios
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      "210110",
+      "D",
+      costo, //costo neto vehiculo
+      concepto,
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaIC22,
+      "D",
+      importe_iva,
+      concepto,
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      "210110" /**nueva cuenta */,
+      "H",
+      costo,
+      concepto,
+      transaction_pa7_giama_renting,
+      null,
+      getTodayDate(),
+      null,
+      null
+    );
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    const { body } = handleError(error);
+    return body;
+  }
+  if (!es_importacion_masiva) {
+    transaction_giama_renting.commit();
+    transaction_pa7_giama_renting.commit();
+  }
+  return {
+    status: true,
+    message: "El vehículo ha sido cargado con éxito",
+  };
+};
+
 export const getVehiculos = async (req, res) => {
   const hoy = getTodayDate();
   try {
@@ -431,266 +703,13 @@ export const getVehiculosById = async (req, res) => {
 };
 
 export const postVehiculo = async (req, res) => {
-  const {
-    modelo,
-    dominio,
-    dominio_provisorio,
-    fecha_inicio_amortizacion,
-    nro_chasis,
-    nro_motor,
-    kilometros,
-    dispositivo,
-    costo,
-    color,
-    sucursal,
-    numero_comprobante_1,
-    numero_comprobante_2,
-    usuario,
-    cuenta_contable,
-    cuenta_secundaria,
-    proveedor_vehiculo,
-  } = req.body;
-  let cuentaRODN;
-  let cuentaIC21;
-  let cuentaIC22;
-  let cuentaRDN2;
-  let NroAsiento;
-  let NroAsientoSecundario;
-  let transaction_giama_renting = await giama_renting.transaction();
-  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-  let insertId;
-  let meses_amortizacion;
-  let numero_comprobante = `${padWithZeros(
-    numero_comprobante_1,
-    5
-  )}${padWithZeros(numero_comprobante_2, 8)}`;
-  const camposObligatorios = ["modelo", "costo", "sucursal"];
-  const mensajeError = validarCamposObligatorios(
-    req.body,
-    camposObligatorios,
-    "vehículo"
-  );
-  if (mensajeError) {
-    return res.send({ status: false, message: mensajeError });
-  }
-  /*   if (!dominio && !dominio_provisorio)
-    return res.send({
-      status: false,
-      message: "El vehículo debe tener dominio o dominio provisorio",
-    }); */
-  if (!cuenta_contable)
-    return res.send({
-      status: false,
-      message: "Debe especificar una cuenta contable",
-    });
-  let concepto = `Ingreso del vehiculo - ${
-    dominio ? dominio : dominio_provisorio ? dominio_provisorio : "SIN DOMINIO"
-  }`;
-  const importe_iva = parseFloat(costo) * 0.21; //
-  const importe_total = importe_iva + parseFloat(costo);
   try {
-    meses_amortizacion = await getParametro("AMRT");
-    cuentaRODN = await getParametro("RODN");
-    cuentaIC21 = await getParametro("IC21");
-    cuentaIC22 = await getParametro("IC22");
-    cuentaRDN2 = await getParametro("RDN2");
-  } catch (error) {
-    const { body } = handleError(error, "parámetro");
-    return res.send(body);
-  }
-  //buscar numeros de asiento y asiento secundario
-  try {
-    NroAsiento = await getNumeroAsiento();
-    NroAsientoSecundario = await getNumeroAsientoSecundario();
-  } catch (error) {
-    const { body } = handleError(error, "número de asiento");
-    return res.send(body);
-  }
-  try {
-    const result = await giama_renting.query(
-      `INSERT INTO vehiculos (modelo, fecha_ingreso, fecha_inicio_amortizacion,
-        precio_inicial, dominio, dominio_provisorio, nro_chasis, nro_motor,
-        kilometros_iniciales, kilometros_actuales, dispositivo_peaje, meses_amortizacion, color, sucursal, 
-        nro_factura_compra, estado_actual, usuario_ultima_modificacion)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          modelo,
-          getTodayDate(),
-          fecha_inicio_amortizacion ? fecha_inicio_amortizacion : null,
-          costo,
-          dominio ? dominio : null,
-          dominio_provisorio ? dominio_provisorio : null,
-          nro_chasis,
-          nro_motor,
-          kilometros,
-          kilometros,
-          dispositivo,
-          meses_amortizacion,
-          color,
-          sucursal,
-          numero_comprobante,
-          1,
-          usuario,
-        ],
-        transaction: transaction_giama_renting,
-      }
-    );
-    insertId = result[0]; // este es el id insertado
+    const result = await insertVehiculo(req);
+    return res.send(result);
   } catch (error) {
     console.log(error);
-    transaction_giama_renting.rollback();
-    const { body } = handleError(error, "vehículo", acciones.post);
-    return res.send(body);
+    return res.send(error);
   }
-  const files = req.files;
-  if (!Array.isArray(files))
-    return res.send({
-      status: false,
-      message: "Error al cargar archivos de imágenes",
-    });
-  const folderPath = `giama_renting/vehiculos/${insertId}`;
-
-  for (const file of files) {
-    const key = `${folderPath}/${uuidv4()}_${file.originalname}`;
-    const command = new PutObjectCommand({
-      Bucket: "giama-bucket",
-      Key: key,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    });
-
-    try {
-      await s3.send(command);
-    } catch (err) {
-      transaction_giama_renting.rollback();
-      console.error("Error al subir imagen:", err);
-      return res.send({
-        status: false,
-        message: "Error al guardar las imágenes del vehículo",
-      });
-    }
-  }
-  //movimiento proveedores
-  try {
-    await movimientosProveedores({
-      cod_proveedor: proveedor_vehiculo,
-      tipo_comprobante: 1,
-      numero_comprobante_1,
-      numero_comprobante_2,
-      importe_neto: costo,
-      importe_total: costo,
-      cuenta_concepto: cuenta_contable,
-      NroAsiento,
-      NroAsientoSecundario,
-      usuario: usuario,
-      transaction_asientos: transaction_pa7_giama_renting,
-    });
-  } catch (error) {
-    transaction_giama_renting.rollback();
-    const { body } = handleError(
-      error,
-      "Movimientos proveedores",
-      acciones.post
-    );
-    return res.send(body);
-  }
-  //asientos
-  try {
-    //asientos
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuentaRODN,
-      "D",
-      costo, //costo neto vehiculo
-      concepto,
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      NroAsientoSecundario,
-      null
-    );
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuentaIC21,
-      "D",
-      importe_iva,
-      concepto,
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      NroAsientoSecundario,
-      null
-    );
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuenta_contable,
-      "H",
-      importe_total,
-      concepto,
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      NroAsientoSecundario,
-      null
-    );
-    //asientos secundarios
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario,
-      cuenta_secundaria,
-      "D",
-      costo, //costo neto vehiculo
-      concepto,
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      null,
-      null
-    );
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario,
-      cuentaIC22,
-      "D",
-      importe_iva,
-      concepto,
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      null,
-      null
-    );
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario,
-      cuenta_secundaria /**nueva cuenta */,
-      "H",
-      importe_total,
-      concepto,
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      null,
-      null
-    );
-  } catch (error) {
-    console.log(error);
-    transaction_giama_renting.rollback();
-    transaction_pa7_giama_renting.rollback();
-    const { body } = handleError(error);
-    return res.send(body);
-  }
-  transaction_giama_renting.commit();
-  transaction_pa7_giama_renting.commit();
-  return res.send({
-    status: true,
-    message: "El vehículo ha sido cargado con éxito",
-  });
 };
 
 export const postImagenesVehiculo = async (req, res) => {
@@ -1538,5 +1557,66 @@ LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR
       acciones.get
     );
     return res.send(body);
+  }
+};
+
+export const postVehiculosMasivos = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.send({
+        status: false,
+        message: "Debe subir un archivo Excel",
+      });
+    }
+    const usuario = req.body.usuario; // viene del formData del front
+    console.log(usuario);
+
+    // leer excel
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const transaction_1 = await giama_renting.transaction();
+    const transaction_2 = await pa7_giama_renting.transaction();
+    // recorrer filas y llamar a insertVehiculo
+    for (let row of data) {
+      const vehiculo = {
+        modelo: row.modelo,
+        nro_chasis: row.nro_chasis,
+        nro_motor: row.nro_motor,
+        kilometros: row.km_iniciales,
+        costo: row.precio_inicial,
+        color: row.color,
+        sucursal: row.sucursal,
+        numero_comprobante_1: row.punto_de_venta,
+        numero_comprobante_2: row.nro_comprobante,
+        proveedor_vehiculo: row.proveedor_vehiculo,
+        meses_amortizacion_masiva: row.meses_amortizacion,
+        transaction_1: transaction_1,
+        transaction_2: transaction_2,
+        importacion_masiva: true,
+        usuario,
+      };
+      console.log(vehiculo);
+      const result = await insertVehiculo({ body: vehiculo });
+
+      if (!result.status) {
+        return res.send({
+          status: false,
+          message: `Error al insertar vehículo: ${result.message}`,
+        });
+      }
+    }
+    transaction_1.commit();
+    transaction_2.commit();
+    return res.send({
+      status: true,
+      message: "Vehículos cargados correctamente",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      status: false,
+      message: "Error al procesar archivo",
+    });
   }
 };

@@ -16,6 +16,7 @@ import {
   getSituacionFlota,
   getFichas,
   postImagenesVehiculo,
+  postVehiculosMasivos,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 import { auth } from "../middlewares/auth.js";
@@ -43,6 +44,12 @@ vehiculosRouter.post(
   auth,
   upload.array("images"),
   postImagenesVehiculo
+);
+vehiculosRouter.post(
+  "/postVehiculosMasivos",
+  auth,
+  upload.single("file"),
+  postVehiculosMasivos
 );
 /* vehiculosRouter.post("/getAllCostosPeriodo", auth, getAllCostosPeriodo);
 vehiculosRouter.post("/getAllAlquileresPeriodo", auth, getAllAlquileresPeriodo);
