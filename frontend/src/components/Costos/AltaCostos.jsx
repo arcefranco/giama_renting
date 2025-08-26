@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react'
+import { useMatch } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
 import DataGrid, {Column} from "devextreme-react/data-grid"
@@ -13,11 +14,13 @@ import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 
 const AltaCostos = () => {
 const dispatch = useDispatch()
-    useEffect(() => {
-    Promise.all([
-        dispatch(getConceptosCostos()),
-        dispatch(getCuentasContables()),
-        locale('es')
+const isIngresos = useMatch("/costos/alta/ingresos");
+const isEgresos = useMatch("/costos/alta/egresos");
+useEffect(() => {
+  Promise.all([
+    dispatch(getConceptosCostos()),
+    dispatch(getCuentasContables()),
+    locale('es')
     ])
 }, [])
 
@@ -29,6 +32,19 @@ const [form, setForm] = useState({
     ingreso_egreso: '',
     activable: 0
 })
+const [conceptosFiltrados, setConceptosFiltrados] = useState([])
+useEffect(() => {
+if(isEgresos){
+  setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "E"))
+}
+else if(isIngresos){
+  setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "I"))
+}
+else{
+  setConceptosFiltrados(conceptos)
+}
+}, [conceptos, isEgresos, isIngresos])
+const [tipo, setTipo] = useState(null)
 useToastFeedback({
   isError,
   isSuccess,
@@ -44,7 +60,34 @@ useToastFeedback({
     })
   }
 })
+useEffect(() => {
+if(isEgresos){
+  setTipo("E")
+  setForm({
+    ...form,
+    ingreso_egreso: "E"
+  })
+}
+else if(isIngresos){
+  setTipo("I")
+  setForm({
+    ...form,
+    ingreso_egreso: "I",
+    activable: 0
+  })
+}
+else{
+  setTipo(null)
+  setForm({
+    nombre: '',
+    cuenta_contable: '',
+    cuenta_secundaria: '',
+    ingreso_egreso: '',
+    activable: 0
+})
+}
 
+}, [isEgresos, isIngresos, tipo])
 const handleChange = (e) => {
     const { name, value } = e.target;
     if(name === "cuenta_contable"){
@@ -70,12 +113,7 @@ const handleCheckChange = (e) => {
 }
 const handleSubmit = async (e) => {
     e.preventDefault();
-    if(form["ingreso_egreso"] == "I" && form["activable"] == 1){
-      Swal.fire("Un ingreso no puede ser un gasto activable")
-    }else{
-
       dispatch(postConceptoCostos(form))
-    }
 } 
 const handleActualizar = ( ) => {
   dispatch(getConceptosCostos())
@@ -142,13 +180,13 @@ const renderEliminarCell = (data) => {
         <p className={styles.loadingText}>Cargando...</p>
       </div>
     )}
-        <h2>Conceptos de costos e ingresos</h2>
+        <h2>Conceptos de {isEgresos ? "egresos" : isIngresos ? "ingresos" : ""}</h2>
     <button onClick={handleActualizar} className={styles.refreshButton}>
     🔄 Actualizar
     </button>
       <DataGrid
         className={styles.dataGrid}
-        dataSource={conceptos || []}
+        dataSource={conceptosFiltrados || []}
         showBorders={true}
         style={{fontFamily: "IBM"}}
         rowAlternationEnabled={true}
@@ -169,7 +207,7 @@ const renderEliminarCell = (data) => {
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
       </DataGrid>
-            <h2>Alta de conceptos de costos</h2>
+            <h2>Alta de conceptos de {isEgresos ? "egresos" : isIngresos ? "ingresos" : ""}</h2>
             <form action="" enctype="multipart/form-data" className={styles.form}>
             <div className={styles.inputContainer}>
                 <span>Concepto</span>
@@ -188,31 +226,8 @@ const renderEliminarCell = (data) => {
                 }
               </select>
             </div>
-            <div className={styles.inputContainer} style={{
-                  width: "7rem"
-            }}>
-            <span>Tipo</span>
-            <label>
-              <input
-                type="radio"
-                name="ingreso_egreso"
-                value="I"
-                checked={form.ingreso_egreso === "I"}
-                onChange={handleChange}
-              />
-              Ingreso
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="ingreso_egreso"
-                value="E"
-                checked={form.ingreso_egreso === "E"}
-                onChange={handleChange}
-              />
-              Egreso
-            </label>
-          </div>
+            {
+              tipo === "E" &&
           <div className={styles.inputContainer} style={{
                 flexDirection: "row",
                 alignItems: "anchor-center"
@@ -221,6 +236,7 @@ const renderEliminarCell = (data) => {
             <input name='activable'
             checked={form["activable"] === 1} onChange={handleCheckChange} type="checkbox" />
           </div>
+            }
             </form>
             <button 
             className={styles.sendBtn} onClick={handleSubmit} 

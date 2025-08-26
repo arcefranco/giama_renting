@@ -6,7 +6,7 @@ const menuItems = [
   {
     title: "Vehículos",
     items: [
-          { label: "Formulario de ingreso", to: "/vehiculos" },
+          { label: "Ingreso de vehículos", to: "/vehiculos" },
           { label: "Listado vehículos", to: "/vehiculosReporte" },
           { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
           { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
@@ -50,14 +50,16 @@ const menuItems = [
    title: "Parámetros",
    items: [
     { label: "Formas de cobro", to: "/alquileres/formasDeCobro" }, 
-     { label: "Conceptos de costos", to: "/costos/alta" },
+    { label: "Conceptos de ingresos", to: "/costos/alta/ingresos" },
+    { label: "Conceptos de egresos", to: "/costos/alta/egresos" },
    ]
  },
   {
    title: "Costos/Ingresos",
    items: [
-     { label: "Egresos prorrateados", to: "/costos/prorrateoIE" },
-     { label: "Carga ingresos/egresos", to: "/costos/ingresos_egresos" },
+     { label: "Carga de egresos prorrateados", to: "/costos/prorrateoIE" },
+     { label: "Carga de ingresos", to: "/costos/ingresos" },
+     { label: "Carga de egresos", to: "/costos/egresos" },
    ]
  },
  ,

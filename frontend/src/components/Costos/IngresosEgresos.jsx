@@ -6,7 +6,7 @@ import {getVehiculos, getVehiculosById, resetVehiculo} from '../../reducers/Vehi
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
 import {getFormasDeCobro} from "../../reducers/Alquileres/alquileresSlice.js"
 import {getModelos, getProveedores} from '../../reducers/Generales/generalesSlice'
-import { useParams } from 'react-router-dom';
+import { useParams, useMatch } from 'react-router-dom';
 import DataGrid, {Column, Scrolling, Summary, TotalItem} from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
@@ -22,6 +22,8 @@ import Swal from 'sweetalert2';
 const IngresosEgresos = () => {  
 
 const { id } = useParams();
+const isIngresos = useMatch("/costos/ingresos");
+const isEgresos = useMatch("/costos/egresos");
 const gridRef = useRef(null);
 const dispatch = useDispatch()
 const {isError, isSuccess, isLoading, message, 
@@ -53,9 +55,9 @@ const [form, setForm] = useState({
     cod_proveedor: '',
     usuario: username,
 })
+const [tipo, setTipo] = useState(null)
 const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
-const [inputGeneraRecibo, setInputGeneraRecibo] = useState(false)
-const [inputProveedores, setInputProveedores] = useState(false)
+const [conceptosFiltrados, setConceptosFiltrados] = useState([])
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
     const pageCount = Math.ceil(costos_ingresos_vehiculo.length / 5);
@@ -175,20 +177,65 @@ useEffect(() => {
 }, [form.id_vehiculo])
 
 useEffect(() => {
-  if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "I"){
-    setInputGeneraRecibo(true)
-  }else{
-    setInputGeneraRecibo(false)
-  }
-}, [form.id_concepto, conceptos])
+if(isEgresos){
+  setTipo("E")
+}
+else if(isIngresos){
+  setTipo("I")
+}
+else{
+  setTipo(null)
+}
+setForm({
+    id_vehiculo: id ? id : "",
+    fecha: '',
+    id_concepto: '',
+    id_forma_cobro: '',
+    id_cliente: '',
+    importe_neto: '',
+    importe_iva: '',
+    importe_total: '',
+    observacion: '',
+    cuenta: '',
+    ingreso_egreso: '',
+    genera_recibo: 1,
+    cta_cte_proveedores: 1,
+    cuenta_secundaria: '',
+    tipo_comprobante: '',
+    numero_comprobante_1: '',
+    numero_comprobante_2: '',
+    cod_proveedor: '',
+    usuario: username,
+})
+}, [isEgresos, isIngresos, tipo])
 
 useEffect(() => {
-  if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "E"){
-    setInputProveedores(true)
-  }else{
-    setInputProveedores(false)
+if(isEgresos){
+  setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "E"))
+}
+else if(isIngresos){
+  setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "I"))
+}
+else{
+  setConceptosFiltrados(conceptos)
+}
+}, [conceptos, isEgresos, isIngresos])
+
+useEffect(() => {
+  if(!tipo){
+    if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "I"){
+      setTipo("I")
+    }
   }
-}, [form.id_concepto, conceptos])
+}, [form.id_concepto, conceptos, tipo])
+
+useEffect(() => {
+  if(!tipo){
+    if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "E"){
+      setTipo("E")
+    }
+  }
+}, [form.id_concepto, conceptos, tipo])
 
 useEffect(() => {
   if (nro_recibo_ingreso) {
@@ -236,14 +283,14 @@ const handleActualizar = ( ) => {
 const handleChange = (e) => {
   const { name, value } = e.target;
   if(value && name === "importe_neto"){
-    if(!inputProveedores){
+    if(!tipo || tipo !== "E"){
       setForm({
        ...form,
        [name]: parseFloat(value),
        "importe_iva": parseFloat(value) * 0.21,
        "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
      }); 
-    }else if(inputProveedores){
+    }else if(tipo === "E"){
       if(form.tipo_comprobante == 3){
       setForm({
        ...form,
@@ -366,7 +413,7 @@ return (
       <span className={styles.loadingText}>Cargando...</span>
     </div>
   )}
-    <h2>Ingresos y egresos del vehículo</h2>
+    <h2> {isIngresos ? "Ingresos" : isEgresos ? "Egresos" : "Ingresos y egresos"} del vehículo</h2>
     {
       vehiculo?.length && modelos?.length ?
     <div>
@@ -454,7 +501,7 @@ return (
     />
   </Summary>
       </DataGrid>
-      <h2>Alta de ingresos/egresos del vehículo</h2>
+      <h2>Alta de {isIngresos ? "ingresos" : isEgresos ? "egresos" : "ingresos/egresos"} del vehículo</h2>
       <div className={styles.formContainer}>
       <form action="" enctype="multipart/form-data" className={styles.form}>
       <div className={styles.inputContainer}>
@@ -468,14 +515,14 @@ return (
         onChange={handleChange} id="">
           <option value={""} disabled selected>{"Seleccione un concepto"}</option>
           {
-            conceptos?.length && conceptos?.map(e => {
+            conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
             return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
             })
           }
         </select>
       </div>
       {
-        inputProveedores && 
+        tipo && tipo === "E" && 
       <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", height: "3rem"}}>
       <label style={{fontSize: "15px"}}>Cuenta corriente proveedores</label>
       <input
@@ -492,7 +539,7 @@ return (
       </div>
       }
       {
-        inputGeneraRecibo &&
+        tipo && tipo === "I" &&
     <div className={styles.inputWrapper} >
       <span>Clientes</span>
       <div className={styles.selectWithIcon} style={{
@@ -511,7 +558,7 @@ return (
       </div>
       </div>
       }
-      { inputProveedores && form.cta_cte_proveedores == 1 &&
+      { tipo && tipo === "E"  && form.cta_cte_proveedores == 1 &&
       <div className={styles.inputContainer}>
         <span>Proveedores</span>
         <select name="cod_proveedor" style={{width: "130%"}}  value={form["cod_proveedor"]} 
@@ -526,7 +573,7 @@ return (
       </div>
 
       }
-      { inputProveedores &&
+      { tipo && tipo === "E" &&
       <div className={styles.inputContainer}>
         <span>Tipo comprobante</span>
         <select name="tipo_comprobante" style={{width: "130%"}}  value={form["tipo_comprobante"]} 
@@ -538,7 +585,7 @@ return (
       </div>
 
       }
-      { inputProveedores &&
+      { tipo && tipo === "E" &&
       <div className={styles.inputContainer}>
         <span>Punto de venta</span>
         <input type="number" name='numero_comprobante_1' value={form.numero_comprobante_1}
@@ -546,7 +593,7 @@ return (
       </div>
 
       }
-      { inputProveedores &&
+      { tipo && tipo === "E" &&
       <div className={styles.inputContainer}>
         <span>Nº Comprobante</span>
         <input type="number" name='numero_comprobante_2' value={form.numero_comprobante_2}
@@ -562,7 +609,7 @@ return (
       <div className={styles.inputContainer}>
           <span>IVA</span>
           <input type="number" name='importe_iva' value={form["importe_iva"]} 
-          disabled={inputProveedores && form.cta_cte_proveedores == 1 && form.tipo_comprobante == 3 ? true : false}
+          disabled={tipo && tipo === "E" && form.cta_cte_proveedores == 1 && form.tipo_comprobante == 3 ? true : false}
           onChange={handleChange}/>
       </div>
       <div className={styles.inputContainer}>
@@ -587,7 +634,7 @@ return (
         onChange={handleChange}/>
       </div>
       {
-        inputGeneraRecibo && 
+      tipo && tipo === "I" && 
       <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", height: "3rem"}}>
       <label style={{fontSize: "15px"}}>Genera recibo y factura</label>
       <input

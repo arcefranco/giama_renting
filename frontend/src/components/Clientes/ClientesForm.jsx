@@ -70,6 +70,8 @@ const {isError, isSuccess, isLoading, message} = useSelector((state) => state.cl
 const [imagenes, setImagenes] = useState([]);
 const [formValido, setFormValido] = useState(false);
 const [errors, setErrors] = useState({});
+const [tiposResponsableClientes, setTiposResponsableClientes] = useState(null)
+const [tiposDocumentoClientes, setTiposDocumentoClientes] = useState(null)
 const camposObligatorios = [
   "tipo_documento",
   "nro_documento",
@@ -150,7 +152,7 @@ useToastFeedback({
         setImagenes([])
   }
 })
-  useEffect(() => {
+useEffect(() => {
     const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') || 
     (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));
     const camposObligatoriosCompletos = camposObligatorios.every(
@@ -160,6 +162,23 @@ useToastFeedback({
 
     setFormValido(isButtonEnabled && camposObligatoriosCompletos);
 }, [form, imagenes]);
+
+useEffect(() => {
+if(tipos_responsable?.length){
+  const ids = [1, 4, 5];
+  const resultado = tipos_responsable.filter(item => ids.includes(item.id));
+  setTiposResponsableClientes(resultado)
+}
+}, [tipos_responsable])
+
+useEffect(() => {
+if(tipos_documento?.length){
+  const ids = [6,7];
+  const resultado = tipos_documento.filter(item => ids.includes(item.id));
+  setTiposDocumentoClientes(resultado)
+}
+}, [tipos_documento])
+
 const handleChange = (e) => {
   const { name, value } = e.target;
   if(name == "resolucion_datero"){
@@ -267,7 +286,7 @@ return (
           onChange={handleChange} id="">
             <option value={""} disabled /* selected */>{"Seleccione"}</option>
             {
-              tipos_responsable?.length && tipos_responsable?.map(e => {
+              tiposResponsableClientes?.length && tiposResponsableClientes?.map(e => {
                 return <option key={e.id} value={e.id}>{e.nombre}</option>
               })
             }
@@ -281,7 +300,7 @@ return (
           onChange={handleChange} id="">
             <option value={""} disabled /* selected */>{"Seleccione"}</option>
             {
-              tipos_documento?.length && tipos_documento?.map(e => {
+              tiposDocumentoClientes?.length && tiposDocumentoClientes?.map(e => {
                 return <option key={e.id} value={e.id}>{e.nombre}</option>
               })
             }

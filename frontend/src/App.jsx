@@ -58,10 +58,12 @@ function App() {
     <Route path='/clientesReporte' element={<ReporteClientes/>}/>
     <Route path='/clientes/imagenes/:id' element={<ImagenesClientes/>}/>
     <Route path='/clientes/actualizar/:id' element={<UpdateCliente/>}/>
-    <Route path='/costos/alta' element={<AltaCostos/>}/>
+    <Route path='/costos/alta/ingresos' element={<AltaCostos/>}/>
+    <Route path='/costos/alta/egresos' element={<AltaCostos/>}/>
     <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
     <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
-    <Route path='/costos/ingresos_egresos' element={<IngresosEgresos/>}/>
+    <Route path='/costos/ingresos' element={<IngresosEgresos/>}/>
+    <Route path='/costos/egresos' element={<IngresosEgresos/>}/>
     <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
     <Route path='/alquileres/contrato' element={<ContratoAlquiler/>}/>   
     <Route path='/contrato/actualizar/:id' element={<ContratoAlquiler/>}/>

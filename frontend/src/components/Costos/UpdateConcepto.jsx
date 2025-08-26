@@ -6,6 +6,7 @@ import { ClipLoader } from "react-spinners";
 import styles from "./AltaCostos.module.css"
 import { getCuentasContables, getConceptosCostosById, updateConcepto, reset } from '../../reducers/Costos/costosSlice'
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
+import Swal from 'sweetalert2';
 const  UpdateConcepto = () => {
 const { id } = useParams();
 const dispatch = useDispatch()
@@ -68,7 +69,11 @@ const handleCheckChange = (e) => {
 }
 const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(updateConcepto(form))
+    if(form.ingreso_egreso === "I" && form.activable == 1){
+      toast.info("Un ingreso no puede ser un gasto activable")
+    }else{
+      dispatch(updateConcepto(form))
+    }
 } 
   return (
     <div>      

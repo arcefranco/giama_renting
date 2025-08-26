@@ -524,10 +524,11 @@ const clienteOptions = clientes.map(cliente => ({
   </div>
     <h2>Depósito en garantía</h2>
       <form action="" className={`${styles.form} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
-      <div className={styles.inputContainer}>
+        {
+        !id &&
+        <div className={styles.inputContainer}>
         <span>Importe total</span>
         <input
-        disabled={id ? true : false}
         type="number"
         name="deposito"
         value={formContrato.deposito}
@@ -535,6 +536,7 @@ const clienteOptions = clientes.map(cliente => ({
         />
 
         </div>
+        }
         <div className={styles.inputContainer}>
           <span>Formas de cobro</span>
           <select name="id_forma_cobro_contrato" disabled={id ? true : false}  

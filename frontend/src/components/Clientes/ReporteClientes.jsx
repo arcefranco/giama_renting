@@ -184,6 +184,7 @@ return (
         <Column dataField="mail" caption="Mail" width={90}/>
         <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="resolucion_datero" caption="Res. datero" width={200} cellRender={renderResolucion}/>
+        <Column dataField="usuario_resolucion_datero" caption="Usuario (res. datero)" width={200} />
         <Column dataField="id" caption="" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column
