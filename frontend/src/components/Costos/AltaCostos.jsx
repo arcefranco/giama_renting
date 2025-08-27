@@ -30,18 +30,22 @@ const [form, setForm] = useState({
     cuenta_contable: '',
     cuenta_secundaria: '',
     ingreso_egreso: '',
+    genera_recibo: 0,
+    genera_factura: 0,
     activable: 0
 })
 const [conceptosFiltrados, setConceptosFiltrados] = useState([])
 useEffect(() => {
-if(isEgresos){
-  setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "E"))
-}
-else if(isIngresos){
-  setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "I"))
-}
-else{
-  setConceptosFiltrados(conceptos)
+if(conceptos.length){
+  if(isEgresos){
+    setConceptosFiltrados(conceptos?.filter(e => e.ingreso_egreso === "E"))
+  }
+  else if(isIngresos){
+    setConceptosFiltrados(conceptos?.filter(e => e.ingreso_egreso === "I"))
+  }
+  else{
+    setConceptosFiltrados(conceptos)
+  }
 }
 }, [conceptos, isEgresos, isIngresos])
 const [tipo, setTipo] = useState(null)
@@ -56,6 +60,8 @@ useToastFeedback({
         cuenta_contable: '',
         cuenta_secundaria: '',
         ingreso_egreso: '',
+        genera_factura: 0,
+        genera_recibo: 0,
         activable: 0
     })
   }
@@ -235,6 +241,28 @@ const renderEliminarCell = (data) => {
             <span>Gasto activable</span>
             <input name='activable'
             checked={form["activable"] === 1} onChange={handleCheckChange} type="checkbox" />
+          </div>
+            }
+          {
+              tipo === "I" &&
+          <div className={styles.inputContainer} style={{
+                flexDirection: "row",
+                alignItems: "anchor-center"
+          }}>
+            <span>Genera factura</span>
+            <input name='genera_factura'
+            checked={form["genera_factura"] === 1} onChange={handleCheckChange} type="checkbox" />
+          </div>
+            }
+            {
+              tipo === "I" &&
+          <div className={styles.inputContainer} style={{
+                flexDirection: "row",
+                alignItems: "anchor-center"
+          }}>
+            <span>Genera recibo</span>
+            <input name='genera_recibo'
+            checked={form["genera_recibo"] === 1} onChange={handleCheckChange} type="checkbox" />
           </div>
             }
             </form>

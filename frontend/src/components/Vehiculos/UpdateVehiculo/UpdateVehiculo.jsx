@@ -29,6 +29,7 @@ const UpdateVehiculo = () => {
     dispositivo: '',
     meses_amortizacion: '',
     dominio: '',
+    dominio_provisorio: '',
     color: '',
     calcomania: 0,
     gnc: 0,
@@ -66,7 +67,8 @@ const UpdateVehiculo = () => {
         cubre_asiento: vehiculo[0].cubre_asiento || 0,
         sucursal: vehiculo[0].sucursal || '',
         estado: vehiculo[0].estado_actual || '',
-        dominio: vehiculo[0].dominio ? vehiculo[0].dominio : ""
+        dominio: vehiculo[0].dominio ? vehiculo[0].dominio : "",
+        dominio_provisorio: vehiculo[0].dominio_provisorio ? vehiculo[0].dominio_provisorio : "",
         
       });
     }
@@ -117,7 +119,7 @@ useToastFeedback({
         )}
         <h2 style={{display: "flex", alignItems: "center"}}>
           Modificar datos del vehículo: {vehiculo && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
-    vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : ""} {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
+    vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : "SIN DOMINIO"} {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
         </h2>
         <form className={styles.form}>
         <fieldset className={styles.fieldSet}>
@@ -137,6 +139,14 @@ useToastFeedback({
               <div className={styles.inputContainer}>
                 <span>Dominio</span>
                 <input type="text" name="dominio" value={form.dominio} onChange={handleChange} />
+              </div>
+              
+            }
+            {
+              vehiculo?.length && !vehiculo[0]["dominio"] && !vehiculo[0]["dominio_provisorio"] &&
+              <div className={styles.inputContainer}>
+                <span>Dominio provisorio</span>
+                <input type="text" name="dominio_provisorio" value={form.dominio_provisorio} onChange={handleChange} />
               </div>
               
             }

@@ -507,7 +507,9 @@ const clienteOptions = clientes.map(cliente => ({
       id && <button className={styles.sendBtn} onClick={submitUpdate}>Enviar</button>
     }
     </div>
-    <div className={styles.container} style={{height: "20rem"}}>
+    {
+      !id &&
+          <div className={styles.container} style={{height: "20rem"}}>
     <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
     <input
       type="checkbox"
@@ -522,10 +524,11 @@ const clienteOptions = clientes.map(cliente => ({
     />
     <label htmlFor="sinGarantia" style={{ marginLeft: '0.5rem' }}>Sin depósito en garantía</label>
   </div>
-    <h2>Depósito en garantía</h2>
+    
+        <h2>Depósito en garantía</h2>
+
       <form action="" className={`${styles.form} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
-        {
-        !id &&
+ 
         <div className={styles.inputContainer}>
         <span>Importe total</span>
         <input
@@ -536,7 +539,7 @@ const clienteOptions = clientes.map(cliente => ({
         />
 
         </div>
-        }
+
         <div className={styles.inputContainer}>
           <span>Formas de cobro</span>
           <select name="id_forma_cobro_contrato" disabled={id ? true : false}  
@@ -552,6 +555,8 @@ const clienteOptions = clientes.map(cliente => ({
         </div>
       </form>
     </div>
+    }
+
     {
       !id && <AlquileresForm modoContrato={true} onSubmitFinal={handleFinalSubmit} 
       idVehiculoSeleccionado={formContrato.id_vehiculo} minDateContrato={formContrato.fecha_desde_contrato} 

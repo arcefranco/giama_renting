@@ -6,7 +6,6 @@ import { ClipLoader } from "react-spinners";
 import styles from "./AltaCostos.module.css"
 import { getCuentasContables, getConceptosCostosById, updateConcepto, reset } from '../../reducers/Costos/costosSlice'
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
-import Swal from 'sweetalert2';
 const  UpdateConcepto = () => {
 const { id } = useParams();
 const dispatch = useDispatch()
@@ -18,12 +17,15 @@ const dispatch = useDispatch()
 }, [])
 
 const {isError, isSuccess, isLoading, message, cuentasContables, concepto} = useSelector((state) => state.costosReducer)
+const [tipo, setTipo] = useState(null)
 const [form, setForm] = useState({
     nombre: '',
     cuenta_contable: '',
     cuenta_secundaria: '',
     ingreso_egreso: '',
     activable: 0,
+    genera_factura: 0,
+    genera_recibo: 0,
     id: id
 })
 useToastFeedback({
@@ -33,17 +35,24 @@ useToastFeedback({
   resetAction: reset
 })
 useEffect(() => {
-if(concepto){
+if(concepto?.length){
+setTipo(concepto[0]["ingreso_egreso"])
+}
+}, [concepto, id])
+useEffect(() => {
+if(concepto?.length){
     setForm({
         nombre: concepto[0]?.nombre,
         cuenta_contable: concepto[0]?.cuenta_contable,
         cuenta_secundaria: concepto[0]?.cuenta_secundaria,
         ingreso_egreso: concepto[0]?.ingreso_egreso,
         activable: concepto[0]?.activable,
+        genera_factura: concepto[0]?.genera_factura,
+        genera_recibo: concepto[0]?.genera_recibo,
         id: id
     })
 }
-}, [concepto])
+}, [concepto, id])
 const handleChange = (e) => {
     const { name, value } = e.target;
     if(name === "cuenta_contable"){
@@ -89,8 +98,10 @@ const handleSubmit = async (e) => {
         <p className={styles.loadingText}>Cargando...</p>
       </div>
     )}
-            <h2>Actualizar conceptos de costos</h2>
-            <form action="" enctype="multipart/form-data" className={styles.form}>
+            <h2>Actualizar {tipo === "I" ? "ingreso" : tipo === "E" ? "egreso" : ""}</h2>
+            <form action="" enctype="multipart/form-data" className={styles.form} style={{
+              gridTemplateColumns: "1fr 1fr"
+            }}>
             <div className={styles.inputContainer}>
               <span>Cuenta contable</span>
               <select name="cuenta_contable"  value={form["cuenta_contable"]} 
@@ -108,39 +119,39 @@ const handleSubmit = async (e) => {
                 <input type="text" name='nombre' value={form["nombre"]} 
               onChange={handleChange}/>
             </div>
-                        <div className={styles.inputContainer} style={{
-                              width: "7rem"
-                        }}>
-                        <span>Tipo</span>
-                        <label>
-                          <input
-                            type="radio"
-                            name="ingreso_egreso"
-                            value="I"
-                            checked={form.ingreso_egreso === "I"}
-                            onChange={handleChange}
-                          />
-                          Ingreso
-                        </label>
-                        <label>
-                          <input
-                            type="radio"
-                            name="ingreso_egreso"
-                            value="E"
-                            checked={form.ingreso_egreso === "E"}
-                            onChange={handleChange}
-                          />
-                          Egreso
-                        </label>
-                      </div>
-                      <div className={styles.inputContainer} style={{
-                            flexDirection: "row",
-                            alignItems: "anchor-center"
-                      }}>
-                        <span>Gasto activable</span>
-                        <input name='activable'
-                        checked={form["activable"] === 1} onChange={handleCheckChange} type="checkbox" />
-                      </div>
+            {
+              tipo && tipo === "E" &&
+            <div className={styles.inputContainer} style={{
+              flexDirection: "row",
+              alignItems: "anchor-center"
+            }}>
+              <span>Gasto activable</span>
+              <input name='activable'
+              checked={form["activable"] === 1} onChange={handleCheckChange} type="checkbox" />
+            </div>
+            }
+            {
+              tipo && tipo === "I" &&
+            <div className={styles.inputContainer} style={{
+              flexDirection: "row",
+              alignItems: "anchor-center"
+            }}>
+              <span>Genera factura</span>
+              <input name='genera_factura'
+              checked={form["genera_factura"] === 1} onChange={handleCheckChange} type="checkbox" />
+            </div>
+            }
+            {
+              tipo && tipo === "I" &&
+            <div className={styles.inputContainer} style={{
+              flexDirection: "row",
+              alignItems: "anchor-center"
+            }}>
+              <span>Genera recibo</span>
+              <input name='genera_recibo'
+              checked={form["genera_recibo"] === 1} onChange={handleCheckChange} type="checkbox" />
+            </div>
+            }
             </form>
             <button 
             className={styles.sendBtn} onClick={handleSubmit}

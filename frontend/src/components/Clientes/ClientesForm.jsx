@@ -7,6 +7,7 @@ import { ToastContainer } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
 import { paises } from '../../paises.js'
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
+import { validacionCUIT } from '../../helpers/validacionCUIT.js'
 const ClientesForm = () => {
 const dispatch = useDispatch()
   useEffect(() => {
@@ -43,6 +44,7 @@ const [form, setFormData] = useState({
     mail: '',
     notas:'',
     resolucion_datero: 0,
+    usuario: username,
     usuario_resolucion_datero: username,
     //datero
     composicion_familiar: "",
@@ -147,7 +149,8 @@ useToastFeedback({
           antiguedad_cabify: "",
           antiguedad_didi: "",
           trabajos_anteriores: "",
-          observacion_perfil: ""
+          observacion_perfil: "",
+          usuario: username
         })
         setImagenes([])
   }
@@ -206,6 +209,22 @@ const handleFileChange = (e) => {
   // Limpiá el value del input para permitir volver a subir el mismo archivo si se desea
   e.target.value = null;
 };
+
+const onBlurNroDocumento = () => {
+const value = form["nro_documento"];
+let error = "";
+
+if (!value) {
+  error = "Campo obligatorio";
+} else if (!validacionCUIT(value)) {
+  error = "CUIT/CUIL inválido";
+}
+
+setErrors({
+  ...errors,
+  ["nro_documento"]: error,
+});}
+
 const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -312,7 +331,7 @@ return (
         <input type="number" 
         name='nro_documento'  value={form["nro_documento"]}
         onChange={handleChange} 
-        onBlur={() => setErrors({ ...errors, ["nro_documento"]: !form["nro_documento"] ? 'Campo obligatorio' : '' })}/>
+        onBlur={onBlurNroDocumento}/>
         {errors["nro_documento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nro_documento"]}</span>}
         </div>
         <div className={styles.inputContainer}>

@@ -38,9 +38,9 @@ const handleSubmit = (e) => {
 )}
     <h2 style={{margin: "1rem", color: "#800000"}}>Importación masiva de vehículos</h2>
     <div className={styles.container} style={{justifySelf: "center"}}>
-        <div className={styles.inputContainer} style={{width: "12rem", justifyContent: "space-between"}}>
+        <div className={styles.inputContainer} style={{width: "16rem", justifyContent: "space-between"}}>
             <span>Ingrese el archivo excel</span>
-            <input type="file" name='file' accept=".xls,.xlsx"  ref={excel}/>
+            <input type="file" name='file' accept=".xls,.xlsx" style={{ fontSize: "10px"}}  ref={excel}/>
         </div>
         <button className={styles.sendBtn} onClick={handleSubmit}>Enviar</button>
     </div>
