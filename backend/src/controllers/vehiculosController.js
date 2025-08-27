@@ -487,7 +487,7 @@ export const insertVehiculo = async (req) => {
       tipo_comprobante: 1,
       numero_comprobante_1,
       numero_comprobante_2,
-      importe_neto: costo,
+      importe_neto: importe_neto,
       importe_iva: importe_iva,
       importe_total: costo,
       cuenta_concepto: "210110" /* FCA - Deuda autos */,
@@ -513,7 +513,7 @@ export const insertVehiculo = async (req) => {
       NroAsiento,
       cuentaRODN,
       "D",
-      costo, //costo neto vehiculo
+      importe_neto, //costo neto vehiculo
       concepto,
       transaction_pa7_giama_renting,
       null,
@@ -553,7 +553,7 @@ export const insertVehiculo = async (req) => {
       NroAsientoSecundario,
       "210110",
       "D",
-      costo, //costo neto vehiculo
+      importe_neto,
       concepto,
       transaction_pa7_giama_renting,
       null,
