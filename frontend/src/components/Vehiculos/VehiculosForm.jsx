@@ -50,6 +50,7 @@ const dispatch = useDispatch()
   const {modelos, sucursales, preciosModelos, 
     AMRT, plan_cuentas, proveedores_vehiculo} = useSelector((state) => state.generalesReducer)
   const {isError, isSuccess, isLoading, message} = useSelector((state) => state.vehiculosReducer)
+  const [cuentaDeudaAuto, setCuentaDeudaAuto] = useState(null)
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -107,6 +108,21 @@ if(AMRT) {
   })
 }
 }, [AMRT])
+
+useEffect(() => {
+  if(plan_cuentas?.length){
+    setCuentaDeudaAuto(plan_cuentas.find(e => e.Codigo == "210110")?.Codigo)
+  }
+}, [plan_cuentas])
+
+useEffect(() => {
+if(cuentaDeudaAuto){
+  setFormData({
+    ...form,
+    cuenta_contable: cuentaDeudaAuto
+  })
+}
+}, [cuentaDeudaAuto])
 
 useEffect(() => {
 if(form.cuenta_contable) {
@@ -223,8 +239,7 @@ const handleSubmit = async (e) => {
         </div> */}
         <div className={styles.inputContainer}>
           <span>Cuenta contable</span>
-          <select name="cuenta_contable" value={form["cuenta_contable"]}
-          onChange={handleChange} id="">
+          <select name="cuenta_contable" value={form["cuenta_contable"]} disabled>
             <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
             {
               plan_cuentas?.length && plan_cuentas?.map(e => {
