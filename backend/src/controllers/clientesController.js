@@ -61,6 +61,7 @@ export const postCliente = async (req, res) => {
     antiguedad_didi,
     trabajos_anteriores,
     observacion_perfil,
+    usuario,
   } = req.body;
   const hoy = getTodayDate();
   const camposObligatorios = [
@@ -92,8 +93,8 @@ export const postCliente = async (req, res) => {
       `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
         tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
         nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, mail, notas, resolucion_datero, fecha_resolucion_datero,
-        usuario_resolucion_datero)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        usuario_resolucion_datero, usuario_alta)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -122,6 +123,7 @@ export const postCliente = async (req, res) => {
           resolucion_datero,
           hoy,
           usuario_resolucion_datero,
+          usuario,
         ],
         transaction: transaction,
       }

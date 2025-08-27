@@ -35,6 +35,8 @@ export const postConceptoCostos = async (req, res) => {
     cuenta_contable,
     cuenta_secundaria,
     ingreso_egreso,
+    genera_recibo,
+    genera_factura,
     activable,
   } = req.body;
   if (!nombre || !cuenta_contable || !ingreso_egreso) {
@@ -46,9 +48,19 @@ export const postConceptoCostos = async (req, res) => {
       message: "Un ingreso no puede ser un gasto activable",
     });
   }
+  if (
+    (ingreso_egreso == "E" && genera_recibo == 1) ||
+    (ingreso_egreso == "E" && genera_factura == 1)
+  ) {
+    return res.send({
+      status: false,
+      message: "Un egreso no puede generar recibo o factura",
+    });
+  }
   try {
     await giama_renting.query(
-      "INSERT INTO conceptos_costos (nombre, cuenta_contable, cuenta_secundaria, ingreso_egreso, activable) VALUES (?,?,?,?,?)",
+      `INSERT INTO conceptos_costos (nombre, cuenta_contable, cuenta_secundaria, 
+      ingreso_egreso, activable, genera_recibo, genera_factura) VALUES (?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -57,6 +69,8 @@ export const postConceptoCostos = async (req, res) => {
           cuenta_secundaria,
           ingreso_egreso,
           activable,
+          genera_recibo,
+          genera_factura,
         ],
       }
     );
@@ -122,23 +136,26 @@ export const updateConceptoCostos = async (req, res) => {
     nombre,
     cuenta_contable,
     cuenta_secundaria,
-    ingreso_egreso,
     activable,
+    genera_factura,
+    genera_recibo,
   } = req.body;
-  if (!nombre || !cuenta_contable || !ingreso_egreso) {
+  if (!nombre || !cuenta_contable) {
     return res.send({ status: false, message: "Faltan datos" });
   }
   try {
     await giama_renting.query(
-      "UPDATE conceptos_costos SET nombre = ?, cuenta_contable = ?, cuenta_secundaria = ?, ingreso_egreso = ?, activable = ? WHERE id = ?",
+      `UPDATE conceptos_costos SET nombre = ?, cuenta_contable = ?, 
+      cuenta_secundaria = ?, activable = ?, genera_factura = ?, genera_recibo = ? WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
         replacements: [
           nombre,
           cuenta_contable,
           cuenta_secundaria,
-          ingreso_egreso,
           activable,
+          genera_factura,
+          genera_recibo,
           id,
         ],
       }

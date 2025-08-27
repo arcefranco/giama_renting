@@ -353,6 +353,7 @@ export const insertVehiculo = async (req) => {
     meses_amortizacion_masiva,
   } = req.body;
   let cuentaRODN;
+  let cuentaRDN2;
   let cuentaIC21;
   let cuentaIC22;
   let NroAsiento;
@@ -397,6 +398,7 @@ export const insertVehiculo = async (req) => {
     cuentaRODN = await getParametro("RODN");
     cuentaIC21 = await getParametro("IC21");
     cuentaIC22 = await getParametro("IC22");
+    cuentaRDN2 = await getParametro("RDN2");
   } catch (error) {
     const { body } = handleError(error, "parámetro");
     return body;
@@ -551,7 +553,7 @@ export const insertVehiculo = async (req) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
-      "210110",
+      cuentaRDN2,
       "D",
       importe_neto,
       concepto,
@@ -812,6 +814,7 @@ export const updateVehiculo = async (req, res) => {
     meses_amortizacion,
     color,
     dominio,
+    dominio_provisorio,
     calcomania,
     gnc,
     sucursal,
@@ -866,7 +869,7 @@ export const updateVehiculo = async (req, res) => {
 
   try {
     await giama_renting.query(
-      `UPDATE vehiculos SET modelo = :modelo, dominio = :dominio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
+      `UPDATE vehiculos SET modelo = :modelo, dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
         kilometros_actuales = :kilometros, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
         calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
@@ -879,6 +882,7 @@ export const updateVehiculo = async (req, res) => {
         replacements: {
           modelo,
           dominio: dominio ? dominio : null,
+          dominio_provisorio: dominio_provisorio ? dominio_provisorio : null,
           nro_chasis,
           nro_motor,
           kilometros,
@@ -1610,7 +1614,7 @@ export const postVehiculosMasivos = async (req, res) => {
     transaction_2.commit();
     return res.send({
       status: true,
-      message: "Vehículos cargados correctamente",
+      message: `${data.length} vehículos cargados correctamente`,
     });
   } catch (error) {
     console.error(error);
