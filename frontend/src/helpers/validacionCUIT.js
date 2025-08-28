@@ -12,7 +12,6 @@ export const validacionCUIT = (string) => {
   for (let i = 0; i < multiplicadores.length; i++) {
     suma += parseInt(string[i], 10) * multiplicadores[i];
   }
-  console.log(suma % 11 === 0);
   return suma % 11 === 0;
 };
 

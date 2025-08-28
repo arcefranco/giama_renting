@@ -210,6 +210,18 @@ const renderEliminarCell = (data) => {
         alignment="center" cellRender={(data) => {
           return data.data.ingreso_egreso == "I" ? "Ingreso" : data.data.ingreso_egreso == "E" ? "Egreso" : null
         }}/>
+        {
+          tipo === "I" &&
+          <Column dataField="genera_recibo" caption="Genera recibo" width={100} alignment="center" cellRender={(data) => {
+            return data.data.genera_recibo == 1 ? "Sí" : "No"
+          }} />
+        }
+        {
+          tipo === "I" &&
+          <Column dataField="genera_factura" caption="Genera factura" width={100} alignment="center" cellRender={(data) => {
+            return data.data.genera_factura == 1 ? "Sí" : "No"
+          }} />
+        }
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
       </DataGrid>

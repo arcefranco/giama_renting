@@ -46,7 +46,6 @@ const [form, setForm] = useState({
     observacion: '',
     cuenta: '',
     ingreso_egreso: '',
-    genera_recibo: 1,
     cta_cte_proveedores: 1,
     cuenta_secundaria: '',
     tipo_comprobante: '',
@@ -117,7 +116,6 @@ useToastFeedback({
           cuenta: '',
           cuenta_secundaria: '',
           ingreso_egreso: '',
-          genera_recibo: 1,
           cta_cte_proveedores: 1,
           cod_proveedor: '',
           tipo_comprobante: '',
@@ -139,7 +137,6 @@ useToastFeedback({
           cuenta: '',
           cuenta_secundaria: '',
           ingreso_egreso: '',
-          genera_recibo: 1,
           cta_cte_proveedores: 1,
           cod_proveedor: '',
           tipo_comprobante: '',
@@ -183,31 +180,19 @@ if(isEgresos){
 else if(isIngresos){
   setTipo("I")
 }
-else{
-  setTipo(null)
-}
-setForm({
-    id_vehiculo: id ? id : "",
-    fecha: '',
-    id_concepto: '',
-    id_forma_cobro: '',
-    id_cliente: '',
-    importe_neto: '',
-    importe_iva: '',
-    importe_total: '',
-    observacion: '',
-    cuenta: '',
-    ingreso_egreso: '',
-    genera_recibo: 1,
-    cta_cte_proveedores: 1,
-    cuenta_secundaria: '',
-    tipo_comprobante: '',
-    numero_comprobante_1: '',
-    numero_comprobante_2: '',
-    cod_proveedor: '',
-    usuario: username,
-})
+
 }, [isEgresos, isIngresos, tipo])
+
+useEffect(() => {
+  if(!isEgresos && !isIngresos && conceptos?.length){
+    if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "I"){
+      setTipo("I")
+    }
+    else if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "E"){
+      setTipo("E")
+    }
+  }
+}, [form.id_concepto, conceptos, tipo])
 
 useEffect(() => {
 if(isEgresos){
@@ -220,22 +205,6 @@ else{
   setConceptosFiltrados(conceptos)
 }
 }, [conceptos, isEgresos, isIngresos])
-
-useEffect(() => {
-  if(!tipo){
-    if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "I"){
-      setTipo("I")
-    }
-  }
-}, [form.id_concepto, conceptos, tipo])
-
-useEffect(() => {
-  if(!tipo){
-    if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "E"){
-      setTipo("E")
-    }
-  }
-}, [form.id_concepto, conceptos, tipo])
 
 useEffect(() => {
   if (nro_recibo_ingreso) {
@@ -589,7 +558,7 @@ return (
       <div className={styles.inputContainer}>
         <span>Punto de venta</span>
         <input type="number" name='numero_comprobante_1' value={form.numero_comprobante_1}
-        onChange={handleChange} max="99999" />
+        onChange={handleChange} />
       </div>
 
       }
@@ -597,7 +566,7 @@ return (
       <div className={styles.inputContainer}>
         <span>Nº Comprobante</span>
         <input type="number" name='numero_comprobante_2' value={form.numero_comprobante_2}
-        onChange={handleChange} max="99999999" />
+        onChange={handleChange}  />
       </div>
 
       }
@@ -633,23 +602,6 @@ return (
           <textarea type="text" name='observacion' value={form["observacion"]} 
         onChange={handleChange}/>
       </div>
-      {
-      tipo && tipo === "I" && 
-      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", height: "3rem"}}>
-      <label style={{fontSize: "15px"}}>Genera recibo y factura</label>
-      <input
-        type="checkbox"
-        checked={form.genera_recibo}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            genera_recibo: e.target.checked ? 1 : 0,
-          })
-        }
-        />
-
-      </div>
-      }
       </form>
       <button 
       className={styles.sendBtn} 
