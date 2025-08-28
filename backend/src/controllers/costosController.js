@@ -324,7 +324,6 @@ async function registrarCostoIngresoIndividual({
   importe_total,
   observacion,
   id_forma_cobro,
-  genera_recibo,
   cta_cte_proveedores,
   usuario,
   id_cliente,
@@ -336,6 +335,8 @@ async function registrarCostoIngresoIndividual({
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
   let ingreso_egreso;
+  let genera_recibo;
+  let genera_factura;
   let NroAsiento;
   let NroAsientoSecundario;
   let cuenta_forma_cobro;
@@ -348,7 +349,8 @@ async function registrarCostoIngresoIndividual({
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
-      `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto`,
+      `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
+      FROM conceptos_costos WHERE id = :id_concepto`,
       {
         type: QueryTypes.SELECT,
         replacements: { id_concepto },
@@ -359,6 +361,8 @@ async function registrarCostoIngresoIndividual({
     ingreso_egreso = result[0]["ingreso_egreso"];
     cuenta_concepto = result[0]["cuenta_contable"];
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
+    genera_recibo = result[0]["genera_recibo"];
+    genera_factura = result[0]["genera_factura"];
   } catch (error) {
     console.log(error);
     await transaction_asientos.rollback();
@@ -456,43 +460,47 @@ async function registrarCostoIngresoIndividual({
   const importeNetoFinal = importe_neto * factor;
   const importeIvaFinal = importe_iva * factor;
   const importeTotalFinal = importe_total * factor;
-  if (ingreso_egreso === "I" && genera_recibo == 1) {
+  if (ingreso_egreso === "I") {
     //recibo
-    try {
-      //inserto recibo
-      nro_recibo = await insertRecibo(
-        getTodayDate(),
-        observacion,
-        importe_total,
-        usuario,
-        id_cliente,
-        id_vehiculo,
-        null,
-        null,
-        id_forma_cobro,
-        transaction_costos_ingresos
-      );
-    } catch (error) {
-      console.log(error);
-      throw error;
+    if (genera_recibo === 1) {
+      try {
+        //inserto recibo
+        nro_recibo = await insertRecibo(
+          getTodayDate(),
+          observacion,
+          importe_total,
+          usuario,
+          id_cliente,
+          id_vehiculo,
+          null,
+          null,
+          id_forma_cobro,
+          transaction_costos_ingresos
+        );
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     }
     //factura
-    try {
-      await insertFactura(
-        id_cliente,
-        importeNetoFinal,
-        importeIvaFinal,
-        importeTotalFinal,
-        usuario,
-        NroAsiento,
-        NroAsientoSecundario,
-        observacion,
-        transaction_costos_ingresos,
-        transaction_asientos
-      );
-    } catch (error) {
-      console.log(error);
-      throw error;
+    if (genera_factura === 1) {
+      try {
+        await insertFactura(
+          id_cliente,
+          importeNetoFinal,
+          importeIvaFinal,
+          importeTotalFinal,
+          usuario,
+          NroAsiento,
+          NroAsientoSecundario,
+          observacion,
+          transaction_costos_ingresos,
+          transaction_asientos
+        );
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     }
   }
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
