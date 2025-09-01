@@ -57,6 +57,8 @@ const [form, setForm] = useState({
 const [tipo, setTipo] = useState(null)
 const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
 const [conceptosFiltrados, setConceptosFiltrados] = useState([])
+const [generaRecibo, setGeneraRecibo] = useState(false)
+const [generaFactura, setGeneraFactura] = useState(false)
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
     const pageCount = Math.ceil(costos_ingresos_vehiculo.length / 5);
@@ -145,6 +147,8 @@ useToastFeedback({
           usuario: username
           })
         }
+        setGeneraFactura(false)
+        setGeneraRecibo(false)
     }
 });
 
@@ -173,7 +177,7 @@ useEffect(() => {
   }
 }, [form.id_vehiculo])
 
-useEffect(() => {
+useEffect(() => { /**SET TIPO SEGUN URL */
 if(isEgresos){
   setTipo("E")
 }
@@ -183,7 +187,7 @@ else if(isIngresos){
 
 }, [isEgresos, isIngresos, tipo])
 
-useEffect(() => {
+useEffect(() => { /**SET TIPO EN INGRESOS/EGRESOS DESDE VEHICULO */
   if(!isEgresos && !isIngresos && conceptos?.length){
     if(conceptos.find(e => e.id == form.id_concepto)?.ingreso_egreso === "I"){
       setTipo("I")
@@ -194,7 +198,7 @@ useEffect(() => {
   }
 }, [form.id_concepto, conceptos, tipo])
 
-useEffect(() => {
+useEffect(() => { /**FILTRADO DE CONCEPTOS */
 if(isEgresos){
   setConceptosFiltrados(conceptos.filter(e => e.ingreso_egreso === "E"))
 }
@@ -205,6 +209,23 @@ else{
   setConceptosFiltrados(conceptos)
 }
 }, [conceptos, isEgresos, isIngresos])
+
+useEffect(() => { /*SET GENERA RECIBO/FACTURA */
+if(form.id_concepto){
+  let concepto = conceptos.find(e => e.id == form.id_concepto)
+  if(concepto.genera_recibo == 1){
+    setGeneraRecibo(true)
+  }else{
+    setGeneraRecibo(false)
+  }
+
+  if(concepto.genera_factura == 1){
+    setGeneraFactura(true)
+  }else{
+    setGeneraFactura(false)
+  }
+}
+}, [form.id_concepto])
 
 useEffect(() => {
   if (nro_recibo_ingreso) {
@@ -602,6 +623,30 @@ return (
           <textarea type="text" name='observacion' value={form["observacion"]} 
         onChange={handleChange}/>
       </div>
+      {
+        tipo && tipo === "I" &&
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
+      height: "3rem", alignItems: "center"}}>
+      <label style={{fontSize: "15px"}}>Genera recibo</label>
+      <input
+        type="checkbox"
+        checked={generaRecibo}
+        />
+
+      </div>
+      }
+      {
+        tipo && tipo === "I" &&
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
+      height: "3rem", alignItems: "center"}}>
+      <label style={{fontSize: "15px"}}>Genera factura</label>
+      <input
+        type="checkbox"
+        checked={generaFactura}
+        />
+
+      </div>
+      }
       </form>
       <button 
       className={styles.sendBtn} 

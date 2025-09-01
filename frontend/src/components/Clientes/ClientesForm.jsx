@@ -8,6 +8,7 @@ import { ClipLoader } from "react-spinners";
 import { paises } from '../../paises.js'
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { validacionCUIT } from '../../helpers/validacionCUIT.js'
+import { validacionEmail } from '../../helpers/validacionEmail.js'
 const ClientesForm = () => {
 const dispatch = useDispatch()
   useEffect(() => {
@@ -220,9 +221,24 @@ if (!value) {
   error = "CUIT/CUIL inválido";
 }
 
+
 setErrors({
   ...errors,
   ["nro_documento"]: error,
+});}
+const onBlurEmail = () => {
+const value = form["mail"];
+let error = "";
+
+if (!value) {
+  error = "Campo obligatorio";
+} else if (!validacionEmail(value)) {
+  error = "Email inválido";
+}
+
+setErrors({
+  ...errors,
+  ["mail"]: error,
 });}
 
 const handleSubmit = async (e) => {
@@ -410,7 +426,7 @@ return (
         <input type="text" 
         name='mail' value={form["mail"]}
         onChange={handleChange} 
-        onBlur={() => setErrors({ ...errors, ["mail"]: !form["mail"] ? 'Campo obligatorio' : '' })}/>
+        onBlur={onBlurEmail}/>
         {errors["mail"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["mail"]}</span>}
         </div>
         <div className={styles.inputContainer}>
