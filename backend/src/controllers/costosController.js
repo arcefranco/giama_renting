@@ -241,19 +241,21 @@ const asientos_costos_ingresos = async (
       NroAsientoSecundario,
       TipoComprobante
     );
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuentaIVA,
-      dhNetoEIva,
-      importe_iva,
-      observacion,
-      transaction,
-      comprobante,
-      Fecha,
-      NroAsientoSecundario,
-      TipoComprobante
-    );
+    if (importe_iva > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        dhNetoEIva,
+        importe_iva,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
     await asientoContable(
       "c_movimientos",
       NroAsiento,
@@ -281,19 +283,21 @@ const asientos_costos_ingresos = async (
         null,
         TipoComprobante
       );
-      await asientoContable(
-        "c2_movimientos",
-        NroAsientoSecundario,
-        cuentaSecundariaIVA,
-        dhNetoEIva,
-        importe_iva,
-        observacion,
-        transaction,
-        comprobante,
-        Fecha,
-        null,
-        TipoComprobante
-      );
+      if (importe_iva > 0) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuentaSecundariaIVA,
+          dhNetoEIva,
+          importe_iva,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
@@ -346,6 +350,7 @@ async function registrarCostoIngresoIndividual({
   let nro_recibo;
   let FA_FC;
   let comprobante;
+  let nro_comprobante;
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
@@ -420,6 +425,10 @@ async function registrarCostoIngresoIndividual({
       numero_comprobante_1,
       5
     )}-${padWithZeros(numero_comprobante_2, 8)}`;
+    nro_comprobante = `${padWithZeros(numero_comprobante_1, 5)}${padWithZeros(
+      numero_comprobante_2,
+      8
+    )}`;
   } else {
     FA_FC = null;
     comprobante = null;
@@ -442,7 +451,7 @@ async function registrarCostoIngresoIndividual({
       importe_iva,
       importe_total,
       observacion,
-      comprobante,
+      nro_comprobante,
       ingreso_egreso,
       transaction_asientos,
       NroAsiento,
@@ -545,7 +554,10 @@ async function registrarCostoIngresoIndividual({
     );
     await transaction_costos_ingresos.commit();
     await transaction_asientos.commit();
-    return nro_recibo ? nro_recibo : null;
+    return {
+      nro_recibo: nro_recibo ? nro_recibo : null,
+      genera_factura: genera_factura,
+    };
   } catch (error) {
     await transaction_costos_ingresos.rollback();
     await transaction_asientos.rollback();
@@ -554,12 +566,22 @@ async function registrarCostoIngresoIndividual({
 }
 
 export const postCostos_Ingresos = async (req, res) => {
+  let message;
   try {
-    let nro_recibo_ingreso = await registrarCostoIngresoIndividual(req.body);
+    let { nro_recibo, genera_factura } = await registrarCostoIngresoIndividual(
+      req.body
+    );
+    if (nro_recibo && genera_factura == 0) {
+      message = "Ingresado correctamente. Se generó el recibo.";
+    } else if (!nro_recibo && genera_factura == 1) {
+      message = "Ingresado correctamente. Se generó la factura.";
+    } else if (!nro_recibo && genera_factura == 0) {
+      message = "Ingresado correctamente";
+    }
     return res.send({
       status: true,
-      message: "Ingresado correctamente",
-      nro_recibo_ingreso: nro_recibo_ingreso ? nro_recibo_ingreso : null,
+      message: message,
+      nro_recibo_ingreso: nro_recibo ? nro_recibo : null,
     });
   } catch (error) {
     console.log(error);

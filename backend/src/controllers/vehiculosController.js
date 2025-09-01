@@ -492,7 +492,7 @@ export const insertVehiculo = async (req) => {
       importe_neto: importe_neto,
       importe_iva: importe_iva,
       importe_total: costo,
-      cuenta_concepto: "210110" /* FCA - Deuda autos */,
+      cuenta_concepto: cuentaRODN,
       NroAsiento,
       NroAsientoSecundario,
       usuario: usuario,
@@ -518,10 +518,10 @@ export const insertVehiculo = async (req) => {
       importe_neto, //costo neto vehiculo
       concepto,
       transaction_pa7_giama_renting,
-      null,
+      numero_comprobante,
       getTodayDate(),
       NroAsientoSecundario,
-      null
+      1
     );
     await asientoContable(
       "c_movimientos",
@@ -531,10 +531,10 @@ export const insertVehiculo = async (req) => {
       importe_iva,
       concepto,
       transaction_pa7_giama_renting,
-      null,
+      numero_comprobante,
       getTodayDate(),
       NroAsientoSecundario,
-      null
+      1
     );
     await asientoContable(
       "c_movimientos",
@@ -544,10 +544,10 @@ export const insertVehiculo = async (req) => {
       costo,
       concepto,
       transaction_pa7_giama_renting,
-      null,
+      numero_comprobante,
       getTodayDate(),
       NroAsientoSecundario,
-      null
+      1
     );
     //asientos secundarios
     await asientoContable(
@@ -558,10 +558,10 @@ export const insertVehiculo = async (req) => {
       importe_neto,
       concepto,
       transaction_pa7_giama_renting,
-      null,
+      numero_comprobante,
       getTodayDate(),
       null,
-      null
+      1
     );
     await asientoContable(
       "c2_movimientos",
@@ -571,10 +571,10 @@ export const insertVehiculo = async (req) => {
       importe_iva,
       concepto,
       transaction_pa7_giama_renting,
-      null,
+      numero_comprobante,
       getTodayDate(),
       null,
-      null
+      1
     );
     await asientoContable(
       "c2_movimientos",
@@ -584,10 +584,10 @@ export const insertVehiculo = async (req) => {
       costo,
       concepto,
       transaction_pa7_giama_renting,
-      null,
+      numero_comprobante,
       getTodayDate(),
       null,
-      null
+      1
     );
   } catch (error) {
     console.log(error);

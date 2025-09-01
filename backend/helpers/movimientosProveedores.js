@@ -27,8 +27,8 @@ export const movimientosProveedores = async ({
   try {
     const result = await pa7_giama_renting.query(
       `INSERT INTO c_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, Iva1,
-      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?)`,
+      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1,
+      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -37,7 +37,8 @@ export const movimientosProveedores = async ({
           FA_FC,
           NroComprobante,
           getTodayDate(),
-          importe_neto,
+          tipo_comprobante == 3 ? importe_neto : null,
+          tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
           21,
           importe_total,
@@ -58,8 +59,8 @@ export const movimientosProveedores = async ({
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoGravado1, Iva1,
-      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?)`,
+      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1,
+      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -68,7 +69,8 @@ export const movimientosProveedores = async ({
           FA_FC,
           NroComprobante,
           getTodayDate(),
-          importe_neto,
+          tipo_comprobante == 3 ? importe_neto : null,
+          tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
           21,
           importe_total,
