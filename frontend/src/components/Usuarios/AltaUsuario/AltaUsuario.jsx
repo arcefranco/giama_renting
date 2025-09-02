@@ -97,7 +97,7 @@ const handleSubmit = async (e) => {
         <p className={styles.loadingText}>Cargando...</p>
       </div>
     )}
-    <h2>Alta de usuario</h2>
+    <h2>Alta de usuario 2</h2>
     <form action="" enctype="multipart/form-data" className={styles.form}>
       <div className={styles.inputContainer}>
           <span>Nombre</span>
