@@ -4,15 +4,20 @@ import { ToastContainer, toast } from 'react-toastify';
 import {createUsuario, reset} from "../../../reducers/Usuarios/usuariosSlice.js"
 import styles from "./AltaUsuario.module.css"
 import { ClipLoader } from 'react-spinners';
+import { getRoles } from '../../../reducers/Generales/generalesSlice.js';
+import Select from "react-select";
 
 const AltaUsuario = () => {
 
 const dispatch = useDispatch()
 const {isError, isSuccess, isLoading, message} = useSelector((state) => state.usuariosReducer)
+const {roles} = useSelector((state) => state.generalesReducer)
 const [form, setForm] = useState({
     nombre: '',
     email: '',
+    roles: '',
 })
+const [selectedRoles, setSelectedRoles] = useState([]);
 useEffect(() => {
 
   if(isError){
@@ -42,11 +47,19 @@ useEffect(() => {
         dispatch(reset())
         setForm({
             nombre: '',
-            email: ''
+            email: '',
+            roles: ''
         })
+        setSelectedRoles([]);
     }
 
 }, [isError, isSuccess])
+
+useEffect(() => {
+dispatch(getRoles())
+}, [])
+
+
 
 const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,6 +68,14 @@ const handleChange = (e) => {
          [name]: value,
        }); 
 
+};
+const handleChangeRoles = (selectedOptions) => {
+  setSelectedRoles(selectedOptions);
+  const ids = selectedOptions.map(opt => opt.value).join(",");
+  setForm({
+    ...form,
+    roles: ids,
+  });
 };
 const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +91,7 @@ const handleSubmit = async (e) => {
       <div className={styles.spinnerOverlay}>
         <ClipLoader
           size={60}
-          color="#800020" // bordó
+          color="#800020"
           loading={true}
         />
         <p className={styles.loadingText}>Cargando...</p>
@@ -87,6 +108,18 @@ const handleSubmit = async (e) => {
           <span>Email</span>
           <input type="text" name='email' value={form["email"]} 
         onChange={handleChange}/>
+      </div>
+      <div className={styles.inputContainer} style={{fontSize: "13px", width: "14rem"}}> 
+        <label>Roles</label>
+        <Select
+          isMulti
+          options={roles.map((r) => ({
+            value: r.id,
+            label: r.concepto,
+          }))}
+          value={selectedRoles}  
+          onChange={handleChangeRoles}
+        />
       </div>
      </form>
     <button 

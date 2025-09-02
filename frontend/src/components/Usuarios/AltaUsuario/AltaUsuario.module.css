@@ -21,8 +21,9 @@
   }
   .form {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
+    height: 14rem;
     padding: 1rem;
     position: relative;
   }

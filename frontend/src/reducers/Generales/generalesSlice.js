@@ -15,6 +15,7 @@ const initialState = {
   plan_cuentas: [],
   proveedores: [],
   proveedores_vehiculo: [],
+  roles: [],
   AMRT: null,
 };
 
@@ -110,6 +111,14 @@ export const getProveedoresVehiculo = createAsyncThunk(
   "getProveedoresVehiculo",
   async (_, { rejectWithValue }) => {
     const result = await generalesService.getProveedoresVehiculo();
+    return result.status ? result.data : rejectWithValue(result);
+  }
+);
+
+export const getRoles = createAsyncThunk(
+  "getRoles",
+  async (_, { rejectWithValue }) => {
+    const result = await generalesService.getRoles();
     return result.status ? result.data : rejectWithValue(result);
   }
 );
@@ -332,6 +341,22 @@ export const generalesSlice = createSlice({
       state.proveedores_vehiculo = action.payload;
     });
     builder.addCase(getProveedoresVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getRoles.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getRoles.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.roles = action.payload;
+    });
+    builder.addCase(getRoles.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
