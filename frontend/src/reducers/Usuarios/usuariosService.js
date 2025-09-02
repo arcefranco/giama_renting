@@ -1,5 +1,4 @@
 import { getFunction, postFunction } from "../axios/axiosFunctions";
-import axios from "axios";
 
 const createUsuario = async (data) => {
   return postFunction("login/createUsuario", data);
