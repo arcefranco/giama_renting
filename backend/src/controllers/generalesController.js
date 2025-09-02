@@ -179,7 +179,7 @@ export const getProveedores = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    const { body } = handleError(error, "Cuentas contables", acciones.get);
+    const { body } = handleError(error, "Proveedores", acciones.get);
     return res.send(body);
   }
 };
@@ -194,7 +194,19 @@ export const getProveedoresVehiculo = async (req, res) => {
     );
     return res.send(resultado);
   } catch (error) {
-    const { body } = handleError(error, "Cuentas contables", acciones.get);
+    const { body } = handleError(error, "Proveedores vehículo", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const getRoles = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM roles", {
+      type: QueryTypes.SELECT,
+    });
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "Roles", acciones.get);
     return res.send(body);
   }
 };

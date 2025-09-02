@@ -5,30 +5,38 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../../helpers/sendEmail.js";
+import { handleError, acciones } from "../../helpers/handleError.js";
+
 dotenv.config();
 const { sign, verify } = pkg;
 
 export const createUsuario = async (req, res) => {
-  const { email, nombre } = req.body;
-
+  const { email, nombre, roles } = req.body;
+  const { user } = req.user;
+  console.log(user);
   if (!email) {
-    return res.send({ status: false, message: "Faltan campos" });
+    return res.send({ status: false, message: "El email es obligatorio." });
+  }
+
+  if (!roles) {
+    return res.send({
+      status: false,
+      message: "El usuario debe tener un rol asignado",
+    });
   }
 
   try {
     await giama_renting.query(
-      "INSERT INTO usuarios (email, nombre) VALUES (?,?)",
+      "INSERT INTO usuarios (email, nombre, roles, usuario_alta) VALUES (?,?,?,?)",
       {
-        replacements: [email, nombre ? nombre : null],
+        replacements: [email, nombre ? nombre : null, roles, user],
         type: QueryTypes.INSERT,
       }
     );
   } catch (error) {
     console.log(error);
-    return res.send({
-      status: false,
-      message: `error al insertar en base de datos: ${error}`,
-    });
+    const { body } = handleError(error, "Usuario", acciones.post);
+    return res.send(body);
   }
   const payload = {
     email: email,
