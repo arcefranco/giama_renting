@@ -202,10 +202,13 @@ const renderEliminarCell = (data) => {
         <Column dataField="nombre" width={200} caption="Nombre" alignment="left" />
         <Column dataField="cuenta_contable" width={400} caption="Cuenta contable" alignment="center" cellRender={renderCuentaContable}/>
         <Column dataField="cuenta_secundaria" width={100} caption="Cuenta secundaria" alignment="center" />
+        {
+          tipo === "E" &&
         <Column dataField="activable" width={100} caption="Es activable" 
         alignment="center" cellRender={(data) => {
           return data.data.activable == 1 ? "Sí" : "No"
         }}/>
+        }
         {
           tipo === "I" &&
           <Column dataField="genera_recibo" caption="Genera recibo" width={100} alignment="center" cellRender={(data) => {

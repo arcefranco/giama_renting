@@ -17,6 +17,8 @@ const UpdateCliente = () => {
   const {username} = useSelector((state) => state.loginReducer)
   const [errors, setErrors] = useState({});
   const [formValido, setFormValido] = useState(false);
+  const [tiposResponsableClientes, setTiposResponsableClientes] = useState(null)
+  const [tiposDocumentoClientes, setTiposDocumentoClientes] = useState(null)
   const [form, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -133,7 +135,7 @@ useToastFeedback({
   message,
   resetAction: reset
 })
-  useEffect(() => {
+useEffect(() => {
     const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') || 
     (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));
     const camposObligatoriosCompletos =
@@ -146,9 +148,9 @@ useToastFeedback({
       form["mail"] !== '' 
 
     setFormValido(isButtonEnabled && camposObligatoriosCompletos);
-  }, [form]);
+}, [form]);
 
-  useEffect(() => {
+useEffect(() => {
     const params = new URLSearchParams(location.search);
     const imprimir = params.get('imprimir');
 
@@ -220,7 +222,23 @@ useToastFeedback({
         ventana.close();
       }, 1000); // esperás 1s para asegurar que el formulario se renderice
     }
-  }, [location]);
+}, [location]);
+
+useEffect(() => {
+if(tipos_responsable?.length){
+  const ids = [1, 4, 5];
+  const resultado = tipos_responsable.filter(item => ids.includes(item.id));
+  setTiposResponsableClientes(resultado)
+}
+}, [tipos_responsable])
+
+useEffect(() => {
+if(tipos_documento?.length){
+  const ids = [6,7];
+  const resultado = tipos_documento.filter(item => ids.includes(item.id));
+  setTiposDocumentoClientes(resultado)
+}
+}, [tipos_documento])
 
 
 const handleChange = (e) => {
@@ -391,7 +409,7 @@ if(fecha){
           onChange={handleChange} id="">
             <option value={""} disabled /* selected */>{"Seleccione"}</option>
             {
-              tipos_responsable?.length && tipos_responsable?.map(e => {
+              tiposResponsableClientes?.length && tiposResponsableClientes?.map(e => {
                 return <option key={e.id} value={e.id}>{e.nombre}</option>
               })
             }
@@ -400,12 +418,12 @@ if(fecha){
         <div className={styles.inputContainer}>
           <span>Tipo documento</span>
           <select name="tipo_documento" 
-          onBlur={() => setErrors({ ...errors, ["tipo_documento"]: !form["tipo_documento"] ? 'Campo obligatorio' : '' })} 
           value={form["tipo_documento"]}
+          onBlur={() => setErrors({ ...errors, ["tipo_documento"]: !form["tipo_documento"] ? 'Campo obligatorio' : '' })}
           onChange={handleChange} id="">
             <option value={""} disabled /* selected */>{"Seleccione"}</option>
             {
-              tipos_documento?.length && tipos_documento?.map(e => {
+              tiposDocumentoClientes?.length && tiposDocumentoClientes?.map(e => {
                 return <option key={e.id} value={e.id}>{e.nombre}</option>
               })
             }
