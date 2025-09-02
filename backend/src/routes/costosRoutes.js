@@ -11,6 +11,7 @@ import {
   updateConceptoCostos,
 } from "../controllers/costosController.js";
 import { auth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/roles.js";
 const costosRouter = Router();
 
 costosRouter.use((req, res, next) => {
@@ -21,17 +22,43 @@ costosRouter.use((req, res, next) => {
   next();
 });
 
-costosRouter.get("/cuentasContables", auth, getCuentasContables);
-costosRouter.post("/concepto", auth, postConceptoCostos);
-costosRouter.get("/concepto", auth, getConceptosCostos);
-costosRouter.post("/getConceptosCostosById", auth, getConceptosCostosById);
-costosRouter.post("/updateConcepto", auth, updateConceptoCostos);
-costosRouter.post("/deleteConcepto", auth, deleteConceptosCostos);
-costosRouter.post("/costos_ingresos", auth, postCostos_Ingresos);
+costosRouter.get(
+  "/cuentasContables",
+  auth,
+  authorizeRoles("2"),
+  getCuentasContables
+);
+costosRouter.post("/concepto", auth, authorizeRoles("2"), postConceptoCostos);
+costosRouter.get("/concepto", auth, authorizeRoles("2"), getConceptosCostos);
+costosRouter.post(
+  "/getConceptosCostosById",
+  auth,
+  authorizeRoles("2"),
+  getConceptosCostosById
+);
+costosRouter.post(
+  "/updateConcepto",
+  auth,
+  authorizeRoles("2"),
+  updateConceptoCostos
+);
+costosRouter.post(
+  "/deleteConcepto",
+  auth,
+  authorizeRoles("2"),
+  deleteConceptosCostos
+);
+costosRouter.post(
+  "/costos_ingresos",
+  auth,
+  authorizeRoles("2"),
+  postCostos_Ingresos
+);
 costosRouter.post(
   "/costos_ingresos_id_vehiculo",
   auth,
+  authorizeRoles("2"),
   getCostosIngresosByIdVehiculo
 );
-costosRouter.post("/prorrateoIE", auth, prorrateoIE);
+costosRouter.post("/prorrateoIE", auth, authorizeRoles("2"), prorrateoIE);
 export default costosRouter;

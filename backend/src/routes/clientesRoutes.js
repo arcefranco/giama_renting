@@ -12,6 +12,7 @@ import {
   postImagenesCliente,
 } from "../controllers/clientesController.js";
 import { auth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/roles.js";
 const clientesRouter = Router();
 clientesRouter.use((req, res, next) => {
   res.header(
@@ -20,14 +21,25 @@ clientesRouter.use((req, res, next) => {
   );
   next();
 });
-clientesRouter.post("/postCliente", upload.array("images"), auth, postCliente);
+clientesRouter.post(
+  "/postCliente",
+  upload.array("images"),
+  auth,
+  authorizeRoles("3"),
+  postCliente
+);
 clientesRouter.post(
   "/postImagenesCliente",
   upload.array("images"),
   auth,
   postImagenesCliente
 );
-clientesRouter.get("/getClientes", auth, getClientes);
+clientesRouter.get(
+  "/getClientes",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getClientes
+);
 clientesRouter.post("/getclientesById", auth, getClientesById);
 clientesRouter.post("/getDateroByIdCliente", auth, getDateroByIdCliente);
 clientesRouter.post("/getEstadoCliente", auth, getEstadoCliente);

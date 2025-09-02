@@ -31,23 +31,36 @@ vehiculosRouter.use((req, res, next) => {
   );
   next();
 });
-vehiculosRouter.get("/getVehiculos", auth, authorizeRoles("3"), getVehiculos);
-vehiculosRouter.post("/getVehiculosById", auth, getVehiculosById);
+vehiculosRouter.get(
+  "/getVehiculos",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getVehiculos
+);
+vehiculosRouter.post(
+  "/getVehiculosById",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getVehiculosById
+);
 vehiculosRouter.post(
   "/postVehiculo",
   auth,
+  authorizeRoles("2"),
   upload.array("images"),
   postVehiculo
 );
 vehiculosRouter.post(
   "/postImagenesVehiculo",
   auth,
+  authorizeRoles("2"),
   upload.array("images"),
   postImagenesVehiculo
 );
 vehiculosRouter.post(
   "/postVehiculosMasivos",
   auth,
+  authorizeRoles("2"),
   upload.single("file"),
   postVehiculosMasivos
 );
@@ -57,12 +70,27 @@ vehiculosRouter.get("/getAllAmortizaciones", auth, getAllAmortizaciones); */
 
 vehiculosRouter.post("/getImagenesVehiculos", auth, getImagenesVehiculos);
 vehiculosRouter.post("/eliminarImagenes", auth, eliminarImagenes);
-vehiculosRouter.post("/updateVehiculo", auth, updateVehiculo);
+vehiculosRouter.post(
+  "/updateVehiculo",
+  auth,
+  authorizeRoles("2"),
+  updateVehiculo
+);
 vehiculosRouter.post("/getCostosPeriodo", auth, getCostosPeriodo);
 vehiculosRouter.post("/getCostoNetoVehiculo", auth, getCostoNetoVehiculo);
-vehiculosRouter.post("/getSituacionFlota", auth, getSituacionFlota);
+vehiculosRouter.post(
+  "/getSituacionFlota",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getSituacionFlota
+);
 vehiculosRouter.post("/getAlquileresPeriodo", auth, getAlquileresPeriodo);
-vehiculosRouter.post("/getAmortizacion" /* , auth */, getAmortizacion);
-vehiculosRouter.post("/getFichas", auth, getFichas);
+vehiculosRouter.post("/getAmortizacion", auth, getAmortizacion);
+vehiculosRouter.post(
+  "/getFichas",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getFichas
+);
 
 export default vehiculosRouter;

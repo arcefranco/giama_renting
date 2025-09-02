@@ -87,7 +87,7 @@ export const createPass = async (req, res) => {
   }
   return res.send({
     status: true,
-    message: "Contraseña creada con exito!",
+    message: `Ya puede ingresar utilizando el email ${email} y la contraseña creada recientemente`,
   });
 };
 

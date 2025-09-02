@@ -15,6 +15,7 @@ import {
   getAlquilerByIdContrato,
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/roles.js";
 const alquileresRouter = Router();
 alquileresRouter.use((req, res, next) => {
   res.header(
@@ -23,16 +24,41 @@ alquileresRouter.use((req, res, next) => {
   );
   next();
 });
-alquileresRouter.post("/contrato", auth, postContratoAlquiler);
+alquileresRouter.post(
+  "/contrato",
+  auth,
+  authorizeRoles("3"),
+  postContratoAlquiler
+);
 alquileresRouter.post("/postAlquiler", auth, postAlquiler);
-alquileresRouter.post("/formaDeCobro", auth, postFormaCobro);
-alquileresRouter.get("/formaDeCobro", auth, getFormasCobro);
+alquileresRouter.post(
+  "/formaDeCobro",
+  auth,
+  authorizeRoles("2"),
+  postFormaCobro
+);
+alquileresRouter.get(
+  "/formaDeCobro",
+  auth,
+  authorizeRoles("2"),
+  getFormasCobro
+);
 alquileresRouter.post("/idVehiculo", auth, getAlquileresByIdVehiculo);
 alquileresRouter.post("/contrato/idVehiculo", auth, getContratosByIdVehiculo);
 alquileresRouter.post("/id", getAlquilerByIdContrato);
-alquileresRouter.post("/contrato/id", auth, getContratoById);
-alquileresRouter.post("/", auth, getAlquileres);
-alquileresRouter.post("/contratos", auth, getContratos);
+alquileresRouter.post(
+  "/contrato/id",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getContratoById
+);
+alquileresRouter.post("/", auth, authorizeRoles("2", "3", "4"), getAlquileres);
+alquileresRouter.post(
+  "/contratos",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getContratos
+);
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
 alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
