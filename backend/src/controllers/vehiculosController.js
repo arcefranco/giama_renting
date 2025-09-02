@@ -521,7 +521,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante,
       getTodayDate(),
       NroAsientoSecundario,
-      1
+      "FA"
     );
     await asientoContable(
       "c_movimientos",
@@ -534,7 +534,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante,
       getTodayDate(),
       NroAsientoSecundario,
-      1
+      "FA"
     );
     await asientoContable(
       "c_movimientos",
@@ -547,7 +547,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante,
       getTodayDate(),
       NroAsientoSecundario,
-      1
+      "FA"
     );
     //asientos secundarios
     await asientoContable(
@@ -561,7 +561,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante,
       getTodayDate(),
       null,
-      1
+      "FA"
     );
     await asientoContable(
       "c2_movimientos",
@@ -574,7 +574,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante,
       getTodayDate(),
       null,
-      1
+      "FA"
     );
     await asientoContable(
       "c2_movimientos",
@@ -587,7 +587,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante,
       getTodayDate(),
       null,
-      1
+      "FA"
     );
   } catch (error) {
     console.log(error);

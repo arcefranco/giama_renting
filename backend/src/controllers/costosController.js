@@ -575,6 +575,8 @@ export const postCostos_Ingresos = async (req, res) => {
       message = "Ingresado correctamente. Se generó el recibo.";
     } else if (!nro_recibo && genera_factura == 1) {
       message = "Ingresado correctamente. Se generó la factura.";
+    } else if (nro_recibo && genera_factura == 1) {
+      message = "Ingresado correctamente. Se generó la factura y el recibo.";
     } else if (!nro_recibo && genera_factura == 0) {
       message = "Ingresado correctamente";
     }
