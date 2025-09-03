@@ -69,7 +69,7 @@ function App() {
     <Route path='/contrato/actualizar/:id' element={<ContratoAlquiler/>}/>
     <Route path='/alquileres/:idContrato'element={<AlquileresForm key={location.pathname}/>}/>
     <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
-    <Route path='/alquileres/reporte' element={<ReporteAlquileres/>}/>
+    <Route path='/alquileres/reporte' element={<ReporteAlquileres key={"alq"}/>}/>
     <Route path='/alquileres/contrato/reporte' element={<ReporteContratos/>}/>
     </Route>
   </Route>

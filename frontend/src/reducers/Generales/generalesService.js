@@ -53,6 +53,10 @@ const getRoles = async () => {
   return getFunction("generales/roles");
 };
 
+const getFormasCobro = async () => {
+  return getFunction("generales/formas_cobro");
+};
+
 const getParametroAMRT = async () => {
   try {
     const response = await axios.get(
@@ -88,5 +92,6 @@ const generalesService = {
   getProveedoresVehiculo,
   getEstados,
   getRoles,
+  getFormasCobro,
 };
 export default generalesService;

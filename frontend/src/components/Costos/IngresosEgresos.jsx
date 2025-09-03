@@ -4,8 +4,7 @@ import { getCostosIngresosByIdVehiculo, getConceptosCostos,
   postCostos_Ingresos, reset as resetCostosSlice, resetCostosVehiculo, reset_nro_recibo_ingreso } from '../../reducers/Costos/costosSlice.js';
 import {getVehiculos, getVehiculosById, resetVehiculo} from '../../reducers/Vehiculos/vehiculosSlice'
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
-import {getFormasDeCobro} from "../../reducers/Alquileres/alquileresSlice.js"
-import {getModelos, getProveedores} from '../../reducers/Generales/generalesSlice'
+import {getModelos, getProveedores, getFormasDeCobro} from '../../reducers/Generales/generalesSlice'
 import { useParams, useMatch } from 'react-router-dom';
 import DataGrid, {Column, Scrolling, Summary, TotalItem} from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
@@ -30,9 +29,8 @@ const {isError, isSuccess, isLoading, message,
 costos_ingresos_vehiculo, conceptos, nro_recibo_ingreso} = useSelector((state) => state.costosReducer)
 const {vehiculo, vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {clientes} = useSelector((state) => state.clientesReducer)
-const {formasDeCobro} = useSelector((state) => state.alquileresReducer)
 const {username} = useSelector((state) => state.loginReducer)
-const {modelos, proveedores} = useSelector((state) => state.generalesReducer)
+const {modelos, proveedores, formasDeCobro} = useSelector((state) => state.generalesReducer)
 const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
 const [form, setForm] = useState({
     id_vehiculo: id ? id : "",
@@ -80,7 +78,7 @@ return () => {
   dispatch(resetCostosVehiculo());
   dispatch(resetVehiculo());
   dispatch(resetIngreso());
-  dispatch(reset_nro_recibo_ingreso())
+  dispatch(reset_nro_recibo_ingreso());
 };
 }, [dispatch])
 

@@ -20,9 +20,13 @@ Promise.all([
   dispatch(getAlquileres({fecha_desde: "", fecha_hasta: ""})),
   dispatch(getVehiculos()),
   dispatch(getClientes()),
-  dispatch(getModelos())
+  dispatch(getModelos()),
+  dispatch(reset())
 ])
-}, [])
+return () => {
+  dispatch(reset())
+}
+}, [dispatch])
 
 const {
     alquileres,

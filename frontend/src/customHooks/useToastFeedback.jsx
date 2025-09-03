@@ -6,7 +6,7 @@ export const useToastFeedback = ({ isError, isSuccess, message, resetAction, onS
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (isError) {
+    if (isError && message) {
       toast.error(message, {
         position: "bottom-center",
         autoClose: 5000,

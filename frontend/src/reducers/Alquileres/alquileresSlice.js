@@ -151,12 +151,7 @@ export const alquileresSlice = createSlice({
   name: "alquileres",
   initialState,
   reducers: {
-    reset: (state) => {
-      state.isLoading = false;
-      state.isSuccess = false;
-      state.isError = false;
-      state.message = "";
-    },
+    reset: () => ({ ...initialState }),
     reset_nro_recibo: (state) => {
       state.nro_recibo_alquiler = null;
       state.nro_recibo_deposito = null;
