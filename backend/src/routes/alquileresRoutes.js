@@ -40,7 +40,7 @@ alquileresRouter.post(
 alquileresRouter.get(
   "/formaDeCobro",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("2", "3"),
   getFormasCobro
 );
 alquileresRouter.post("/idVehiculo", auth, getAlquileresByIdVehiculo);

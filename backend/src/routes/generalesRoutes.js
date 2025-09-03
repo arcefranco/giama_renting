@@ -43,5 +43,10 @@ generalesRouter.get("/proveedores", auth, getProveedores);
 generalesRouter.get("/AMRT", auth, getParametroAMRT);
 generalesRouter.get("/proveedores_vehiculo", auth, getProveedoresVehiculo);
 generalesRouter.get("/roles", auth, authorizeAdmin(), getRoles);
-generalesRouter.get("/formas_cobro", auth, authorizeRoles("2"), getFormasCobro);
+generalesRouter.get(
+  "/formas_cobro",
+  auth,
+  authorizeRoles("2", "3"),
+  getFormasCobro
+);
 export default generalesRouter;

@@ -166,6 +166,7 @@ export const logIn = async (req, res) => {
         status: true,
         username: user[0].email,
         nombre: user[0].nombre,
+        roles: user[0].roles,
       });
     } else {
       throw "Email o contraseña incorrecta";
