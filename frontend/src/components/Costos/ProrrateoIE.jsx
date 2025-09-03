@@ -70,17 +70,19 @@ const handleChange = (e) => {
    }); 
   }
   else if(value && name == "numero_comprobante_1"){
-    if (value.length > 5) value = value.slice(0, 5)
+    let newValue;
+    if (value.length > 5) newValue = value.slice(0, 5)
       setForm({
      ...form,
-     [name]: value,
+     [name]: newValue,
    }); 
   }
   else if(value && name == "numero_comprobante_2"){
-    if (value.length > 8) value = value.slice(0, 8)
+    let newValue;
+    if (value.length > 8) newValue = value.slice(0, 8)
       setForm({
      ...form,
-     [name]: value,
+     [name]: newValue,
    }); 
   }
   else if(value && name == "cod_proveedor"){

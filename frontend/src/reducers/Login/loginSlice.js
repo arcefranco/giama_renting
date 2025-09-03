@@ -8,7 +8,7 @@ const username =
 const initialState = {
   status: {},
   username: username ? username : null,
-  roles: [],
+  roles: "",
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -48,8 +48,7 @@ export const loginSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.status = action.payload;
-      state.username = action.payload.user;
-      /*       state.roles = action.payload.roles; */
+      state.roles = action.payload.roles;
     });
     builder.addCase(logIn.rejected, (state, action) => {
       state.isLoading = false;

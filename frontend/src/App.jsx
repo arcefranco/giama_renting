@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Routes, Route } from "react-router-dom";
 import VehiculosForm from './components/Vehiculos/VehiculosForm';
 import Login from './components/Login/Login'
@@ -22,7 +21,6 @@ import ProrrateoIE from './components/Costos/ProrrateoIE';
 import FichaVehiculo from './components/Vehiculos/FichaVehiculo/FichaVehiculo';
 import ReporteFichasVehiculos from './components/Vehiculos/FichaVehiculo/ReporteFichasVehiculos';
 import ReporteAlquileres from './components/Alquileres/ReporteAlquileres/ReporteAlquileres';
-/* import UpdateAlquiler from './components/Alquileres/UpdateAlquiler/UpdateAlquiler'; */
 import AltaUsuario from './components/Usuarios/AltaUsuario/AltaUsuario';
 import AltaPassword from './components/Usuarios/Password/AltaPassword';
 import RecoveryPass from './components/Usuarios/Password/RecoveryPass';
@@ -30,8 +28,10 @@ import ContratoAlquiler from './components/Alquileres/ContratoAlquiler/ContratoA
 import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteContratos';
 import SituacionFlota from './components/Vehiculos/SituacionFlota/SituacionFlota';
 import ImportacionMasiva from './components/Vehiculos/ImportacionMasiva';
+import PrivateRoute from "./utils/PrivateRoute";
+import Unauthorized from "./utils/Unauthorized";
+import AdminRoute from "./utils/AdminRoute";
 function App() {
-
 
   return (
     <Routes>
@@ -43,33 +43,67 @@ function App() {
       
   <Route element={<ProtectedRoute />}>
     <Route element={<MainLayout />}>
+    <Route path="/unauthorized" element={<Unauthorized/>}/>
     <Route path="/home" element={<Home />} />
-    <Route path='/usuarios/alta' element={<AltaUsuario/>}/>
-    <Route path="/vehiculos" element={<VehiculosForm />} />
-    <Route path="/vehiculosReporte" element={<ReporteVehiculos />} />
+    <Route element={<AdminRoute/>}>
+      <Route path='/usuarios/alta' element={<AltaUsuario/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path="/vehiculos" element={<VehiculosForm />} />
+    </Route>
+    <Route path="/vehiculosReporte" element={<ReporteVehiculos />} />  
     <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo/>}/>
-    <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo/>}/>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo/>}/>
+    </Route>
     <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo/>}/>
     <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo/>}/>
     <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos/>}/>
     <Route path="/vehiculos/situacionFlota" element={<SituacionFlota/>}/>
-    <Route path="/vehiculos/importacionMasiva" element={<ImportacionMasiva/>}/>
-    <Route path="/clientes" element={<ClientesForm/>}/>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path="/vehiculos/importacionMasiva" element={<ImportacionMasiva/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["3"]} />}>
+      <Route path="/clientes" element={<ClientesForm/>}/>
+    </Route>
     <Route path='/clientesReporte' element={<ReporteClientes/>}/>
     <Route path='/clientes/imagenes/:id' element={<ImagenesClientes/>}/>
     <Route path='/clientes/actualizar/:id' element={<UpdateCliente/>}/>
-    <Route path='/costos/alta/ingresos' element={<AltaCostos/>}/>
-    <Route path='/costos/alta/egresos' element={<AltaCostos/>}/>
-    <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
-    <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
-    <Route path='/costos/ingresos' element={<IngresosEgresos/>}/>
-    <Route path='/costos/egresos' element={<IngresosEgresos/>}/>
-    <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
-    <Route path='/alquileres/contrato' element={<ContratoAlquiler/>}/>   
-    <Route path='/contrato/actualizar/:id' element={<ContratoAlquiler/>}/>
-    <Route path='/alquileres/:idContrato'element={<AlquileresForm key={location.pathname}/>}/>
-    <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
-    <Route path='/alquileres/reporte' element={<ReporteAlquileres key={"alq"}/>}/>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/alta/ingresos' element={<AltaCostos/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/alta/egresos' element={<AltaCostos/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/ingresos' element={<IngresosEgresos/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+        <Route path='/costos/egresos' element={<IngresosEgresos/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["3"]} />}>
+      <Route path='/alquileres/contrato' element={<ContratoAlquiler/>}/>   
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["3"]} />}>
+      <Route path='/contrato/actualizar/:id' element={<ContratoAlquiler/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["3"]} />}>
+      <Route path='/alquileres/:idContrato'element={<AlquileresForm key={location.pathname}/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro/>}/>
+    </Route>
+
+    <Route path='/alquileres/reporte' element={<ReporteAlquileres/>}/>
     <Route path='/alquileres/contrato/reporte' element={<ReporteContratos/>}/>
     </Route>
   </Route>

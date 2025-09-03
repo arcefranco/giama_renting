@@ -1,16 +1,17 @@
 import { Link } from "react-router-dom";
 import styles from "./Header.module.css"
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 const menuItems = [
   {
     title: "Vehículos",
     items: [
-          { label: "Ingreso de vehículos", to: "/vehiculos" },
+          { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["2"] },
           { label: "Listado vehículos", to: "/vehiculosReporte" },
           { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
           { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
-          { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva" }
+          { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["2"] }
         ],
 /*     submenus: [
       {
@@ -33,14 +34,14 @@ const menuItems = [
    {
     title: "Clientes",
     items: [
-      { label: "Ingreso de clientes", to: "/clientes" },
+      { label: "Ingreso de clientes", to: "/clientes", roles: ["3"]  },
       { label: "Listado de clientes", to: "/clientesReporte" },
     ]
   },
   {
    title: "Alquileres",
    items: [
-    { label: "Alta de contrato", to: "/alquileres/contrato" },
+    { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["3"] },
     { label: "Listado de alquileres", to: "/alquileres/reporte" },
     { label: "Listado de contratos", to: "/alquileres/contrato/reporte" },
 
@@ -49,81 +50,88 @@ const menuItems = [
   {
    title: "Parámetros",
    items: [
-    { label: "Formas de cobro", to: "/alquileres/formasDeCobro" }, 
-    { label: "Conceptos de ingresos", to: "/costos/alta/ingresos" },
-    { label: "Conceptos de egresos", to: "/costos/alta/egresos" },
+    { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["2"] }, 
+    { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["2"] },
+    { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["2"] },
    ]
  },
   {
    title: "Costos/Ingresos",
    items: [
-     { label: "Carga de ingresos", to: "/costos/ingresos" },
-     { label: "Carga de egresos", to: "/costos/egresos" },
-     { label: "Carga de egresos prorrateados", to: "/costos/prorrateoIE" },
+     { label: "Carga de ingresos", to: "/costos/ingresos", roles: ["2"] },
+     { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
+     { label: "Carga de egresos prorrateados", to: "/costos/prorrateoIE", roles: ["2"] },
    ]
  },
  ,
   {
    title: "Usuarios",
    items: [
-    { label: "Crear usuario", to: "/usuarios/alta" }
+    { label: "Crear usuario", to: "/usuarios/alta", roles: ["1"] }
    ]
  }
 ];
 
+
 const Header = () => {
+const {roles} = useSelector((state) => state.loginReducer)
 const handleLogout = async () => {
-        await axios.get(import.meta.env.VITE_REACT_APP_HOST + "login/logout", {
-          withCredentials: true,
-        });
-        localStorage.removeItem("username");
-        window.location.replace("/");
-      };
+  await axios.get(import.meta.env.VITE_REACT_APP_HOST + "login/logout", {
+    withCredentials: true,
+  });
+  localStorage.removeItem("username");
+  window.location.replace("/");
+};
 const nombre = JSON.parse(localStorage?.getItem("nombre")) ? JSON.parse(localStorage?.getItem("nombre")) : "" 
-  return (
+const hasAccess = (itemRoles) => {
+  if (!itemRoles || itemRoles.length === 0) return true;
+
+  // roles viene como string: "2,4"
+  const userRoles = roles ? roles.split(",") : [];
+
+  // admin siempre pasa
+  if (userRoles.includes("1")) return true;
+
+  return userRoles.some((r) => itemRoles.includes(r));
+};
+return (
     <header className={styles.header}>
       <div className={styles.logo}>Giama Renting</div>
 
       <nav className={styles.nav}>
-        <ul className={styles.menu}>
-          {menuItems.map((item, idx) => (
-            <li className={styles.menuItem} key={idx}>
-              {item.title}
-              <div className={styles.dropdown}>
-                {item.submenus ? (
-                  item.submenus.map((submenu, i) => (
-                    <div className={styles.dropdownColumn} key={i}>
-                      <h4>{submenu.title}</h4>
-                      <ul>
-                        {submenu.items.map((subitem, j) => (
-                          <li key={j}>
-                            <Link to={subitem.to}>{subitem.label}</Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))
-                ) : (
-                  <ul>
-                    {item.items.map((subitem, i) => (
-                      <li key={i}>
-                        <Link to={subitem.to}>{subitem.label}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+<ul className={styles.menu}>
+  {menuItems.map((item, idx) => {
+    return (
+      <li className={styles.menuItem} key={idx}>
+        {item.title}
+        <div className={styles.dropdown}>
+          <ul>
+            {item.items.map((subitem, i) => {
+              const disabled = !hasAccess(subitem.roles);
+
+              return (
+                <li key={i} className={disabled ? styles.disabled : ""}>
+                  {disabled ? (
+                    <span style={{color: "darkgray"}}>{subitem.label}</span> 
+                  ) : (
+                    <Link to={subitem.to}>{subitem.label}</Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </li>
+    );
+  })}
+</ul>
       </nav>
 
       <div className={styles.userSection}>
-        {
-          nombre && 
-        <span>Hola, {nombre}</span>
-        }
-        <button className={styles.logoutBtn} onClick={handleLogout}>Salir</button>
+        {nombre && <span>Hola, {nombre}</span>}
+        <button className={styles.logoutBtn} onClick={handleLogout}>
+          Salir
+        </button>
       </div>
     </header>
   );
