@@ -154,19 +154,18 @@ export const logIn = async (req, res) => {
           id: user[0].id,
         },
         process.env.SECRET,
-        { expiresIn: 7200 } //2 horas
+        { expiresIn: 32400 } //9 horas
       );
       res.cookie("authToken", token, {
         httpOnly: true, // Evita acceso desde JavaScript del lado del cliente
-        sameSite: "strict", // Previene envío entre sitios
-        maxAge: 7200000, // 2 horas en milisegundos
+        sameSite: "strict",
+        maxAge: 32400000, // 9 horas en milisegundos
       });
 
       return res.send({
         status: true,
         username: user[0].email,
         nombre: user[0].nombre,
-        /*         roles: roles?.map((item) => item.codigo), */
       });
     } else {
       throw "Email o contraseña incorrecta";

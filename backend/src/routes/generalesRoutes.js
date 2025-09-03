@@ -14,9 +14,10 @@ import {
   getProveedores,
   getProveedoresVehiculo,
   getRoles,
+  getFormasCobro,
 } from "../controllers/generalesController.js";
 import { auth } from "../middlewares/auth.js";
-import { authorizeAdmin } from "../middlewares/roles.js";
+import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
 
 const generalesRouter = Router();
 
@@ -42,4 +43,5 @@ generalesRouter.get("/proveedores", auth, getProveedores);
 generalesRouter.get("/AMRT", auth, getParametroAMRT);
 generalesRouter.get("/proveedores_vehiculo", auth, getProveedoresVehiculo);
 generalesRouter.get("/roles", auth, authorizeAdmin(), getRoles);
+generalesRouter.get("/formas_cobro", auth, authorizeRoles("2"), getFormasCobro);
 export default generalesRouter;

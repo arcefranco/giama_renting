@@ -210,3 +210,15 @@ export const getRoles = async (req, res) => {
     return res.send(body);
   }
 };
+
+export const getFormasCobro = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM formas_cobro", {
+      type: QueryTypes.SELECT,
+    });
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "Formas de cobro", acciones.get);
+    return res.send(body);
+  }
+};
