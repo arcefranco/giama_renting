@@ -1,13 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {getFichas} from '../../../reducers/Vehiculos/vehiculosSlice'
+import {getFichas, reset} from '../../../reducers/Vehiculos/vehiculosSlice'
 import { getConceptosCostos } from '../../../reducers/Costos/costosSlice';
 import styles from './FichaVehiculo.module.css'
 import { ClipLoader } from 'react-spinners';
 import DataGrid, {Column, Summary, TotalItem, FilterRow} from "devextreme-react/data-grid"
-import { locale } from 'devextreme/localization';
+import { ToastContainer } from 'react-toastify';
 import 'devextreme/dist/css/dx.carmine.css';
 import { formatearFecha } from '../../../helpers/formatearFecha';
+import { useToastFeedback } from '../../../customHooks/useToastFeedback';
 
 const ReporteFichasVehiculos = () => {
 const dispatch = useDispatch()
@@ -21,6 +22,8 @@ useEffect(() => {
       dispatch(getConceptosCostos())
     ])
 },[])
+
+
 
 const nombresMeses = [
   "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
@@ -48,11 +51,19 @@ const periodos = generarPeriodos();
 const { isError, isSuccess, isLoading, message, fichas } = useSelector(state => state.vehiculosReducer);
 const { conceptos } = useSelector(state => state.costosReducer);
 const [fichasProcesadas, setFichasProcesadas] = useState([]);
-
+useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset,
+});
 useEffect(() => {
+    if(form["mes"] && form["anio"]){
     Promise.all([
       dispatch(getFichas(form))
     ])
+    }
+
 }, [form["mes"], form["anio"]])
 
 useEffect(() => {
@@ -115,6 +126,7 @@ const renderDominio = (data) => {
 };
   return (
     <div>
+    <ToastContainer/>
     {isLoading && (
     <div className={styles.spinnerOverlay}>
     <ClipLoader

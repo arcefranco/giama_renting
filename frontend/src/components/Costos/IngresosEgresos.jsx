@@ -57,6 +57,7 @@ const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
 const [conceptosFiltrados, setConceptosFiltrados] = useState([])
 const [generaRecibo, setGeneraRecibo] = useState(false)
 const [generaFactura, setGeneraFactura] = useState(false)
+const [IVAInhabilitado, setIVAInhabilitado] = useState(false)
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
     const pageCount = Math.ceil(costos_ingresos_vehiculo.length / 5);
@@ -82,7 +83,7 @@ return () => {
 };
 }, [dispatch])
 
-  useEffect(() => {
+useEffect(() => { /**CARGA COSTOS DE VEHICULO EN URL */
     if (id) {
       // cargar datos del vehículo de la URL
       dispatch(getCostosIngresosByIdVehiculo({ id: id }));
@@ -94,63 +95,9 @@ return () => {
       dispatch(resetCostosVehiculo?.());
       setForm((f) => ({ ...f, id_vehiculo: "" }));
     }
-  }, [id, dispatch]);
+}, [id, dispatch]);
 
-useToastFeedback({
-    isError,
-    isSuccess,
-    message,
-    resetAction: resetCostosSlice,
-    onSuccess: () => {
-        if(id){
-          setForm({
-          id_vehiculo: id,
-          fecha: '',
-          id_cliente: '',
-          id_forma_cobro: '',
-          id_concepto: '',
-          importe_neto: '',
-          importe_iva: '',
-          importe_total: '',
-          observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          ingreso_egreso: '',
-          cta_cte_proveedores: 1,
-          cod_proveedor: '',
-          tipo_comprobante: '',
-          numero_comprobante_1: '',
-          numero_comprobante_2: '',
-          usuario: username
-          })
-        }else if (!id){
-          setForm({
-          id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
-          id_cliente: '',
-          id_forma_cobro: '',
-          fecha: '',
-          id_concepto: '',
-          importe_neto: '',
-          importe_iva: '',
-          importe_total: '',
-          observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          ingreso_egreso: '',
-          cta_cte_proveedores: 1,
-          cod_proveedor: '',
-          tipo_comprobante: '',
-          numero_comprobante_1: '',
-          numero_comprobante_2: '',
-          usuario: username
-          })
-        }
-        setGeneraFactura(false)
-        setGeneraRecibo(false)
-    }
-});
-
-useEffect(() => {
+useEffect(() => { /**OPCIONES DE VEHICULOS PARA EL SELECT */
   if(vehiculos?.length){
     setOpcionesVehiculos(vehiculos?.filter(v => {return !v.fecha_venta})?.map(e => {
     
@@ -168,7 +115,7 @@ useEffect(() => {
   }
 }, [vehiculos, modelos])
 
-useEffect(() => {
+useEffect(() => { /**OBTENGO COSTOS DEL VEHICULO DESDE EL SELECT */
   if(!id && form.id_vehiculo){
     dispatch(getCostosIngresosByIdVehiculo({id: form.id_vehiculo})),
     dispatch(getVehiculosById({id: form.id_vehiculo}))
@@ -225,13 +172,13 @@ if(form.id_concepto){
 }
 }, [form.id_concepto])
 
-useEffect(() => {
+useEffect(() => { /**OBTENGO RECIBO PARA IMPRIMIR */
   if (nro_recibo_ingreso) {
     dispatch(getReciboIngresoById({ id: nro_recibo_ingreso }));
   }
 }, [nro_recibo_ingreso])
 
-useEffect(() => {
+useEffect(() => { /**SWAL PARA IMPRIMIR RECIBO */
   if(html_recibo_ingreso){
     Swal.fire({
       title: '¿Desea imprimir el recibo?',
@@ -261,6 +208,99 @@ useEffect(() => {
   }
 }, [html_recibo_ingreso])
 
+useEffect(() => { /**HABILITACION DE INPUT IVA */
+if(tipo && tipo === "E" && form.cta_cte_proveedores == 1 && form.tipo_comprobante == 3){
+  setIVAInhabilitado(true)
+  setForm({
+    ...form,
+    importe_total: form.importe_total - form.importe_iva,
+    importe_iva: 0
+  })
+}
+else if(tipo && tipo === "I" && !generaFactura){
+  setIVAInhabilitado(true)
+  setForm({
+    ...form,
+    importe_total: form.importe_total - form.importe_iva,
+    importe_iva: 0
+  })
+}
+else if(isIngresos && !generaFactura){
+  setIVAInhabilitado(true)
+  setForm({
+    ...form,
+    importe_total: form.importe_total - form.importe_iva,
+    importe_iva: 0
+  })
+}else{
+  setIVAInhabilitado(false)
+}
+}, [tipo, form.cta_cte_proveedores, form.tipo_comprobante, generaFactura])
+
+useEffect(() => {
+if(!form.importe_iva){
+  setForm({
+    ...form,
+    importe_iva: 0,
+    importe_neto: form.importe_total
+  })
+}
+}, [form.importe_iva])
+
+useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: resetCostosSlice,
+    onSuccess: () => {
+        if(id){
+          setForm({
+          id_vehiculo: id,
+          fecha: '',
+          id_cliente: '',
+          id_forma_cobro: '',
+          id_concepto: '',
+          importe_neto: '',
+          importe_iva: '',
+          importe_total: '',
+          observacion: '',
+          cuenta: '',
+          cuenta_secundaria: '',
+          ingreso_egreso: '',
+          cta_cte_proveedores: 1,
+          cod_proveedor: '',
+          tipo_comprobante: '',
+          numero_comprobante_1: '',
+          numero_comprobante_2: '',
+          usuario: username
+          })
+        }else if (!id){
+          setForm({
+          id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
+          id_cliente: '',
+          id_forma_cobro: '',
+          fecha: '',
+          id_concepto: '',
+          importe_neto: '',
+          importe_iva: '',
+          importe_total: '',
+          observacion: '',
+          cuenta: '',
+          cuenta_secundaria: '',
+          ingreso_egreso: '',
+          cta_cte_proveedores: 1,
+          cod_proveedor: '',
+          tipo_comprobante: '',
+          numero_comprobante_1: '',
+          numero_comprobante_2: '',
+          usuario: username
+          })
+        }
+        setGeneraFactura(false)
+        setGeneraRecibo(false)
+    }
+});
+
 const handleActualizar = ( ) => {
   if(!id){
     dispatch(getCostosIngresosByIdVehiculo({id: form.id_vehiculo}))
@@ -270,49 +310,43 @@ const handleActualizar = ( ) => {
 }
 const handleChange = (e) => {
   const { name, value } = e.target;
-  if(value && name === "importe_neto"){
-    if(!tipo || tipo !== "E"){
+  if(value && name === "importe_total"){
+    console.log(value)
+    if(IVAInhabilitado){
       setForm({
-       ...form,
-       [name]: parseFloat(value),
-       "importe_iva": parseFloat(value) * 0.21,
-       "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
-     }); 
-    }else if(tipo === "E"){
-      if(form.tipo_comprobante == 3){
-      setForm({
-       ...form,
-       [name]: parseFloat(value),
-       "importe_iva": 0,
-       "importe_total": parseFloat(value)
-      }); 
-      }
-      else if(form.tipo_comprobante == 1){
-      setForm({
-       ...form,
-       [name]: parseFloat(value),
-       "importe_iva": parseFloat(value) * 0.21,
-       "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
-     }); 
-      }
-
+      ...form,
+      importe_total: value,
+      importe_neto: value,
+      importe_iva: 0
+    })
+    }else{
+    setForm({
+      ...form,
+      importe_total: value,
+      importe_neto: parseFloat(parseInt(value) / 1.21).toFixed(2),
+      importe_iva: parseFloat(parseInt(value) - parseFloat(value / 1.21)).toFixed(2)
+    })
     }
+
+  }
+  else if(value && name === "importe_iva"){
+    setForm({
+    ...form,
+    [name]: value,
+    "importe_total": parseFloat(parseFloat(value) + parseFloat(form["importe_neto"])).toFixed(2)
+  }); 
   }
   else if(value && name === "id_concepto"){
       setForm({
      ...form,
      [name]: value,
+     "importe_total": 0,
+     "importe_iva": 0,
+     "importe_neto": 0,
      "cuenta": conceptos?.find(e => e.id == value)?.cuenta_contable,
      "cuenta_secundaria": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
      "ingreso_egreso": conceptos.find(e => e.id == value)?.ingreso_egreso,
      "id_forma_cobro": ""
-   }); 
-  }
-  else if(value && name === "importe_iva"){
-      setForm({
-     ...form,
-     [name]: value,
-     "importe_total": parseFloat(value) + parseFloat(form["importe_neto"])
    }); 
   }
   else if(value && name == "numero_comprobante_1"){
@@ -394,14 +428,14 @@ return (
 <div className={styles.container}>
 <ToastContainer/>
 {isLoading && (
-    <div className={styles.spinnerOverlay}>
+  <div className={styles.spinnerOverlay}>
     <ClipLoader
       size={60}
       color="#800020" // bordó
       loading={true}
     />
       <span className={styles.loadingText}>Cargando...</span>
-    </div>
+  </div>
   )}
     <h2> {isIngresos ? "Ingresos" : isEgresos ? "Egresos" : "Ingresos y egresos"} del vehículo</h2>
     {
@@ -420,7 +454,7 @@ return (
     <h2>Seleccionar un vehículo</h2>
 
     }
-          { !id && <div className={styles.inputContainer}>
+        { !id && <div className={styles.inputContainer}>
           <span>Vehículo</span>
           <Select
             options={opcionesVehiculos}
@@ -592,22 +626,22 @@ return (
 
       }
       <div className={styles.inputContainer}>
+          <span>Total</span>
+          <input type="number" name='importe_total' value={form["importe_total"]} 
+          onChange={handleChange}/>
+      </div>
+      <div className={styles.inputContainer}>
           <span>Importe neto</span>
-          <input type="number" name='importe_neto' value={form["importe_neto"]} 
-        onChange={handleChange}/>
+          <input type="number" name='importe_neto' value={form["importe_neto"]} disabled/>
       </div>
       <div className={styles.inputContainer}>
           <span>IVA</span>
           <input type="number" name='importe_iva' value={form["importe_iva"]} 
-          disabled={tipo && tipo === "E" && form.cta_cte_proveedores == 1 && form.tipo_comprobante == 3 ? true : false}
+          disabled={IVAInhabilitado}
           onChange={handleChange}/>
       </div>
       <div className={styles.inputContainer}>
-          <span>Total</span>
-          <input type="number" name='importe_total' value={form["importe_total"]} disabled/>
-      </div>
-      <div className={styles.inputContainer}>
-        <span>Forma de cobro</span>
+        <span>Forma de {isIngresos ? "cobro" : isEgresos ? "pago" : "pago/cobro"}</span>
         <select name="id_forma_cobro" disabled={form.cta_cte_proveedores === 1 && form.ingreso_egreso === "E" ? true : false}  value={form["id_forma_cobro"]} 
         onChange={handleChange} id="">
           <option value={""} disabled selected>{"Seleccione una opción"}</option>
