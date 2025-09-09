@@ -63,9 +63,9 @@ const [form, setForm] = useState({
 })
 const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
 const [conceptosFiltrados, setConceptosFiltrados] = useState([])
-const [IVAInhabilitado, setIVAInhabilitado] = useState(false)
 const [totalNeto, setTotalNeto] = useState(0)
 const [totalIVA, setTotalIVA] = useState(0);
+const [totalPerc, setTotalPerc] = useState(0);
 
 const [egresosFiltrados, setEgresosFiltrados] = useState([])
 useEffect(() => {
@@ -172,9 +172,9 @@ if(!form.importe_iva){
 useEffect(() => {
 setForm({
   ...form,
-  importe_total: totalNeto + totalIVA
+  importe_total: parseFloat(totalNeto + totalIVA + totalPerc).toFixed(2)
 })
-}, [totalNeto, totalIVA])
+}, [totalNeto, totalIVA, totalPerc])
 
 useToastFeedback({
     isError,
@@ -390,6 +390,13 @@ const handleChangeNumbers = (e) => {
       (newForm.importe_tasa_IVA || 0)
     ).toFixed(2)
   );
+
+    // Calcular totalIVA con los valores NUEVOS
+  const totalPercCalc =
+    (newForm.importe_tasa_IIBB_CABA || 0) +
+    (newForm.importe_tasa_IIBB || 0) +
+    (newForm.importe_tasa_IVA || 0);
+    setTotalPerc(totalPercCalc)
   
     // Guardar en el estado
     setForm(newForm);
