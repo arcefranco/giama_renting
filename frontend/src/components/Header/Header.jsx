@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import styles from "./Header.module.css"
 import axios from "axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { logOut } from "../../reducers/Login/loginSlice";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = [
   {
@@ -74,15 +77,14 @@ const menuItems = [
 
 
 const Header = () => {
-const {roles} = useSelector((state) => state.loginReducer)
-const handleLogout = async () => {
-  await axios.get(import.meta.env.VITE_REACT_APP_HOST + "login/logout", {
-    withCredentials: true,
+const {roles, nombre, username} = useSelector((state) => state.loginReducer)
+const dispatch = useDispatch()
+const navigate = useNavigate()
+const handleLogout = () => {
+  dispatch(logOut()).then(() => {
+    navigate("/");
   });
-  localStorage.removeItem("username");
-  window.location.replace("/");
 };
-const nombre = JSON.parse(localStorage?.getItem("nombre")) ? JSON.parse(localStorage?.getItem("nombre")) : "" 
 const hasAccess = (itemRoles) => {
   if (!itemRoles || itemRoles.length === 0) return true;
 
@@ -94,6 +96,7 @@ const hasAccess = (itemRoles) => {
 
   return userRoles.some((r) => itemRoles.includes(r));
 };
+
 return (
     <header className={styles.header}>
       <div className={styles.logo}>Giama Renting</div>

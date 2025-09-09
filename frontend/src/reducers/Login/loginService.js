@@ -8,18 +8,7 @@ const logIn = async (data) => {
       data,
       { withCredentials: true } // Asegura que se envíen y reciban cookies
     );
-    console.log(response);
     if (response.data.status) {
-      window.localStorage.setItem(
-        "username",
-        JSON.stringify(response.data.username)
-      );
-      window.localStorage.setItem(
-        "nombre",
-        JSON.stringify(response.data.nombre)
-      );
-      /*       window.localStorage.setItem("roles", JSON.stringify(response.data.roles)); */
-      window.location.replace("/home");
       return response.data;
     } else {
       throw response.data;

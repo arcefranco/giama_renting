@@ -1,7 +1,8 @@
 import React from 'react'
-
+import { useSelector } from 'react-redux'
 const Home = () => {
-  const nombre = JSON.parse(localStorage?.getItem("nombre")) ? JSON.parse(localStorage?.getItem("nombre")) : "" // ej: "farce@giama.com.ar"
+  const {roles, nombre, username} = useSelector((state) => state.loginReducer)
+  
   return (
     <div>
         <h1>Bienvenido/a {nombre}</h1>

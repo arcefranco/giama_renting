@@ -8,16 +8,18 @@ import Car from "../../assets/Vector.png"
 import { logIn } from '../../reducers/Login/loginSlice'; 
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 const Login = () => {
 const dispatch = useDispatch(); 
-const {status, message} = useSelector(state => state.loginReducer.status) 
+const navigate = useNavigate();
+  const {status, message, isSuccess, isError} = useSelector(state => state.loginReducer) 
   const [email, setEmail] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 useEffect(() => {
 
-    if(!status){
+    if(!isError && message){
       toast.error(message, {
         position: "bottom-center",
         autoClose: 5000,
@@ -29,9 +31,17 @@ useEffect(() => {
         theme: "colored",
         })
     }
+
     
 
-  }, [status]) 
+  }, [isError])
+  
+  useEffect(() => {
+  if (isSuccess && status) {
+    navigate("/home");
+  }
+}, [isSuccess, status, navigate]);
+
   const validateEmail = (value) => {
     setEmail(value);
   };
