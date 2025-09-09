@@ -11,7 +11,10 @@ import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { insertFactura } from "../../helpers/insertFactura.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
-import { movimientosProveedores } from "../../helpers/movimientosProveedores.js";
+import {
+  movimientosProveedores,
+  movimientosProveedoresEgresos,
+} from "../../helpers/movimientosProveedores.js";
 
 export const getCuentasContables = async (req, res) => {
   try {
@@ -176,7 +179,11 @@ export const getCostosIngresosByIdVehiculo = async (req, res) => {
   const { id } = req.body;
   try {
     const resultado = await giama_renting.query(
-      "SELECT * FROM costos_ingresos WHERE id_vehiculo = ?",
+      `SELECT ci.*, cc.ingreso_egreso
+        FROM costos_ingresos ci
+        JOIN conceptos_costos cc 
+        ON ci.id_concepto = cc.id
+        WHERE ci.id_vehiculo = ?`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
@@ -335,6 +342,20 @@ async function registrarCostoIngresoIndividual({
   tipo_comprobante,
   numero_comprobante_1,
   numero_comprobante_2,
+  neto_no_gravado,
+  neto_21,
+  neto_10,
+  neto_27,
+  importe_iva_21,
+  importe_iva_10,
+  importe_iva_27,
+  tasa_IIBB_CABA,
+  tasa_IIBB,
+  tasa_IVA,
+  importe_tasa_IIBB_CABA,
+  importe_tasa_IIBB,
+  importe_tasa_IVA,
+  importe_otros_impuestos,
 }) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
@@ -469,6 +490,9 @@ async function registrarCostoIngresoIndividual({
   const importeNetoFinal = importe_neto * factor;
   const importeIvaFinal = importe_iva * factor;
   const importeTotalFinal = importe_total * factor;
+  const importeOtrosImpuestosFinal = importe_otros_impuestos
+    ? importe_otros_impuestos * factor
+    : 0;
   if (ingreso_egreso === "I") {
     //recibo
     if (genera_recibo === 1) {
@@ -513,26 +537,37 @@ async function registrarCostoIngresoIndividual({
     }
   }
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
-    await movimientosProveedores({
+    await movimientosProveedoresEgresos({
       cod_proveedor,
       tipo_comprobante,
       numero_comprobante_1,
       numero_comprobante_2,
-      importe_neto,
-      importe_iva,
       importe_total,
       cuenta_concepto,
       NroAsiento,
       NroAsientoSecundario,
       usuario,
       transaction_asientos,
+      neto_no_gravado,
+      neto_21,
+      neto_10,
+      neto_27,
+      importe_iva_21,
+      importe_iva_10,
+      importe_iva_27,
+      tasa_IIBB_CABA,
+      tasa_IIBB,
+      tasa_IVA,
+      importe_tasa_IIBB_CABA,
+      importe_tasa_IIBB,
+      importe_tasa_IVA,
     });
   }
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
-      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva,
-      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -542,6 +577,7 @@ async function registrarCostoIngresoIndividual({
           comprobante ? comprobante : null,
           importeNetoFinal,
           importeIvaFinal,
+          importeOtrosImpuestosFinal,
           importeTotalFinal,
           observacion,
           NroAsiento,
@@ -604,6 +640,7 @@ export const prorrateoIE = async (req, res) => {
     importe_neto,
     importe_iva,
     importe_total,
+    importe_otros_impuestos,
     observacion,
     id_forma_cobro,
     cta_cte_proveedores,
@@ -612,6 +649,19 @@ export const prorrateoIE = async (req, res) => {
     numero_comprobante_1,
     numero_comprobante_2,
     usuario,
+    neto_no_gravado,
+    neto_21,
+    neto_10,
+    neto_27,
+    importe_iva_21,
+    importe_iva_10,
+    importe_iva_27,
+    tasa_IIBB_CABA,
+    tasa_IIBB,
+    tasa_IVA,
+    importe_tasa_IIBB_CABA,
+    importe_tasa_IIBB,
+    importe_tasa_IVA,
   } = req.body;
   let NroAsiento;
   let NroAsientoSecundario;
@@ -785,21 +835,33 @@ export const prorrateoIE = async (req, res) => {
   const diferencia = importe_neto - netoDividido * cantidad;
   const totalDividido = importe_total / cantidad;
   const ivaDividido = importe_iva / cantidad;
+  const otrosImpuestosDividido = importe_otros_impuestos / cantidad;
   if (cta_cte_proveedores == 1) {
     try {
-      await movimientosProveedores({
+      await movimientosProveedoresEgresos({
         cod_proveedor,
         tipo_comprobante,
         numero_comprobante_1,
         numero_comprobante_2,
-        importe_neto,
-        importe_iva,
         importe_total,
         cuenta_concepto: cuenta_forma_cobro,
         NroAsiento,
         NroAsientoSecundario,
         usuario,
         transaction_asientos,
+        neto_no_gravado,
+        neto_21,
+        neto_10,
+        neto_27,
+        importe_iva_21,
+        importe_iva_10,
+        importe_iva_27,
+        tasa_IIBB_CABA,
+        tasa_IIBB,
+        tasa_IVA,
+        importe_tasa_IIBB_CABA,
+        importe_tasa_IIBB,
+        importe_tasa_IVA,
       });
     } catch (error) {
       console.log(error);
@@ -876,13 +938,14 @@ export const prorrateoIE = async (req, res) => {
       );
       return res.send(body);
     }
+    const factor = -1;
 
     //inserto en costos_ingresos
     try {
       await giama_renting.query(
         `INSERT INTO costos_ingresos 
-      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva,
-      importe_total, observacion, nro_asiento, id_forma_cobro, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+      importe_total, observacion, nro_asiento, id_forma_cobro, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
         {
           type: QueryTypes.INSERT,
           replacements: [
@@ -890,9 +953,10 @@ export const prorrateoIE = async (req, res) => {
             fecha,
             id_concepto,
             comprobante,
-            importeAUsar,
-            ivaDividido,
-            importeTotalAusar,
+            importeAUsar * factor,
+            ivaDividido * factor,
+            otrosImpuestosDividido * factor,
+            importeTotalAusar * factor,
             observacion + ` (${dominio})`,
             NroAsiento,
             id_forma_cobro ? id_forma_cobro : null,
