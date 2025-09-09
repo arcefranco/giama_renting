@@ -488,7 +488,7 @@ async function registrarCostoIngresoIndividual({
   //(solo asiento primario)
   const factor = ingreso_egreso === "E" ? -1 : 1;
   const importeNetoFinal = importe_neto * factor;
-  const importeIvaFinal = importe_iva * factor;
+  const importeIvaFinal = importe_iva ? importe_iva * factor : 0;
   const importeTotalFinal = importe_total * factor;
   const importeOtrosImpuestosFinal = importe_otros_impuestos
     ? importe_otros_impuestos * factor
