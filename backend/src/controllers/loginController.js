@@ -41,7 +41,7 @@ export const createUsuario = async (req, res) => {
   const payload = {
     email: email,
   };
-  const token = sign(payload, process.env.SECRET, { expiresIn: "20m" });
+  const token = sign(payload, process.env.SECRET, { expiresIn: "1d" });
   try {
     await sendEmail(email, token);
   } catch (error) {
