@@ -25,14 +25,28 @@ const {username} = useSelector((state) => state.loginReducer)
 const [form, setForm] = useState({
     arrayVehiculos: [],
     fecha: '',
+    id_forma_cobro: '',
     id_concepto: '',
     comprobante: '',
-    importe_neto: '',
-    importe_iva: '',
-    importe_total: '',
+    neto_no_gravado: 0,
+    neto_21: 0,
+    neto_10: 0,
+    neto_27: 0,
+    importe_iva_21: 0,
+    importe_iva_10: 0,
+    importe_iva_27: 0,
+    tasa_IIBB_CABA: 0,
+    tasa_IIBB: 0,
+    tasa_IVA: 0,
+    importe_tasa_IIBB_CABA: 0,
+    importe_tasa_IIBB: 0,
+    importe_tasa_IVA: 0,
+    importe_total: 0,
+    importe_neto: 0,
+    importe_iva: 0,
+    importe_otros_impuestos: 0,
     observacion: '',
     cuenta: '',
-    id_forma_cobro: '',
     cta_cte_proveedores: '',
     cod_proveedor: '',
     tipo_comprobante: '',
@@ -45,74 +59,8 @@ const {modelos, proveedores} = useSelector((state) => state.generalesReducer)
 const {isError, isSuccess, isLoading, message, conceptos} = useSelector((state) => state.costosReducer)
 const {formasDeCobro} = useSelector((state) => state.alquileresReducer)
 const [conceptosFiltrados, setConceptosFiltrados] = useState(null)
-const handleChange = (e) => {
-  const { name, value } = e.target;
-  if(value && name === "importe_neto"){
-        setForm({
-       ...form,
-       [name]: parseFloat(value),
-       "importe_iva": parseFloat(value) * 0.21,
-       "importe_total": (parseFloat(value) * 0.21) + parseFloat(value)
-     }); 
-  }
-  else if(value && name === "id_concepto"){
-      setForm({
-     ...form,
-     [name]: value,
-     "cuenta": conceptos.find(e => e.id == value)?.cuenta_contable,
-   }); 
-  }
-    else if(value && name === "importe_iva"){
-      setForm({
-     ...form,
-     [name]: value,
-     "importe_total": parseFloat(value) + parseFloat(form["importe_neto"])
-   }); 
-  }
-  else if(value && name == "numero_comprobante_1"){
-    let newValue;
-    if (value.length > 5) newValue = value.slice(0, 5)
-      setForm({
-     ...form,
-     [name]: newValue,
-   }); 
-  }
-  else if(value && name == "numero_comprobante_2"){
-    let newValue;
-    if (value.length > 8) newValue = value.slice(0, 8)
-      setForm({
-     ...form,
-     [name]: newValue,
-   }); 
-  }
-  else if(value && name == "cod_proveedor"){
-    setForm({
-     ...form,
-     [name]: value,
-     tipo_comprobante: proveedores?.find(e => e.Codigo == value)?.TipoResponsable == 1 ? 1 : 3,
-      importe_neto: 0,
-     importe_iva: 0,
-     importe_total: 0
-   }); 
-  }
-  else if(value && name == "tipo_comprobante"){
-      setForm({
-     ...form,
-     [name]: value,
-     importe_neto: 0,
-     importe_iva: 0,
-     importe_total: 0
-     
-   }); 
-  }
-  else{
-    setForm({
-     ...form,
-     [name]: value,
-   }); 
-
-  }
-};
+const [totalNeto, setTotalNeto] = useState(0)
+const [totalIVA, setTotalIVA] = useState(0);
 const handleSubmit = () => {
   dispatch(prorrateoIE(form))
 }
@@ -120,7 +68,41 @@ useToastFeedback({
   isError,
   isSuccess,
   message,
-  resetAction: reset
+  resetAction: reset,
+  onSuccess: () => {
+    setForm({
+    arrayVehiculos: [],
+    fecha: '',
+    id_forma_cobro: '',
+    id_concepto: '',
+    comprobante: '',
+    neto_no_gravado: 0,
+    neto_21: 0,
+    neto_10: 0,
+    neto_27: 0,
+    importe_iva_21: 0,
+    importe_iva_10: 0,
+    importe_iva_27: 0,
+    tasa_IIBB_CABA: 0,
+    tasa_IIBB: 0,
+    tasa_IVA: 0,
+    importe_tasa_IIBB_CABA: 0,
+    importe_tasa_IIBB: 0,
+    importe_tasa_IVA: 0,
+    importe_total: 0,
+    importe_neto: 0,
+    importe_iva: 0,
+    importe_otros_impuestos: 0,
+    observacion: '',
+    cuenta: '',
+    cta_cte_proveedores: '',
+    cod_proveedor: '',
+    tipo_comprobante: '',
+    numero_comprobante_1: '',
+    numero_comprobante_2: '',
+    usuario: username
+    })
+  }
 })
 
 useEffect(() => {
@@ -199,6 +181,144 @@ const todasSeleccionadas = (col) => {
 const todosSeleccionados = () => {
   const todos = Object.values(categorias).flat().map(v => v.id);
   return todos.every((id) => seleccionados.includes(id));
+};
+
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  if(value && name === "id_concepto"){
+      setForm({
+     ...form,
+     [name]: value,
+     "cuenta": conceptos.find(e => e.id == value)?.cuenta_contable,
+   }); 
+  }
+  else if(value && name == "numero_comprobante_1"){
+    let newValue = value;
+    if (value.length > 5) newValue = value.slice(0, 5)
+      setForm({
+     ...form,
+     [name]: newValue,
+   }); 
+  }
+  else if(value && name == "numero_comprobante_2"){
+    let newValue = value;
+    if (value.length > 8) newValue = value.slice(0, 8)
+      setForm({
+     ...form,
+     [name]: newValue,
+   }); 
+  }
+  else if(value && name == "cod_proveedor"){
+    setForm({
+     ...form,
+     [name]: value,
+     tipo_comprobante: proveedores?.find(e => e.Codigo == value)?.TipoResponsable == 1 ? 1 : 3,
+      importe_neto: 0,
+     importe_iva: 0,
+     importe_total: 0
+   }); 
+  }
+  else if(value && name == "tipo_comprobante"){
+      setForm({
+     ...form,
+     [name]: value,
+     importe_neto: 0,
+     importe_iva: 0,
+     importe_total: 0
+     
+   }); 
+  }
+  else{
+    setForm({
+     ...form,
+     [name]: value,
+   }); 
+
+  }
+};
+
+const handleChangeNumbers = (e) => {
+  const { name, value, type } = e.target;
+  const parsedValue = type === "number" && value !== "" ? parseFloat(value) : value;
+
+  let newForm = { ...form, [name]: parsedValue };
+
+  // Netos e IVA
+  if (name === "neto_no_gravado") {
+    newForm.neto_no_gravado = parsedValue;
+  }
+
+  if (name === "neto_21") {
+    newForm.neto_21 = parsedValue;
+    newForm.importe_iva_21 = parseFloat((parsedValue * 0.21).toFixed(2));
+  }
+
+  if (name === "neto_10") {
+    newForm.neto_10 = parsedValue;
+    newForm.importe_iva_10 = parseFloat((parsedValue * 0.105).toFixed(2));
+  }
+
+  if (name === "neto_27") {
+    newForm.neto_27 = parsedValue;
+    newForm.importe_iva_27 = parseFloat((parsedValue * 0.27).toFixed(2));
+  }
+
+  // Recalcular totalNeto
+const totalNetoCalc =
+  (newForm.neto_no_gravado || 0) +
+  (newForm.neto_21 || 0) +
+  (newForm.neto_10 || 0) +
+  (newForm.neto_27 || 0);
+
+// Calcular totalIVA con los valores NUEVOS
+const totalIVACalc =
+  (newForm.importe_iva_21 || 0) +
+  (newForm.importe_iva_10 || 0) +
+  (newForm.importe_iva_27 || 0);
+
+// Guardar en estados locales
+setTotalNeto(totalNetoCalc);
+setTotalIVA(totalIVACalc);
+newForm.importe_neto = parseFloat(totalNetoCalc.toFixed(2));
+newForm.importe_iva = parseFloat(totalIVACalc.toFixed(2));
+
+  // Tasas → importes
+  if (name === "tasa_IIBB_CABA") {
+    newForm.tasa_IIBB_CABA = parsedValue;
+    newForm.importe_tasa_IIBB_CABA = parseFloat(((parsedValue / 100) * totalNeto).toFixed(2));
+  }
+
+  if (name === "tasa_IIBB") {
+    newForm.tasa_IIBB = parsedValue;
+    newForm.importe_tasa_IIBB = parseFloat(((parsedValue / 100) * totalNeto).toFixed(2));
+  }
+
+  if (name === "tasa_IVA") {
+    newForm.tasa_IVA = parsedValue;
+    newForm.importe_tasa_IVA = parseFloat(((parsedValue / 100) * totalNeto).toFixed(2));
+  }
+
+  // Otros impuestos = suma de tasas
+newForm.importe_otros_impuestos = parseFloat(
+  (
+    (newForm.importe_tasa_IIBB_CABA || 0) +
+    (newForm.importe_tasa_IIBB || 0) +
+    (newForm.importe_tasa_IVA || 0)
+  ).toFixed(2)
+);
+
+  // Recalcular importe_total
+  const importeTotal =
+    totalNeto +
+    (newForm.importe_iva_21 || 0) +
+    (newForm.importe_iva_10 || 0) +
+    (newForm.importe_iva_27 || 0) +
+    newForm.importe_otros_impuestos;
+
+  newForm.importe_total = parseFloat(importeTotal.toFixed(2));
+
+  // Guardar en el estado
+  setForm(newForm);
 };
 
   return (
@@ -338,21 +458,64 @@ const todosSeleccionados = () => {
                 onChange={handleChange} max="99999999" />
               </div>
               <div className={styles.inputContainer}>
-                  <span>Importe neto</span>
-                  <input type="number" name='importe_neto' value={form["importe_neto"]} 
-                onChange={handleChange}/>
+                  <span>Neto no gravado</span>
+                  <input type="number" name='neto_no_gravado' value={form.neto_no_gravado} onChange={handleChangeNumbers}/>
               </div>
               <div className={styles.inputContainer}>
-                  <span>IVA</span>
-                  <input type="number" name='importe_iva' value={form["importe_iva"]} 
-                  onChange={handleChange}/>
+                  <span>Neto al 21%</span>
+                  <input type="number" name='neto_21' value={form.neto_21} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>IVA 21%</span>
+                  <input type="number" name='importe_iva_21' value={form.importe_iva_21} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Neto al 10,5%</span>
+                  <input type="number" name='neto_10' value={form.neto_10} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>IVA 10,5%</span>
+                  <input type="number" name='importe_iva_10' value={form.importe_iva_10} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Neto al 27%</span>
+                  <input type="number" name='neto_27' value={form.neto_27} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>IVA 27%</span>
+                  <input type="number" name='importe_iva_27' value={form.importe_iva_27} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Tasa percepción IIBB CABA</span>
+                  <input type="number" name='tasa_IIBB_CABA' value={form.tasa_IIBB_CABA} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Tasa percepción IIBB</span>
+                  <input type="number" name='tasa_IIBB' value={form.tasa_IIBB} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Tasa percepción IVA</span>
+                  <input type="number" name='tasa_IVA' value={form.tasa_IVA} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Importe percepción IIBB CABA</span>
+                  <input type="number" name='importe_tasa_IIBB_CABA' value={form.importe_tasa_IIBB_CABA} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Importe percepción IIBB</span>
+                  <input type="number" name='importe_tasa_IIBB' value={form.importe_tasa_IIBB} onChange={handleChangeNumbers}/>
+              </div>
+              <div className={styles.inputContainer}>
+                  <span>Importe percepción IVA</span>
+                  <input type="number" name='importe_tasa_IVA' value={form.importe_tasa_IVA} onChange={handleChangeNumbers}/>
               </div>
               <div className={styles.inputContainer}>
                   <span>Total</span>
-                  <input type="number" name='importe_total' value={form["importe_total"]} disabled/>
+                  <input type="number" name='importe_total' value={form["importe_total"]} disabled
+                  onChange={handleChange}/>
               </div>
               <div className={styles.inputContainer}>
-                <span>Forma de cobro</span>
+                <span>Forma de pago</span>
                 <select name="id_forma_cobro" disabled={form.cta_cte_proveedores === 1 ? true : false}
                   value={form["id_forma_cobro"]} 
                 onChange={handleChange} id="">

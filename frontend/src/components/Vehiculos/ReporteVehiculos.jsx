@@ -106,13 +106,23 @@ const renderModificarCell = (data) => {
       </button>
     );
 };
-const renderCostosCell = (data) => {
+const renderEgresosCell = (data) => {
     return (
       <button
-        onClick={() => window.open(`/costos/ingresos_egresos/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`/costos/egresos/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px" ,textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        Costos
+        Egresos
+      </button>
+    );
+};
+const renderIngresosCell = (data) => {
+    return (
+      <button
+        onClick={() => window.open(`/costos/ingresos/${data.data.id}`, '_blank')}
+        style={{ color: '#1976d2', fontSize: "11px" ,textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        Ingresos
       </button>
     );
 };
@@ -232,7 +242,8 @@ return (
         <Column dataField="fecha_inicio_amortizacion" caption="Fecha amortización" alignment="center" cellRender={renderFecha}/>
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderModificarCell} />
-        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderCostosCell} />
+        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderIngresosCell} />
+        <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderEgresosCell} />
         <Column dataField="id"  width={100} caption="" alignment="center" cellRender={renderFichaCell} />
       </DataGrid>
     </div>

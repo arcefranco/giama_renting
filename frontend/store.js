@@ -10,6 +10,8 @@ import costosReducer from "./src/reducers/Costos/costosSlice";
 import alquileresReducer from "./src/reducers/Alquileres/alquileresSlice";
 import usuariosReducer from "./src/reducers/Usuarios/usuariosSlice";
 import recibosReducer from "./src/reducers/Recibos/recibosSlice";
+import ingresosReducer from "./src/reducers/Costos/ingresosSlice";
+import egresosReducer from "./src/reducers/Costos/egresosSlice";
 const loginPersistConfig = {
   key: "login",
   storage,
@@ -19,6 +21,8 @@ const reducer = combineReducers({
   loginReducer: persistReducer(loginPersistConfig, loginReducer),
   generalesReducer,
   vehiculosReducer,
+  ingresosReducer,
+  egresosReducer,
   clientesReducer,
   costosReducer,
   alquileresReducer,

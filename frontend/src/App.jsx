@@ -14,7 +14,7 @@ import ImagenesClientes from './components/Clientes/ImagenesClientes';
 import UpdateCliente from './components/Clientes/UpdateCliente';
 import AltaCostos from './components/Costos/AltaCostos';
 import UpdateConcepto from './components/Costos/UpdateConcepto';
-import IngresosEgresos from './components/Costos/IngresosEgresos';
+import Ingresos from "./components/Costos/Ingresos";
 import FormasDeCobro from './components/Alquileres/FormasDeCobro/FormasDeCobro';
 import AlquileresForm from './components/Alquileres/AlquileresForm/AlquileresForm';
 import ProrrateoIE from './components/Costos/ProrrateoIE';
@@ -31,6 +31,7 @@ import ImportacionMasiva from './components/Vehiculos/ImportacionMasiva';
 import PrivateRoute from "./utils/PrivateRoute";
 import Unauthorized from "./utils/Unauthorized";
 import AdminRoute from "./utils/AdminRoute";
+import Egresos from "./components/Costos/Egresos";
 function App() {
 
   return (
@@ -79,13 +80,16 @@ function App() {
       <Route path='/costos/conceptos/:id' element={<UpdateConcepto/>}/>
     </Route>
     <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-      <Route path='/costos/ingresos_egresos/:id' element={<IngresosEgresos/>}/>
+      <Route path='/costos/ingresos' element={<Ingresos/>}/>
     </Route>
     <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-      <Route path='/costos/ingresos' element={<IngresosEgresos/>}/>
+        <Route path='/costos/egresos' element={<Egresos/>}/>
     </Route>
     <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-        <Route path='/costos/egresos' element={<IngresosEgresos/>}/>
+      <Route path='/costos/ingresos/:id' element={<Ingresos/>}/>
+    </Route>
+    <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+      <Route path='/costos/egresos/:id' element={<Egresos/>}/>
     </Route>
     <Route element={<PrivateRoute allowedRoles={["2"]} />}>
       <Route path='/costos/prorrateoIE' element={<ProrrateoIE/>}/>
