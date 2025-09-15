@@ -337,6 +337,7 @@ import * as xlsx from "xlsx";
 export const insertVehiculo = async (req) => {
   const {
     modelo,
+    fecha_ingreso,
     nro_chasis,
     nro_motor,
     kilometros,
@@ -427,7 +428,7 @@ export const insertVehiculo = async (req) => {
         type: QueryTypes.INSERT,
         replacements: [
           modelo,
-          getTodayDate(),
+          fecha_ingreso ? fecha_ingreso : getTodayDate(),
           costo,
           nro_chasis,
           nro_motor,
@@ -1578,7 +1579,14 @@ export const postVehiculosMasivos = async (req, res) => {
     // leer excel
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
-    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      raw: false, // fuerza conversión automática de fechas
+      dateNF: "yyyy-mm-dd", // formato de salida
+    });
+    function normalizeDate(dmy) {
+      const [dia, mes, anio] = dmy.split("/");
+      return `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
     const transaction_1 = await giama_renting.transaction();
     const transaction_2 = await pa7_giama_renting.transaction();
     // recorrer filas y llamar a insertVehiculo
@@ -1586,6 +1594,7 @@ export const postVehiculosMasivos = async (req, res) => {
       const vehiculo = {
         modelo: row.modelo,
         nro_chasis: row.nro_chasis,
+        fecha_ingreso: normalizeDate(row.fecha_ingreso),
         nro_motor: row.nro_motor,
         kilometros: row.km_iniciales,
         costo: row.precio_inicial,
@@ -1600,7 +1609,6 @@ export const postVehiculosMasivos = async (req, res) => {
         importacion_masiva: true,
         usuario,
       };
-      console.log(vehiculo);
       const result = await insertVehiculo({ body: vehiculo });
 
       if (!result.status) {
