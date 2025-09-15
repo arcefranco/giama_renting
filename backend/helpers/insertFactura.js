@@ -86,7 +86,12 @@ export const insertFactura = async (
   if (!clienteObtenido.tipo_contribuyente)
     throw new Error("El cliente debe aclarar su tipo responsable");
   if (!existeClienteFacturacion) {
-    const nombre = clienteObtenido.nombre + " " + clienteObtenido.apellido;
+    let nombre;
+    if (clienteObtenido.razon_social) {
+      nombre = clienteObtenido.razon_social;
+    } else {
+      nombre = clienteObtenido.nombre + " " + clienteObtenido.apellido;
+    }
     const domicilio =
       clienteObtenido.direccion + " " + clienteObtenido.nro_direccion;
     const result = await pa7_giama_renting.query(

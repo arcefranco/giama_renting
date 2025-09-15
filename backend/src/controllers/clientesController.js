@@ -15,6 +15,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
+import * as xlsx from "xlsx";
 
 export const postCliente = async (req, res) => {
   const {
@@ -654,3 +655,98 @@ export const eliminarImagenes = async (req, res) => {
     return res.send({ status: false, message: "Error al eliminar imagen" });
   }
 };
+
+/* export const postClientesMasivo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.send({
+        status: false,
+        message: "Debe subir un archivo Excel",
+      });
+    }
+    // leer excel
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      raw: false, // fuerza conversión automática de fechas
+      dateNF: "yyyy-mm-dd", // formato de salida
+    });
+    function normalizeDate(dmy) {
+      const [dia, mes, anio] = dmy.split("/");
+      return `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+    const transaction_1 = await giama_renting.transaction();
+    // recorrer filas y llamar a insertVehiculo
+    for (let row of data) {
+      const cliente = {
+        nombre: row.RazonSocial,
+        tipo_doc: row.Tipo_Documento,
+        nro_doc: row.Nro_Doc,
+        tipo_responsable: row.Tipo_Responsable,
+        domicilio: row.Domicilio,
+        localidad: row.Localidad,
+        provincia: row.Provincia,
+        telefono: row.Telefono,
+        email: row.correo_electronico,
+        fecha_nacimiento: normalizeDate(row.Fecha_nacimiento),
+      };
+      console.log(cliente);
+      try {
+        await giama_renting.query(
+          `INSERT INTO clientes (razon_social, fecha_nacimiento, tipo_contribuyente,
+        tipo_documento, nro_documento, direccion,
+        nro_direccion, provincia, ciudad, celular, mail, usuario_alta)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          {
+            type: QueryTypes.INSERT,
+            replacements: [
+              row.RazonSocial,
+              normalizeDate(row.Fecha_nacimiento),
+              row.Tipo_Responsable == "RESPONSABLE MONOTRIBUTO"
+                ? 4
+                : row.Tipo_Responsable == "CONSUMIDOR FINAL"
+                ? 5
+                : null,
+              row.Tipo_Documento == "CUIL"
+                ? 7
+                : row.Tipo_Documento == "CUIT"
+                ? 6
+                : null,
+              row.Nro_Doc,
+              row.Domicilio,
+              0,
+              row.Provincia == "Buenos Aires"
+                ? 1
+                : row.Provincia == "BUENOS AIRES"
+                ? 1
+                : row.Provincia == "CABA"
+                ? 2
+                : null,
+              row.Localidad ? row.Localidad : null,
+              row.Telefono,
+              row.correo_electronico,
+              "farce@giama.com.ar",
+            ],
+            transaction: transaction_1,
+          }
+        );
+      } catch (error) {
+        console.log(error);
+        transaction_1.rollback();
+        const { body } = handleError(error, "cliente", acciones.post);
+        return res.send(body);
+      }
+    }
+    transaction_1.commit();
+    return res.send({
+      status: true,
+      message: `${data.length} clientes cargados correctamente`,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      status: false,
+      message: "Error al procesar archivo",
+    });
+  }
+}; */

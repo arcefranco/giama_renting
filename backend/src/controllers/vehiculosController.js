@@ -434,7 +434,7 @@ export const insertVehiculo = async (req) => {
           kilometros,
           kilometros,
           meses_amortizacion_final,
-          color,
+          color ? color : null,
           sucursal,
           numero_comprobante,
           1,

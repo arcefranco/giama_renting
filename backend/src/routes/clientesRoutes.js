@@ -10,6 +10,7 @@ import {
   getDateroByIdCliente,
   getEstadoCliente,
   postImagenesCliente,
+  /*   postClientesMasivo, */
 } from "../controllers/clientesController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
@@ -46,4 +47,9 @@ clientesRouter.post("/getEstadoCliente", auth, getEstadoCliente);
 clientesRouter.post("/getImagenesclientes", auth, getImagenesClientes);
 clientesRouter.post("/eliminarImagenes", auth, eliminarImagenes);
 clientesRouter.post("/updateCliente", auth, updateCliente);
+/* clientesRouter.post(
+  "/postClientesMasivo",
+  upload.single("file"),
+  postClientesMasivo
+); */
 export default clientesRouter;
