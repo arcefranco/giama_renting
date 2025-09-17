@@ -7,6 +7,6 @@ export default ({ mode }) => {
 
   return defineConfig({
     plugins: [react()],
-    base: env.VITE_BASE || "/",
+    base: env.VITE_BASENAME || "/",
   });
 };
