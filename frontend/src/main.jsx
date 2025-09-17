@@ -11,7 +11,7 @@ import { loadMessages } from 'devextreme/localization';
 import * as messagesEs from 'devextreme/localization/messages/es.json';
 import { PersistGate } from 'redux-persist/integration/react';
 const base = import.meta.env.VITE_BASENAME || "/";
-
+console.log("this is base: ", base)
 
 loadMessages(messagesEs); // Cargar traducciones a español
 
