@@ -17,6 +17,7 @@ export const getProveedoresGPS = async (req, res) => {
     return res.send(body);
   }
 };
+
 export const getModelos = async (req, res) => {
   try {
     const resultado = await giama_renting.query("SELECT * FROM modelos", {

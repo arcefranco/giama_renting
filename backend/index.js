@@ -9,6 +9,7 @@ import clientesRouter from "./src/routes/clientesRoutes.js";
 import costosRouter from "./src/routes/costosRoutes.js";
 import alquileresRouter from "./src/routes/alquileresRoutes.js";
 import recibosRouter from "./src/routes/recibosRoutes.js";
+import parametrosRouter from "./src/routes/parametrosRoutes.js";
 dotenv.config();
 const app = express();
 const corsOptions = {
@@ -33,3 +34,4 @@ app.use("/clientes", clientesRouter);
 app.use("/costos", costosRouter);
 app.use("/alquileres", alquileresRouter);
 app.use("/recibos", recibosRouter);
+app.use("/parametros", parametrosRouter);
