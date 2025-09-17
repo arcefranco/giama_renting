@@ -32,6 +32,12 @@ import PrivateRoute from "./utils/PrivateRoute";
 import Unauthorized from "./utils/Unauthorized";
 import AdminRoute from "./utils/AdminRoute";
 import Egresos from "./components/Costos/Egresos";
+import Modelos from "./components/Parametros/Modelos/Modelos";
+import ProveedoresGPS from "./components/Parametros/ProveedoresGPS/ProveedoresGPS";
+import Sucursales from "./components/Parametros/Sucursales/Sucursales";
+import UpdateProveedorGPS from "./components/Parametros/ProveedoresGPS/UpdateProveedorGPS";
+import UpdateModelo from "./components/Parametros/Modelos/UpdateModelo";
+import UpdateSucursal from "./components/Parametros/Sucursales/UpdateSucursal";
 function App() {
 
   return (
@@ -109,6 +115,13 @@ function App() {
 
     <Route path='/alquileres/reporte' element={<ReporteAlquileres/>}/>
     <Route path='/alquileres/contrato/reporte' element={<ReporteContratos/>}/>
+
+    <Route path='/parametros/proveedoresGPS' element={<ProveedoresGPS/>}/>
+    <Route path='/parametros/proveedoresGPS/:id' element={<UpdateProveedorGPS/>}/>
+    <Route path='/parametros/modelos' element={<Modelos/>}/>
+    <Route path='/parametros/modelos/:id' element={<UpdateModelo/>}/>
+    <Route path='/parametros/sucursales' element={<Sucursales/>}/>
+    <Route path='/parametros/sucursales/:id' element={<UpdateSucursal/>}/>
     </Route>
   </Route>
     </Routes>

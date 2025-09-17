@@ -56,6 +56,9 @@ const menuItems = [
     { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["2"] }, 
     { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["2"] },
     { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["2"] },
+    { label: "Modelos", to: "/parametros/modelos"},
+    { label: "Proveedores GPS", to: "/parametros/proveedoresGPS"},
+    { label: "Sucursales", to: "/parametros/sucursales"}
    ]
  },
   {

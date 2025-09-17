@@ -12,10 +12,11 @@ import usuariosReducer from "./src/reducers/Usuarios/usuariosSlice";
 import recibosReducer from "./src/reducers/Recibos/recibosSlice";
 import ingresosReducer from "./src/reducers/Costos/ingresosSlice";
 import egresosReducer from "./src/reducers/Costos/egresosSlice";
+import parametrosReducer from "./src/reducers/Parametros/parametrosSlice";
 const loginPersistConfig = {
   key: "login",
   storage,
-  whitelist: ["username", "roles", "nombre"], // campos que querés guardar
+  whitelist: ["username", "roles", "nombre"],
 };
 const reducer = combineReducers({
   loginReducer: persistReducer(loginPersistConfig, loginReducer),
@@ -28,6 +29,7 @@ const reducer = combineReducers({
   alquileresReducer,
   usuariosReducer,
   recibosReducer,
+  parametrosReducer,
 });
 export const store = configureStore({
   reducer: reducer,
