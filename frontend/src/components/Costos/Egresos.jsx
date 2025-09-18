@@ -336,91 +336,77 @@ if(value && name === "id_concepto"){
   }
 };
 
+const toNumber = (val) => {
+  if (val === "" || val === null || val === undefined) return null;
+  const n = parseFloat(val.toString().replace(",", "."));
+  return isNaN(n) ? null : n;
+};
+
 const handleChangeNumbers = (e) => {
-  const { name, value, type } = e.target;
-   const sanitizedValue = value.replace(/,/g, '.');
-  
-  // Ahora, parseFloat procesará el valor correctamente
-  const parsedValue = sanitizedValue !== "" ? parseFloat(sanitizedValue) : null;
+  const { name, value } = e.target;
 
-    let newForm = { ...form, [name]: parsedValue };
-  
-    // Netos e IVA
-    if (name === "neto_no_gravado") {
-      newForm.neto_no_gravado = parsedValue;
-    }
-  
-    if (name === "neto_21") {
-      newForm.neto_21 = parsedValue;
-      newForm.importe_iva_21 = parsedValue ? parseFloat((parsedValue * 0.21).toFixed(2)) : "";
+  // siempre guardo el string que escribe el usuario
+  let newForm = { ...form, [name]: value };
 
-    }
-  
-    if (name === "neto_10") {
-      newForm.neto_10 = parsedValue;
-      newForm.importe_iva_10 = parsedValue ? parseFloat((parsedValue * 0.105).toFixed(2)) : "";
-    }
-  
-    if (name === "neto_27") {
-      newForm.neto_27 = parsedValue;
-      newForm.importe_iva_27 = parsedValue ? parseFloat((parsedValue * 0.27).toFixed(2)) : "";
-    }
-  
-    // Recalcular totalNeto
+  // convertir a número solo cuando haga falta
+  const neto_21 = toNumber(newForm.neto_21);
+  const neto_10 = toNumber(newForm.neto_10);
+  const neto_27 = toNumber(newForm.neto_27);
+  const neto_no_gravado = toNumber(newForm.neto_no_gravado);
+
+  // IVA calculado a partir del número (no del string)
+  newForm.importe_iva_21 = neto_21 ? (neto_21 * 0.21).toFixed(2) : "";
+  newForm.importe_iva_10 = neto_10 ? (neto_10 * 0.105).toFixed(2) : "";
+  newForm.importe_iva_27 = neto_27 ? (neto_27 * 0.27).toFixed(2) : "";
+
+  // Totales
   const totalNetoCalc =
-    (newForm.neto_no_gravado || 0) +
-    (newForm.neto_21 || 0) +
-    (newForm.neto_10 || 0) +
-    (newForm.neto_27 || 0);
-  
-  // Calcular totalIVA con los valores NUEVOS
+    (neto_no_gravado || 0) +
+    (neto_21 || 0) +
+    (neto_10 || 0) +
+    (neto_27 || 0);
+
   const totalIVACalc =
-    (newForm.importe_iva_21 || 0) +
-    (newForm.importe_iva_10 || 0) +
-    (newForm.importe_iva_27 || 0);
-  
-  // Guardar en estados locales
+    (toNumber(newForm.importe_iva_21) || 0) +
+    (toNumber(newForm.importe_iva_10) || 0) +
+    (toNumber(newForm.importe_iva_27) || 0);
+
   setTotalNeto(totalNetoCalc);
   setTotalIVA(totalIVACalc);
-  newForm.importe_neto = parseFloat(totalNetoCalc.toFixed(2));
-  newForm.importe_iva = parseFloat(totalIVACalc.toFixed(2));
-  
-    // Tasas → importes
-    if (name === "tasa_IIBB_CABA") {
-      newForm.tasa_IIBB_CABA = parsedValue;
-      newForm.importe_tasa_IIBB_CABA = parsedValue ? parseFloat(((parsedValue / 100) * totalNeto).toFixed(2)) : "";
-    }
-  
-    if (name === "tasa_IIBB") {
-      newForm.tasa_IIBB = parsedValue;
-      newForm.importe_tasa_IIBB = parsedValue ? parseFloat(((parsedValue / 100) * totalNeto).toFixed(2)) : "";
-    }
-  
-    if (name === "tasa_IVA") {
-      newForm.tasa_IVA = parsedValue;
-      newForm.importe_tasa_IVA = parsedValue ? parseFloat(((parsedValue / 100) * totalNeto).toFixed(2)) : "";
-    }
-  
-    // Otros impuestos = suma de tasas
-  newForm.importe_otros_impuestos = parseFloat(
-    (
-      (newForm.importe_tasa_IIBB_CABA || 0) +
-      (newForm.importe_tasa_IIBB || 0) +
-      (newForm.importe_tasa_IVA || 0)
-    ).toFixed(2)
+
+  newForm.importe_neto = totalNetoCalc.toFixed(2);
+  newForm.importe_iva = totalIVACalc.toFixed(2);
+
+  // Tasas (mismo criterio: convertir al vuelo)
+  const tasa_IIBB_CABA = toNumber(newForm.tasa_IIBB_CABA);
+  const tasa_IIBB = toNumber(newForm.tasa_IIBB);
+  const tasa_IVA = toNumber(newForm.tasa_IVA);
+
+  newForm.importe_tasa_IIBB_CABA = tasa_IIBB_CABA
+    ? ((tasa_IIBB_CABA / 100) * totalNetoCalc).toFixed(2)
+    : "";
+
+  newForm.importe_tasa_IIBB = tasa_IIBB
+    ? ((tasa_IIBB / 100) * totalNetoCalc).toFixed(2)
+    : "";
+
+  newForm.importe_tasa_IVA = tasa_IVA
+    ? ((tasa_IVA / 100) * totalNetoCalc).toFixed(2)
+    : "";
+
+  newForm.importe_otros_impuestos = (
+    (toNumber(newForm.importe_tasa_IIBB_CABA) || 0) +
+    (toNumber(newForm.importe_tasa_IIBB) || 0) +
+    (toNumber(newForm.importe_tasa_IVA) || 0)
+  ).toFixed(2);
+
+  setTotalPerc(
+    (toNumber(newForm.importe_tasa_IIBB_CABA) || 0) +
+      (toNumber(newForm.importe_tasa_IIBB) || 0) +
+      (toNumber(newForm.importe_tasa_IVA) || 0)
   );
 
-    // Calcular totalIVA con los valores NUEVOS
-  const totalPercCalc =
-    (newForm.importe_tasa_IIBB_CABA || 0) +
-    (newForm.importe_tasa_IIBB || 0) +
-    (newForm.importe_tasa_IVA || 0);
-    setTotalPerc(totalPercCalc)
-  
-    // Guardar en el estado
-    setForm(newForm);
-
-
+  setForm(newForm);
 };
 
 const handleSubmit = () => {
@@ -645,7 +631,7 @@ return (
       </div>
       <div className={styles.inputContainer}>
           <span>Neto no gravado</span>
-          <input type="number" name='neto_no_gravado' value={form.neto_no_gravado} onChange={handleChangeNumbers}/>
+          <input type="text" name='neto_no_gravado' value={form.neto_no_gravado} onChange={handleChangeNumbers}/>
       </div>
       <div>{/* DIV PARA ORDENAR */}</div>
       <div className={styles.inputContainer}>
