@@ -39,6 +39,7 @@ const UpdateCliente = () => {
     codigo_postal: '',
     provincia: '',
     celular: '',
+    telefono_alternativo: '',
     ciudad: '',
     mail: '',
     notas:'',
@@ -102,6 +103,7 @@ const UpdateCliente = () => {
         codigo_postal: cliente[0]?.codigo_postal || '',
         provincia: cliente[0]?.provincia || '',
         celular: cliente[0]?.celular || '',
+        telefono_alternativo: cliente[0]?.telefono_alternativo || '',
         ciudad: cliente[0]?.ciudad || '',
         mail: cliente[0]?.mail || '',
         notas: cliente[0]?.notas ||'',
@@ -491,6 +493,12 @@ if(fecha){
         name='celular' value={form["celular"]}
         onChange={handleChange} />
         {errors["celular"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["celular"]}</span>}
+        </div>
+        <div className={styles.inputContainer}>
+        <span>Tél. alternativo</span>
+        <input type="number"
+        name='telefono_alternativo' value={form["telefono_alternativo"]}
+        onChange={handleChange}/>
         </div>
         <div className={styles.inputContainer}>
         <span>Provincia</span>

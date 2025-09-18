@@ -181,6 +181,7 @@ return (
         width={100}/>
         <Column dataField="ciudad" caption="Ciudad" width={110}/>
         <Column dataField="celular" caption="Celular" width={90}/>
+        <Column dataField="telefono_alternativo" caption="Tél. alternativo" width={90}/>
         <Column dataField="mail" caption="Mail" width={90}/>
         <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="resolucion_datero" caption="Res. datero" width={200} cellRender={renderResolucion}/>

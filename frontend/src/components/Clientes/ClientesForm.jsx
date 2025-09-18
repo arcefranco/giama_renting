@@ -41,6 +41,7 @@ const [form, setFormData] = useState({
     codigo_postal: '',
     provincia: '',
     celular: '',
+    telefono_alternativo: '',
     ciudad: '',
     mail: '',
     notas:'',
@@ -130,6 +131,8 @@ useToastFeedback({
           depto: '',
           codigo_postal: '',
           provincia: '',
+          celular: '',
+          telefono_alternativo: '',
           ciudad: '',
           mail: '',
           notas: '',
@@ -403,6 +406,12 @@ return (
         onChange={handleChange} 
         onBlur={() => setErrors({ ...errors, ["celular"]: !form["celular"] ? 'Campo obligatorio' : '' })}/>
         {errors["celular"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["celular"]}</span>}
+        </div>
+        <div className={styles.inputContainer}>
+        <span>Tél. alternativo</span>
+        <input type="number"
+        name='telefono_alternativo' value={form["telefono_alternativo"]}
+        onChange={handleChange}/>
         </div>
         <div className={styles.inputContainer}>
         <span>Provincia</span>

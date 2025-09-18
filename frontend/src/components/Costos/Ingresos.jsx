@@ -97,16 +97,18 @@ useEffect(() => { /**CARGA COSTOS DE VEHICULO EN URL */
 useEffect(() => { /**OPCIONES DE VEHICULOS PARA EL SELECT */
   if(vehiculos?.length){
     setOpcionesVehiculos(vehiculos?.filter(v => {return !v.fecha_venta})?.map(e => {
-    
+    let modeloNombre = modelos?.find(m => m.id == e.modelo)?.nombre
+    let dominio = e.dominio ? e.dominio : 
+        e.dominio_provisorio ? e.dominio_provisorio : ""
       return {
         value: e.id,
         label: (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
-            <span>{e.dominio ? e.dominio : 
-        e.dominio_provisorio ? e.dominio_provisorio : ""} - {modelos?.find(m => m.id == e.modelo)?.nombre}</span>
+            <span>{dominio} - {modeloNombre}</span>
             {renderEstadoVehiculo(e, "chico")}
           </div>
-        )
+        ),
+        searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
       };
     }))
   }
@@ -420,7 +422,11 @@ return (
               }));
             }}
             placeholder="Seleccione un vehículo"
+            filterOption={(option, inputValue) =>
+            option.data.searchKey.includes(inputValue.toLowerCase())
+            }
             styles={customStyles}
+            
           />
         </div> 
         }
