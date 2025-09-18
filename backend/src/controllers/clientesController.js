@@ -39,6 +39,7 @@ export const postCliente = async (req, res) => {
     provincia,
     ciudad,
     celular,
+    telefono_alternativo,
     mail,
     notas,
     resolucion_datero,
@@ -93,9 +94,9 @@ export const postCliente = async (req, res) => {
     const result = await giama_renting.query(
       `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
         tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
-        nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, mail, notas, resolucion_datero, fecha_resolucion_datero,
+        nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, telefono_alternativo, mail, notas, resolucion_datero, fecha_resolucion_datero,
         usuario_resolucion_datero, usuario_alta)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -119,6 +120,7 @@ export const postCliente = async (req, res) => {
           provincia,
           ciudad,
           celular,
+          telefono_alternativo,
           mail,
           notas,
           resolucion_datero,
@@ -240,6 +242,7 @@ export const updateCliente = async (req, res) => {
     provincia,
     ciudad,
     celular,
+    telefono_alternativo,
     mail,
     notas,
     resolucion_datero,
@@ -338,8 +341,10 @@ export const updateCliente = async (req, res) => {
   try {
     await giama_renting.query(
       `UPDATE clientes SET nombre = ?, apellido = ?, razon_social = ?, fecha_nacimiento = ?, nacionalidad = ?, tipo_contribuyente = ?,
-        tipo_documento = ?, nro_documento = ?, doc_expedido_por = ?, licencia = ?, lic_expedida_por = ?, fecha_vencimiento_licencia = ?, direccion = ?,
-        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, celular = ?, mail = ?, notas = ?, 
+        tipo_documento = ?, nro_documento = ?, doc_expedido_por = ?, licencia = ?, lic_expedida_por = ?, fecha_vencimiento_licencia = ?, 
+        direccion = ?,
+        nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, 
+        celular = ?, telefono_alternativo = ?, mail = ?, notas = ?, 
         resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?
         WHERE id = ?`,
       {
@@ -365,6 +370,7 @@ export const updateCliente = async (req, res) => {
           provincia ? provincia : null,
           ciudad,
           celular,
+          telefono_alternativo,
           mail,
           notas,
           resolucion_datero_final,
