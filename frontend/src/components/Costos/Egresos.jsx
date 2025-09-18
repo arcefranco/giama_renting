@@ -443,7 +443,8 @@ const customStyles = {
 const customStylesProveedores = {
   container: (provided) => ({
     ...provided,
-    width: '15rem'
+    width: '15rem',
+    fontSize: "11px"
   })
 };
 return (
