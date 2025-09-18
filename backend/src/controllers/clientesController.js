@@ -684,43 +684,33 @@ export const eliminarImagenes = async (req, res) => {
     const transaction_1 = await giama_renting.transaction();
     // recorrer filas y llamar a insertVehiculo
     for (let row of data) {
-      const cliente = {
-        nombre: row.RazonSocial,
-        tipo_doc: row.Tipo_Documento,
-        nro_doc: row.Nro_Doc,
-        tipo_responsable: row.Tipo_Responsable,
-        domicilio: row.Domicilio,
-        localidad: row.Localidad,
-        provincia: row.Provincia,
-        telefono: row.Telefono,
-        email: row.correo_electronico,
-        fecha_nacimiento: normalizeDate(row.Fecha_nacimiento),
-      };
-      console.log(cliente);
       try {
         await giama_renting.query(
-          `INSERT INTO clientes (razon_social, fecha_nacimiento, tipo_contribuyente,
-        tipo_documento, nro_documento, direccion,
-        nro_direccion, provincia, ciudad, celular, mail, usuario_alta)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO clientes (razon_social, nombre, apellido, tipo_documento, nro_documento,
+           tipo_contribuyente, direccion, nro_direccion, piso, depto, provincia, celular, telefono_alternativo,
+           mail, fecha_nacimiento, ciudad, usuario_alta)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           {
             type: QueryTypes.INSERT,
             replacements: [
-              row.RazonSocial,
-              normalizeDate(row.Fecha_nacimiento),
+              row.RazonSocial ? row.RazonSocial : null,
+              row.Nombre ? row.Nombre : null,
+              row.Apellido ? row.Apellido : null,
+              row.tipo_documento == "CUIL"
+                ? 7
+                : row.tipo_documento == "CUIT"
+                ? 6
+                : null,
+              row.Nro_Doc,
               row.Tipo_Responsable == "RESPONSABLE MONOTRIBUTO"
                 ? 4
                 : row.Tipo_Responsable == "CONSUMIDOR FINAL"
                 ? 5
                 : null,
-              row.Tipo_Documento == "CUIL"
-                ? 7
-                : row.Tipo_Documento == "CUIT"
-                ? 6
-                : null,
-              row.Nro_Doc,
-              row.Domicilio,
-              0,
+              row.Calle ? row.Calle : null,
+              row.nro_direccion ? row.nro_direccion : null,
+              row.Piso ? row.Piso : null,
+              row.Depto ? row.Depto : null,
               row.Provincia == "Buenos Aires"
                 ? 1
                 : row.Provincia == "BUENOS AIRES"
@@ -728,9 +718,11 @@ export const eliminarImagenes = async (req, res) => {
                 : row.Provincia == "CABA"
                 ? 2
                 : null,
-              row.Localidad ? row.Localidad : null,
-              row.Telefono,
+              row.Celular,
+              row.telefono_alternativo,
               row.correo_electronico,
+              normalizeDate(row.fecha_nacimiento),
+              row.Localidad ? row.Localidad : null,
               "farce@giama.com.ar",
             ],
             transaction: transaction_1,
