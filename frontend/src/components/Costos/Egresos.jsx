@@ -338,7 +338,10 @@ if(value && name === "id_concepto"){
 
 const handleChangeNumbers = (e) => {
   const { name, value, type } = e.target;
-  const parsedValue =  value !== "" ? parseFloat(value) : null;
+   const sanitizedValue = value.replace(/,/g, '.');
+  
+  // Ahora, parseFloat procesará el valor correctamente
+  const parsedValue = sanitizedValue !== "" ? parseFloat(sanitizedValue) : null;
 
     let newForm = { ...form, [name]: parsedValue };
   
