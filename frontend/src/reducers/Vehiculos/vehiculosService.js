@@ -54,8 +54,29 @@ const eliminarImagenes = async (key) => {
 const postImagenesVehiculo = async (data) => {
   return postFunction("vehiculos/postImagenesVehiculo", data);
 };
-const getCostosPeriodo = async (data) => {
-  return postObjectFunction("vehiculos/getCostosPeriodo", data);
+const getCostosPeriodo = async (form) => {
+  try {
+    const response = await axios.post(
+      import.meta.env.VITE_REACT_APP_HOST + "vehiculos/getCostosPeriodo",
+      form,
+      {
+        withCredentials: true,
+      }
+    );
+    const data = response.data;
+    if (data?.status === false) {
+      return data; // backend ya manda status:false,message
+    } else if (
+      typeof response.data === "object" &&
+      !Array.isArray(response.data)
+    ) {
+      return { status: true, data };
+    }
+
+    return { status: false, message: "Formato inesperado en la respuesta." };
+  } catch (error) {
+    return ServiceErrorHandler(error, "vehiculos/getCostosPeriodo"); // devuelve {status:false,message}
+  }
 };
 const getCostoNetoVehiculo = async (data) => {
   return postObjectFunction("vehiculos/getCostoNetoVehiculo", data);

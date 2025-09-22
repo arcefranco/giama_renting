@@ -420,7 +420,7 @@ export const vehiculosSlice = createSlice({
     builder.addCase(getAmortizacion.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = action.payload.status;
-      state.message = action.payload.message;
+      state.message = action.payload.message ? action.payload.message : "";
       state.amortizacion = action.payload.amortizacion;
       state.amortizacion_todos_movimientos =
         action.payload.amortizacion_todos_movimientos;
