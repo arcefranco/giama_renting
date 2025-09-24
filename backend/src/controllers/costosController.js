@@ -15,6 +15,7 @@ import {
   movimientosProveedores,
   movimientosProveedoresEgresos,
 } from "../../helpers/movimientosProveedores.js";
+import { toNumber } from "../../helpers/toNumber.js";
 
 export const getCuentasContables = async (req, res) => {
   try {
@@ -203,9 +204,16 @@ const asientos_costos_ingresos = async (
   cuenta_secundaria_concepto,
   cuenta_forma_cobro,
   cuenta_secundaria_forma_cobro,
-  importe_neto,
-  importe_iva,
-  importe_total,
+  importe_neto_total_1,
+  importe_neto_total_2,
+  importe_neto_total_3,
+  importe_iva_total_1,
+  importe_iva_total_2,
+  importe_iva_total_3,
+  cuenta_concepto_2,
+  cuenta_secundaria_concepto_2,
+  cuenta_concepto_3,
+  cuenta_secundaria_concepto_3,
   observacion,
   comprobante,
   ingreso_egreso,
@@ -216,6 +224,13 @@ const asientos_costos_ingresos = async (
 ) => {
   let cuentaIVA;
   let cuentaSecundariaIVA;
+  let importe_total_asientos =
+    importe_neto_total_1 +
+    importe_neto_total_2 +
+    importe_neto_total_3 +
+    importe_iva_total_1 +
+    importe_iva_total_2 +
+    importe_iva_total_3;
 
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
@@ -235,12 +250,13 @@ const asientos_costos_ingresos = async (
   }
 
   try {
+    /**EGRESOS: IMPORTES NETO DEBE */
     await asientoContable(
       "c_movimientos",
       NroAsiento,
       cuenta_concepto,
       dhNetoEIva,
-      importe_neto,
+      importe_neto_total_1,
       observacion,
       transaction,
       comprobante,
@@ -248,13 +264,73 @@ const asientos_costos_ingresos = async (
       NroAsientoSecundario,
       TipoComprobante
     );
-    if (importe_iva > 0) {
+    if (importe_neto_total_2) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_concepto_2,
+        dhNetoEIva,
+        importe_neto_total_2,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_neto_total_3) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_concepto_3,
+        dhNetoEIva,
+        importe_neto_total_3,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_iva_total_1 > 0) {
       await asientoContable(
         "c_movimientos",
         NroAsiento,
         cuentaIVA,
         dhNetoEIva,
-        importe_iva,
+        importe_iva_total_1,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_iva_total_2 > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        dhNetoEIva,
+        importe_iva_total_2,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_iva_total_3 > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        dhNetoEIva,
+        importe_iva_total_3,
         observacion,
         transaction,
         comprobante,
@@ -268,7 +344,7 @@ const asientos_costos_ingresos = async (
       NroAsiento,
       cuenta_forma_cobro,
       dhTotal,
-      importe_total,
+      importe_total_asientos,
       observacion,
       transaction,
       comprobante,
@@ -282,7 +358,7 @@ const asientos_costos_ingresos = async (
         NroAsientoSecundario,
         cuenta_secundaria_concepto,
         dhNetoEIva,
-        importe_neto,
+        importe_neto_total_1,
         observacion,
         transaction,
         comprobante,
@@ -290,13 +366,73 @@ const asientos_costos_ingresos = async (
         null,
         TipoComprobante
       );
-      if (importe_iva > 0) {
+      if (importe_neto_total_2) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuenta_secundaria_concepto_2,
+          dhNetoEIva,
+          importe_neto_total_2,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_neto_total_3) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuenta_secundaria_concepto_3,
+          dhNetoEIva,
+          importe_neto_total_3,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_iva_total_1 > 0) {
         await asientoContable(
           "c2_movimientos",
           NroAsientoSecundario,
           cuentaSecundariaIVA,
           dhNetoEIva,
-          importe_iva,
+          importe_iva_total_1,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_iva_total_2 > 0) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuentaSecundariaIVA,
+          dhNetoEIva,
+          importe_iva_total_2,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_iva_total_3 > 0) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuentaSecundariaIVA,
+          dhNetoEIva,
+          importe_iva_total_3,
           observacion,
           transaction,
           comprobante,
@@ -310,7 +446,7 @@ const asientos_costos_ingresos = async (
         NroAsientoSecundario,
         cuenta_secundaria_forma_cobro,
         dhTotal,
-        importe_total,
+        importe_total_asientos,
         observacion,
         transaction,
         comprobante,
@@ -329,9 +465,6 @@ const asientos_costos_ingresos = async (
 async function registrarCostoIngresoIndividual({
   id_vehiculo,
   fecha,
-  id_concepto,
-  importe_neto,
-  importe_iva,
   importe_total,
   observacion,
   id_forma_cobro,
@@ -342,20 +475,42 @@ async function registrarCostoIngresoIndividual({
   tipo_comprobante,
   numero_comprobante_1,
   numero_comprobante_2,
+
+  id_concepto,
   neto_no_gravado,
   neto_21,
   neto_10,
   neto_27,
+  id_concepto_2,
+  neto_no_gravado_2,
+  neto_21_2,
+  neto_10_2,
+  neto_27_2,
+  id_concepto_3,
+  neto_no_gravado_3,
+  neto_21_3,
+  neto_10_3,
+  neto_27_3,
   importe_iva_21,
   importe_iva_10,
   importe_iva_27,
+
+  importe_neto_total_1,
+  importe_neto_total_2,
+  importe_neto_total_3,
+  importe_iva_total_1,
+  importe_iva_total_2,
+  importe_iva_total_3,
+  importe_otros_impuestos_total_1,
+  importe_otros_impuestos_total_2,
+  importe_otros_impuestos_total_3,
+
   tasa_IIBB_CABA,
   tasa_IIBB,
   tasa_IVA,
   importe_tasa_IIBB_CABA,
   importe_tasa_IIBB,
   importe_tasa_IVA,
-  importe_otros_impuestos,
 }) {
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
@@ -368,6 +523,11 @@ async function registrarCostoIngresoIndividual({
   let cuenta_secundaria_forma_cobro;
   let cuenta_concepto;
   let cuenta_secundaria_concepto;
+  let cuenta_concepto_2;
+  let cuenta_secundaria_concepto_2;
+  let cuenta_concepto_3;
+  let cuenta_secundaria_concepto_3;
+
   let nro_recibo;
   let FA_FC;
   let comprobante;
@@ -399,6 +559,60 @@ async function registrarCostoIngresoIndividual({
       }`
     );
   }
+
+  //obtengo cuentas_concepto 2 y 3 si hay
+  if (id_concepto_2) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT cuenta_contable, cuenta_secundaria
+      FROM conceptos_costos WHERE id = :id_concepto_2`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { id_concepto_2 },
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró el concepto especificado");
+      cuenta_concepto_2 = result[0]["cuenta_contable"];
+      cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
+    } catch (error) {
+      console.log(error);
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
+      throw new Error(
+        `Error al buscar una cuenta contable ${
+          error.message ? `${" :"}${error.message}` : ""
+        }`
+      );
+    }
+  }
+
+  if (id_concepto_3) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT cuenta_contable, cuenta_secundaria
+      FROM conceptos_costos WHERE id = :id_concepto_3`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { id_concepto_3 },
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró el concepto especificado");
+      cuenta_concepto_3 = result[0]["cuenta_contable"];
+      cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
+    } catch (error) {
+      console.log(error);
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
+      throw new Error(
+        `Error al buscar una cuenta contable ${
+          error.message ? `${" :"}${error.message}` : ""
+        }`
+      );
+    }
+  }
+
   //obtengo cuentas contables de la forma de cobro/pago (si es egreso y cta cte proveedores, las cuentas son PROV Y PRO2)
   if (ingreso_egreso === "E" && cta_cte_proveedores === 1) {
     try {
@@ -468,9 +682,16 @@ async function registrarCostoIngresoIndividual({
       cuenta_secundaria_concepto,
       cuenta_forma_cobro,
       cuenta_secundaria_forma_cobro,
-      importe_neto,
-      importe_iva,
-      importe_total,
+      toNumber(importe_neto_total_1),
+      toNumber(importe_neto_total_2),
+      toNumber(importe_neto_total_3),
+      toNumber(importe_iva_total_1),
+      toNumber(importe_iva_total_2),
+      toNumber(importe_iva_total_3),
+      cuenta_concepto_2,
+      cuenta_secundaria_concepto_2,
+      cuenta_concepto_3,
+      cuenta_secundaria_concepto_3,
       observacion,
       nro_comprobante,
       ingreso_egreso,
@@ -487,12 +708,7 @@ async function registrarCostoIngresoIndividual({
   //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
   //(solo asiento primario)
   const factor = ingreso_egreso === "E" ? -1 : 1;
-  const importeNetoFinal = importe_neto * factor;
-  const importeIvaFinal = importe_iva ? importe_iva * factor : 0;
-  const importeTotalFinal = importe_total * factor;
-  const importeOtrosImpuestosFinal = importe_otros_impuestos
-    ? importe_otros_impuestos * factor
-    : 0;
+
   if (ingreso_egreso === "I") {
     //recibo
     if (genera_recibo === 1) {
@@ -544,25 +760,67 @@ async function registrarCostoIngresoIndividual({
       numero_comprobante_2,
       importe_total,
       cuenta_concepto,
+      cuenta_concepto_2,
+      cuenta_concepto_3,
       NroAsiento,
       NroAsientoSecundario,
       usuario,
       transaction_asientos,
-      neto_no_gravado,
-      neto_21,
-      neto_10,
-      neto_27,
-      importe_iva_21,
-      importe_iva_10,
-      importe_iva_27,
+      neto_no_gravado: toNumber(neto_no_gravado),
+      neto_21: toNumber(neto_21),
+      neto_10: toNumber(neto_10),
+      neto_27: toNumber(neto_27),
+      neto_no_gravado_2: toNumber(neto_no_gravado_2),
+      neto_21_2: toNumber(neto_21_2),
+      neto_10_2: toNumber(neto_10_2),
+      neto_27_2: toNumber(neto_27_2),
+      neto_no_gravado_3: toNumber(neto_no_gravado_3),
+      neto_21_3: toNumber(neto_21_3),
+      neto_10_3: toNumber(neto_10_3),
+      neto_27_3: toNumber(neto_27_3),
+      importe_iva_21: toNumber(importe_iva_21),
+      importe_iva_10: toNumber(importe_iva_10),
+      importe_iva_27: toNumber(importe_iva_27),
       tasa_IIBB_CABA,
       tasa_IIBB,
       tasa_IVA,
-      importe_tasa_IIBB_CABA,
-      importe_tasa_IIBB,
-      importe_tasa_IVA,
+      importe_tasa_IIBB_CABA: toNumber(importe_tasa_IIBB_CABA),
+      importe_tasa_IIBB: toNumber(importe_tasa_IIBB),
+      importe_tasa_IVA: toNumber(importe_tasa_IVA),
     });
   }
+  const importeNetoFinal_1 = toNumber(importe_neto_total_1) * factor;
+  const importeIvaFinal_1 = importe_iva_total_1
+    ? toNumber(importe_iva_total_1) * factor
+    : 0;
+  const importeOtrosImpuestosFinal_1 = importe_otros_impuestos_total_1
+    ? toNumber(importe_otros_impuestos_total_1) * factor
+    : 0;
+  const suma_importes_1 =
+    importeNetoFinal_1 + importeIvaFinal_1 + importeOtrosImpuestosFinal_1;
+  const importeTotalFinal_1 = suma_importes_1 * factor;
+
+  const importeNetoFinal_2 = toNumber(importe_neto_total_2) * factor;
+  const importeIvaFinal_2 = importe_iva_total_2
+    ? toNumber(importe_iva_total_2) * factor
+    : 0;
+  const importeOtrosImpuestosFinal_2 = importe_otros_impuestos_total_2
+    ? toNumber(importe_otros_impuestos_total_2) * factor
+    : 0;
+  const suma_importes_2 =
+    importeNetoFinal_2 + importeIvaFinal_2 + importeOtrosImpuestosFinal_2;
+  const importeTotalFinal_2 = suma_importes_2 * factor;
+
+  const importeNetoFinal_3 = toNumber(importe_neto_total_3) * factor;
+  const importeIvaFinal_3 = importe_iva_total_3
+    ? toNumber(importe_iva_total_3) * factor
+    : 0;
+  const importeOtrosImpuestosFinal_3 = importe_otros_impuestos_total_3
+    ? toNumber(importe_otros_impuestos_total_3) * factor
+    : 0;
+  const suma_importes_3 =
+    importeNetoFinal_3 + importeIvaFinal_3 + importeOtrosImpuestosFinal_3;
+  const importeTotalFinal_3 = suma_importes_3 * factor;
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
@@ -575,10 +833,10 @@ async function registrarCostoIngresoIndividual({
           fecha,
           id_concepto,
           comprobante ? comprobante : null,
-          importeNetoFinal,
-          importeIvaFinal,
-          importeOtrosImpuestosFinal,
-          importeTotalFinal,
+          importeNetoFinal_1,
+          importeIvaFinal_1,
+          importeOtrosImpuestosFinal_1,
+          importeTotalFinal_1,
           observacion,
           NroAsiento,
           id_forma_cobro ? id_forma_cobro : null,
@@ -588,6 +846,58 @@ async function registrarCostoIngresoIndividual({
         transaction: transaction_costos_ingresos,
       }
     );
+    if (id_concepto_2) {
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+        (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            fecha,
+            id_concepto_2,
+            comprobante ? comprobante : null,
+            importeNetoFinal_2,
+            importeIvaFinal_2,
+            importeOtrosImpuestosFinal_2,
+            importeTotalFinal_2,
+            observacion,
+            NroAsiento,
+            id_forma_cobro ? id_forma_cobro : null,
+            id_cliente ? id_cliente : null,
+            nro_recibo ? nro_recibo : null,
+          ],
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
+    if (id_concepto_3) {
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+        (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            fecha,
+            id_concepto_3,
+            comprobante ? comprobante : null,
+            importeNetoFinal_3,
+            importeIvaFinal_3,
+            importeOtrosImpuestosFinal_3,
+            importeTotalFinal_3,
+            observacion,
+            NroAsiento,
+            id_forma_cobro ? id_forma_cobro : null,
+            id_cliente ? id_cliente : null,
+            nro_recibo ? nro_recibo : null,
+          ],
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
     await transaction_costos_ingresos.commit();
     await transaction_asientos.commit();
     return {

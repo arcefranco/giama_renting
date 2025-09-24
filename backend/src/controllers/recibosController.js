@@ -135,7 +135,7 @@ export const getReciboById = async (req, res) => {
             <p><b>Teléfono: </b> +54 3534246184</p>
             </div>
             <div>
-            <p><b>Email: </b>info.giamarenting@gmail.com</p>
+            <p><b>Email: </b></p>
             </div>
           </div>
           <div>
