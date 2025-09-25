@@ -210,10 +210,19 @@ const asientos_costos_ingresos = async (
   importe_iva_total_1,
   importe_iva_total_2,
   importe_iva_total_3,
+  importe_tasa_IIBB_CABA,
+  importe_tasa_IIBB,
+  importe_tasa_IVA,
   cuenta_concepto_2,
   cuenta_secundaria_concepto_2,
   cuenta_concepto_3,
   cuenta_secundaria_concepto_3,
+  cuenta_percepcion_IIBB,
+  cuenta_secundaria_percepcion_IIBB,
+  cuenta_percepcion_IIBB_CABA,
+  cuenta_secundaria_percepcion_IIBB_CABA,
+  cuenta_percepcion_IVA,
+  cuenta_secundaria_percepcion_IVA,
   observacion,
   comprobante,
   ingreso_egreso,
@@ -230,7 +239,10 @@ const asientos_costos_ingresos = async (
     importe_neto_total_3 +
     importe_iva_total_1 +
     importe_iva_total_2 +
-    importe_iva_total_3;
+    importe_iva_total_3 +
+    importe_tasa_IIBB +
+    importe_tasa_IIBB_CABA +
+    importe_tasa_IVA;
 
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
@@ -247,6 +259,19 @@ const asientos_costos_ingresos = async (
     }
   } catch (error) {
     throw error;
+  }
+
+  if (
+    (importe_neto_total_1 && !cuenta_concepto) ||
+    (!importe_neto_total_1 && cuenta_concepto) ||
+    (importe_neto_total_2 && !cuenta_concepto_2) ||
+    (!importe_neto_total_2 && cuenta_concepto_2) ||
+    (importe_neto_total_3 && !cuenta_concepto_3) ||
+    (!importe_neto_total_3 && cuenta_concepto_3)
+  ) {
+    throw new Error(
+      "No puede asignar un importe sin un concepto ni un concepto sin un importe"
+    );
   }
 
   try {
@@ -338,6 +363,54 @@ const asientos_costos_ingresos = async (
         NroAsientoSecundario,
         TipoComprobante
       );
+    }
+    /**asientos de percepcion*/
+    if (ingreso_egreso === "E") {
+      if (importe_tasa_IIBB) {
+        await asientoContable(
+          "c_movimientos",
+          NroAsiento,
+          cuenta_percepcion_IIBB,
+          "D",
+          importe_tasa_IIBB,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          NroAsientoSecundario,
+          TipoComprobante
+        );
+      }
+      if (importe_tasa_IIBB_CABA) {
+        await asientoContable(
+          "c_movimientos",
+          NroAsiento,
+          cuenta_percepcion_IIBB_CABA,
+          "D",
+          importe_tasa_IIBB_CABA,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          NroAsientoSecundario,
+          TipoComprobante
+        );
+      }
+      if (importe_tasa_IVA) {
+        await asientoContable(
+          "c_movimientos",
+          NroAsiento,
+          cuenta_percepcion_IVA,
+          "D",
+          importe_tasa_IVA,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          NroAsientoSecundario,
+          TipoComprobante
+        );
+      }
     }
     await asientoContable(
       "c_movimientos",
@@ -441,6 +514,54 @@ const asientos_costos_ingresos = async (
           TipoComprobante
         );
       }
+      /**asientos de percepcion*/
+      if (ingreso_egreso === "E") {
+        if (importe_tasa_IIBB) {
+          await asientoContable(
+            "c2_movimientos",
+            NroAsientoSecundario,
+            cuenta_secundaria_percepcion_IIBB,
+            "D",
+            importe_tasa_IIBB,
+            observacion,
+            transaction,
+            comprobante,
+            Fecha,
+            null,
+            TipoComprobante
+          );
+        }
+        if (importe_tasa_IIBB_CABA) {
+          await asientoContable(
+            "c2_movimientos",
+            NroAsientoSecundario,
+            cuenta_secundaria_percepcion_IIBB_CABA,
+            "D",
+            importe_tasa_IIBB_CABA,
+            observacion,
+            transaction,
+            comprobante,
+            Fecha,
+            null,
+            TipoComprobante
+          );
+        }
+        if (importe_tasa_IVA) {
+          await asientoContable(
+            "c2_movimientos",
+            NroAsientoSecundario,
+            cuenta_secundaria_percepcion_IVA,
+            "D",
+            importe_tasa_IVA,
+            observacion,
+            transaction,
+            comprobante,
+            Fecha,
+            null,
+            TipoComprobante
+          );
+        }
+      }
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
@@ -532,6 +653,12 @@ async function registrarCostoIngresoIndividual({
   let FA_FC;
   let comprobante;
   let nro_comprobante;
+  let cuenta_percepcion_IIBB;
+  let cuenta_secundaria_percepcion_IIBB;
+  let cuenta_percepcion_IIBB_CABA;
+  let cuenta_secundaria_percepcion_IIBB_CABA;
+  let cuenta_percepcion_IVA;
+  let cuenta_secundaria_percepcion_IVA;
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
@@ -613,7 +740,37 @@ async function registrarCostoIngresoIndividual({
     }
   }
 
+  //obtengo cuentas percepcion IIBB, IIBB CABA e IVA si hay importe
+  if (ingreso_egreso === "E") {
+    try {
+      const result = await giama_renting.query(
+        `SELECT valor_str
+        FROM parametros
+        WHERE codigo IN ('PIBB', 'PIB2', 'PIBC', 'PIC2', 'PIVA', 'PIV2');`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      if (!result.length)
+        throw new Error(
+          "No se encontraron los codigos de parametros de percepcion"
+        );
+      cuenta_percepcion_IIBB = result[0]["valor_str"];
+      cuenta_secundaria_percepcion_IIBB = result[1]["valor_str"];
+      cuenta_percepcion_IIBB_CABA = result[2]["valor_str"];
+      cuenta_secundaria_percepcion_IIBB_CABA = result[3]["valor_str"];
+      cuenta_percepcion_IVA = result[4]["valor_str"];
+      cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
+    } catch (error) {
+      throw new Error(
+        `Error al buscar parametros de percepcion ${
+          error.message ? `: ${error.message}` : ""
+        }`
+      );
+    }
+  }
   //obtengo cuentas contables de la forma de cobro/pago (si es egreso y cta cte proveedores, las cuentas son PROV Y PRO2)
+
   if (ingreso_egreso === "E" && cta_cte_proveedores === 1) {
     try {
       const result = await giama_renting.query(
@@ -688,10 +845,19 @@ async function registrarCostoIngresoIndividual({
       toNumber(importe_iva_total_1),
       toNumber(importe_iva_total_2),
       toNumber(importe_iva_total_3),
+      toNumber(importe_tasa_IIBB_CABA),
+      toNumber(importe_tasa_IIBB),
+      toNumber(importe_tasa_IVA),
       cuenta_concepto_2,
       cuenta_secundaria_concepto_2,
       cuenta_concepto_3,
       cuenta_secundaria_concepto_3,
+      cuenta_percepcion_IIBB,
+      cuenta_secundaria_percepcion_IIBB,
+      cuenta_percepcion_IIBB_CABA,
+      cuenta_secundaria_percepcion_IIBB_CABA,
+      cuenta_percepcion_IVA,
+      cuenta_secundaria_percepcion_IVA,
       observacion,
       nro_comprobante,
       ingreso_egreso,
@@ -798,7 +964,7 @@ async function registrarCostoIngresoIndividual({
     : 0;
   const suma_importes_1 =
     importeNetoFinal_1 + importeIvaFinal_1 + importeOtrosImpuestosFinal_1;
-  const importeTotalFinal_1 = suma_importes_1 * factor;
+  const importeTotalFinal_1 = suma_importes_1;
 
   const importeNetoFinal_2 = toNumber(importe_neto_total_2) * factor;
   const importeIvaFinal_2 = importe_iva_total_2
@@ -809,7 +975,7 @@ async function registrarCostoIngresoIndividual({
     : 0;
   const suma_importes_2 =
     importeNetoFinal_2 + importeIvaFinal_2 + importeOtrosImpuestosFinal_2;
-  const importeTotalFinal_2 = suma_importes_2 * factor;
+  const importeTotalFinal_2 = suma_importes_2;
 
   const importeNetoFinal_3 = toNumber(importe_neto_total_3) * factor;
   const importeIvaFinal_3 = importe_iva_total_3
@@ -820,7 +986,7 @@ async function registrarCostoIngresoIndividual({
     : 0;
   const suma_importes_3 =
     importeNetoFinal_3 + importeIvaFinal_3 + importeOtrosImpuestosFinal_3;
-  const importeTotalFinal_3 = suma_importes_3 * factor;
+  const importeTotalFinal_3 = suma_importes_3;
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
