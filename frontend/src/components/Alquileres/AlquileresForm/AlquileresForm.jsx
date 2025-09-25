@@ -25,7 +25,7 @@ import {getReciboAlquilerById, resetAlquiler} from "../../../reducers/Recibos/re
 import Swal from 'sweetalert2';
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
-  minDateContrato, maxDateContrato }) => {
+  minDateContrato, maxDateContrato, vehiculo, cliente }) => {
 const dispatch = useDispatch()
 const {idContrato} = useParams()
 useEffect(() => {
@@ -72,6 +72,7 @@ const [fechaDesdePorDefecto, setFechaDesdePorDefecto] = useState(null)
 const [fechaHastaPorDefecto, setFechaHastaPorDefecto] = useState(null) 
 const [minDate, setMinDate] = useState(null)
 const [maxDate, setMaxDate] = useState(null)
+const [sendBtnDisabled, setSendBtnDisabled] = useState(true)
 const [form, setForm] = useState({
     id_contrato: idContrato ? idContrato : "",
     ingresa_alquiler: 1,
@@ -206,7 +207,30 @@ useEffect(() => {
       dispatch(resetAlquiler())
     });
   }
-}, [html_recibo_alquiler])
+}, [html_recibo_alquiler]);
+
+useEffect(() => {
+if(form.ingresa_alquiler == 1 && !modoContrato && (!form.id_vehiculo || !form.id_cliente || !form.fecha_desde_alquiler || !form.fecha_hasta_alquiler ||
+  !form.importe_neto || !form.importe_iva || !form.importe_total || !form.id_forma_cobro_alquiler)){
+    setSendBtnDisabled(true)
+}
+else if(form.ingresa_alquiler == 0 && (!vehiculo || !cliente)){
+    console.log(form.ingresa_alquiler, vehiculo, cliente)
+  setSendBtnDisabled(true)
+}
+else if(form.ingresa_alquiler == 1 && (!vehiculo || !cliente || !form.fecha_desde_alquiler
+  || !form.fecha_hasta_alquiler || !form.importe_neto || !form.importe_iva || !form.importe_total || !form.id_forma_cobro_alquiler
+)){
+    setSendBtnDisabled(true)
+}
+else{
+  setSendBtnDisabled(false)
+}
+
+}, 
+[form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler, form.fecha_hasta_alquiler,
+form.importe_neto, form.importe_iva, form.importe_total, form.id_forma_cobro_alquiler
+])
 
 const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
   alquileres?.map(a => ({
@@ -303,7 +327,7 @@ const handleSubmit = async (e) => {
                 }
                 {
                   modoContrato && 
-                  <div>
+                <div>
                 <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
                 <input
                   type="checkbox"
@@ -313,6 +337,11 @@ const handleSubmit = async (e) => {
                     setForm({
                       ...form,
                       ingresa_alquiler: e.target.checked ? 0 : 1,
+                      importe_neto: "",
+                      importe_iva: "",
+                      importe_total: "",
+                      fecha_desde_alquiler: fechaDesdePorDefecto,
+                      fecha_hasta_alquiler: fechaHastaPorDefecto
                     })
                   }
                   />
@@ -427,27 +456,11 @@ const handleSubmit = async (e) => {
 
                 </div>
                 </form>
-                {
-                modoContrato ?
                 <button 
                 className={styles.sendBtn} onClick={handleSubmit} 
-                disabled={
-                    !form["fecha_desde_alquiler"] || !form["fecha_hasta_alquiler"] ||
-                    !form["importe_neto"] || !form["importe_iva"] ||
-                    !form["importe_total"] || !form["id_forma_cobro_alquiler"]}>
+                disabled={sendBtnDisabled}>
                   Enviar
                 </button>
-                :
-                <button 
-                className={styles.sendBtn} onClick={handleSubmit} 
-                disabled={!form["id_vehiculo"] || !form["id_cliente"] ||
-                    !form["fecha_desde_alquiler"] || !form["fecha_hasta_alquiler"] ||
-                    !form["importe_neto"] || !form["importe_iva"] ||
-                    !form["importe_total"] || !form["id_forma_cobro_alquiler"]}>
-                  Enviar
-                </button>
-
-                }
         </div>
   )
 }
