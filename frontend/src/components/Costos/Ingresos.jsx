@@ -18,6 +18,7 @@ import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { getReciboIngresoById, resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
 import Swal from 'sweetalert2';
+import { toNumber } from '../../../../backend/helpers/toNumber.js';
 
 const Ingresos = () => {  
 
@@ -34,27 +35,41 @@ const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
 const [form, setForm] = useState({
     id_vehiculo: id ? id : "",
     fecha: '',
-    id_concepto: '',
     id_forma_cobro: '',
     id_cliente: '',
+    ingreso_egreso: 'I',
+    observacion: '',
+    cuenta: '',
+    cuenta_secundaria: '',
+    cuenta_2: '',
+    cuenta_secundaria_2: '',
+    cuenta_3: '',
+    cuenta_secundaria_3: '',
+    usuario: username,
+    id_concepto: '',
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
-    observacion: '',
-    cuenta: '',
-    ingreso_egreso: 'I',
-    cuenta_secundaria: '',
-    tipo_comprobante: '',
-    numero_comprobante_1: '',
-    numero_comprobante_2: '',
-    cod_proveedor: '',
-    usuario: username,
+    id_concepto_2: '',
+    importe_neto_2: '',
+    importe_iva_2: '',
+    importe_total_2: '',
+    id_concepto_3: '',
+    importe_neto_3: '',
+    importe_iva_3: '',
+    importe_total_3: '',
 })
 const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
 const [conceptosFiltrados, setConceptosFiltrados] = useState([])
 const [generaRecibo, setGeneraRecibo] = useState(false)
 const [generaFactura, setGeneraFactura] = useState(false)
+const [generaRecibo2, setGeneraRecibo2] = useState(false)
+const [generaFactura2, setGeneraFactura2] = useState(false)
+const [generaRecibo3, setGeneraRecibo3] = useState(false)
+const [generaFactura3, setGeneraFactura3] = useState(false)
 const [IVAInhabilitado, setIVAInhabilitado] = useState(false)
+const [IVAInhabilitado2, setIVAInhabilitado2] = useState(false)
+const [IVAInhabilitado3, setIVAInhabilitado3] = useState(false)
 const [ingresosFiltrados, setIngresosFiltrados] = useState([])
 useEffect(() => {
   if (gridRef.current && costos_ingresos_vehiculo?.length > 0) {
@@ -150,7 +165,80 @@ if(form.id_concepto){
     setGeneraFactura(false)
   }
 }
+
 }, [form.id_concepto])
+useEffect(() => {
+if(form.id_concepto_2){
+  let concepto = conceptos.find(e => e.id == form.id_concepto_2)
+  if(concepto.genera_recibo == 1){
+    setGeneraRecibo2(true)
+  }else{
+    setGeneraRecibo2(false)
+  }
+
+  if(concepto.genera_factura == 1){
+    setGeneraFactura2(true)
+  }else{
+    setGeneraFactura2(false)
+  }
+} 
+}, [form.id_concepto_2])
+useEffect(() => {
+if(form.id_concepto_3){
+  let concepto = conceptos.find(e => e.id == form.id_concepto_3)
+  if(concepto.genera_recibo == 1){
+    setGeneraRecibo3(true)
+  }else{
+    setGeneraRecibo3(false)
+  }
+
+  if(concepto.genera_factura == 1){
+    setGeneraFactura3(true)
+  }else{
+    setGeneraFactura3(false)
+  }
+} 
+}, [form.id_concepto_3])
+
+useEffect(() => { /**HABILITACION DE INPUT IVA */
+if(!generaFactura){
+  setIVAInhabilitado(true)
+  setForm({
+    ...form,
+    importe_total: form.importe_total - form.importe_iva,
+    importe_iva: ""
+  })
+}
+else if(generaFactura){
+  setIVAInhabilitado(false)
+}
+}, [generaFactura])
+useEffect(() => {
+if(!generaFactura2){
+  setIVAInhabilitado2(true)
+  setForm({
+    ...form,
+    importe_total_2: form.importe_total_2 - form.importe_iva_2,
+    importe_iva_2: ""
+  })
+}
+else {
+  setIVAInhabilitado2(false)
+}
+}, [generaFactura2])
+useEffect(() => {
+if(!generaFactura3){
+  setIVAInhabilitado3(true)
+  setForm({
+    ...form,
+    importe_total_3: form.importe_total_3 - form.importe_iva_3,
+    importe_iva_3: ""
+  })
+}
+else if(generaFactura3){
+  setIVAInhabilitado3(false)
+}
+}, [generaFactura3])
 
 useEffect(() => { /**OBTENGO RECIBO PARA IMPRIMIR */
   if (nro_recibo_ingreso) {
@@ -188,29 +276,37 @@ useEffect(() => { /**SWAL PARA IMPRIMIR RECIBO */
   }
 }, [html_recibo_ingreso])
 
-useEffect(() => { /**HABILITACION DE INPUT IVA */
-if(!generaFactura){
-  setIVAInhabilitado(true)
-  setForm({
-    ...form,
-    importe_total: form.importe_total - form.importe_iva,
-    importe_iva: 0
-  })
-}
-else{
-  setIVAInhabilitado(false)
-}
-}, [generaFactura])
 
 useEffect(() => {
 if(!form.importe_iva){
   setForm({
     ...form,
-    importe_iva: 0,
+    importe_iva: "",
     importe_neto: form.importe_total
   })
 }
+
 }, [form.importe_iva])
+
+useEffect(() => {
+if(!form.importe_iva_2){
+  setForm({
+    ...form,
+    importe_iva_2: "",
+    importe_neto_2: form.importe_total_2
+  })
+}
+}, [form.importe_iva_2])
+
+useEffect(() => {
+if(!form.importe_iva_3){
+  setForm({
+    ...form,
+    importe_iva_3: "",
+    importe_neto_3: form.importe_total_3
+  })
+}
+}, [form.importe_iva_3])
 
 useToastFeedback({
     isError,
@@ -222,45 +318,65 @@ useToastFeedback({
           setForm({
           id_vehiculo: id,
           fecha: '',
+          usuario: username,
+          observacion: '',
+          cuenta: '',
+          cuenta_secundaria: '',
+          cuenta_2: '',
+          cuenta_secundaria_2: '',
+          cuenta_3: '',
+          cuenta_secundaria_3: '',
+          ingreso_egreso: 'I',
           id_cliente: '',
           id_forma_cobro: '',
           id_concepto: '',
           importe_neto: '',
           importe_iva: '',
           importe_total: '',
-          observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          ingreso_egreso: 'I',
-          cod_proveedor: '',
-          tipo_comprobante: '',
-          numero_comprobante_1: '',
-          numero_comprobante_2: '',
-          usuario: username
+          id_concepto_2: '',
+          importe_neto_2: '',
+          importe_iva_2: '',
+          importe_total_2: '',
+          id_concepto_3: '',
+          importe_neto_3: '',
+          importe_iva_3: '',
+          importe_total_3: ''
           })
         }else if (!id){
           setForm({
           id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
+          fecha: '',
+          usuario: username,
+          observacion: '',
+          cuenta: '',
+          cuenta_secundaria: '',
+          cuenta_2: '',
+          cuenta_secundaria_2: '',
+          cuenta_3: '',
+          cuenta_secundaria_3: '',
+          ingreso_egreso: 'I',
           id_cliente: '',
           id_forma_cobro: '',
-          fecha: '',
           id_concepto: '',
           importe_neto: '',
           importe_iva: '',
           importe_total: '',
-          observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          ingreso_egreso: 'I',
-          cod_proveedor: '',
-          tipo_comprobante: '',
-          numero_comprobante_1: '',
-          numero_comprobante_2: '',
-          usuario: username
+          id_concepto_2: '',
+          importe_neto_2: '',
+          importe_iva_2: '',
+          importe_total_2: '',
+          id_concepto_3: '',
+          importe_neto_3: '',
+          importe_iva_3: '',
+          importe_total_3: ''
           })
         }
         setGeneraFactura(false)
         setGeneraRecibo(false)
+        setGeneraFactura2(false)
+        setGeneraRecibo2(false)
+        setGeneraFactura3(false)
+        setGeneraRecibo3(false)
     }
 });
 
@@ -279,18 +395,53 @@ const handleChange = (e) => {
       ...form,
       importe_total: value,
       importe_neto: value,
-      importe_iva: 0
+      importe_iva: ""
     })
     }else{
     setForm({
       ...form,
       importe_total: value,
-      importe_neto: parseFloat(parseInt(value) / 1.21).toFixed(2),
-      importe_iva: parseFloat(parseInt(value) - parseFloat(value / 1.21)).toFixed(2)
+      importe_neto: parseFloat(toNumber(value) / 1.21).toFixed(2),
+      importe_iva: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
     })
     }
-
   }
+  //copias de comportamiento a importes 2 y 3
+  else if(value && name === "importe_total_2"){
+    if(IVAInhabilitado2){
+      setForm({
+      ...form,
+      importe_total_2: value,
+      importe_neto_2: value,
+      importe_iva_2: ""
+    })
+    }else{
+    setForm({
+      ...form,
+      importe_total_2: value,
+      importe_neto_2: parseFloat(toNumber(value) / 1.21).toFixed(2),
+      importe_iva_2: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
+    })
+    }
+  }
+  else if(value && name === "importe_total_3"){
+    if(IVAInhabilitado3){
+      setForm({
+      ...form,
+      importe_total_3: value,
+      importe_neto_3: value,
+      importe_iva_3: ""
+    })
+    }else{
+    setForm({
+      ...form,
+      importe_total_3: value,
+      importe_neto_3: parseFloat(toNumber(value) / 1.21).toFixed(2),
+      importe_iva_3: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
+    })
+    }
+  }
+  ////////////////////////////////////////
   else if(value && name === "importe_iva"){
     setForm({
     ...form,
@@ -298,19 +449,58 @@ const handleChange = (e) => {
     "importe_total": parseFloat(parseFloat(value) + parseFloat(form["importe_neto"])).toFixed(2)
   }); 
   }
+  //copias de comportamiento de importes iva 2 y 3
+  else if(value && name === "importe_iva_2"){
+    setForm({
+    ...form,
+    [name]: value,
+    "importe_total_2": parseFloat(parseFloat(value) + parseFloat(form["importe_neto_2"])).toFixed(2)
+  }); 
+  }
+  else if(value && name === "importe_iva_3"){
+    setForm({
+    ...form,
+    [name]: value,
+    "importe_total_3": parseFloat(parseFloat(value) + parseFloat(form["importe_neto_3"])).toFixed(2)
+  }); 
+  }
+  /////////////////////////////////////////
   else if(value && name === "id_concepto"){
       setForm({
      ...form,
      [name]: value,
-     "importe_total": 0,
-     "importe_iva": 0,
-     "importe_neto": 0,
+     "importe_total": "",
+     "importe_iva": "",
+     "importe_neto": "",
      "cuenta": conceptos?.find(e => e.id == value)?.cuenta_contable,
      "cuenta_secundaria": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
-     "ingreso_egreso": conceptos.find(e => e.id == value)?.ingreso_egreso,
-     "id_forma_cobro": ""
    }); 
   }
+  //copias de comportmiento conceptos 2 y 3
+  else if(value && name === "id_concepto_2"){
+      setForm({
+     ...form,
+     [name]: value,
+     "importe_total_2": "",
+     "importe_iva_2": "",
+     "importe_neto_2": "",
+     "cuenta_2": conceptos?.find(e => e.id == value)?.cuenta_contable,
+     "cuenta_secundaria_2": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
+   }); 
+  }
+  else if(value && name === "id_concepto_3"){
+      setForm({
+     ...form,
+     [name]: value,
+     "importe_total_3": "",
+     "importe_iva_3": "",
+     "importe_neto_3": "",
+     "cuenta_3": conceptos?.find(e => e.id == value)?.cuenta_contable,
+     "cuenta_secundaria_3": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
+   }); 
+  }
+  /////////////////////////////////////////
+  
   else if(value && name == "numero_comprobante_1"){
     let newValue;
     if (value.length > 5) newValue = value.slice(0, 5)
@@ -325,16 +515,6 @@ const handleChange = (e) => {
       setForm({
      ...form,
      [name]: newValue,
-   }); 
-  }
-  else if(value && name == "tipo_comprobante"){
-      setForm({
-     ...form,
-     [name]: value,
-     importe_neto: 0,
-     importe_iva: 0,
-     importe_total: 0
-     
    }); 
   }
   else{
@@ -373,7 +553,8 @@ const renderConcepto = (data) => {
 const customStyles = {
   container: (provided) => ({
     ...provided,
-    width: '22rem'
+    width: '18rem',
+    fontSize: "10px"
   })
 };
 return (
@@ -445,9 +626,9 @@ return (
         
         columnAutoWidth={true}>
         <Scrolling mode="standard"/>
-        <Column dataField="fecha" sortOrder="desc" cellRender={renderFecha} alignment="center" caption="Fecha"/>
-        <Column dataField="id_concepto" sortOrder="desc" cellRender={renderConcepto} alignment="center" caption="Concepto"/>
-        <Column dataField="comprobante" caption="Comprobante"/>
+        <Column dataField="fecha" sortOrder="desc" cellRender={renderFecha} alignment="center" width={100} caption="Fecha"/>
+        <Column dataField="id_concepto" sortOrder="desc" cellRender={renderConcepto} width={120} alignment="left" caption="Concepto"/>
+        <Column dataField="comprobante" caption="Comprobante" width={120}/>
         <Column dataField="importe_neto" alignment="right" caption="Importe Neto"/>
         <Column dataField="importe_iva" alignment="right" caption="IVA"/>
         <Column dataField="importe_total" alignment="right" caption="Total"/>
@@ -484,24 +665,13 @@ return (
       <h2>Alta de ingresos del vehículo</h2>
       <div className={styles.formContainer}>
       <form action="" enctype="multipart/form-data" className={styles.form}>
+      <div className={styles.container3}>
       <div className={styles.inputContainer}>
           <span>Fecha</span>
           <input type="date" name='fecha' value={form["fecha"]} 
         onChange={handleChange}/>
       </div>
-      <div className={styles.inputContainer}>
-        <span>Concepto</span>
-        <select name="id_concepto" style={{width: "130%"}}  value={form["id_concepto"]} 
-        onChange={handleChange} id="">
-          <option value={""} disabled selected>{"Seleccione un concepto"}</option>
-          {
-            conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
-            return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
-            })
-          }
-        </select>
-      </div>
-    <div className={styles.inputWrapper} >
+      <div className={styles.inputWrapper} >
       <span>Clientes</span>
       <div className={styles.selectWithIcon} style={{
         width: "20rem"
@@ -519,21 +689,6 @@ return (
       </div>
       </div>
       <div className={styles.inputContainer}>
-          <span>Total</span>
-          <input type="number" name='importe_total' value={form["importe_total"]} 
-          onChange={handleChange}/>
-      </div>
-      <div className={styles.inputContainer}>
-          <span>Importe neto</span>
-          <input type="number" name='importe_neto' value={form["importe_neto"]} disabled/>
-      </div>
-      <div className={styles.inputContainer}>
-          <span>IVA</span>
-          <input type="number" name='importe_iva' value={form["importe_iva"]} 
-          disabled={IVAInhabilitado}
-          onChange={handleChange}/>
-      </div>
-      <div className={styles.inputContainer}>
         <span>Forma de cobro</span>
         <select name="id_forma_cobro" value={form["id_forma_cobro"]} 
         onChange={handleChange} id="">
@@ -545,11 +700,37 @@ return (
           }
         </select>
       </div>
-      <div className={styles.inputContainer}>
-          <span>Observacion</span>
-          <textarea type="text" name='observacion' value={form["observacion"]} 
-        onChange={handleChange}/>
       </div>
+      <div className={styles.container6}>
+      <div className={styles.inputContainer}>
+        <span>Concepto</span>
+        <select name="id_concepto" style={{width: "130%"}}  value={form["id_concepto"]} 
+        onChange={handleChange} id="">
+          <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+          {
+            conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
+            return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
+            })
+          }
+        </select>
+      </div>
+
+      <div className={styles.inputContainer}>
+          <span>Total</span>
+          <input type="text" name='importe_total' value={form["importe_total"]} 
+          onChange={handleChange}/>
+      </div>
+      <div className={styles.inputContainer}>
+          <span>Importe neto</span>
+          <input type="text" name='importe_neto' value={form["importe_neto"]} disabled/>
+      </div>
+      <div className={styles.inputContainer}>
+          <span>IVA</span>
+          <input type="text" name='importe_iva' value={form["importe_iva"]} 
+          disabled={IVAInhabilitado}
+          onChange={handleChange}/>
+      </div>
+
       <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
       height: "3rem", alignItems: "center"}}>
       <label style={{fontSize: "15px"}}>Genera recibo</label>
@@ -567,6 +748,112 @@ return (
         checked={generaFactura}
         />
 
+      </div>
+      </div>
+      <div className={styles.container6}>
+      <div className={styles.inputContainer}>
+        <span>Concepto</span>
+        <select name="id_concepto_2" style={{width: "130%"}}  value={form["id_concepto_2"]} 
+        onChange={handleChange} id="">
+          <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+          {
+            conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
+            return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
+            })
+          }
+        </select>
+      </div>
+
+      <div className={styles.inputContainer}>
+          <span>Total</span>
+          <input type="text" name='importe_total_2' value={form["importe_total_2"]} 
+          onChange={handleChange}/>
+      </div>
+      <div className={styles.inputContainer}>
+          <span>Importe neto</span>
+          <input type="text" name='importe_neto_2' value={form["importe_neto_2"]} disabled/>
+      </div>
+      <div className={styles.inputContainer}>
+          <span>IVA</span>
+          <input type="text" name='importe_iva_2' value={form["importe_iva_2"]} 
+          disabled={IVAInhabilitado2}
+          onChange={handleChange}/>
+      </div>
+
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
+      height: "3rem", alignItems: "center"}}>
+      <label style={{fontSize: "15px"}}>Genera recibo</label>
+      <input
+        type="checkbox"
+        checked={generaRecibo2}
+        />
+
+      </div>
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
+      height: "3rem", alignItems: "center"}}>
+      <label style={{fontSize: "15px"}}>Genera factura</label>
+      <input
+        type="checkbox"
+        checked={generaFactura2}
+        />
+
+      </div>
+      </div>
+      <div className={styles.container6}>
+        <div className={styles.inputContainer}>
+        <span>Concepto</span>
+        <select name="id_concepto_3" style={{width: "130%"}}  value={form["id_concepto_3"]} 
+        onChange={handleChange} id="">
+          <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+          {
+            conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
+            return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
+            })
+          }
+        </select>
+      </div>
+
+      <div className={styles.inputContainer}>
+          <span>Total</span>
+          <input type="text" name='importe_total_3' value={form["importe_total_3"]} 
+          onChange={handleChange}/>
+      </div>
+      <div className={styles.inputContainer}>
+          <span>Importe neto</span>
+          <input type="text" name='importe_neto_3' value={form["importe_neto_3"]} disabled/>
+      </div>
+      <div className={styles.inputContainer}>
+          <span>IVA</span>
+          <input type="text" name='importe_iva_3' value={form["importe_iva_3"]} 
+          disabled={IVAInhabilitado}
+          onChange={handleChange}/>
+      </div>
+
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
+      height: "3rem", alignItems: "center"}}>
+      <label style={{fontSize: "15px"}}>Genera recibo</label>
+      <input
+        type="checkbox"
+        checked={generaRecibo3}
+        />
+
+      </div>
+      <div className={styles.inputContainer} style={{flexDirection: "row", width: "9rem", 
+      height: "3rem", alignItems: "center"}}>
+      <label style={{fontSize: "15px"}}>Genera factura</label>
+      <input
+        type="checkbox"
+        checked={generaFactura3}
+        />
+
+      </div>
+      </div>
+
+
+      <div className={styles.inputContainer}>
+          <span>Observacion</span>
+          <textarea type="text" name='observacion' value={form["observacion"]} 
+        onChange={handleChange}/>
       </div>
       </form>
       <button 

@@ -24,8 +24,9 @@ const Egresos = () => {
 const { id } = useParams();
 const gridRef = useRef(null);
 const dispatch = useDispatch()
-const {costos_ingresos_vehiculo, conceptos} = useSelector((state) => state.costosReducer)
+const {costos_ingresos_vehiculo, conceptos, isLoading: isLoadingCostos} = useSelector((state) => state.costosReducer)
 const {isError, isSuccess, isLoading, message} = useSelector((state) => state.egresosReducer)
+
 const {vehiculo, vehiculos} = useSelector((state) => state.vehiculosReducer)
 const {username} = useSelector((state) => state.loginReducer)
 const {modelos, proveedores, formasDeCobro} = useSelector((state) => state.generalesReducer)
@@ -97,9 +98,6 @@ const [totalNeto_1, setTotalNeto_1] = useState(0)
 const [totalNeto_2, setTotalNeto_2] = useState(0)
 const [totalNeto_3, setTotalNeto_3] = useState(0)
 
-const [totalIVA_1, setTotalIVA_1] = useState(0)
-const [totalIVA_2, setTotalIVA_2] = useState(0)
-const [totalIVA_3, setTotalIVA_3] = useState(0)
 
 
 const [egresosFiltrados, setEgresosFiltrados] = useState([])
@@ -252,6 +250,16 @@ useToastFeedback({
           neto_21: null,
           neto_10: null,
           neto_27: null,
+          id_concepto_2: '',
+          neto_no_gravado_2: null,
+          neto_21_2: null,
+          neto_10_2: null,
+          neto_27_2: null,
+          id_concepto_3: '',
+          neto_no_gravado_3: null,
+          neto_21_3: null,
+          neto_10_3: null,
+          neto_27_3: null,
           importe_iva_21: null,
           importe_iva_10: null,
           importe_iva_27: null,
@@ -653,7 +661,7 @@ const customStylesProveedores = {
 return (
 <div className={styles.container}>
 <ToastContainer/>
-{isLoading && (
+{(isLoading || isLoadingCostos) && (
   <div className={styles.spinnerOverlay}>
     <ClipLoader
       size={60}
@@ -718,11 +726,12 @@ return (
         
         columnAutoWidth={true}>
         <Scrolling mode="standard"/>
-        <Column dataField="fecha" sortOrder="desc" cellRender={renderFecha} alignment="center" caption="Fecha"/>
-        <Column dataField="id_concepto" sortOrder="desc" cellRender={renderConcepto} alignment="center" caption="Concepto"/>
-        <Column dataField="comprobante" caption="Comprobante"/>
+        <Column dataField="fecha" sortOrder="desc" cellRender={renderFecha} alignment="center" width={100} caption="Fecha"/>
+        <Column dataField="id_concepto" sortOrder="desc" cellRender={renderConcepto} alignment="left" width={120} caption="Concepto"/>
+        <Column dataField="comprobante" caption="Comprobante" width={120}/>
         <Column dataField="importe_neto" alignment="right" caption="Importe Neto"/>
         <Column dataField="importe_iva" alignment="right" caption="IVA"/>
+        <Column dataField="importe_otros_impuestos" alignment="right" caption="Otros impuestos"/>
         <Column dataField="importe_total" alignment="right" caption="Total"/>
         <Column dataField="observacion" caption="Observación"/>
          <Summary>
