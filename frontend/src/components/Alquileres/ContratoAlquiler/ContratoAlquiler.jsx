@@ -560,7 +560,7 @@ const clienteOptions = clientes.map(cliente => ({
     {
       !id && <AlquileresForm modoContrato={true} onSubmitFinal={handleFinalSubmit} 
       idVehiculoSeleccionado={formContrato.id_vehiculo} minDateContrato={formContrato.fecha_desde_contrato} 
-      maxDateContrato={formContrato.fecha_hasta_contrato}/>
+      maxDateContrato={formContrato.fecha_hasta_contrato} vehiculo={formContrato.id_vehiculo} cliente={formContrato.id_cliente}/>
     }
     
 
