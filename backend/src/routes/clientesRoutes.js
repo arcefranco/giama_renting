@@ -46,7 +46,7 @@ clientesRouter.post("/getDateroByIdCliente", auth, getDateroByIdCliente);
 clientesRouter.post("/getEstadoCliente", auth, getEstadoCliente);
 clientesRouter.post("/getImagenesclientes", auth, getImagenesClientes);
 clientesRouter.post("/eliminarImagenes", auth, eliminarImagenes);
-clientesRouter.post("/updateCliente", auth, updateCliente);
+clientesRouter.post("/updateCliente", auth, authorizeRoles("3"), updateCliente);
 /* clientesRouter.post(
   "/postClientesMasivo",
   upload.single("file"),
