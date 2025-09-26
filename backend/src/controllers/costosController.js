@@ -636,8 +636,6 @@ async function registrarCostoIngresoIndividual({
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
   let ingreso_egreso;
-  let genera_recibo;
-  let genera_factura;
   let NroAsiento;
   let NroAsientoSecundario;
   let cuenta_forma_cobro;
@@ -662,7 +660,7 @@ async function registrarCostoIngresoIndividual({
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
-      `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
+      `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria,
       FROM conceptos_costos WHERE id = :id_concepto`,
       {
         type: QueryTypes.SELECT,
@@ -674,8 +672,6 @@ async function registrarCostoIngresoIndividual({
     ingreso_egreso = result[0]["ingreso_egreso"];
     cuenta_concepto = result[0]["cuenta_contable"];
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
-    genera_recibo = result[0]["genera_recibo"];
-    genera_factura = result[0]["genera_factura"];
   } catch (error) {
     console.log(error);
     await transaction_asientos.rollback();
@@ -741,37 +737,37 @@ async function registrarCostoIngresoIndividual({
   }
 
   //obtengo cuentas percepcion IIBB, IIBB CABA e IVA si hay importe
-  if (ingreso_egreso === "E") {
-    try {
-      const result = await giama_renting.query(
-        `SELECT valor_str
+
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str
         FROM parametros
         WHERE codigo IN ('PIBB', 'PIB2', 'PIBC', 'PIC2', 'PIVA', 'PIV2');`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      if (!result.length)
-        throw new Error(
-          "No se encontraron los codigos de parametros de percepcion"
-        );
-      cuenta_percepcion_IIBB = result[0]["valor_str"];
-      cuenta_secundaria_percepcion_IIBB = result[1]["valor_str"];
-      cuenta_percepcion_IIBB_CABA = result[2]["valor_str"];
-      cuenta_secundaria_percepcion_IIBB_CABA = result[3]["valor_str"];
-      cuenta_percepcion_IVA = result[4]["valor_str"];
-      cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
-    } catch (error) {
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    if (!result.length)
       throw new Error(
-        `Error al buscar parametros de percepcion ${
-          error.message ? `: ${error.message}` : ""
-        }`
+        "No se encontraron los codigos de parametros de percepcion"
       );
-    }
+    cuenta_percepcion_IIBB = result[0]["valor_str"];
+    cuenta_secundaria_percepcion_IIBB = result[1]["valor_str"];
+    cuenta_percepcion_IIBB_CABA = result[2]["valor_str"];
+    cuenta_secundaria_percepcion_IIBB_CABA = result[3]["valor_str"];
+    cuenta_percepcion_IVA = result[4]["valor_str"];
+    cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
+  } catch (error) {
+    throw new Error(
+      `Error al buscar parametros de percepcion ${
+        error.message ? `: ${error.message}` : ""
+      }`
+    );
   }
+
   //obtengo cuentas contables de la forma de cobro/pago (si es egreso y cta cte proveedores, las cuentas son PROV Y PRO2)
 
-  if (ingreso_egreso === "E" && cta_cte_proveedores === 1) {
+  if (cta_cte_proveedores === 1) {
     try {
       const result = await giama_renting.query(
         `SELECT codigo, valor_str FROM parametros WHERE codigo = "PROV" OR codigo = "PRO2"`,
@@ -875,49 +871,6 @@ async function registrarCostoIngresoIndividual({
   //(solo asiento primario)
   const factor = ingreso_egreso === "E" ? -1 : 1;
 
-  if (ingreso_egreso === "I") {
-    //recibo
-    if (genera_recibo === 1) {
-      try {
-        //inserto recibo
-        nro_recibo = await insertRecibo(
-          getTodayDate(),
-          observacion,
-          importe_total,
-          usuario,
-          id_cliente,
-          id_vehiculo,
-          null,
-          null,
-          id_forma_cobro,
-          transaction_costos_ingresos
-        );
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
-    }
-    //factura
-    if (genera_factura === 1) {
-      try {
-        await insertFactura(
-          id_cliente,
-          importeNetoFinal,
-          importeIvaFinal,
-          importeTotalFinal,
-          usuario,
-          NroAsiento,
-          NroAsientoSecundario,
-          observacion,
-          transaction_costos_ingresos,
-          transaction_asientos
-        );
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
-    }
-  }
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
     await movimientosProveedoresEgresos({
       cod_proveedor,
@@ -955,6 +908,7 @@ async function registrarCostoIngresoIndividual({
       importe_tasa_IVA: toNumber(importe_tasa_IVA),
     });
   }
+
   const importeNetoFinal_1 = toNumber(importe_neto_total_1) * factor;
   const importeIvaFinal_1 = importe_iva_total_1
     ? toNumber(importe_iva_total_1) * factor
@@ -1077,25 +1031,272 @@ async function registrarCostoIngresoIndividual({
   }
 }
 
+async function registrarIngresoIndividual({
+  id_vehiculo,
+  fecha,
+  id_forma_cobro,
+  id_cliente,
+  observacion,
+  usuario,
+  id_concepto,
+  importe_neto,
+  importe_iva,
+  importe_total,
+  id_concepto_2,
+  importe_neto_2,
+  importe_iva_2,
+  importe_total_2,
+  id_concepto_3,
+  importe_neto_3,
+  importe_iva_3,
+  importe_total_3,
+}) {
+  let genera_recibo;
+  let genera_factura;
+  let genera_recibo_2;
+  let genera_factura_2;
+  let genera_recibo_3;
+  let genera_factura_3;
+  let NroAsiento;
+  let NroAsientoSecundario;
+  let cuenta_forma_cobro;
+  let cuenta_secundaria_forma_cobro;
+  let cuenta_concepto;
+  let cuenta_secundaria_concepto;
+  let cuenta_concepto_2;
+  let cuenta_secundaria_concepto_2;
+  let cuenta_concepto_3;
+  let cuenta_secundaria_concepto_3;
+  let nro_recibo;
+  let genera_recibo_final;
+
+  if (genera_recibo === 1 || genera_recibo === 1 || genera_recibo_3 === 1) {
+    genera_recibo_final = true;
+  } else {
+    genera_recibo_final = false;
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
+      FROM conceptos_costos WHERE id = :id_concepto`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: { id_concepto },
+      }
+    );
+    if (!result.length)
+      throw new Error("No se encontró el concepto especificado");
+    cuenta_concepto = result[0]["cuenta_contable"];
+    cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
+    genera_recibo = result[0]["genera_recibo"];
+    genera_factura = result[0]["genera_factura"];
+  } catch (error) {
+    console.log(error);
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
+    throw new Error(
+      `Error al buscar una cuenta contable ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
+    );
+  }
+
+  //obtengo cuentas_concepto 2 y 3 si hay
+  if (id_concepto_2) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+      FROM conceptos_costos WHERE id = :id_concepto_2`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { id_concepto_2 },
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró el concepto especificado");
+      cuenta_concepto_2 = result[0]["cuenta_contable"];
+      cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
+      genera_recibo_2 = result[0]["genera_recibo"];
+      genera_factura_2 = result[0]["genera_factura"];
+    } catch (error) {
+      console.log(error);
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
+      throw new Error(
+        `Error al buscar una cuenta contable ${
+          error.message ? `${" :"}${error.message}` : ""
+        }`
+      );
+    }
+  }
+
+  if (id_concepto_3) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+      FROM conceptos_costos WHERE id = :id_concepto_3`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { id_concepto_3 },
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró el concepto especificado");
+      cuenta_concepto_3 = result[0]["cuenta_contable"];
+      cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
+      genera_recibo_3 = result[0]["genera_recibo"];
+      genera_factura_3 = result[0]["genera_factura"];
+    } catch (error) {
+      console.log(error);
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
+      throw new Error(
+        `Error al buscar una cuenta contable ${
+          error.message ? `${" :"}${error.message}` : ""
+        }`
+      );
+    }
+  }
+  //obtengo cuentas de forma_cobro
+  try {
+    const result = await giama_renting.query(
+      "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_forma_cobro],
+      }
+    );
+    if (!result.length)
+      throw new Error("No se encontró la forma de cobro especificada");
+    cuenta_forma_cobro = result[0]["cuenta_contable"];
+    cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
+  } catch (error) {
+    throw new Error(
+      `Error al buscar cuentas contables de la forma de cobro ${
+        error.message ? `: ${error.message}` : ""
+      }`
+    );
+  }
+  //obtengo numeros de asiento
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    throw error;
+  }
+  //realizo el asiento
+  try {
+    NroAsiento = await asientos_costos_ingresos(
+      fecha,
+      cuenta_concepto,
+      cuenta_secundaria_concepto,
+      cuenta_forma_cobro,
+      cuenta_secundaria_forma_cobro,
+      toNumber(importe_neto),
+      toNumber(importe_neto_2),
+      toNumber(importe_neto_3),
+      toNumber(importe_iva),
+      toNumber(importe_iva_2),
+      toNumber(importe_iva_3),
+      0,
+      0,
+      0,
+      cuenta_concepto_2,
+      cuenta_secundaria_concepto_2,
+      cuenta_concepto_3,
+      cuenta_secundaria_concepto_3,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      observacion,
+      null,
+      ingreso_egreso,
+      transaction_asientos,
+      NroAsiento,
+      NroAsientoSecundario,
+      null
+    );
+  } catch (error) {
+    await transaction_asientos.rollback();
+    transaction_costos_ingresos.rollback();
+    throw error;
+  }
+
+  if (ingreso_egreso === "I") {
+    //recibo
+    if (genera_recibo_final === 1) {
+      try {
+        //inserto recibo
+        nro_recibo = await insertRecibo(
+          getTodayDate(),
+          observacion,
+          importe_total,
+          usuario,
+          id_cliente,
+          id_vehiculo,
+          null,
+          null,
+          id_forma_cobro,
+          transaction_costos_ingresos
+        );
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    }
+    //factura
+    if (genera_factura === 1) {
+      try {
+        await insertFactura(
+          id_cliente,
+          importeNetoFinal,
+          importeIvaFinal,
+          importeTotalFinal,
+          usuario,
+          NroAsiento,
+          NroAsientoSecundario,
+          observacion,
+          transaction_costos_ingresos,
+          transaction_asientos
+        );
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    }
+  }
+}
+
 export const postCostos_Ingresos = async (req, res) => {
   let message;
+  const { ingreso_egreso } = req.body;
+  let nro_recibo_ingreso;
+  let genera_factura_ingreso;
   try {
-    let { nro_recibo, genera_factura } = await registrarCostoIngresoIndividual(
-      req.body
-    );
-    if (nro_recibo && genera_factura == 0) {
+    if (ingreso_egreso === "E") {
+      await registrarCostoIngresoIndividual(req.body);
+    } else if (ingreso_egreso === "I") {
+      let { nro_recibo, genera_factura } = registrarIngresoIndividual(req.body);
+      nro_recibo_ingreso = nro_recibo;
+      genera_factura_ingreso = genera_factura;
+    }
+
+    if (nro_recibo_ingreso && genera_factura_ingreso == 0) {
       message = "Ingresado correctamente. Se generó el recibo.";
-    } else if (!nro_recibo && genera_factura == 1) {
+    } else if (!nro_recibo_ingreso && genera_factura_ingreso == 1) {
       message = "Ingresado correctamente. Se generó la factura.";
-    } else if (nro_recibo && genera_factura == 1) {
+    } else if (nro_recibo_ingreso && genera_factura_ingreso == 1) {
       message = "Ingresado correctamente. Se generó la factura y el recibo.";
-    } else if (!nro_recibo && genera_factura == 0) {
+    } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
       message = "Ingresado correctamente";
     }
     return res.send({
       status: true,
       message: message,
-      nro_recibo_ingreso: nro_recibo ? nro_recibo : null,
+      nro_recibo_ingreso: nro_recibo_ingreso ? nro_recibo_ingreso : null,
     });
   } catch (error) {
     console.log(error);
