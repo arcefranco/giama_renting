@@ -39,12 +39,6 @@ const [form, setForm] = useState({
     id_cliente: '',
     ingreso_egreso: 'I',
     observacion: '',
-    cuenta: '',
-    cuenta_secundaria: '',
-    cuenta_2: '',
-    cuenta_secundaria_2: '',
-    cuenta_3: '',
-    cuenta_secundaria_3: '',
     usuario: username,
     id_concepto: '',
     importe_neto: '',
@@ -320,12 +314,6 @@ useToastFeedback({
           fecha: '',
           usuario: username,
           observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          cuenta_2: '',
-          cuenta_secundaria_2: '',
-          cuenta_3: '',
-          cuenta_secundaria_3: '',
           ingreso_egreso: 'I',
           id_cliente: '',
           id_forma_cobro: '',
@@ -348,12 +336,6 @@ useToastFeedback({
           fecha: '',
           usuario: username,
           observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          cuenta_2: '',
-          cuenta_secundaria_2: '',
-          cuenta_3: '',
-          cuenta_secundaria_3: '',
           ingreso_egreso: 'I',
           id_cliente: '',
           id_forma_cobro: '',
@@ -472,8 +454,6 @@ const handleChange = (e) => {
      "importe_total": "",
      "importe_iva": "",
      "importe_neto": "",
-     "cuenta": conceptos?.find(e => e.id == value)?.cuenta_contable,
-     "cuenta_secundaria": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
    }); 
   }
   //copias de comportmiento conceptos 2 y 3
@@ -484,8 +464,6 @@ const handleChange = (e) => {
      "importe_total_2": "",
      "importe_iva_2": "",
      "importe_neto_2": "",
-     "cuenta_2": conceptos?.find(e => e.id == value)?.cuenta_contable,
-     "cuenta_secundaria_2": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
    }); 
   }
   else if(value && name === "id_concepto_3"){
@@ -495,8 +473,6 @@ const handleChange = (e) => {
      "importe_total_3": "",
      "importe_iva_3": "",
      "importe_neto_3": "",
-     "cuenta_3": conceptos?.find(e => e.id == value)?.cuenta_contable,
-     "cuenta_secundaria_3": conceptos?.find(e => e.id == value)?.cuenta_secundaria,
    }); 
   }
   /////////////////////////////////////////
