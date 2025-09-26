@@ -75,7 +75,9 @@ function App() {
     </Route>
     <Route path='/clientesReporte' element={<ReporteClientes/>}/>
     <Route path='/clientes/imagenes/:id' element={<ImagenesClientes/>}/>
-    <Route path='/clientes/actualizar/:id' element={<UpdateCliente/>}/>
+    <Route element={<PrivateRoute allowedRoles={["3"]}/>}>
+      <Route path='/clientes/actualizar/:id' element={<UpdateCliente/>}/>
+    </Route>
     <Route element={<PrivateRoute allowedRoles={["2"]} />}>
       <Route path='/costos/alta/ingresos' element={<AltaCostos/>}/>
     </Route>

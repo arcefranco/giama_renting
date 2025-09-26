@@ -30,7 +30,7 @@ alquileresRouter.post(
   authorizeRoles("3"),
   postContratoAlquiler
 );
-alquileresRouter.post("/postAlquiler", auth, postAlquiler);
+alquileresRouter.post("/postAlquiler", auth, authorizeRoles("3"), postAlquiler);
 alquileresRouter.post(
   "/formaDeCobro",
   auth,
