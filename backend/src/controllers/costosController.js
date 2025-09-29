@@ -1068,16 +1068,16 @@ async function registrarIngresoIndividual({
   let cuenta_concepto_3;
   let cuenta_secundaria_concepto_3;
   let nro_recibo;
+  let nro_factura;
+  let transaction_costos_ingresos = await giama_renting.transaction();
+  let transaction_asientos = await pa7_giama_renting.transaction();
   let genera_recibo_final;
+  let genera_factura_final;
+  let conceptos_recibo = [];
 
-  if (genera_recibo === 1 || genera_recibo === 1 || genera_recibo_3 === 1) {
-    genera_recibo_final = true;
-  } else {
-    genera_recibo_final = false;
-  }
   try {
     const result = await giama_renting.query(
-      `SELECT cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
+      `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
       FROM conceptos_costos WHERE id = :id_concepto`,
       {
         type: QueryTypes.SELECT,
@@ -1090,6 +1090,9 @@ async function registrarIngresoIndividual({
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
     genera_recibo = result[0]["genera_recibo"];
     genera_factura = result[0]["genera_factura"];
+    if (result[0]["genera_recibo"] === 1) {
+    conceptos_recibo.push(result[0]["nombre"]);
+    }
   } catch (error) {
     console.log(error);
     await transaction_asientos.rollback();
@@ -1105,7 +1108,7 @@ async function registrarIngresoIndividual({
   if (id_concepto_2) {
     try {
       const result = await giama_renting.query(
-        `SELECT cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
       FROM conceptos_costos WHERE id = :id_concepto_2`,
         {
           type: QueryTypes.SELECT,
@@ -1118,6 +1121,9 @@ async function registrarIngresoIndividual({
       cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
       genera_recibo_2 = result[0]["genera_recibo"];
       genera_factura_2 = result[0]["genera_factura"];
+      if (result[0]["genera_recibo"] === 1) {
+      conceptos_recibo.push(result[0]["nombre"]);
+    }
     } catch (error) {
       console.log(error);
       await transaction_asientos.rollback();
@@ -1133,7 +1139,7 @@ async function registrarIngresoIndividual({
   if (id_concepto_3) {
     try {
       const result = await giama_renting.query(
-        `SELECT cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
       FROM conceptos_costos WHERE id = :id_concepto_3`,
         {
           type: QueryTypes.SELECT,
@@ -1146,6 +1152,9 @@ async function registrarIngresoIndividual({
       cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
       genera_recibo_3 = result[0]["genera_recibo"];
       genera_factura_3 = result[0]["genera_factura"];
+      if (result[0]["genera_recibo"] === 1) {
+      conceptos_recibo.push(result[0]["nombre"]);
+    }
     } catch (error) {
       console.log(error);
       await transaction_asientos.rollback();
@@ -1157,6 +1166,39 @@ async function registrarIngresoIndividual({
       );
     }
   }
+  if (genera_recibo === 1 || genera_recibo_2 === 1 || genera_recibo_3 === 1) {
+    genera_recibo_final = true;
+  } else {
+    genera_recibo_final = false;
+  }
+  //para el string que se devuelve al usuario, chequeamos tambien si se generó factura o no
+  if (genera_factura === 1 || genera_factura_2 === 1 || genera_factura_3 === 1) {
+    genera_factura_final = true;
+  } else {
+    genera_factura_final = false;
+  }
+  //armo el detalle del recibo segun nombres de concepto que generen recibo
+  const detalle_recibo = conceptos_recibo.join(" + ");
+  //suma de importes_totales que generan recibo
+  const importe_total_recibo = 
+  (genera_recibo   ? toNumber(importe_total)   : 0) +
+  (genera_recibo_2 ? toNumber(importe_total_2) : 0) +
+  (genera_recibo_3 ? toNumber(importe_total_3) : 0);
+
+  //suma de importes para facturas
+  const importe_total_factura = 
+  (genera_factura   ? toNumber(importe_total)   : 0) +
+  (genera_factura_2 ? toNumber(importe_total_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_total_3) : 0);
+  const importe_neto_factura = 
+  (genera_factura   ? toNumber(importe_neto)   : 0) +
+  (genera_factura_2 ? toNumber(importe_neto_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_neto_3) : 0);
+  const importe_iva_factura = 
+  (genera_factura   ? toNumber(importe_iva)   : 0) +
+  (genera_factura_2 ? toNumber(importe_iva_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_iva_3) : 0);
+
   //obtengo cuentas de forma_cobro
   try {
     const result = await giama_renting.query(
@@ -1213,7 +1255,7 @@ async function registrarIngresoIndividual({
       null,
       observacion,
       null,
-      ingreso_egreso,
+      "I",
       transaction_asientos,
       NroAsiento,
       NroAsientoSecundario,
@@ -1224,37 +1266,14 @@ async function registrarIngresoIndividual({
     transaction_costos_ingresos.rollback();
     throw error;
   }
-
-  if (ingreso_egreso === "I") {
-    //recibo
-    if (genera_recibo_final === 1) {
+  //factura
+  if (genera_factura_final) {
       try {
-        //inserto recibo
-        nro_recibo = await insertRecibo(
-          getTodayDate(),
-          observacion,
-          importe_total,
-          usuario,
+        nro_factura = await insertFactura(
           id_cliente,
-          id_vehiculo,
-          null,
-          null,
-          id_forma_cobro,
-          transaction_costos_ingresos
-        );
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
-    }
-    //factura
-    if (genera_factura === 1) {
-      try {
-        await insertFactura(
-          id_cliente,
-          importeNetoFinal,
-          importeIvaFinal,
-          importeTotalFinal,
+          importe_neto_factura,
+          importe_iva_factura,
+          importe_total_factura,
           usuario,
           NroAsiento,
           NroAsientoSecundario,
@@ -1267,19 +1286,131 @@ async function registrarIngresoIndividual({
         throw error;
       }
     }
+    //recibo
+    if (genera_recibo_final) {
+      try {
+        //inserto recibo
+        nro_recibo = await insertRecibo(
+          getTodayDate(),
+          detalle_recibo,
+          importe_total_recibo,
+          usuario,
+          id_cliente,
+          id_vehiculo,
+          null,
+          null,
+          id_forma_cobro,
+          nro_factura,
+          transaction_costos_ingresos
+        );
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    }
+  //inserto en tabla costos_ingresos
+    try {
+    await giama_renting.query(
+      `INSERT INTO costos_ingresos 
+      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          id_vehiculo,
+          fecha,
+          id_concepto,
+          null,
+          importe_neto,
+          importe_iva,
+          null,
+          importe_total,
+          observacion,
+          NroAsiento,
+          id_forma_cobro ? id_forma_cobro : null,
+          id_cliente ? id_cliente : null,
+          nro_recibo ? nro_recibo : null,
+        ],
+        transaction: transaction_costos_ingresos,
+      }
+    );
+    if (id_concepto_2) {
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+        (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            fecha,
+            id_concepto_2,
+            null,
+            importe_neto_2,
+            importe_iva_2,
+            null,
+            importe_total_2,
+            observacion,
+            NroAsiento,
+            id_forma_cobro ? id_forma_cobro : null,
+            id_cliente ? id_cliente : null,
+            nro_recibo ? nro_recibo : null,
+          ],
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
+    if (id_concepto_3) {
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+        (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            fecha,
+            id_concepto_3,
+            null,
+            importe_neto_3,
+            importe_iva_3,
+            null,
+            importe_total_3,
+            observacion,
+            NroAsiento,
+            id_forma_cobro ? id_forma_cobro : null,
+            id_cliente ? id_cliente : null,
+            nro_recibo ? nro_recibo : null,
+          ],
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
+  }catch(error){
+    await transaction_costos_ingresos.rollback();
+    await transaction_asientos.rollback();
+    throw new Error(error.message);
   }
+    await transaction_costos_ingresos.commit();
+    await transaction_asientos.commit();
+    return {
+      nro_recibo: nro_recibo ? nro_recibo : null,
+      genera_factura: genera_factura_final,
+    };
+
+  
 }
 
 export const postCostos_Ingresos = async (req, res) => {
   let message;
   const { ingreso_egreso } = req.body;
-  let nro_recibo_ingreso;
+  let nro_recibo_ingreso; 
   let genera_factura_ingreso;
   try {
     if (ingreso_egreso === "E") {
       await registrarCostoIngresoIndividual(req.body);
     } else if (ingreso_egreso === "I") {
-      let { nro_recibo, genera_factura } = registrarIngresoIndividual(req.body);
+      let { nro_recibo, genera_factura } = await registrarIngresoIndividual(req.body);
       nro_recibo_ingreso = nro_recibo;
       genera_factura_ingreso = genera_factura;
     }
