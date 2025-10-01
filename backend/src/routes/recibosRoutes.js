@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
-import { getReciboById } from "../controllers/recibosController.js";
+import { getReciboById, getRecibos } from "../controllers/recibosController.js";
 import express from "express";
 const recibosRouter = Router();
 recibosRouter.use((req, res, next) => {
@@ -12,4 +12,5 @@ recibosRouter.use((req, res, next) => {
 });
 
 recibosRouter.post("/getReciboById", auth, getReciboById);
+recibosRouter.get("/getRecibos", auth, getRecibos);
 export default recibosRouter;

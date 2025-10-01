@@ -1,6 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { handleError, acciones } from "../../helpers/handleError.js";
 import { formatearFechaISOText } from "../../helpers/formatearFechaISO.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -159,7 +160,7 @@ export const getReciboById = async (req, res) => {
             <p><b>Pago: </b> # ${id}</p>
           </div>
           <div>
-            <p><b>Fecha Pago: </b>  ${formatearFechaISOText(getTodayDate())}</p>
+            <p><b>Fecha Pago: </b>  ${recibo.fecha}</p>
           </div>
            <div>
             <p><b>Tipo Pago: </b> ${recibo.nombre_forma_cobro}</p>
@@ -196,8 +197,20 @@ export const getReciboById = async (req, res) => {
     return res.send({ status: true, data: { html: html } });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ status: false, message: "Error al generar el recibo" });
+    return res.send({ status: false, message: "Error al generar el recibo" });
   }
 };
+
+export const getRecibos = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM recibos", {
+      type: QueryTypes.SELECT
+    })
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "Tipos de responsable", acciones.get);
+    return res.send(body);
+  }
+}
+
+
