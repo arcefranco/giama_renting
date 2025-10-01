@@ -7,6 +7,8 @@ const initialState = {
   html_recibo_alquiler: null,
   html_recibo_deposito: null,
   html_recibo_ingreso: null,
+  html_recibo: null,
+  recibos: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -39,6 +41,27 @@ export const getReciboIngresoById = createAsyncThunk(
     handleAsyncThunk(
       () => recibosService.getReciboById(data),
       responses.object,
+      rejectWithValue
+    )
+);
+
+export const getReciboByIdSlice = createAsyncThunk(
+  "getReciboByIdSlice",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => recibosService.getReciboById(data),
+      responses.object,
+      rejectWithValue
+    )
+);
+
+
+export const getRecibos = createAsyncThunk(
+  "getRecibos",
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => recibosService.getRecibos(),
+      responses.array,
       rejectWithValue
     )
 );
@@ -104,6 +127,36 @@ export const recibosSlice = createSlice({
       state.html_recibo_ingreso = action.payload.data.html;
     });
     builder.addCase(getReciboIngresoById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getRecibos.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getRecibos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.recibos = action.payload;
+    });
+    builder.addCase(getRecibos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getReciboByIdSlice.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getReciboByIdSlice.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.html_recibo = action.payload.data.html;
+    });
+    builder.addCase(getReciboByIdSlice.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
