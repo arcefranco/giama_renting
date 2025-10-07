@@ -478,23 +478,23 @@ export const anulacionRecibo = async (req, res) => {
 
     } else {
       // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
-      const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, ...otrosCampos } = factura; 
+      const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
       let id_ndc;
       let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
       const result = await pa7_giama_renting.query(
         `INSERT INTO facturas 
-         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, ${Object.keys(otrosCampos).join(", ")})
+         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, ${Object.keys(otrosCampos).join(", ")})
          VALUES (?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
-          replacements: ["CB", FacAsoc_insertada, PuntoVenta, NumeroFacturaEmitida, ...Object.values(otrosCampos)],
+          replacements: ["CB", FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
           transaction: transaction_pa7_giama_renting
         }
       );
       console.log(result);
       id_ndc = result[0]
       //o queda claro que se hace con facturasitems // se hace un solo registro igual pero x "anulacion factura x"
-      const descripcion_facturas_items = `Anulación factura ${id_factura}`
+      const descripcion_facturas_items = `Anulación factura ${Tipo} ${padWithZeros(PuntoVenta, 5)}-${padWithZeros(NumeroFacturaEmitida, 8)}`
       await giama_renting.query(
         `INSERT INTO facturasitems (
           IdFactura,
