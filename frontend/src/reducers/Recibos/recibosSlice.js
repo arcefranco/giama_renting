@@ -66,6 +66,16 @@ export const getRecibos = createAsyncThunk(
     )
 );
 
+export const anulacionRecibo = createAsyncThunk(
+  "anulacionRecibo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => recibosService.anulacionRecibo(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const recibosSlice = createSlice({
   name: "recibos",
   initialState,
@@ -157,6 +167,21 @@ export const recibosSlice = createSlice({
       state.html_recibo = action.payload.data.html;
     });
     builder.addCase(getReciboByIdSlice.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(anulacionRecibo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anulacionRecibo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(anulacionRecibo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

@@ -8,10 +8,11 @@ import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
-import { getRecibos, reset, getReciboByIdSlice } from '../../reducers/Recibos/recibosSlice'
+import { getRecibos, reset, getReciboByIdSlice, anulacionRecibo } from '../../reducers/Recibos/recibosSlice.js'
 import { getClientes } from '../../reducers/Clientes/clientesSlice';
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
 import styles from "./ReporteRecibos.module.css"
+
 
 const ReporteRecibos = () => {
     const dispatch = useDispatch()
@@ -61,6 +62,7 @@ const ReporteRecibos = () => {
             }, 500)
         }
     }, [html_recibo]);
+
     const renderFecha = (data) => {
         if (data.value) {
             let fechaSplit = data?.value?.split("-")
@@ -68,7 +70,6 @@ const ReporteRecibos = () => {
         }
     }
     const renderVehiculo = (data) => {
-        console.log(data.value)
         if (data.value) {
             const vehiculo = vehiculos?.find(e => e.id == data.value)
             return <div>
@@ -78,7 +79,6 @@ const ReporteRecibos = () => {
         }
     }
     const renderNombreCliente = (data) => {
-        console.log(data.value)
         if (data.value) {
             const cliente = clientes?.find(e => e.id == data.value)
             return cliente ? <div>
@@ -87,7 +87,6 @@ const ReporteRecibos = () => {
         }
     }
     const renderNroDoc = (data) => {
-        console.log(data.value)
         if (data.value) {
             const cliente = clientes?.find(e => e.id == data.value)
             return cliente ? <div>
@@ -116,6 +115,37 @@ const ReporteRecibos = () => {
         )
 
     }
+    const renderAnularRecibo = (data) => {
+        const row = data.value
+        const recibo = recibos?.find(e => e.id == data.value)
+
+        return (
+            recibo?.anulado == 1 ?
+                <button
+                    style={{
+                        color: "#888888ff", fontSize: "11px",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+
+                    }}
+                >
+                    Anular
+                </button>
+                :
+                <button
+                    style={{
+                        color: "#175fbb", fontSize: "11px",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: "pointer"
+                    }}
+                    onClick={() => {
+                        dispatch(anulacionRecibo({ id: row }))
+                    }}
+                >
+                    Anular
+                </button>
+        )
+
+    }
     return (
         <div className={styles.container}>
             <ToastContainer />
@@ -130,7 +160,7 @@ const ReporteRecibos = () => {
                 </div>
             )}
             <h2>Listado de recibos</h2>
-            {/*     <div className={styles.filter}>
+            {/*<div className={styles.filter}>
     <div style={{display: "grid",
     gridTemplateColumns: "1fr 1fr",
     columnGap: "4rem"}}>
@@ -144,7 +174,7 @@ const ReporteRecibos = () => {
       </div>
     </div>
       <button className={styles.searchButton} onClick={handleSubmit}>Buscar</button>
-    </div> */}
+            </div> */}
             <button onClick={handleActualizar} className={styles.refreshButton}>
                 🔄 Actualizar reporte
             </button>
@@ -168,7 +198,10 @@ const ReporteRecibos = () => {
                 <Column dataField="id_cliente" caption="CUIL/CUIT" dataType="string" alignment="center" cellRender={renderNroDoc} />
                 <Column dataField="id_vehiculo" caption="Dominio" alignment="center" cellRender={renderVehiculo} />
                 <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" />
-                <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption="" cellRender={renderImprimirRecibo} />
+                <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption=""
+                    cellRender={renderImprimirRecibo} />
+                <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption=""
+                    cellRender={renderAnularRecibo} />
 
 
                 {/*                 <Summary calculateCustomSummary={handleCustomSummary}>
