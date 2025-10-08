@@ -22,20 +22,20 @@ const ImageUploader = ({ idVehiculo, dispatchAction }) => {
 
     const formData = new FormData();
     imagenes.forEach((img) => formData.append("images", img));
-    formData.append("id", idVehiculo); 
+    formData.append("id", idVehiculo);
 
     try {
       const result = await dispatch(dispatchAction(formData)).unwrap();
 
       if (result.status) {
         setImagenes([]); // Limpiamos las imágenes tras subirlas
-      } 
+      }
     } catch (error) {
       console.error("Error al subir imágenes:", error);
 
-    } 
+    }
   };
-  const fileText = 
+  const fileText =
     imagenes.length === 0
       ? "No hay archivos seleccionados"
       : imagenes.length === 1
@@ -52,7 +52,7 @@ const ImageUploader = ({ idVehiculo, dispatchAction }) => {
           id="fileInput"
           type="file"
           multiple
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={handleFileChange}
           className={styles.hiddenInput}
         />

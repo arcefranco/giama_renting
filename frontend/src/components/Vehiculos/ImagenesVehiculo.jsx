@@ -11,17 +11,18 @@ import { ToastContainer, toast } from 'react-toastify';
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import ImageUploader from '../../utils/ImageUploader/ImageUploader';
+import pdf from "../../assets/pdf.png"
 
 const ImagenesVehiculo = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { isError, isSuccess, isLoading, message, vehiculo, imagenes } = useSelector(state => state.vehiculosReducer);
-  const {modelos} = useSelector(state => state.generalesReducer)
+  const { modelos } = useSelector(state => state.generalesReducer)
   useEffect(() => {
     Promise.all([
-        dispatch(getImagenesVehiculos({id: id})),
-        dispatch(getVehiculosById({id: id})),
-        dispatch(getModelos()),
+      dispatch(getImagenesVehiculos({ id: id })),
+      dispatch(getVehiculosById({ id: id })),
+      dispatch(getModelos()),
     ])
 
   }, [id]);
@@ -32,12 +33,12 @@ const ImagenesVehiculo = () => {
     message,
     resetAction: reset,
     onSuccess: () => {
-    dispatch(getImagenesVehiculos({id: id}))
+      dispatch(getImagenesVehiculos({ id: id }))
     }
   });
   const handleEliminarImagen = async (key) => {
     try {
-      dispatch(eliminarImagenes({key: key}))
+      dispatch(eliminarImagenes({ key: key }))
       // Luego actualizá tu estado o hacé refetch de las imágenes
     } catch (err) {
       console.error(err);
@@ -62,39 +63,67 @@ const ImagenesVehiculo = () => {
   };
   return (
     <div className={styles.container}>
-      <ToastContainer/>
+      <ToastContainer />
       {isLoading && (
-          <div className={styles.spinnerOverlay}>
-            <ClipLoader size={60} color="#800020" loading={true} />
-            <p className={styles.loadingText}>Cargando...</p>
-          </div>
-        )} 
+        <div className={styles.spinnerOverlay}>
+          <ClipLoader size={60} color="#800020" loading={true} />
+          <p className={styles.loadingText}>Cargando...</p>
+        </div>
+      )}
       {vehiculo?.length && (
-        <h2 style={{display: "flex", alignItems: "center", fontSize: "xx-large"}}>
-          {vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
-    vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre } - {vehiculo[0].color} - {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
+        <h2 style={{ display: "flex", alignItems: "center", fontSize: "xx-large" }}>
+          {vehiculo[0]?.dominio ? vehiculo[0]?.dominio :
+            vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio : ""} - {modelos.find((m) => m.id === vehiculo[0].modelo)?.nombre} - {vehiculo[0].color} - {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
         </h2>
       )}
       <ImageUploader
-      idVehiculo={id} 
-      dispatchAction={postImagenesVehiculo}
+        idVehiculo={id}
+        dispatchAction={postImagenesVehiculo}
       />
       <div className={styles.grid}>
-        {imagenes?.length ? imagenes?.map((img, index) => (
-          <div key={index} className={styles.card}>
-            <img
-              src={img.url}
-              alt={`Imagen ${index + 1}`}
-              className={styles.thumbnail}
-              onClick={() => window.open(img.url, '_blank')}
-            />
-            <button className={styles.removeBtn} onClick={() => handleDeleteClick(img["key"])}>×</button>
-            <div className={styles.info}>
-              <p>{img.key.split('/').pop()}</p>
-              <p>{new Date(img.lastModified).toLocaleString()}</p>
-            </div>
-          </div>
-        )) : <span>El vehículo no tiene imagenes guardadas</span>}
+        {imagenes?.length ? (
+          imagenes.map((img, index) => {
+            const isPDF = img.key.toLowerCase().endsWith('.pdf');
+
+            return (
+              <div key={index} className={styles.card}>
+                {isPDF ? (
+                  <div
+                    className={styles.pdfThumbnail}
+                    onClick={() => window.open(img.url, '_blank')}
+                  >
+                    <img
+                      src={pdf} // podés usar una imagen local o URL pública
+                      alt="PDF File"
+                      className={styles.pdfIcon}
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={img.url}
+                    alt={`Imagen ${index + 1}`}
+                    className={styles.thumbnail}
+                    onClick={() => window.open(img.url, '_blank')}
+                  />
+                )}
+
+                <button
+                  className={styles.removeBtn}
+                  onClick={() => handleDeleteClick(img["key"])}
+                >
+                  ×
+                </button>
+
+                <div className={styles.info}>
+                  <p>{img.key.split('/').pop()}</p>
+                  <p>{new Date(img.lastModified).toLocaleString()}</p>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <span>El vehículo no tiene imágenes ni archivos guardados</span>
+        )}
       </div>
     </div>
   );
