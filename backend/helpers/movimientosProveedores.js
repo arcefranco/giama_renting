@@ -181,6 +181,8 @@ export const movimientosProveedoresEgresos = async ({
   numero_comprobante_2,
   importe_total,
   cuenta_concepto,
+  cuenta_concepto_2,
+  cuenta_concepto_3,
   NroAsiento,
   NroAsientoSecundario,
   usuario,
@@ -189,6 +191,14 @@ export const movimientosProveedoresEgresos = async ({
   neto_21,
   neto_10,
   neto_27,
+  neto_no_gravado_2,
+  neto_21_2,
+  neto_10_2,
+  neto_27_2,
+  neto_no_gravado_3,
+  neto_21_3,
+  neto_10_3,
+  neto_27_3,
   importe_iva_21,
   importe_iva_10,
   importe_iva_27,
@@ -204,7 +214,22 @@ export const movimientosProveedoresEgresos = async ({
   let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
-  let importe_neto = neto_no_gravado + neto_21 + neto_10 + neto_27;
+  let importe_neto_1 = neto_no_gravado + neto_21 + neto_10 + neto_27;
+  let importe_neto_2;
+  let importe_neto_3;
+  let importe_neto_21_total = neto_21 + neto_21_2 + neto_21_3;
+  let importe_neto_27_total = neto_27 + neto_27_2 + neto_27_3;
+  let importe_neto_10_total = neto_10 + neto_10_2 + neto_10_3;
+
+  let importe_neto_no_gravado_total =
+    neto_no_gravado + neto_no_gravado_2 + neto_no_gravado_3;
+  if (cuenta_concepto_2) {
+    importe_neto_2 = neto_no_gravado_2 + neto_21_2 + neto_10_2 + neto_27_2;
+  }
+  if (cuenta_concepto_3) {
+    importe_neto_3 = neto_no_gravado_3 + neto_21_3 + neto_10_3 + neto_27_3;
+  }
+
   let insertMovProv;
   //c_movprov
   try {
@@ -222,10 +247,10 @@ export const movimientosProveedoresEgresos = async ({
           FA_FC,
           NroComprobante,
           getTodayDate(),
-          neto_no_gravado,
-          neto_21,
-          neto_10,
-          neto_27,
+          importe_neto_no_gravado_total,
+          importe_neto_21_total,
+          importe_neto_10_total,
+          importe_neto_27_total,
           21,
           10.5,
           27,
@@ -268,10 +293,10 @@ export const movimientosProveedoresEgresos = async ({
           FA_FC,
           NroComprobante,
           getTodayDate(),
-          neto_no_gravado,
-          neto_21,
-          neto_10,
-          neto_27,
+          importe_neto_no_gravado_total,
+          importe_neto_21_total,
+          importe_neto_10_total,
+          importe_neto_27_total,
           21,
           10.5,
           27,
@@ -305,7 +330,7 @@ export const movimientosProveedoresEgresos = async ({
       CtaContable, Importe) VALUES (?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
-        replacements: [insertMovProv, 3, cuenta_concepto, importe_neto],
+        replacements: [insertMovProv, 3, cuenta_concepto, importe_neto_1],
         transaction: transaction_asientos,
       }
     );
@@ -316,6 +341,46 @@ export const movimientosProveedoresEgresos = async ({
         error.message ? ` :${error.message}` : ""
       }`
     );
+  }
+  if (cuenta_concepto_2) {
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante,
+      CtaContable, Importe) VALUES (?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [insertMovProv, 3, cuenta_concepto_2, importe_neto_2],
+          transaction: transaction_asientos,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      throw new Error(
+        `Error al insertar registro en proveedores ${
+          error.message ? ` :${error.message}` : ""
+        }`
+      );
+    }
+  }
+  if (cuenta_concepto_3) {
+    try {
+      await pa7_giama_renting.query(
+        `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante,
+      CtaContable, Importe) VALUES (?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [insertMovProv, 3, cuenta_concepto_3, importe_neto_3],
+          transaction: transaction_asientos,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      throw new Error(
+        `Error al insertar registro en proveedores ${
+          error.message ? ` :${error.message}` : ""
+        }`
+      );
+    }
   }
   //c_movprovctacte
   try {

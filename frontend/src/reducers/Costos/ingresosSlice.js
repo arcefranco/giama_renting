@@ -43,7 +43,7 @@ export const ingresosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.nro_recibo_ingreso = action.payload.nro_recibo_ingreso;
+      state.nro_recibo_ingreso = action.payload.nro_recibo_ingreso ? action.payload.nro_recibo_ingreso : null;
       state.message = action.payload.message;
     });
     builder.addCase(postCostos_Ingresos.rejected, (state, action) => {

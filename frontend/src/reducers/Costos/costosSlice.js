@@ -72,7 +72,7 @@ export const getConceptosCostosById = createAsyncThunk(
     )
 );
 
-export const postCostos_Ingresos = createAsyncThunk(
+/* export const postCostos_Ingresos = createAsyncThunk(
   "postCostos_Ingresos",
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
@@ -80,7 +80,7 @@ export const postCostos_Ingresos = createAsyncThunk(
       responses.successObject,
       rejectWithValue
     )
-);
+); */
 
 export const getCostosIngresosByIdVehiculo = createAsyncThunk(
   "getCostosIngresosByIdVehiculo",
@@ -213,7 +213,7 @@ export const costosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
-    builder.addCase(postCostos_Ingresos.pending, (state) => {
+/*     builder.addCase(postCostos_Ingresos.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(postCostos_Ingresos.fulfilled, (state, action) => {
@@ -228,7 +228,7 @@ export const costosSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
-    });
+    }); */
     builder.addCase(getCostosIngresosByIdVehiculo.pending, (state) => {
       state.isLoading = true;
     });

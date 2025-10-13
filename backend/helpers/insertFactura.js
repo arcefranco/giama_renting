@@ -40,7 +40,8 @@ export const insertFactura = async (
       }`
     );
   }
-  console.log(clienteObtenido);
+  if (!clienteObtenido.tipo_contribuyente)
+    throw new Error("El cliente debe aclarar su tipo responsable");
   if (clienteObtenido.tipo_contribuyente == 1) tipo_factura = "FA";
   else tipo_factura = "FB";
   //obtengo el nombre de la provincia del cliente
@@ -83,8 +84,7 @@ export const insertFactura = async (
       `Error al buscar el cliente ${error.message && error.message}`
     );
   }
-  if (!clienteObtenido.tipo_contribuyente)
-    throw new Error("El cliente debe aclarar su tipo responsable");
+
   if (!existeClienteFacturacion) {
     let nombre;
     if (clienteObtenido.razon_social) {
@@ -177,4 +177,5 @@ export const insertFactura = async (
       `Error al insertar la factura ${error.message && error.message}`
     );
   }
+  return id_factura;
 };

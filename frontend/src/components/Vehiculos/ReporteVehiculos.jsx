@@ -89,7 +89,7 @@ const ReporteVehiculos = () => {
   const renderImagenesCell = (data) => {
     return (
       <button
-        onClick={() => window.open(`/vehiculos/imagenes/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}vehiculos/imagenes/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Archivos
@@ -99,17 +99,17 @@ const ReporteVehiculos = () => {
   const renderModificarCell = (data) => {
     return (
       <button
-        onClick={() => window.open(`/vehiculos/actualizar/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}vehiculos/actualizar/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        Modificar
+        Modificarr
       </button>
     );
   };
   const renderEgresosCell = (data) => {
     return (
       <button
-        onClick={() => window.open(`/costos/egresos/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}costos/egresos/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Egresos
@@ -119,7 +119,7 @@ const ReporteVehiculos = () => {
   const renderIngresosCell = (data) => {
     return (
       <button
-        onClick={() => window.open(`/costos/ingresos/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}costos/ingresos/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Ingresos
@@ -129,7 +129,7 @@ const ReporteVehiculos = () => {
   const renderFichaCell = (data) => {
     return (
       <button
-        onClick={() => window.open(`/vehiculos/ficha/${data.data.id}`, '_blank')}
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}vehiculos/ficha/${data.data.id}`, '_blank')}
         style={{
           color: '#1976d2', fontSize: "11px",
           textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer'

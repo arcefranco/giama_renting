@@ -6,7 +6,6 @@ export const responses = {
 
 export const handleAsyncThunk = async (promiseFn, type, rejectWithValue) => {
   const result = await promiseFn();
-
   if (!result.status) {
     return rejectWithValue(result); // {status:false,message}
   }
