@@ -15,6 +15,7 @@ export const asientoContable = async (
   AsientoSecundario,
   TipoComprobante
 ) => {
+  console.log("IMPORTE: ", importe);
   if (db === "c_movimientos") {
     try {
       await pa7_giama_renting.query(

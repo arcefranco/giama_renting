@@ -1,9 +1,17 @@
 import { QueryTypes } from "sequelize";
-import { giama_renting } from "../../helpers/connection.js";
+import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { handleError, acciones } from "../../helpers/handleError.js";
 import { formatearFechaISOText } from "../../helpers/formatearFechaISO.js";
 import dotenv from "dotenv";
+import { asientoContable } from "../../helpers/asientoContable.js";
 dotenv.config();
+import { getParametro } from "../../helpers/getParametro.js";
+import { padWithZeros } from "../../helpers/padWithZeros.js";
+import {
+  getNumeroAsiento,
+  getNumeroAsientoSecundario,
+} from "../../helpers/getNumeroAsiento.js";
 const imageBase64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+gAAAPoBAMAAAC/jcnXAAAACXBIWXMAAAsSAAALEgHS3X78AAAAG1BMVEVHcE
 yPkJWZmZknMnCZmZknMnCZmZmZmZknMnDN6xkDAAAAB3RSTlMAPXt/tMvYMo+dkAAAGAZJREFUeNrswYEAAAAAgKD9qRepAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -135,7 +143,7 @@ export const getReciboById = async (req, res) => {
             <p><b>Teléfono: </b> +54 3534246184</p>
             </div>
             <div>
-            <p><b>Email: </b>info.giamarenting@gmail.com</p>
+            <p><b>Email: </b></p>
             </div>
           </div>
           <div>
@@ -159,7 +167,7 @@ export const getReciboById = async (req, res) => {
             <p><b>Pago: </b> # ${id}</p>
           </div>
           <div>
-            <p><b>Fecha Pago: </b>  ${formatearFechaISOText(getTodayDate())}</p>
+            <p><b>Fecha Pago: </b>  ${formatearFechaISOText(recibo.fecha)}</p>
           </div>
            <div>
             <p><b>Tipo Pago: </b> ${recibo.nombre_forma_cobro}</p>
@@ -196,8 +204,349 @@ export const getReciboById = async (req, res) => {
     return res.send({ status: true, data: { html: html } });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ status: false, message: "Error al generar el recibo" });
+    return res.send({ status: false, message: "Error al generar el recibo" });
   }
 };
+
+export const getRecibos = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query("SELECT * FROM recibos", {
+      type: QueryTypes.SELECT
+    })
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "Recibo", acciones.get);
+    return res.send(body);
+  }
+}
+
+
+//FUNCION AUXILIAR
+const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_pa7_giama_renting) => {
+  let NroAsiento;
+  let NroAsientoSecundario;
+
+  const result_costo = await giama_renting.query(
+      `SELECT * FROM costos_ingresos 
+      WHERE nro_recibo = ?
+      AND id_concepto IN (
+      SELECT id FROM conceptos_costos WHERE genera_recibo = 1)`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    if(!result_costo.length){
+      throw new Error("No se encontraron registros de ingresos asociados")
+    }
+  const costo_ingreso = result_costo[0]
+
+  const {nro_asiento} = costo_ingreso
+
+  //busco numeros de asiento
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+      throw error;
+  }
+  //realizo los asientos
+  try {
+  const today = getTodayDate()
+  const nro_comprobante = padWithZeros(`${NroAsiento}`, 13)
+await giama_renting.query(
+  `INSERT INTO c_movimientos (
+    Fecha,
+    NroAsiento,
+    Cuenta,
+    DH,
+    Importe,
+    Concepto,
+    TipoComprobante,
+    NroComprobante,
+    AsientoSecundario
+  )
+  SELECT
+    :today AS Fecha,
+    :NroAsiento AS NroAsiento,
+    Cuenta,
+    CASE WHEN DH = 'D' THEN 'H' ELSE 'D' END AS DH,
+    Importe,
+    CONCAT('Anulación de recibo ${id}') AS Concepto,
+    'ASD' AS TipoComprobante,
+    :nro_comprobante AS NroComprobante,
+    :NroAsientoSecundario AS AsientoSecundario
+  FROM c_movimientos
+  WHERE NroAsiento = :nro_asiento
+  `,
+  {
+    type: QueryTypes.INSERT,
+    replacements: {today, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento },
+    transaction: transaction_pa7_giama_renting
+  }
+);
+
+await giama_renting.query(
+  `INSERT INTO c2_movimientos (
+    Fecha,
+    NroAsiento,
+    Cuenta,
+    DH,
+    Importe,
+    Concepto,
+    TipoComprobante,
+    NroComprobante
+  )
+  SELECT
+    :today AS Fecha,
+    :NroAsientoSecundario AS NroAsiento,
+    Cuenta,
+    CASE WHEN DH = 'D' THEN 'H' ELSE 'D' END AS DH,
+    Importe,
+    CONCAT('Anulación de recibo ${id}') AS Concepto,
+    'ASD' AS TipoComprobante,
+    :nro_comprobante AS NroComprobante
+  FROM c_movimientos
+  WHERE NroAsiento = :nro_asiento
+  `,
+  {
+    type: QueryTypes.INSERT,
+    replacements: {today, NroAsientoSecundario, nro_comprobante, nro_asiento },
+    transaction: transaction_pa7_giama_renting
+  }
+);
+   /*  await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_concepto,
+      "D",
+      importe_neto,
+      `Anulación de recibo ${id}`,
+      transaction_pa7_giama_renting,
+      padWithZeros(`${NroAsiento}`, 13),
+      getTodayDate(),
+      NroAsientoSecundario,
+      "ASD"
+      );
+      await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIVA,
+      "D",
+      importe_iva,
+      `Anulación de recibo ${id}`,
+      transaction_pa7_giama_renting,
+      padWithZeros(`${NroAsiento}`, 13),
+      getTodayDate(),
+      NroAsientoSecundario,
+      "ASD"
+      );
+      await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_forma_cobro,
+      "H",
+      importe_total,
+      `Anulación de recibo ${id}`,
+      transaction_pa7_giama_renting,
+      padWithZeros(`${NroAsiento}`, 13),
+      getTodayDate(),
+      NroAsientoSecundario,
+      "ASD"
+      );
+      //asientos secundarios
+      await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_concepto,
+      "D",
+      importe_neto,
+      `Anulación de recibo ${id}`,
+      transaction_pa7_giama_renting,
+      padWithZeros(`${NroAsiento}`, 13),
+      getTodayDate(),
+      null,
+      "ASD"
+      );
+      await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaSecundariaIVA,
+      "D",
+      importe_iva,
+      `Anulación de recibo ${id}`,
+      transaction_pa7_giama_renting,
+      padWithZeros(`${NroAsiento}`, 13),
+      getTodayDate(),
+      null,
+      "ASD"
+      );
+      await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_forma_cobro,
+      "H",
+      importe_total,
+      `Anulación de recibo ${id}`,
+      transaction_pa7_giama_renting,
+      padWithZeros(`${NroAsiento}`, 13),
+      getTodayDate(),
+      null,
+      "ASD"
+      ); */
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
+  }
+}
+
+export const anulacionRecibo = async (req, res) => {
+  const { id } = req.body;
+  let id_factura;
+  let NumeroFacturaEmitida;
+  let CAE;
+  let VtoCAE;
+  let transaction_giama_renting = await giama_renting.transaction();
+  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+
+  try {
+    const result = await giama_renting.query(
+      "SELECT id_factura_pa6 FROM recibos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    id_factura = result[0]?.id_factura_pa6;
+  } catch (error) {
+    const { body } = handleError(error, "Recibo", acciones.get);
+    return res.send(body);
+  }
+
+  try {
+    const result = await pa7_giama_renting.query(
+      "SELECT * FROM facturas WHERE Id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_factura],
+      }
+    );
+
+    if (!result || result.length === 0) {
+      return res.send({ status: false, message: "Factura no encontrada" });
+    }
+
+    const factura = result[0];
+    NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
+    CAE = factura.CAE;
+    VtoCAE = factura.VtoCAE;
+
+
+    if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
+      await pa7_giama_renting.query("DELETE FROM facturasitems WHERE IdFactura = ?", {
+        type: QueryTypes.DELETE,
+        replacements: [id_factura],
+        transaction: transaction_pa7_giama_renting
+      });
+      await pa7_giama_renting.query("DELETE FROM facturas WHERE Id = ?", {
+        type: QueryTypes.DELETE,
+        replacements: [id_factura],
+        transaction: transaction_pa7_giama_renting
+      });
+
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting)
+      await giama_renting.query(`DELETE FROM costos_ingresos 
+      WHERE nro_recibo = ?`, {
+        type: QueryTypes.DELETE,
+        replacements: [id],
+        transaction: transaction_giama_renting
+      })
+
+      await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
+        type: QueryTypes.UPDATE,
+        replacements: [1, getTodayDate(), id],
+        transaction: transaction_giama_renting
+      })
+
+      return res.send({ status: true, message: "Recibo anulado correctamente" });
+
+    } else if (!NumeroFacturaEmitida || !CAE || !VtoCAE) {
+      return res.send({
+        status: false,
+        message: "La factura aún no puede ser eliminada",
+      });
+
+    } else {
+      // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
+      const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
+      let id_ndc;
+      let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
+      const result = await pa7_giama_renting.query(
+        `INSERT INTO facturas 
+         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, ${Object.keys(otrosCampos).join(", ")})
+         VALUES (?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: ["CB", FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
+          transaction: transaction_pa7_giama_renting
+        }
+      );
+      console.log(result);
+      id_ndc = result[0]
+      //o queda claro que se hace con facturasitems // se hace un solo registro igual pero x "anulacion factura x"
+      const descripcion_facturas_items = `Anulación factura ${Tipo} ${padWithZeros(PuntoVenta, 5)}-${padWithZeros(NumeroFacturaEmitida, 8)}`
+      await giama_renting.query(
+        `INSERT INTO facturasitems (
+          IdFactura,
+          TipoAlicuota,
+          Descripcion,
+          Cantidad,
+          PrecioUnitario,
+          Porcentaje,
+          Subtotal,
+          usd_precio_unitario,
+          usd_subtotal
+        )
+        SELECT
+          :id_ndc AS IdFactura,
+          TipoAlicuota,
+          :descripcion_facturas_items AS Descripcion,
+          Cantidad,
+          PrecioUnitario,
+          Porcentaje,
+          Subtotal,
+          usd_precio_unitario,
+          usd_subtotal
+        FROM facturasitems
+        WHERE IdFactura = :id_factura
+        `,
+        {
+          type: QueryTypes.INSERT,
+          replacements: {id_ndc, descripcion_facturas_items, id_factura},
+          transaction: transaction_pa7_giama_renting
+        }
+      );
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting)
+      await giama_renting.query(`DELETE FROM costos_ingresos 
+      WHERE nro_recibo = ?`, {
+        type: QueryTypes.DELETE,
+        replacements: [id],
+        transaction: transaction_giama_renting
+      })
+
+      await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
+        type: QueryTypes.UPDATE,
+        replacements: [1, getTodayDate(), id],
+        transaction: transaction_giama_renting
+      })
+      transaction_giama_renting.commit()
+      transaction_pa7_giama_renting.commit()
+      return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
+    }
+
+  } catch (error) {
+    const { body } = handleError(error, "Factura", acciones.get);
+    return res.send(body);
+  }
+};
+

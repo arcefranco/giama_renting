@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
-import { getReciboById } from "../controllers/recibosController.js";
-import express from "express";
+import { anulacionRecibo, getReciboById, getRecibos } from "../controllers/recibosController.js";
 const recibosRouter = Router();
 recibosRouter.use((req, res, next) => {
   res.header(
@@ -12,4 +11,6 @@ recibosRouter.use((req, res, next) => {
 });
 
 recibosRouter.post("/getReciboById", auth, getReciboById);
+recibosRouter.get("/getRecibos", auth, getRecibos);
+recibosRouter.post("/anulacionRecibo", auth, anulacionRecibo);
 export default recibosRouter;
