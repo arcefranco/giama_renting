@@ -294,9 +294,9 @@ const VehiculosForm = () => {
           </div>
           <div></div>
           <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>
-            <span>Cargar imágenes</span>
+            <span>Cargar archivos</span>
             <button type="button" style={{ width: "9rem" }} className={styles.sendBtn} onClick={handleFileClick}>
-              Seleccionar imágenes
+              Seleccionar archivos
             </button>
             <input
               type="file"

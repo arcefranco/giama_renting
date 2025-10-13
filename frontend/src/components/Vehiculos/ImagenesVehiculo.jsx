@@ -42,12 +42,12 @@ const ImagenesVehiculo = () => {
       // Luego actualizá tu estado o hacé refetch de las imágenes
     } catch (err) {
       console.error(err);
-      alert('Error al eliminar la imagen');
+      alert('Error al eliminar el archivo');
     }
   };
   const handleDeleteClick = (imagen) => {
     Swal.fire({
-      title: '¿Seguro que querés eliminar esta imagen?',
+      title: '¿Seguro que querés eliminar este archivo?',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
