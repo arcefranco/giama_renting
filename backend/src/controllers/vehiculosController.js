@@ -1019,17 +1019,14 @@ export const getCostoNetoVehiculo = async (req, res) => {
     SELECT
       v.id AS id_vehiculo,
       v.precio_inicial,
-      cc.activable,
       COALESCE(SUM(ci.importe_neto), 0) AS importe_neto
     FROM vehiculos v
     LEFT JOIN costos_ingresos ci 
       ON ci.id_vehiculo = v.id
-      AND ci.fecha <= ?
-    LEFT JOIN conceptos_costos cc 
-      ON ci.id_concepto = cc.id
+      AND ci.id_concepto IN (SELECT id FROM conceptos_costos WHERE activable)
+      and ci.fecha <= ?
     WHERE v.id = ?
-    AND cc.activable = 1
-    GROUP BY ci.id;
+    GROUP BY v.id;
   `;
 
   try {
@@ -1041,10 +1038,10 @@ export const getCostoNetoVehiculo = async (req, res) => {
       return res.send({ costo_neto_total: 0 });
     }
     precio_inicial = result[0]["precio_inicial"];
-    sum_gastos_activables = result.reduce((total, item) => {
-      return item.activable === 1 ? total + Math.abs(item.importe_neto) : total;
-    }, 0);
-    precio_inicial_total = parseFloat(precio_inicial) + sum_gastos_activables;
+    sum_gastos_activables = result[0]["importe_neto"];
+    console.log(precio_inicial, sum_gastos_activables)
+    precio_inicial_total = parseFloat(precio_inicial) + (parseFloat(sum_gastos_activables) * -1);
+    console.log("precio total: ", precio_inicial_total)
     return res.send({
       costo_neto_total: precio_inicial_total,
     });
