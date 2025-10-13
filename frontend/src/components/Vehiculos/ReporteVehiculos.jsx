@@ -92,7 +92,7 @@ const ReporteVehiculos = () => {
         onClick={() => window.open(`/vehiculos/imagenes/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        Imagenes
+        Archivos
       </button>
     );
   };
