@@ -102,7 +102,7 @@ const ReporteVehiculos = () => {
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}vehiculos/actualizar/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        Modificarr
+        Modificar
       </button>
     );
   };
