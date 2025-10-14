@@ -12,5 +12,5 @@ recibosRouter.use((req, res, next) => {
 
 recibosRouter.post("/getReciboById", auth, getReciboById);
 recibosRouter.get("/getRecibos", auth, getRecibos);
-recibosRouter.post("/anulacionRecibo", auth, authorizeAdmin(), anulacionRecibo);
+recibosRouter.post("/anulacionRecibo", auth, authorizeAdmin(), anulacionRecibo); /*  */
 export default recibosRouter;
