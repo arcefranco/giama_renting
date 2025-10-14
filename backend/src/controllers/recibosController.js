@@ -215,6 +215,7 @@ export const getRecibos = async (req, res) => {
     })
     return res.send(resultado);
   } catch (error) {
+    console.log("error en backend getRecibos: ", error)
     const { body } = handleError(error, "Recibo", acciones.get);
     return res.send(body);
   }
