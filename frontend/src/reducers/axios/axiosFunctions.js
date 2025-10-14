@@ -20,6 +20,7 @@ export const getFunction = async (route) => {
 
     return { status: false, message: "Formato inesperado en la respuesta." };
   } catch (error) {
+    console.log(error)
     return ServiceErrorHandler(error, route); // devuelve {status:false,message}
   }
 };
