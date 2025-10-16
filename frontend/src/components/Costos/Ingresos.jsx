@@ -6,6 +6,7 @@ import {
 } from '../../reducers/Costos/costosSlice.js';
 import { postCostos_Ingresos, reset } from "../../reducers/Costos/ingresosSlice.js"
 import { getVehiculos, getVehiculosById, resetVehiculo } from '../../reducers/Vehiculos/vehiculosSlice'
+import { getContratosByIdVehiculo } from '../../reducers/Alquileres/alquileresSlice.js'
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
 import { getModelos, getFormasDeCobro } from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
@@ -21,6 +22,7 @@ import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { getReciboIngresoById, resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
 import Swal from 'sweetalert2';
 import { toNumber } from '../../../../backend/helpers/toNumber.js';
+import { getToday } from '../../helpers/getTodayDate.js'
 
 const Ingresos = () => {
 
@@ -29,6 +31,7 @@ const Ingresos = () => {
   const dispatch = useDispatch()
   const { costos_ingresos_vehiculo, conceptos, isLoading: isLoadingCostos } = useSelector((state) => state.costosReducer)
   const { isError, isSuccess, isLoading, message, nro_recibo_ingreso } = useSelector((state) => state.ingresosReducer)
+  const { contratosVehiculo } = useSelector((state) => state.alquileresReducer);
   const { vehiculo, vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
   const { username } = useSelector((state) => state.loginReducer)
@@ -128,9 +131,36 @@ const Ingresos = () => {
   useEffect(() => { /**OBTENGO COSTOS DEL VEHICULO DESDE EL SELECT */
     if (!id && form.id_vehiculo) {
       dispatch(getCostosIngresosByIdVehiculo({ id: form.id_vehiculo })),
-        dispatch(getVehiculosById({ id: form.id_vehiculo }))
+        dispatch(getVehiculosById({ id: form.id_vehiculo })),
+        dispatch(getContratosByIdVehiculo({ id: form.id_vehiculo }))
     }
   }, [form.id_vehiculo])
+
+  useEffect(() => { /**ACTUALIZA id_cliente SI EL VEHICULO TIENE UN CONTRATO VIGENTE */
+    if (!contratosVehiculo?.length) return;
+
+    const hoy = getToday()
+    // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
+    const contratoVigente = contratosVehiculo.find(c => {
+      const desde = new Date(c.fecha_desde);
+      const hasta = new Date(c.fecha_hasta);
+      return hoy >= desde && hoy <= hasta;
+    });
+
+    // Si hay contrato vigente, actualizar el form
+    if (contratoVigente) {
+      setForm(prev => ({
+        ...prev,
+        id_cliente: contratoVigente.id_cliente
+      }));
+    } else {
+      // Si no hay contrato vigente, dejar vacío
+      setForm(prev => ({
+        ...prev,
+        id_cliente: ""
+      }));
+    }
+  }, [contratosVehiculo]);
 
   useEffect(() => { /**FILTRADO DE CONCEPTOS */
     if (conceptos?.length) {
