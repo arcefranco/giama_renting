@@ -102,7 +102,9 @@ export const getReciboById = async (req, res) => {
         c.nro_direccion AS numero_direccion,
         f.nombre AS nombre_forma_cobro,
         u.nombre AS nombre_usuario,
-        s.nombre AS nombre_sucursal
+        s.nombre AS nombre_sucursal,
+        v.dominio AS dominio_vehiculo,
+        v.dominio_provisorio AS dominio_provisorio_vehiculo
       FROM recibos r
       LEFT JOIN clientes c ON c.id = r.id_cliente
       LEFT JOIN formas_cobro f ON f.id = r.id_forma_cobro
@@ -137,10 +139,13 @@ export const getReciboById = async (req, res) => {
             <p><b>Nombre: </b> Giama Renting</p>
             </div>
             <div>
-            <p><b>IVA Responsable Inscripto CUIT 30-71228441-9</b></p>
+            <p><b>IVA Responsable Inscripto CUIT 30-71865120-0</b></p>
             </div>
             <div>
-            <p><b>Teléfono: </b> +54 3534246184</p>
+            <p><b>Teléfono: </b> + 54 9 11 2638-6003</p>
+            </div>
+            <div>
+            <p><b>Dirección: </b> + Av. San Juan 1733 – CABA</p>
             </div>
             <div>
             <p><b>Email: </b></p>
@@ -189,6 +194,9 @@ export const getReciboById = async (req, res) => {
         
         
         <h5>Detalle</h5>
+        <div style="font-size: 12px">
+        <p><b>Dominio: ${recibo.dominio_vehiculo ? recibo.dominio_vehiculo : recibo.dominio_provisorio_vehiculo ? recibo.dominio_provisorio_vehiculo : "SIN DOMINIO"}</b></p>
+        </div>
         <div style="display: flex;  justify-content: space-between; font-size: 12px">
         <p>${recibo.detalle}</p>
         <p>$${recibo.importe_total}</p>
