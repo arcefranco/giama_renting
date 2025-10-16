@@ -272,7 +272,7 @@ export const postAlquiler = async (req, res) => {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
-    console.log(error);
+    console.log("THIS: ", error);
     const { body } = handleError(error, "número de asiento");
     return res.send(body);
   }
@@ -290,6 +290,7 @@ export const postAlquiler = async (req, res) => {
       id_contrato,
       null,
       id_forma_cobro_alquiler,
+      null,
       transaction_giama_renting
     );
   } catch (error) {
