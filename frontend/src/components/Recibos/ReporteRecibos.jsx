@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from "react-redux"
 import DataGrid, {
-    Column, Scrolling, Paging, TotalItem, Summary,
+    Column, Scrolling, Paging, TotalItem, Summary, Lookup,
     SearchPanel, HeaderFilter, FilterRow
 } from "devextreme-react/data-grid"
 import 'devextreme/dist/css/dx.carmine.css';
@@ -11,6 +11,7 @@ import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { getRecibos, reset, getReciboByIdSlice, anulacionRecibo } from '../../reducers/Recibos/recibosSlice.js'
 import { getClientes } from '../../reducers/Clientes/clientesSlice';
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
+import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js';
 import styles from "./ReporteRecibos.module.css"
 
 
@@ -20,6 +21,7 @@ const ReporteRecibos = () => {
         dispatch(getRecibos())
         dispatch(getClientes())
         dispatch(getVehiculos())
+        dispatch(getFormasDeCobro())
         return () => {
             dispatch(reset())
         }
@@ -38,6 +40,7 @@ const ReporteRecibos = () => {
     const {
         vehiculos
     } = useSelector((state) => state.vehiculosReducer)
+    const { formasDeCobro } = useSelector((state) => state.generalesReducer)
     useToastFeedback({
         isError,
         isSuccess,
@@ -69,15 +72,35 @@ const ReporteRecibos = () => {
             return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
         }
     }
-    const renderVehiculo = (data) => {
-        if (data.value) {
-            const vehiculo = vehiculos?.find(e => e.id == data.value)
-            return <div>
-                <span>{vehiculo?.dominio ? vehiculo?.dominio : vehiculo?.dominio_provisorio ?
-                    vehiculo?.dominio_provisorio : "SIN DOMINIO"}</span>
-            </div>
+    const calculateFechaFilter = (filterValue, operation) => {
+        if (!filterValue) {
+            return null;
         }
-    }
+
+        // Expresión regular que valida el formato DD/MM/YYYY (o DD-MM-YYYY)
+        const dateRegex = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/;
+        const match = filterValue.match(dateRegex);
+
+        if (match) {
+            // match[1]=Día, match[2]=Mes, match[3]=Año
+            const [full, day, month, year] = match;
+
+            // Aseguramos que Mes y Día tengan dos dígitos
+            const normalizedDay = day.padStart(2, '0');
+            const normalizedMonth = month.padStart(2, '0');
+
+            // Transformar a formato YYYY-MM-DD
+            const formattedDate = `${year}-${normalizedMonth}-${normalizedDay}`;
+
+            // Devolver la expresión de filtro
+            // [dataField, 'operacion', valor_formateado_a_YMD]
+            return ["fecha", operation, formattedDate];
+
+        }
+
+        // Si no es un formato DD/MM/YYYY válido, se busca el valor tal cual
+        return ["fecha", operation, filterValue];
+    };
     const renderNombreCliente = (data) => {
         if (data.value) {
             const cliente = clientes?.find(e => e.id == data.value)
@@ -86,14 +109,17 @@ const ReporteRecibos = () => {
             </div> : <div></div>
         }
     }
-    const renderNroDoc = (data) => {
-        if (data.value) {
-            const cliente = clientes?.find(e => e.id == data.value)
-            return cliente ? <div>
-                <span>{cliente?.nro_documento}</span>
-            </div> : <div></div>
-        }
-    }
+    const getIdClientePorNombre = (texto) => {
+        if (!texto || !clientes?.length) return null;
+        const normalizar = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const textoNorm = normalizar(texto);
+        const clienteEncontrado = clientes.find(c => {
+            const nombreCompleto = normalizar(`${c.nombre} ${c.apellido}`);
+            return nombreCompleto.includes(textoNorm);
+        });
+        return clienteEncontrado?.id || null;
+    };
+
     const handleActualizar = () => {
         dispatch(getRecibos())
     }
@@ -188,38 +214,82 @@ const ReporteRecibos = () => {
                 columnAutoWidth={true}
                 height={400}
             >
+                <FilterRow visible={true} showAllText={""} />
                 <SearchPanel visible={true} highlightCaseSensitive={true} />
                 <HeaderFilter visible={true} />
                 <Scrolling mode="standard" />
                 <Paging defaultPageSize={10} />
                 <Column dataField="id" caption="Nro. Recibo" width={100} dataType="string" alignment="left" />
-                <Column dataField="fecha" allowSearch={false} allowHeaderFiltering={false} caption="Fecha" cellRender={renderFecha} alignment="center" />
-                <Column dataField="id_cliente" caption="Cliente" dataType="string" alignment="center" cellRender={renderNombreCliente} />
-                <Column dataField="id_cliente" caption="CUIL/CUIT" dataType="string" alignment="center" cellRender={renderNroDoc} />
-                <Column dataField="id_vehiculo" caption="Dominio" alignment="center" cellRender={renderVehiculo} />
-                <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" />
+                <Column
+                    dataField="fecha"
+                    caption="Fecha"
+                    cellRender={renderFecha}
+                    alignment="center"
+                    dataType="string" // Forzar editor de texto
+                    allowSearch={true}
+                    allowHeaderFiltering={false} // Eliminar el desplegable del encabezado
+                    calculateFilterExpression={calculateFechaFilter}
+                >
+                </Column>
+                {/* COLUMNA CLIENTE (Nombre) */}
+                <Column
+                    dataField="id_cliente"
+                    caption="Cliente"
+                    dataType="string"
+                    alignment="center"
+                    cellRender={renderNombreCliente}
+                    allowHeaderFiltering={false}
+                    calculateFilterExpression={(filterValue, selectedFilterOperation, target) => {
+                        if (!filterValue) return;
+                        // Creamos una expresión personalizada: buscamos coincidencias en nombre o apellido
+                        return [
+                            ["id_cliente", "=", getIdClientePorNombre(filterValue)]
+                        ];
+                    }}
+                />
+
+                {/* COLUMNA CUIL/CUIT */}
+                <Column
+                    caption="CUIL/CUIT"
+                    alignment="center"
+                    allowFiltering={true}
+                    allowHeaderFiltering={false}
+                    calculateCellValue={(rowData) => {
+                        if (!clientes?.length) return "";
+                        const cliente = clientes.find(c => c.id === rowData.id_cliente);
+                        return cliente?.nro_documento || "";
+                    }}
+                    cellRender={({ value }) => <span>{value}</span>}
+                />
+
+                <Column
+                    caption="Dominio"
+                    alignment="center"
+                    allowFiltering={true}
+                    allowHeaderFiltering={false}
+                    dataType="string" // 🔹 importante
+                    calculateCellValue={(rowData) => {
+                        const vehiculo = vehiculos?.find(e => e.id == rowData.id_vehiculo);
+                        return vehiculo?.dominio || vehiculo?.dominio_provisorio || "SIN DOMINIO";
+                    }}
+                    cellRender={({ value }) => <span>{value}</span>}
+                />
+                <Column
+                    dataField="id_forma_cobro"
+                    caption="Forma de pago"
+                    alignment="right"
+                >
+                    <Lookup
+                        dataSource={formasDeCobro} // El array con ID y nombre
+                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
+                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                    />
+                </Column>
+                <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
                 <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderAnularRecibo} />
-
-
-                {/*                 <Summary calculateCustomSummary={handleCustomSummary}>
-                    <TotalItem
-                        name="importeTotal"
-                        column="importe_neto"
-                        summaryType="custom"
-                        displayFormat="Total: {0}"
-                        showInColumn="importe_neto"
-                        customizeText={(e) => `Total: ${e.value.toLocaleString()}`}
-                    />
-                    <TotalItem
-                        name="countVehiculos"
-                        column="id_vehiculo"
-                        summaryType="custom"
-                        displayFormat="Total registros: {0}"
-                        showInColumn="id_vehiculo" />
-                </Summary> */}
             </DataGrid>
         </div>
     )
