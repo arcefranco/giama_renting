@@ -476,6 +476,7 @@ export const postContratoAlquiler = async (req, res) => {
   let cuentaDEPO;
   let cuentaDEP2;
   let idContrato;
+  let id_factura;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
@@ -708,29 +709,7 @@ export const postContratoAlquiler = async (req, res) => {
   //inserto recibo alquiler
   if (ingresa_alquiler == 1) {
     try {
-      nro_recibo_alquiler = await insertRecibo(
-        getTodayDate(),
-        detalle_alquiler,
-        importe_total,
-        usuario,
-        id_cliente,
-        id_vehiculo,
-        null,
-        null,
-        id_forma_cobro_alquiler,
-        transaction_giama_renting
-      );
-    } catch (error) {
-      console.log(error);
-
-      const { body } = handleError(error, "Recibo de alquiler", acciones.post);
-      return res.send(body);
-    }
-  }
-  //inserto factura de la semana de alquiler
-  if (ingresa_alquiler == 1) {
-    try {
-      await insertFactura(
+        id_factura = await insertFactura(
         id_cliente,
         importe_neto,
         importe_iva,
@@ -742,12 +721,23 @@ export const postContratoAlquiler = async (req, res) => {
         transaction_giama_renting,
         transaction_pa7_giama_renting
       );
-    } catch (error) {
-      const { body } = handleError(
-        error,
-        "Factura del alquiler",
-        acciones.post
+      nro_recibo_alquiler = await insertRecibo(
+        getTodayDate(),
+        detalle_alquiler,
+        importe_total,
+        usuario,
+        id_cliente,
+        id_vehiculo,
+        null,
+        null,
+        id_forma_cobro_alquiler,
+        id_factura,
+        transaction_giama_renting
       );
+    } catch (error) {
+      console.log(error);
+
+      const { body } = handleError(error, "Recibo de alquiler", acciones.post);
       return res.send(body);
     }
   }
@@ -765,6 +755,7 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         null,
         id_forma_cobro_contrato,
+        null,
         transaction_giama_renting
       );
     } catch (error) {
