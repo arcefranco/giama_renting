@@ -91,46 +91,50 @@ export const postCliente = async (req, res) => {
   const transaction = await giama_renting.transaction();
   let insertId;
   try {
-    const result = await giama_renting.query(
-      `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
-        tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
-        nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, telefono_alternativo, mail, notas, resolucion_datero, fecha_resolucion_datero,
-        usuario_resolucion_datero, usuario_alta)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      {
+const result = await giama_renting.query(
+    `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
+      tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
+      nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, telefono_alternativo, mail, notas, resolucion_datero, fecha_resolucion_datero,
+      usuario_resolucion_datero, usuario_alta)
+      VALUES (:nombre, :apellido, :razon_social, :fecha_nacimiento, :nacionalidad, :tipo_contribuyente,
+      :tipo_documento, :nro_documento, :doc_expedido_por, :licencia, :lic_expedida_por, :fecha_vencimiento_licencia, :direccion,
+      :nro_direccion, :piso, :depto, :codigo_postal, :provincia, :ciudad, :celular, :telefono_alternativo, :mail, :notas, :resolucion_datero, :fecha_resolucion_datero,
+      :usuario_resolucion_datero, :usuario_alta)`,
+    {
         type: QueryTypes.INSERT,
-        replacements: [
-          nombre,
-          apellido,
-          razon_social,
-          fecha_nacimiento,
-          nacionalidad,
-          tipo_contribuyente,
-          tipo_documento,
-          nro_documento,
-          doc_expedido_por,
-          licencia,
-          lic_expedida_por,
-          fecha_vencimiento ? fecha_vencimiento : null,
-          direccion,
-          nro_direccion,
-          piso,
-          depto,
-          codigo_postal,
-          provincia,
-          ciudad,
-          celular,
-          telefono_alternativo,
-          mail,
-          notas,
-          resolucion_datero,
-          hoy,
-          usuario_resolucion_datero,
-          usuario,
-        ],
+        // 2. Transforma el array 'replacements' en un objeto
+        replacements: {
+            nombre: nombre,
+            apellido: apellido,
+            razon_social: razon_social,
+            fecha_nacimiento: fecha_nacimiento,
+            nacionalidad: nacionalidad,
+            tipo_contribuyente: tipo_contribuyente,
+            tipo_documento: tipo_documento,
+            nro_documento: nro_documento,
+            doc_expedido_por: doc_expedido_por,
+            licencia: licencia,
+            lic_expedida_por: lic_expedida_por,
+            fecha_vencimiento_licencia: fecha_vencimiento ? fecha_vencimiento : null, // Mapea la variable 'fecha_vencimiento'
+            direccion: direccion,
+            nro_direccion: nro_direccion,
+            piso: piso,
+            depto: depto,
+            codigo_postal: codigo_postal,
+            provincia: provincia,
+            ciudad: ciudad,
+            celular: celular,
+            telefono_alternativo: telefono_alternativo,
+            mail: mail,
+            notas: notas  ? notas : null, // Utiliza la variable 'notas'
+            resolucion_datero: resolucion_datero,
+            fecha_resolucion_datero: hoy, // Mapea la variable 'hoy'
+            usuario_resolucion_datero: usuario_resolucion_datero,
+            usuario_alta: usuario, // Mapea la variable 'usuario'
+        },
         transaction: transaction,
-      }
-    );
+    }
+);
     insertId = result[0];
   } catch (error) {
     console.log(error);
