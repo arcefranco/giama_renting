@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from "react-redux"
 import DataGrid, {
     Column, Scrolling, Paging, TotalItem, Summary, Lookup,
-    SearchPanel, HeaderFilter, FilterRow
+    SearchPanel, HeaderFilter, FilterRow, Export
 } from "devextreme-react/data-grid"
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
@@ -13,7 +13,9 @@ import { getClientes } from '../../reducers/Clientes/clientesSlice';
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js';
 import styles from "./ReporteRecibos.module.css"
-
+import { Workbook } from 'devextreme-exceljs-fork';
+import { saveAs } from 'file-saver-es';
+import { exportDataGrid } from 'devextreme/excel_exporter';
 
 const ReporteRecibos = () => {
     const dispatch = useDispatch()
@@ -172,6 +174,71 @@ const ReporteRecibos = () => {
         )
 
     }
+
+    const getVehiculoExportValue = (id_vehiculo) => {
+        if (!id_vehiculo) return '';
+        const vehiculo = vehiculos?.find(e => e.id == id_vehiculo);
+        if (!vehiculo) return "SIN DATOS";
+
+        // Obtener dominio
+        const dominio = vehiculo.dominio || vehiculo.dominio_provisorio || "SIN DOMINIO";
+
+        // Obtener modelo
+        const modeloNombre = modelos?.find(e => e.id == vehiculo.modelo)?.nombre || "";
+
+        return `${dominio} ${modeloNombre}`;
+    };
+
+    // Cliente: Nombre y Apellido
+    const getClienteExportValue = (id_cliente) => {
+        if (!id_cliente) return '';
+        const cliente = clientes?.find(e => e.id == id_cliente);
+        return cliente ? `${cliente.nombre} ${cliente.apellido}` : '';
+    };
+
+    // Fechas: YYYY-MM-DD a DD/MM/YYYY
+    const getFechaExportValue = (fecha_iso) => {
+        if (!fecha_iso) return '';
+        const fechaSplit = fecha_iso.split("-");
+        // Formato DD/MM/YYYY
+        return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`;
+    };
+    const onExporting = (e) => {
+        const workbook = new Workbook();
+        const worksheet = workbook.addWorksheet('Contratos');
+
+        exportDataGrid({
+            component: e.component,
+            worksheet: worksheet,
+            autoFilterEnabled: true,
+
+            // ******* Lógica para sobrescribir los valores en el Excel *******
+            customizeCell: ({ gridCell, excelCell }) => {
+                if (gridCell.rowType === 'data') {
+                    const dataField = gridCell.column.dataField;
+                    const rawValue = gridCell.data[dataField]; // Valor original del array 'contratos'
+
+                    // Columna Vehículo (id_vehiculo)
+                    if (dataField === 'id_vehiculo') {
+                        excelCell.value = getVehiculoExportValue(rawValue);
+                    }
+                    // Columna Cliente (id_cliente)
+                    else if (dataField === 'id_cliente') {
+                        excelCell.value = getClienteExportValue(rawValue);
+                    }
+                    // Columnas de Fecha (fecha_desde, fecha_hasta)
+                    else if (dataField === 'fecha') {
+                        excelCell.value = getFechaExportValue(rawValue);
+                    }
+                }
+            },
+            // ***************************************************************
+        }).then(() => {
+            workbook.xlsx.writeBuffer().then((buffer) => {
+                saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'ListadoContratos.xlsx');
+            });
+        });
+    };
     return (
         <div className={styles.container}>
             <ToastContainer />
@@ -213,7 +280,9 @@ const ReporteRecibos = () => {
                 allowColumnResizing={true}
                 columnAutoWidth={true}
                 height={400}
+                onExporting={onExporting}
             >
+                <Export enabled={true} fileName="Listado_Recibos" />
                 <FilterRow visible={true} showAllText={""} />
                 <SearchPanel visible={true} highlightCaseSensitive={true} />
                 <HeaderFilter visible={true} />
@@ -286,9 +355,9 @@ const ReporteRecibos = () => {
                     />
                 </Column>
                 <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
-                <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption=""
+                <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
-                <Column dataField="id" allowSearch={false} allowHeaderFiltering={false} alignment="center" caption=""
+                <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderAnularRecibo} />
             </DataGrid>
         </div>
