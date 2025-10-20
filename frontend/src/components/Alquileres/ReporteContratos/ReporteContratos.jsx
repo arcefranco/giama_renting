@@ -4,13 +4,19 @@ import { getVehiculos } from "./../../../reducers/Vehiculos/vehiculosSlice"
 import { getClientes } from "./../../../reducers/Clientes/clientesSlice"
 import { getModelos } from "./../../../reducers/Generales/generalesSlice"
 import { useDispatch, useSelector } from "react-redux"
-import DataGrid, { Column, Scrolling, Paging, TotalItem, Summary } from "devextreme-react/data-grid"
+import DataGrid, { Column, Scrolling, Paging, TotalItem, Summary, FilterRow, HeaderFilter, Export } from "devextreme-react/data-grid"
 import styles from "./ReporteContratos.module.css"
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
 import { esAnteriorAHoy } from '../../../helpers/esAnteriorAHoy'
 import { ToastContainer, toast } from 'react-toastify';
 import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
+import { Workbook } from 'devextreme-exceljs-fork';
+import { saveAs } from 'file-saver-es';
+import { exportDataGrid } from 'devextreme/excel_exporter';
+
+
+
 
 const ReporteContratos = () => {
   const dispatch = useDispatch()
@@ -77,10 +83,27 @@ const ReporteContratos = () => {
       const cliente = clientes?.find(e => e.id == data.value)
       return <div>
         <span>{cliente?.nombre}</span>
+        <span> </span>
         <span>{cliente?.apellido}</span>
       </div>
     }
   }
+  const getClienteNombreCompletoParaOrdenar = (id_cliente) => {
+    const cliente = clientes?.find(e => e.id == id_cliente);
+    // Combina apellido y nombre para ordenar correctamente por apellido primero
+    return cliente ? `${cliente.nombre} ${cliente.apellido}` : '';
+  };
+
+  const getIdClientePorNombre = (texto) => {
+    if (!texto || !clientes?.length) return null;
+    const normalizar = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const textoNorm = normalizar(texto);
+    const clienteEncontrado = clientes.find(c => {
+      const nombreCompleto = normalizar(`${c.nombre} ${c.apellido}`);
+      return nombreCompleto.includes(textoNorm);
+    });
+    return clienteEncontrado?.id || null;
+  };
 
   const renderModificar = (data) => {
     const row = data.data
@@ -149,7 +172,6 @@ const ReporteContratos = () => {
   }
 
   const handleCustomSummary = (e) => {
-    console.log("summaryProcess", e.summaryProcess);
     if (e.name === "countVehiculos") {
       if (e.summaryProcess === "start") {
         e.totalValue = 0;
@@ -158,6 +180,70 @@ const ReporteContratos = () => {
         e.totalValue += 1;
       }
     }
+  };
+  const getVehiculoExportValue = (id_vehiculo) => {
+    if (!id_vehiculo) return '';
+    const vehiculo = vehiculos?.find(e => e.id == id_vehiculo);
+    if (!vehiculo) return "SIN DATOS";
+
+    // Obtener dominio
+    const dominio = vehiculo.dominio || vehiculo.dominio_provisorio || "SIN DOMINIO";
+
+    // Obtener modelo
+    const modeloNombre = modelos?.find(e => e.id == vehiculo.modelo)?.nombre || "";
+
+    return `${dominio} ${modeloNombre}`;
+  };
+
+  // Cliente: Nombre y Apellido
+  const getClienteExportValue = (id_cliente) => {
+    if (!id_cliente) return '';
+    const cliente = clientes?.find(e => e.id == id_cliente);
+    return cliente ? `${cliente.nombre} ${cliente.apellido}` : '';
+  };
+
+  // Fechas: YYYY-MM-DD a DD/MM/YYYY
+  const getFechaExportValue = (fecha_iso) => {
+    if (!fecha_iso) return '';
+    const fechaSplit = fecha_iso.split("-");
+    // Formato DD/MM/YYYY
+    return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`;
+  };
+  const onExporting = (e) => {
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet('Contratos');
+
+    exportDataGrid({
+      component: e.component,
+      worksheet: worksheet,
+      autoFilterEnabled: true,
+
+      // ******* Lógica para sobrescribir los valores en el Excel *******
+      customizeCell: ({ gridCell, excelCell }) => {
+        if (gridCell.rowType === 'data') {
+          const dataField = gridCell.column.dataField;
+          const rawValue = gridCell.data[dataField]; // Valor original del array 'contratos'
+
+          // Columna Vehículo (id_vehiculo)
+          if (dataField === 'id_vehiculo') {
+            excelCell.value = getVehiculoExportValue(rawValue);
+          }
+          // Columna Cliente (id_cliente)
+          else if (dataField === 'id_cliente') {
+            excelCell.value = getClienteExportValue(rawValue);
+          }
+          // Columnas de Fecha (fecha_desde, fecha_hasta)
+          else if (dataField === 'fecha_desde' || dataField === 'fecha_hasta') {
+            excelCell.value = getFechaExportValue(rawValue);
+          }
+        }
+      },
+      // ***************************************************************
+    }).then(() => {
+      workbook.xlsx.writeBuffer().then((buffer) => {
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'ListadoContratos.xlsx');
+      });
+    });
   };
   return (
     <div className={styles.container}>
@@ -173,7 +259,7 @@ const ReporteContratos = () => {
         </div>
       )}
       <h2>Listado de contratos</h2>
-      <div className={styles.filter}>
+      {/*       <div className={styles.filter}>
         <div style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -189,7 +275,7 @@ const ReporteContratos = () => {
           </div>
         </div>
         <button className={styles.searchButton} onClick={handleSubmit}>Buscar</button>
-      </div>
+      </div> */}
       <button onClick={handleActualizar} className={styles.refreshButton}>
         🔄 Actualizar reporte
       </button>
@@ -201,15 +287,28 @@ const ReporteContratos = () => {
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={400}
+        height={550}
+        onExporting={onExporting}
       >
         <Scrolling mode="standard" />
-        <Paging defaultPageSize={10} />
-        <Column dataField="id_vehiculo" caption="Vehículo" cellRender={renderVehiculo} alignment="center" />
-        <Column dataField="id_cliente" caption="Cliente" cellRender={renderCliente} alignment="center" />
-        <Column dataField="fecha_desde" caption="Desde" cellRender={renderFecha} alignment="center" />
-        <Column dataField="fecha_hasta" caption="Hasta" cellRender={renderFecha} alignment="center" />
-        <Column dataField="deposito_garantia" alignment="right" caption="Depósito"
+        <FilterRow visible={true} showAllText={""} />
+        <Export enabled={true} fileName="Listado_Contratos" />
+        <HeaderFilter visible={true} />
+        <Paging defaultPageSize={12} />
+        <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderVehiculo} alignment="center" />
+        <Column dataField="id_cliente" dataType="string" caption="Cliente" cellRender={renderCliente} alignment="center"
+          calculateSortValue={(data) => getClienteNombreCompletoParaOrdenar(data.id_cliente)}
+          allowHeaderFiltering={false}
+          calculateFilterExpression={(filterValue, selectedFilterOperation, target) => {
+            if (!filterValue) return;
+            // Creamos una expresión personalizada: buscamos coincidencias en nombre o apellido
+            return [
+              ["id_cliente", "=", getIdClientePorNombre(filterValue)]
+            ];
+          }} />
+        <Column dataField="fecha_desde" caption="Desde" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />
+        <Column dataField="fecha_hasta" caption="Hasta" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />
+        <Column dataField="deposito_garantia" alignment="right" allowHeaderFiltering={false} allowFiltering={false} caption="Depósito"
           customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
         <Column caption="" cellRender={renderModificar} alignment="center" />
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />
