@@ -3,11 +3,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
 import AlquileresForm from "../AlquileresForm/AlquileresForm.jsx";
 import {
-  postContratoAlquiler, getFormasDeCobro, getContratosByIdVehiculo,
+  postContratoAlquiler, getContratosByIdVehiculo,
   getContratoById, anulacionContrato, reset, reset_nro_recibo
 } from "../../../reducers/Alquileres/alquileresSlice.js";
 import { getVehiculos, getVehiculosById } from "../../../reducers/Vehiculos/vehiculosSlice.js";
-import { getModelos, getSucursales } from "../../../reducers/Generales/generalesSlice.js";
+import { getModelos, getSucursales, getFormasDeCobro } from "../../../reducers/Generales/generalesSlice.js";
 import { getClientes, getEstadoCliente, resetEstadoCliente } from "../../../reducers/Clientes/clientesSlice.js";
 import styles from "../AlquileresForm/AlquileresForm.module.css"
 import DatePicker from "react-datepicker";
@@ -60,7 +60,7 @@ const ContratoAlquiler = () => {
   const fechaHastaPorDefecto = addDaysHelper(fechaDesdePorDefecto, 90);
 
   const { isError, isSuccess, isLoading,
-    message, formasDeCobro, contratosVehiculo, contratoById, nro_recibo_alquiler,
+    message, contratosVehiculo, contratoById, nro_recibo_alquiler,
     nro_recibo_deposito } = useSelector((state) => state.alquileresReducer)
   const { html_recibo_alquiler, html_recibo_deposito } = useSelector((state) => state.recibosReducer);
   const { username } = useSelector((state) => state.loginReducer)
@@ -80,7 +80,7 @@ const ContratoAlquiler = () => {
   });
   const { vehiculos, vehiculo } = useSelector((state) => state.vehiculosReducer)
   const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
-  const { modelos, sucursales } = useSelector((state) => state.generalesReducer)
+  const { modelos, sucursales, formasDeCobro } = useSelector((state) => state.generalesReducer)
   useToastFeedback({
     isError,
     isSuccess,
