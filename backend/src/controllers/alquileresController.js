@@ -736,7 +736,8 @@ export const postContratoAlquiler = async (req, res) => {
       );
     } catch (error) {
       console.log(error);
-
+      transaction_pa7_giama_renting.rollback()
+      transaction_giama_renting.rollback()
       const { body } = handleError(error, "Recibo de alquiler", acciones.post);
       return res.send(body);
     }
@@ -778,7 +779,7 @@ export const postContratoAlquiler = async (req, res) => {
           fecha_desde_contrato_parseada,
           fecha_hasta_contrato_parseada,
           deposito ? deposito : null,
-          id_forma_cobro_contrato,
+          id_forma_cobro_contrato ? id_forma_cobro_contrato : null,
           getTodayDate(),
           NroAsiento ? NroAsiento : null,
           nro_recibo_deposito ? nro_recibo_deposito : null,
@@ -789,6 +790,8 @@ export const postContratoAlquiler = async (req, res) => {
     idContrato = result;
   } catch (error) {
     console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Contrato de alquiler", acciones.post);
     return res.send(body);
   }
