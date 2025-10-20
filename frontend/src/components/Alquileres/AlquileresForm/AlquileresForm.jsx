@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify';
-import { getModelos } from '../../../reducers/Generales/generalesSlice.js'
+import { getModelos, getFormasDeCobro } from '../../../reducers/Generales/generalesSlice.js'
 import {
-  getFormasDeCobro, reset,
+  reset,
   postAlquiler,
   getAlquilerByIdContrato,
   getContratoById,
   reset_nro_recibo
 } from '../../../reducers/Alquileres/alquileresSlice.js'
+
 import { getVehiculos } from '../../../reducers/Vehiculos/vehiculosSlice.js'
 import { getClientes } from '../../../reducers/Clientes/clientesSlice.js'
 import { ClipLoader } from "react-spinners";
@@ -48,11 +49,11 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     }
   }, [])
   const { isError, isSuccess, isLoading,
-    message, formasDeCobro, alquilerByIdContrato, contratoById, nro_recibo_alquiler } = useSelector((state) => state.alquileresReducer)
+    message, alquilerByIdContrato, contratoById, nro_recibo_alquiler } = useSelector((state) => state.alquileresReducer)
   const { html_recibo_alquiler } = useSelector((state) => state.recibosReducer);
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
-  const { modelos } = useSelector((state) => state.generalesReducer)
+  const { modelos, formasDeCobro } = useSelector((state) => state.generalesReducer)
   const { username } = useSelector((state) => state.loginReducer)
   registerLocale("es", es);
   const getNextWednesday = (fromDate) => {
