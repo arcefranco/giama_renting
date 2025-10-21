@@ -431,20 +431,18 @@ export const anulacionRecibo = async (req, res) => {
     const { body } = handleError(error, "Recibo", acciones.get);
     return res.send(body);
   }
-
+  if(id_factura){
   try {
-    const result = await pa7_giama_renting.query(
+   const result = await pa7_giama_renting.query(
       "SELECT * FROM facturas WHERE Id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_factura],
       }
     );
-
     if (!result || result.length === 0) {
       return res.send({ status: false, message: "Factura no encontrada" });
     }
-
     const factura = result[0];
     NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
     CAE = factura.CAE;
@@ -552,10 +550,34 @@ export const anulacionRecibo = async (req, res) => {
       transaction_pa7_giama_renting.commit()
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
-
-  } catch (error) {
+    } catch (error) {
     const { body } = handleError(error, "Factura", acciones.get);
     return res.send(body);
+    }
   }
+  else{
+    try {
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting)
+      await giama_renting.query(`DELETE FROM costos_ingresos 
+      WHERE nro_recibo = ?`, {
+        type: QueryTypes.DELETE,
+        replacements: [id],
+        transaction: transaction_giama_renting
+      })
+
+      await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
+        type: QueryTypes.UPDATE,
+        replacements: [1, getTodayDate(), id],
+        transaction: transaction_giama_renting
+      })
+
+      return res.send({ status: true, message: "Recibo anulado correctamente" });
+    } catch (error) {
+    const { body } = handleError(error, "Recibo", acciones.delete);
+    return res.send(body);
+    }
+
+  }
+
 };
 
