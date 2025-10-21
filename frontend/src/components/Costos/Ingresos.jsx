@@ -6,7 +6,7 @@ import {
 } from '../../reducers/Costos/costosSlice.js';
 import { postCostos_Ingresos, reset } from "../../reducers/Costos/ingresosSlice.js"
 import { getVehiculos, getVehiculosById, resetVehiculo } from '../../reducers/Vehiculos/vehiculosSlice'
-import { getContratosByIdVehiculo } from '../../reducers/Alquileres/alquileresSlice.js'
+import { getContratosByIdVehiculo, getContratosByIdCliente } from '../../reducers/Alquileres/alquileresSlice.js'
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
 import { getModelos, getFormasDeCobro } from '../../reducers/Generales/generalesSlice'
 import { useParams } from 'react-router-dom';
@@ -31,7 +31,7 @@ const Ingresos = () => {
   const dispatch = useDispatch()
   const { costos_ingresos_vehiculo, conceptos, isLoading: isLoadingCostos } = useSelector((state) => state.costosReducer)
   const { isError, isSuccess, isLoading, message, nro_recibo_ingreso } = useSelector((state) => state.ingresosReducer)
-  const { contratosVehiculo } = useSelector((state) => state.alquileresReducer);
+  const { contratosVehiculo, contratosCliente } = useSelector((state) => state.alquileresReducer);
   const { vehiculo, vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
   const { username } = useSelector((state) => state.loginReducer)
@@ -136,6 +136,10 @@ const Ingresos = () => {
     }
   }, [form.id_vehiculo])
 
+  useEffect(() => {
+    dispatch(getContratosByIdCliente({ id: form.id_cliente }))
+  }, [form.id_cliente])
+
   useEffect(() => { /**ACTUALIZA id_cliente SI EL VEHICULO TIENE UN CONTRATO VIGENTE */
     if (!contratosVehiculo?.length) return;
 
@@ -161,6 +165,32 @@ const Ingresos = () => {
       }));
     }
   }, [contratosVehiculo]);
+
+  useEffect(() => { /**ACTUALIZA id_vehiculo SI EL CLIENTE TIENE UN CONTRATO VIGENTE */
+    if (!contratosCliente?.length) return;
+
+    const hoy = getToday()
+    // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
+    const contratoVigente = contratosCliente.find(c => {
+      const desde = new Date(c.fecha_desde);
+      const hasta = new Date(c.fecha_hasta);
+      return hoy >= desde && hoy <= hasta;
+    });
+
+    // Si hay contrato vigente, actualizar el form
+    if (contratoVigente) {
+      setForm(prev => ({
+        ...prev,
+        id_vehiculo: contratoVigente.id_vehiculo
+      }));
+    } else {
+      // Si no hay contrato vigente, dejar vacío
+      setForm(prev => ({
+        ...prev,
+        id_vehiculo: ""
+      }));
+    }
+  }, [contratosCliente]);
 
   useEffect(() => { /**FILTRADO DE CONCEPTOS */
     if (conceptos?.length) {
@@ -595,30 +625,57 @@ const Ingresos = () => {
           <h2>Seleccionar un vehículo</h2>
 
       }
-      {!id && <div className={styles.inputContainer}>
-        <span>Vehículo</span>
-        <Select
-          options={opcionesVehiculos}
-          value={
-            opcionesVehiculos?.find(
-              (opt) => String(opt.value) === String(form.id_vehiculo)
-            ) || null
-          }
-          onChange={(option) => {
-            setForm((prevForm) => ({
-              ...prevForm,
-              id_vehiculo: option?.value || "",
-            }));
-          }}
-          placeholder="Seleccione un vehículo"
-          filterOption={(option, inputValue) =>
-            option.data.searchKey.includes(inputValue.toLowerCase())
-          }
-          styles={customStyles}
+      <div style={{
+        display: "flex",
+        columnGap: "15rem"
+      }}>
+        {!id && <div className={styles.inputContainer}>
+          <span>Vehículo</span>
+          <Select
+            options={opcionesVehiculos}
+            value={
+              opcionesVehiculos?.find(
+                (opt) => String(opt.value) === String(form.id_vehiculo)
+              ) || null
+            }
+            onChange={(option) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                id_vehiculo: option?.value || "",
+              }));
+            }}
+            placeholder="Seleccione un vehículo"
+            filterOption={(option, inputValue) =>
+              option.data.searchKey.includes(inputValue.toLowerCase())
+            }
+            styles={customStyles}
 
-        />
+          />
+        </div>
+        }
+        {
+          !id &&
+          <div className={styles.inputWrapper} >
+            <span>Clientes</span>
+            <div className={styles.selectWithIcon} style={{
+              width: "20rem"
+            }}>
+              <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
+                <option value={""} selected>{"Seleccione un cliente"}</option>
+                {
+                  clientes?.length && clientes.map(e => (
+                    <option key={e.id} value={e.id}>
+                      {e.nro_documento} - {e.nombre} {e.apellido}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+          </div>
+        }
+
       </div>
-      }
+
       <button onClick={handleActualizar} className={styles.refreshButton}>
         🔄 Actualizar
       </button>
@@ -679,23 +736,7 @@ const Ingresos = () => {
               <input type="date" name='fecha' value={form["fecha"]}
                 onChange={handleChange} />
             </div>
-            <div className={styles.inputWrapper} >
-              <span>Clientes</span>
-              <div className={styles.selectWithIcon} style={{
-                width: "20rem"
-              }}>
-                <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
-                  <option value={""} selected>{"Seleccione un cliente"}</option>
-                  {
-                    clientes?.length && clientes.map(e => (
-                      <option key={e.id} value={e.id}>
-                        {e.nro_documento} - {e.nombre} {e.apellido}
-                      </option>
-                    ))
-                  }
-                </select>
-              </div>
-            </div>
+
             <div className={styles.inputContainer}>
               <span>Forma de cobro</span>
               <select name="id_forma_cobro" value={form["id_forma_cobro"]}

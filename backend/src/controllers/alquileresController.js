@@ -1011,6 +1011,31 @@ export const getContratosByIdVehiculo = async (req, res) => {
   }
 };
 
+export const getContratosByIdCliente = async (req, res) => {
+  const { id } = req.body;
+  if (!id)
+    return res.send({
+      statuts: false,
+      message: "No se encontró el id del vehículo",
+    });
+  try {
+    const result = await giama_renting.query(
+      `SELECT * 
+      FROM contratos_alquiler 
+      WHERE id_cliente = ? 
+      AND fecha_hasta >= CURDATE();`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    return res.send(result);
+  } catch (error) {
+    const { body } = handleError(error, "Contratos del vehículo", acciones.get);
+    return res.send(body);
+  }
+};
+
 export const getAlquilerByIdContrato = async (req, res) => {
   const { id } = req.body;
   if (!id)
