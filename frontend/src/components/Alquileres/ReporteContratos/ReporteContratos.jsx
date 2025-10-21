@@ -118,7 +118,7 @@ const ReporteContratos = () => {
 
   const renderModificar = (data) => {
     const row = data.data
-    if (esAnteriorAHoy(row.fecha_hasta)) {
+    if (row.dias_pendientes === 0) {
       return (
         <button
           style={{
@@ -131,7 +131,7 @@ const ReporteContratos = () => {
           Modificar
         </button>
       )
-    } else if (!esAnteriorAHoy(row.fecha_hasta)) {
+    } else if (row.dias_pendientes > 0) {
       return (
         <button
           onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
@@ -149,7 +149,7 @@ const ReporteContratos = () => {
 
   const renderRenovarAlquiler = (data) => {
     const row = data.data
-    if (esAnteriorAHoy(row.fecha_hasta)) {
+    if (row.dias_pendientes === 0) {
       return (
         <button
           style={{
@@ -162,7 +162,7 @@ const ReporteContratos = () => {
           Renovar alquiler
         </button>
       )
-    } else if (!esAnteriorAHoy(row.fecha_hasta)) {
+    } else if (row.dias_pendientes > 0) {
       return (
         <button
           onClick={() => window.open(`${import.meta.env.VITE_BASENAME}alquileres/${data.data.id}`, '_blank')}
@@ -310,7 +310,7 @@ const ReporteContratos = () => {
         <FilterRow visible={true} showAllText={""} />
         <Export enabled={true} fileName="Listado_Contratos" />
         <HeaderFilter visible={true} />
-        <Paging defaultPageSize={12} />
+        <Paging defaultPageSize={20} />
         <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderVehiculo} alignment="center" />
         <Column dataField="id_cliente" dataType="string" caption="Cliente" cellRender={renderCliente} alignment="center"
           calculateSortValue={(data) => getClienteNombreCompletoParaOrdenar(data.id_cliente)}
