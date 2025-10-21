@@ -1068,64 +1068,54 @@ export const getAlquileres = async (req, res) => {
 };
 
 export const getContratos = async (req, res) => {
-  const { fecha_desde, fecha_hasta, vigentes } = req.body;
-/*   if (!fecha_desde || !fecha_hasta) { */
-    if(vigentes){
-      try {
-      const result = await giama_renting.query(
-        `SELECT 
-  c.*, 
-  a.id AS ultimo_alquiler_id, 
-  a.fecha_desde AS ultima_fecha_desde, 
-  a.fecha_hasta AS ultima_fecha_hasta
-FROM contratos_alquiler c
-LEFT JOIN alquileres a 
-  ON a.id = (
-    SELECT MAX(id)
-    FROM alquileres
-    WHERE alquileres.id_contrato = c.id
-  )
-WHERE (a.fecha_hasta < c.fecha_hasta)
-ORDER BY a.id;`,
-        {
-          type: QueryTypes.SELECT,
-        }
+  const { vigentes } = req.body;
+
+  const baseQuery = `
+    SELECT 
+      c.*, 
+      (
+        DATEDIFF(c.fecha_hasta, c.fecha_desde) 
+        - IFNULL((
+            SELECT SUM(DATEDIFF(alq.fecha_hasta, alq.fecha_desde))
+            FROM alquileres alq
+            WHERE alq.id_contrato = c.id
+          ), 0)
+      ) AS dias_pendientes,
+      a.id AS ultimo_alquiler_id,
+      a.fecha_desde AS ultima_fecha_desde,
+      a.fecha_hasta AS ultima_fecha_hasta
+    FROM contratos_alquiler c
+    LEFT JOIN alquileres a 
+      ON a.id = (
+        SELECT MAX(id)
+        FROM alquileres
+        WHERE alquileres.id_contrato = c.id
+      )
+  `;
+
+  try {
+    let result;
+
+    if (vigentes) {
+      result = await giama_renting.query(
+        baseQuery + `
+        WHERE (a.fecha_hasta < c.fecha_hasta OR a.id IS NULL)
+        ORDER BY a.id;`,
+        { type: QueryTypes.SELECT }
       );
-      return res.send(result);
-    } catch (error) {
-      const { body } = handleError(error, "Contratos", acciones.get);
-      return res.send(body);
-    }
-    }else{
-      try {
-        const result = await giama_renting.query(
-          "SELECT * FROM contratos_alquiler",
-          {
-            type: QueryTypes.SELECT,
-          }
-        );
-        return res.send(result);
-      } catch (error) {
-        const { body } = handleError(error, "Contratos", acciones.get);
-        return res.send(body);
-      }
-    }
-/*   } */
-/*   if (fecha_desde && fecha_hasta) {
-    try {
-      const result = await giama_renting.query(
-        "SELECT * FROM contratos_alquiler WHERE fecha_desde >= ? AND fecha_hasta <= ?",
-        {
-          type: QueryTypes.SELECT,
-          replacements: [fecha_desde, fecha_hasta],
-        }
+    } else {
+      result = await giama_renting.query(
+        baseQuery + `
+        ORDER BY c.id;`,
+        { type: QueryTypes.SELECT }
       );
-      return res.send(result);
-    } catch (error) {
-      const { body } = handleError(error, "Contratos", acciones.get);
-      return res.send(body);
     }
-  } */
+
+    return res.send(result);
+  } catch (error) {
+    const { body } = handleError(error, "Contratos", acciones.get);
+    return res.send(body);
+  }
 };
 
 export const getContratoById = async (req, res) => {
