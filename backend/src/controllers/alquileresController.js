@@ -1085,9 +1085,7 @@ LEFT JOIN alquileres a
     FROM alquileres
     WHERE alquileres.id_contrato = c.id
   )
-WHERE 
-  c.fecha_hasta >= CURDATE()
-  AND (a.fecha_hasta < c.fecha_hasta)
+WHERE (a.fecha_hasta < c.fecha_hasta)
 ORDER BY a.id;`,
         {
           type: QueryTypes.SELECT,
