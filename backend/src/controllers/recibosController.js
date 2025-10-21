@@ -474,8 +474,8 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-      transaction_giama_renting.commit();
-      transaction_pa7_giama_renting.commit();
+      await transaction_giama_renting.commit();
+      await transaction_pa7_giama_renting.commit();
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
 
@@ -548,8 +548,8 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-      transaction_giama_renting.commit()
-      transaction_pa7_giama_renting.commit()
+      await transaction_giama_renting.commit()
+      await transaction_pa7_giama_renting.commit()
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
     } catch (error) {
@@ -573,8 +573,8 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_giama_renting
       })
 
-      transaction_giama_renting.commit();
-      transaction_pa7_giama_renting.commit();
+      await transaction_giama_renting.commit();
+      await transaction_pa7_giama_renting.commit();
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
     } catch (error) {
