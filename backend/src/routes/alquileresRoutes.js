@@ -13,6 +13,7 @@ import {
   getContratoById,
   anulacionContrato,
   getAlquilerByIdContrato,
+  getContratosByIdCliente,
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
@@ -45,6 +46,7 @@ alquileresRouter.get(
 );
 alquileresRouter.post("/idVehiculo", auth, getAlquileresByIdVehiculo);
 alquileresRouter.post("/contrato/idVehiculo", auth, getContratosByIdVehiculo);
+alquileresRouter.post("/contrato/idCliente", auth, getContratosByIdCliente);
 alquileresRouter.post("/id", getAlquilerByIdContrato);
 alquileresRouter.post(
   "/contrato/id",
