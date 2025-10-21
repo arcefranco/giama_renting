@@ -51,6 +51,9 @@ const ReporteContratos = () => {
     message,
     resetAction: reset,
   })
+  useEffect(() => {
+    dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: form.vigentes }))
+  }, [form.vigentes]);
   const handleActualizar = () => {
     dispatch(getContratos({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"] }))
   }
@@ -290,7 +293,7 @@ const ReporteContratos = () => {
       <div className={styles.inputContainer} style={{ alignItems: "self-end" }}>
         <span>Vigentes</span>
         <input type="checkbox" name='vigentes' value={form["vigentes"]}
-          onChange={handleCheckChange} />
+          onChange={handleCheckChange} checked={!!form.vigentes} />
       </div>
       <DataGrid
         className={styles.dataGrid}
