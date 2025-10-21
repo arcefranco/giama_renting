@@ -48,6 +48,10 @@ const getContratosByIdVehiculo = async (data) => {
   return postArrayFunction("alquileres/contrato/idVehiculo", data);
 };
 
+const getContratosByIdCliente = async (data) => {
+  return postArrayFunction("alquileres/contrato/idCliente", data);
+};
+
 const getAlquilerByIdContrato = async (data) => {
   return postArrayFunction("alquileres/id", data);
 };
@@ -70,6 +74,7 @@ const alquileresService = {
   getAnulaciones,
   postContratoAlquiler,
   getContratosByIdVehiculo,
+  getContratosByIdCliente,
 };
 
 export default alquileresService;
