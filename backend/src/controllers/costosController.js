@@ -1074,7 +1074,6 @@ async function registrarIngresoIndividual({
   let genera_recibo_final;
   let genera_factura_final;
   let conceptos_recibo = [];
-
   try {
     const result = await giama_renting.query(
       `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
@@ -1263,7 +1262,7 @@ async function registrarIngresoIndividual({
     );
   } catch (error) {
     await transaction_asientos.rollback();
-    transaction_costos_ingresos.rollback();
+    await transaction_costos_ingresos.rollback();
     throw error;
   }
   //factura
@@ -1291,7 +1290,7 @@ async function registrarIngresoIndividual({
       try {
         //inserto recibo
         nro_recibo = await insertRecibo(
-          getTodayDate(),
+          fecha,
           detalle_recibo,
           importe_total_recibo,
           usuario,
