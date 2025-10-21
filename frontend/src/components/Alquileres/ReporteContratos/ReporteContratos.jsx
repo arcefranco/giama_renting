@@ -23,7 +23,7 @@ const ReporteContratos = () => {
 
   useEffect(() => {
     Promise.all([
-      dispatch(getContratos({ fecha_desde: "", fecha_hasta: "" })),
+      dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: 1 })),
       dispatch(getVehiculos()),
       dispatch(getClientes()),
       dispatch(getModelos())
@@ -43,6 +43,7 @@ const ReporteContratos = () => {
   const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
+    vigentes: 1
   })
   useToastFeedback({
     isError,
@@ -59,6 +60,13 @@ const ReporteContratos = () => {
       ...form,
       [name]: value
     })
+  }
+  const handleCheckChange = (e) => {
+    const { name, checked } = e.target;
+    setForm(prevForm => ({
+      ...prevForm,
+      [name]: checked ? 1 : 0
+    }));
   }
   const renderFecha = (data) => {
     if (data.value) {
@@ -241,7 +249,7 @@ const ReporteContratos = () => {
       // ***************************************************************
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'ListadoContratos.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'Listado_Contratos.xlsx');
       });
     });
   };
@@ -279,6 +287,11 @@ const ReporteContratos = () => {
       <button onClick={handleActualizar} className={styles.refreshButton}>
         🔄 Actualizar reporte
       </button>
+      <div className={styles.inputContainer} style={{ alignItems: "self-end" }}>
+        <span>Vigentes</span>
+        <input type="checkbox" name='vigentes' value={form["vigentes"]}
+          onChange={handleCheckChange} />
+      </div>
       <DataGrid
         className={styles.dataGrid}
         dataSource={contratos || []}
