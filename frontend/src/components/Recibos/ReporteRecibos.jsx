@@ -235,7 +235,7 @@ const ReporteRecibos = () => {
             // ***************************************************************
         }).then(() => {
             workbook.xlsx.writeBuffer().then((buffer) => {
-                saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'ListadoContratos.xlsx');
+                saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'Listado_Recibos.xlsx');
             });
         });
     };
