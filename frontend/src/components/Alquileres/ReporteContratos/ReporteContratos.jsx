@@ -55,7 +55,7 @@ const ReporteContratos = () => {
     dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: form.vigentes }))
   }, [form.vigentes]);
   const handleActualizar = () => {
-    dispatch(getContratos({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"] }))
+    dispatch(getContratos({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"], vigentes: form["vigentes"] }))
   }
   const handleChange = (e) => {
     const { name, value } = e.target;
