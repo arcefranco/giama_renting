@@ -259,9 +259,10 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
       nro_asiento_original = result_costo[0]["nro_asiento"]
     }
     else if(result_alquiler.length){
-      nro_asiento_original = result_costo[0]["nro_asiento"]
+      nro_asiento_original = result_alquiler[0]["nro_asiento"]
     }
   } catch (error) {
+    console.log(error)
     throw new Error("Error al buscar ingresos/alquiler asociado")
   }
   //busco numeros de asiento
