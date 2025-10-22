@@ -234,8 +234,9 @@ export const getRecibos = async (req, res) => {
 const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_pa7_giama_renting) => {
   let NroAsiento;
   let NroAsientoSecundario;
-
-  const result_costo = await giama_renting.query(
+  let nro_asiento_original;
+  try {
+    const result_costo = await giama_renting.query(
       `SELECT * FROM costos_ingresos 
       WHERE nro_recibo = ?
       AND id_concepto IN (
@@ -245,13 +246,24 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
         replacements: [id],
       }
     );
-    if(!result_costo.length){
-      throw new Error("No se encontraron registros de ingresos asociados")
+    const result_alquiler = await giama_renting.query("SELECT * FROM alquileres WHERE nro_recibo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id]
+      }
+    )
+    if(!result_alquiler.length && !result_costo.length){
+      throw new Error ("No existe alquiler/ingreso con ese número de recibo asociado")
     }
-  const costo_ingreso = result_costo[0]
-
-  const {nro_asiento} = costo_ingreso
-
+    else if(result_costo.length){
+      nro_asiento_original = result_costo[0]["nro_asiento"]
+    }
+    else if(result_alquiler.length){
+      nro_asiento_original = result_costo[0]["nro_asiento"]
+    }
+  } catch (error) {
+    throw new Error("Error al buscar ingresos/alquiler asociado")
+  }
   //busco numeros de asiento
   try {
     NroAsiento = await getNumeroAsiento();
@@ -286,11 +298,11 @@ await giama_renting.query(
     :nro_comprobante AS NroComprobante,
     :NroAsientoSecundario AS AsientoSecundario
   FROM c_movimientos
-  WHERE NroAsiento = :nro_asiento
+  WHERE NroAsiento = :nro_asiento_original
   `,
   {
     type: QueryTypes.INSERT,
-    replacements: {today, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento },
+    replacements: {today, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
     transaction: transaction_pa7_giama_renting
   }
 );
@@ -316,11 +328,11 @@ await giama_renting.query(
     'ASD' AS TipoComprobante,
     :nro_comprobante AS NroComprobante
   FROM c_movimientos
-  WHERE NroAsiento = :nro_asiento
+  WHERE NroAsiento = :nro_asiento_original
   `,
   {
     type: QueryTypes.INSERT,
-    replacements: {today, NroAsientoSecundario, nro_comprobante, nro_asiento },
+    replacements: {today, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
     transaction: transaction_pa7_giama_renting
   }
 );
