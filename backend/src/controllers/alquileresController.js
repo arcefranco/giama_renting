@@ -123,6 +123,7 @@ export const postAlquiler = async (req, res) => {
     apellido_cliente,
     //no incluye fecha_cobro, hasta ahora se coloca fecha de hoy
     usuario,
+    fecha_recibo,
     id_vehiculo,
     id_cliente,
     fecha_desde_alquiler,
@@ -281,7 +282,7 @@ export const postAlquiler = async (req, res) => {
   //inserto recibo
   try {
     nro_recibo = await insertRecibo(
-      getTodayDate(),
+      fecha_recibo,
       concepto,
       importe_total,
       usuario,
@@ -455,6 +456,7 @@ export const postContratoAlquiler = async (req, res) => {
     ingresa_alquiler,
     fecha_desde_alquiler,
     fecha_hasta_alquiler,
+    fecha_recibo,
     importe_neto,
     importe_iva,
     importe_total,
@@ -722,7 +724,7 @@ export const postContratoAlquiler = async (req, res) => {
         transaction_pa7_giama_renting
       );
       nro_recibo_alquiler = await insertRecibo(
-        getTodayDate(),
+        fecha_recibo,
         detalle_alquiler,
         importe_total,
         usuario,

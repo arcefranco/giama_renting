@@ -84,6 +84,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     id_cliente: '',
     fecha_desde_alquiler: fechaDesdePorDefecto,
     fecha_hasta_alquiler: fechaHastaPorDefecto,
+    fecha_recibo: '',
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
@@ -110,6 +111,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           importe_neto: '',
           ingresa_alquiler: 1,
           importe_iva: '',
+          fecha_recibo: '',
           usuario: username,
           importe_total: '',
           id_forma_cobro_alquiler: '',
@@ -437,6 +439,11 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               placeholderText="Seleccione una fecha"
               locale="es"
             />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha del recibo</span>
+            <input type="date" name='fecha_recibo' value={form["fecha_recibo"]}
+              onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
             <span>Importe total</span>
