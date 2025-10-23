@@ -60,8 +60,10 @@ function App() {
             <Route path="/vehiculos" element={<VehiculosForm />} />
           </Route>
           <Route path="/vehiculosReporte" element={<ReporteVehiculos />} />
-          <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo />} />
-          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["3", "4"]} />}>
+            <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2", "4"]} />}>
             <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo />} />
           </Route>
           <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo />} />
