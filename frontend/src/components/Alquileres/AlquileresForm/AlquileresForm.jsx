@@ -28,7 +28,7 @@ import { getReciboAlquilerById, resetAlquiler } from "../../../reducers/Recibos/
 import Swal from 'sweetalert2';
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
-  minDateContrato, maxDateContrato, vehiculo, cliente }) => {
+  minDateContrato, maxDateContrato, vehiculo, cliente, fecha_recibo_deposito }) => {
   const dispatch = useDispatch()
   const { idContrato } = useParams()
   useEffect(() => {
@@ -97,6 +97,11 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     importe_iva_3: '',
     importe_total_3: '',
     id_forma_cobro_alquiler_3: '',
+    fecha_recibo_alquiler: '',
+    importe_neto: '',
+    importe_iva: '',
+    importe_total: '',
+    id_forma_cobro_alquiler: '',
     usuario: username,
     observacion: '',
     cuenta_contable_forma_cobro_alquiler_1: '',
@@ -122,6 +127,8 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           id_contrato: idContrato,
           ingresa_alquiler: 1,
           fecha_recibo: '',
+          importe_iva: '',
+          fecha_recibo_alquiler: '',
           usuario: username,
           importe_iva_1: '',
           importe_neto_1: '',
@@ -187,6 +194,15 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     })
 
   }, [fechaDesdePorDefecto, fechaHastaPorDefecto])
+
+  useEffect(() => {
+    if (fecha_recibo_deposito) {
+      setForm({
+        ...form,
+        fecha_recibo_alquiler: fecha_recibo_deposito
+      })
+    }
+  }, [fecha_recibo_deposito])
 
   useEffect(() => {
     if (contratoById?.length && clientes?.length) {
@@ -499,7 +515,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           </div>
           <div className={styles.inputContainer}>
             <span>Fecha del recibo</span>
-            <input type="date" name='fecha_recibo' value={form["fecha_recibo"]}
+            <input type="date" name='fecha_recibo_alquiler' value={form["fecha_recibo_alquiler"]}
               onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>

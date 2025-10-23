@@ -554,7 +554,8 @@ export const postContratoAlquiler = async (req, res) => {
     ingresa_alquiler,
     fecha_desde_alquiler,
     fecha_hasta_alquiler,
-    fecha_recibo,
+    fecha_recibo_alquiler,
+    fecha_recibo_deposito,
     importe_neto,
     importe_iva,
     importe_total,
@@ -822,7 +823,7 @@ export const postContratoAlquiler = async (req, res) => {
         transaction_pa7_giama_renting
       );
       nro_recibo_alquiler = await insertRecibo(
-        fecha_recibo,
+        fecha_recibo_alquiler,
         detalle_alquiler,
         importe_total,
         usuario,
@@ -847,7 +848,7 @@ export const postContratoAlquiler = async (req, res) => {
   if (ingresa_deposito == 1) {
     try {
       nro_recibo_deposito = await insertRecibo(
-        getTodayDate(),
+        fecha_recibo_deposito,
         conceptoDeposito,
         deposito,
         usuario,
