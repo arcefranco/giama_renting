@@ -53,7 +53,7 @@ vehiculosRouter.post(
 vehiculosRouter.post(
   "/postImagenesVehiculo",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("4", "3"),
   upload.array("images"),
   postImagenesVehiculo
 );
@@ -73,7 +73,7 @@ vehiculosRouter.post("/eliminarImagenes", auth, eliminarImagenes);
 vehiculosRouter.post(
   "/updateVehiculo",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("2", "4"),
   updateVehiculo
 );
 vehiculosRouter.post("/getCostosPeriodo", auth, getCostosPeriodo);

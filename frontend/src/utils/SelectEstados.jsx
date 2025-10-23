@@ -7,6 +7,7 @@ const SelectEstados = ({
   estados = [], // viene de la base: id + nombre
   value,
   onChange,
+  disabled,
   placeholder = "Seleccione un estado",
 }) => {
   const options = estados.map((e) => ({
@@ -64,6 +65,7 @@ const SelectEstados = ({
 
   return (
     <Select
+      isDisabled={disabled}
       options={options}
       value={selectedOption}
       onChange={(option) => onChange(option?.value)}
