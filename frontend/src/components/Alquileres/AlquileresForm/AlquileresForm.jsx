@@ -28,7 +28,7 @@ import { getReciboAlquilerById, resetAlquiler } from "../../../reducers/Recibos/
 import Swal from 'sweetalert2';
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
-  minDateContrato, maxDateContrato, vehiculo, cliente }) => {
+  minDateContrato, maxDateContrato, vehiculo, cliente, fecha_recibo_deposito }) => {
   const dispatch = useDispatch()
   const { idContrato } = useParams()
   useEffect(() => {
@@ -84,7 +84,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     id_cliente: '',
     fecha_desde_alquiler: fechaDesdePorDefecto,
     fecha_hasta_alquiler: fechaHastaPorDefecto,
-    fecha_recibo: '',
+    fecha_recibo_alquiler: '',
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
@@ -111,7 +111,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           importe_neto: '',
           ingresa_alquiler: 1,
           importe_iva: '',
-          fecha_recibo: '',
+          fecha_recibo_alquiler: '',
           usuario: username,
           importe_total: '',
           id_forma_cobro_alquiler: '',
@@ -162,6 +162,15 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     })
 
   }, [fechaDesdePorDefecto, fechaHastaPorDefecto])
+
+  useEffect(() => {
+    if (fecha_recibo_deposito) {
+      setForm({
+        ...form,
+        fecha_recibo_alquiler: fecha_recibo_deposito
+      })
+    }
+  }, [fecha_recibo_deposito])
 
   useEffect(() => {
     if (contratoById?.length && clientes?.length) {
@@ -442,7 +451,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           </div>
           <div className={styles.inputContainer}>
             <span>Fecha del recibo</span>
-            <input type="date" name='fecha_recibo' value={form["fecha_recibo"]}
+            <input type="date" name='fecha_recibo_alquiler' value={form["fecha_recibo_alquiler"]}
               onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
