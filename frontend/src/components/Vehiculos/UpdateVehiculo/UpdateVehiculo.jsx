@@ -16,7 +16,10 @@ const UpdateVehiculo = () => {
   const { modelos, proveedoresGPS, sucursales, estados } = useSelector(state => state.generalesReducer);
   const { username } = useSelector(state => state.loginReducer);
   const { vehiculo, isError, isSuccess, isLoading, message } = useSelector(state => state.vehiculosReducer);
-
+  const { roles } = useSelector((state) => state.loginReducer)
+  const [userRoles, setUserRoles] = useState([]);
+  const [disabledAdm, setDisabledAdm] = useState(true);
+  const [disabledFin, setDisabledFin] = useState(true);
   const [form, setForm] = useState({
     usuario: username,
     modelo: '',
@@ -43,10 +46,24 @@ const UpdateVehiculo = () => {
     dispatch(getModelos());
     dispatch(getProveedoresGPS());
     dispatch(getSucursales()),
-    dispatch(getEstados())
-    dispatch(getVehiculosById({id: id}));
+      dispatch(getEstados())
+    dispatch(getVehiculosById({ id: id }));
   }, [id]);
-
+  useEffect(() => {
+    setUserRoles(roles.split(","))
+  }, [roles])
+  useEffect(() => {
+    if (userRoles.includes("4")) {
+      setDisabledAdm(false)
+    }
+    if (userRoles.includes("2")) {
+      setDisabledFin(false)
+    }
+    if (userRoles.includes("1")) {
+      setDisabledAdm(false)
+      setDisabledFin(false)
+    }
+  }, [userRoles])
   useEffect(() => {
     if (vehiculo) {
       setForm({
@@ -69,12 +86,12 @@ const UpdateVehiculo = () => {
         estado: vehiculo[0].estado_actual || '',
         dominio: vehiculo[0].dominio ? vehiculo[0].dominio : "",
         dominio_provisorio: vehiculo[0].dominio_provisorio ? vehiculo[0].dominio_provisorio : "",
-        
+
       });
     }
   }, [vehiculo]);
 
-useToastFeedback({
+  useToastFeedback({
     isError,
     isSuccess,
     message,
@@ -101,11 +118,11 @@ useToastFeedback({
   };
 
   const customStyles = {
-  container: (provided) => ({
-    ...provided,
-    width: '16rem',
-  })
-};
+    container: (provided) => ({
+      ...provided,
+      width: '16rem',
+    })
+  };
 
   return (
     <div>
@@ -117,30 +134,30 @@ useToastFeedback({
             <p className={styles.loadingText}>Cargando...</p>
           </div>
         )}
-        <h2 style={{display: "flex", alignItems: "center"}}>
-          Modificar datos del vehículo: {vehiculo && vehiculo[0]?.dominio ? vehiculo[0]?.dominio : 
-    vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : "SIN DOMINIO"} {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
+        <h2 style={{ display: "flex", alignItems: "center" }}>
+          Modificar datos del vehículo: {vehiculo && vehiculo[0]?.dominio ? vehiculo[0]?.dominio :
+            vehiculo && vehiculo[0]?.dominio_provisorio ? vehiculo[0]?.dominio_provisorio + " (PROVISORIO)" : "SIN DOMINIO"} {vehiculo && renderEstadoVehiculo(vehiculo[0], "grande")}
         </h2>
         <form className={styles.form}>
-        <fieldset className={styles.fieldSet}>
-        <legend>Datos generales del vehículo</legend>
-          <div className={styles.inputContainer}>
-            <span>Modelo</span>
-            <select name="modelo" value={form.modelo} onChange={handleChange}>
-              <option value="">Seleccione un modelo</option>
-              {modelos?.map((m) => (
-                <option key={m.id} value={m.id}>{m.nombre}</option>
-              ))}
-            </select>
-          </div>
-          
+          <fieldset className={styles.fieldSet}>
+            <legend>Datos generales del vehículo</legend>
+            <div className={styles.inputContainer}>
+              <span>Modelo</span>
+              <select disabled={true} name="modelo" value={form.modelo} onChange={handleChange}>
+                <option value="">Seleccione un modelo</option>
+                {modelos?.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nombre}</option>
+                ))}
+              </select>
+            </div>
+
             {
               vehiculo?.length && !vehiculo[0]["dominio"] &&
               <div className={styles.inputContainer}>
                 <span>Dominio</span>
                 <input type="text" name="dominio" value={form.dominio} onChange={handleChange} />
               </div>
-              
+
             }
             {
               vehiculo?.length && !vehiculo[0]["dominio"] && !vehiculo[0]["dominio_provisorio"] &&
@@ -148,123 +165,131 @@ useToastFeedback({
                 <span>Dominio provisorio</span>
                 <input type="text" name="dominio_provisorio" value={form.dominio_provisorio} onChange={handleChange} />
               </div>
-              
+
             }
+
+
             <div className={styles.inputContainer}>
-            <span>Estado</span>
-            <SelectEstados
-            estados={estados}
-            value={form.estado}
-            onChange={(value) =>
-            setForm((prev) => ({
-            ...prev,
-            estado: value
-            }))
-            }
-            />
-          </div>
+              <span>Nro. Chasis</span>
+              <input type="text" name="nro_chasis" value={form.nro_chasis} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Nro. Chasis</span>
-            <input type="text" name="nro_chasis" value={form.nro_chasis} onChange={handleChange} />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Nro. Motor</span>
+              <input type="text" name="nro_motor" value={form.nro_motor} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Nro. Motor</span>
-            <input type="text" name="nro_motor" value={form.nro_motor} onChange={handleChange} />
-          </div>
 
-          <div className={styles.inputContainer}>
-            <span>Kilómetros actuales</span>
-            <input type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
-          </div>
 
-          <div className={styles.inputContainer}>
-            <span>Dispositivo Peaje</span>
-            <input type="text" name="dispositivo" value={form.dispositivo} onChange={handleChange} />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Fecha inicio de amortización</span>
+              <input type="date" name="fecha_inicio_amortizacion" value={form.fecha_inicio_amortizacion}
+                disabled={vehiculo?.length && vehiculo[0]["fecha_inicio_amortizacion"] ? true : false} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Fecha inicio de amortización</span>
-            <input type="date" name="fecha_inicio_amortizacion" value={form.fecha_inicio_amortizacion} 
-            disabled={vehiculo?.length && vehiculo[0]["fecha_inicio_amortizacion"] ? true : false} onChange={handleChange} />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Meses amortización</span>
+              <input disabled={disabledFin} type="number" name="meses_amortizacion" value={form.meses_amortizacion} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Meses amortización</span>
-            <input type="number" name="meses_amortizacion" value={form.meses_amortizacion} onChange={handleChange} />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Color</span>
+              <input type="text" name="color" value={form.color} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Color</span>
-            <input type="text" name="color" value={form.color} onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Sucursal</span>
-            <select name="sucursal" value={form.sucursal} onChange={handleChange}>
-              <option value="">Seleccione una sucursal</option>
-              {sucursales.map((m) => (
-                <option key={m.id} value={m.id}>{m.nombre}</option>
-              ))}
-            </select>
-          </div>
           </fieldset>
           <fieldset className={styles.fieldSet}>
-          <legend>Preparación del vehículo</legend>
-          <div className={styles.inputContainer}>
-            <span>Proveedor GPS</span>
-            <select name="proveedor_gps" value={form.proveedor_gps} onChange={handleChange}>
-              <option value="">Seleccione un proveedor</option>
-              {proveedoresGPS.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </select>
-          </div>
+            <legend>Preparación del vehículo</legend>
+            <div className={styles.inputContainer}>
+              <span>Estado</span>
+              <SelectEstados
+                disabled={disabledAdm}
+                estados={estados}
+                value={form.estado}
+                onChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    estado: value
+                  }))
+                }
+              />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Kilómetros actuales</span>
+              <input type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Nro. Serie GPS</span>
-            <input type="text" name="nro_serie_gps" value={form.nro_serie_gps} onChange={handleChange} />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Dispositivo Peaje</span>
+              <input disabled={disabledAdm} type="text" name="dispositivo" value={form.dispositivo} onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Sucursal</span>
+              <select disabled={disabledAdm} name="sucursal" value={form.sucursal} onChange={handleChange}>
+                <option value="">Seleccione una sucursal</option>
+                {sucursales.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Proveedor GPS</span>
+              <select disabled={disabledAdm} name="proveedor_gps" value={form.proveedor_gps} onChange={handleChange}>
+                <option value="">Seleccione un proveedor</option>
+                {proveedoresGPS.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                ))}
+              </select>
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Calcomanía</span>
-            <input
-            type="checkbox"
-            name="calcomania"
-            checked={form.calcomania === 1}
-            onChange={handleCheckChange}
-            />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Nro. Serie GPS</span>
+              <input disabled={disabledAdm} type="text" name="nro_serie_gps" value={form.nro_serie_gps} onChange={handleChange} />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>GNC</span>
-            <input
-            type="checkbox"
-            name="gnc"
-            checked={form.gnc === 1}
-            onChange={handleCheckChange}
-            />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Calcomanía</span>
+              <input
+                disabled={disabledAdm}
+                type="checkbox"
+                name="calcomania"
+                checked={form.calcomania === 1}
+                onChange={handleCheckChange}
+              />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Polarizado</span>
-            <input
-            type="checkbox"
-            name="polarizado"
-            checked={form.polarizado === 1}
-            onChange={handleCheckChange}
-            />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>GNC</span>
+              <input
+                disabled={disabledAdm}
+                type="checkbox"
+                name="gnc"
+                checked={form.gnc === 1}
+                onChange={handleCheckChange}
+              />
+            </div>
 
-          <div className={styles.inputContainer}>
-            <span>Cubre asiento</span>
-            <input
-            type="checkbox"
-            name="cubre_asiento"
-            checked={form.cubre_asiento === 1}
-            onChange={handleCheckChange}
-            />
-          </div>
+            <div className={styles.inputContainer}>
+              <span>Polarizado</span>
+              <input
+                disabled={disabledAdm}
+                type="checkbox"
+                name="polarizado"
+                checked={form.polarizado === 1}
+                onChange={handleCheckChange}
+              />
+            </div>
+
+            <div className={styles.inputContainer}>
+              <span>Cubre asiento</span>
+              <input
+                disabled={disabledAdm}
+                type="checkbox"
+                name="cubre_asiento"
+                checked={form.cubre_asiento === 1}
+                onChange={handleCheckChange}
+              />
+            </div>
           </fieldset>
         </form>
 
