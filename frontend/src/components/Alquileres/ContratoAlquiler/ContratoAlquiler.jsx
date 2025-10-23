@@ -70,6 +70,7 @@ const ContratoAlquiler = () => {
     apellido_cliente: '',
     ingresa_deposito: 1,
     deposito: '',
+    fecha_recibo_deposito: '',
     id_forma_cobro_contrato: '',
     usuario: username,
     sucursal_vehiculo: "",
@@ -98,6 +99,7 @@ const ContratoAlquiler = () => {
         sucursal_vehiculo: "",
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
         fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+        fecha_recibo_deposito: '',
         cuenta_contable_forma_cobro_contrato: '',
         cuenta_secundaria_forma_cobro_contrato: '',
       })
@@ -557,6 +559,11 @@ const ContratoAlquiler = () => {
                 }
               </select>
             </div>
+            <div className={styles.inputContainer}>
+              <span>Fecha del recibo</span>
+              <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
+                onChange={handleChangeContrato} />
+            </div>
           </form>
         </div>
       }
@@ -564,7 +571,9 @@ const ContratoAlquiler = () => {
       {
         !id && <AlquileresForm modoContrato={true} onSubmitFinal={handleFinalSubmit}
           idVehiculoSeleccionado={formContrato.id_vehiculo} minDateContrato={formContrato.fecha_desde_contrato}
-          maxDateContrato={formContrato.fecha_hasta_contrato} vehiculo={formContrato.id_vehiculo} cliente={formContrato.id_cliente} />
+          maxDateContrato={formContrato.fecha_hasta_contrato} vehiculo={formContrato.id_vehiculo} cliente={formContrato.id_cliente}
+          fecha_recibo_deposito={formContrato.fecha_recibo_deposito}
+        />
       }
 
 
