@@ -804,7 +804,6 @@ export const eliminarImagenes = async (req, res) => {
 export const updateVehiculo = async (req, res) => {
   const {
     id,
-    modelo,
     nro_chasis,
     fecha_inicio_amortizacion,
     nro_motor,
@@ -827,7 +826,8 @@ export const updateVehiculo = async (req, res) => {
   let vehiculoAnterior;
   let fechaDePreparacion;
   let fechaDeAmortizacion;
-
+  const userRoles = req.user?.roles.split(",")
+  console.log(userRoles.includes("2") || userRoles.includes("1"))
   try {
     vehiculoAnterior = await giama_renting.query(
       "SELECT * FROM vehiculos WHERE id = ?",
@@ -846,6 +846,55 @@ export const updateVehiculo = async (req, res) => {
   );
   if (validationVehiculoAnterior) {
     return res.send(validationVehiculoAnterior);
+  }
+
+  //PERMISOS ESPECIFICOS
+    
+    //FINANZAS
+
+  if(vehiculoAnterior[0]["fecha_incio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de la fecha inicio de amortización"})
+  }
+  if(vehiculoAnterior[0]["meses_amortizacion"] !== meses_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de los meses amortización"})
+  }
+
+    //ADMINISTRACION
+
+  if(vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje"})
+  }
+
+  if(vehiculoAnterior[0]["estado"] !== estado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo"})
+  }
+
+  if(vehiculoAnterior[0]["sucursal"] !== sucursal && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de sucursal"})
+  }
+
+  if(vehiculoAnterior[0]["proveedor_gps"] !== proveedor_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio del proveedor GPS"})
+  }
+
+  if(vehiculoAnterior[0]["nro_serie_gps"] !== nro_serie_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio del número serie GPS"})
+  }
+
+  if(vehiculoAnterior[0]["calcomania"] !== calcomania && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de calcomania"})
+  }
+
+  if(vehiculoAnterior[0]["gnc"] !== gnc && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de GNC"})
+  }
+
+  if(vehiculoAnterior[0]["polarizado"] !== polarizado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de polarizado"})
+  }
+
+  if(vehiculoAnterior[0]["cubre_asiento"] !== cubre_asiento && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de cubre asiento"})
   }
 
   let preparadoAhora =
@@ -870,7 +919,7 @@ export const updateVehiculo = async (req, res) => {
 
   try {
     await giama_renting.query(
-      `UPDATE vehiculos SET modelo = :modelo, dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
+      `UPDATE vehiculos SET  dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
         kilometros_actuales = :kilometros, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
         calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
@@ -881,7 +930,6 @@ export const updateVehiculo = async (req, res) => {
       {
         type: QueryTypes.UPDATE,
         replacements: {
-          modelo,
           dominio: dominio ? dominio : null,
           dominio_provisorio: dominio_provisorio ? dominio_provisorio : null,
           nro_chasis,
