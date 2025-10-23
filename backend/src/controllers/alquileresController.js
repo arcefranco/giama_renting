@@ -749,7 +749,7 @@ export const postContratoAlquiler = async (req, res) => {
   if (ingresa_deposito == 1) {
     try {
       nro_recibo_deposito = await insertRecibo(
-        getTodayDate(),
+        fecha_recibo,
         conceptoDeposito,
         deposito,
         usuario,
