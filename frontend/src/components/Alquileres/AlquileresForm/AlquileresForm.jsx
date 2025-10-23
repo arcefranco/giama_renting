@@ -85,14 +85,26 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     fecha_desde_alquiler: fechaDesdePorDefecto,
     fecha_hasta_alquiler: fechaHastaPorDefecto,
     fecha_recibo: '',
-    importe_neto: '',
-    importe_iva: '',
-    importe_total: '',
-    id_forma_cobro_alquiler: '',
+    importe_neto_1: '',
+    importe_iva_1: '',
+    importe_total_1: '',
+    id_forma_cobro_alquiler_1: '',
+    importe_neto_2: '',
+    importe_iva_2: '',
+    importe_total_2: '',
+    id_forma_cobro_alquiler_2: '',
+    importe_neto_3: '',
+    importe_iva_3: '',
+    importe_total_3: '',
+    id_forma_cobro_alquiler_3: '',
     usuario: username,
     observacion: '',
-    cuenta_contable_forma_cobro_alquiler: '',
-    cuenta_secundaria_forma_cobro_alquiler: ''
+    cuenta_contable_forma_cobro_alquiler_1: '',
+    cuenta_secundaria_forma_cobro_alquiler_1: '',
+    cuenta_contable_forma_cobro_alquiler_2: '',
+    cuenta_secundaria_forma_cobro_alquiler_2: '',
+    cuenta_contable_forma_cobro_alquiler_3: '',
+    cuenta_secundaria_forma_cobro_alquiler_3: ''
   })
   if (!modoContrato) {
     useToastFeedback({
@@ -108,14 +120,27 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
         setForm({
           ...form,
           id_contrato: idContrato,
-          importe_neto: '',
           ingresa_alquiler: 1,
-          importe_iva: '',
           fecha_recibo: '',
           usuario: username,
-          importe_total: '',
-          id_forma_cobro_alquiler: '',
-          cuenta_contable_forma_cobro_alquiler: ''
+          importe_iva_1: '',
+          importe_neto_1: '',
+          importe_total_1: '',
+          id_forma_cobro_alquiler_1: '',
+          importe_neto_2: '',
+          importe_iva_2: '',
+          importe_total_2: '',
+          id_forma_cobro_alquiler_2: '',
+          importe_neto_3: '',
+          importe_iva_3: '',
+          importe_total_3: '',
+          id_forma_cobro_alquiler_3: '',
+          cuenta_contable_forma_cobro_alquiler_1: '',
+          cuenta_secundaria_forma_cobro_alquiler_1: '',
+          cuenta_contable_forma_cobro_alquiler_2: '',
+          cuenta_secundaria_forma_cobro_alquiler_2: '',
+          cuenta_contable_forma_cobro_alquiler_3: '',
+          cuenta_secundaria_forma_cobro_alquiler_3: ''
         })
       }
     })
@@ -220,13 +245,10 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       form.id_cliente,
       form.fecha_desde_alquiler,
       form.fecha_hasta_alquiler,
-      form.importe_neto,
-      form.importe_iva,
-      form.importe_total,
-      form.id_forma_cobro_alquiler
     ].every(Boolean);
-
-    if (form.ingresa_alquiler == 1 && !modoContrato && !camposCompletos /* (!form.id_vehiculo || !form.id_cliente || !form.fecha_desde_alquiler
+    let formas_cobro_boolean = !form.id_forma_cobro_alquiler_1 && !form.id_forma_cobro_alquiler_2 && !form.id_forma_cobro_alquiler_3 ? true : false
+    let importes_total_boolean = !form.importe_total_1 && !form.importe_total_2 && !form.importe_total_3 ? true : false
+    if (form.ingresa_alquiler == 1 && !modoContrato && (!camposCompletos || (formas_cobro_boolean || importes_total_boolean)) /* (!form.id_vehiculo || !form.id_cliente || !form.fecha_desde_alquiler
       || !form.fecha_hasta_alquiler || !form.importe_neto || !form.importe_iva || !form.importe_total || !form.id_forma_cobro_alquiler)*/) {
       console.log("entra (bloque 1)");
       setSendBtnDisabled(true)
@@ -237,7 +259,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       setSendBtnDisabled(true)
     }
     else if (form.ingresa_alquiler == 1 && modoContrato && (!vehiculo || !cliente || !form.fecha_desde_alquiler
-      || !form.fecha_hasta_alquiler || !form.importe_neto || !form.importe_iva || !form.importe_total || !form.id_forma_cobro_alquiler
+      || !form.fecha_hasta_alquiler || formas_cobro_boolean || importes_total_boolean
     )) {
       console.log("entra (bloque 3)");
       setSendBtnDisabled(true)
@@ -248,7 +270,10 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
 
   },
     [form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler, form.fecha_hasta_alquiler,
-    form.importe_neto, form.importe_iva, form.importe_total, form.id_forma_cobro_alquiler, modoContrato
+    form.importe_neto_1, form.importe_iva_1, form.importe_total_1, form.id_forma_cobro_alquiler_1,
+    form.importe_neto_2, form.importe_iva_2, form.importe_total_2, form.id_forma_cobro_alquiler_2,
+    form.importe_neto_3, form.importe_iva_3, form.importe_total_3, form.id_forma_cobro_alquiler_3,
+      modoContrato
     ])
 
   const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
@@ -277,20 +302,52 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   };
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value && name === "importe_total") {
+    if (value && name === "importe_total_1") {
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva": parseFloat(value) * 0.21,
-        "importe_neto": parseFloat(value) - (parseFloat(value) * 0.21)
+        "importe_iva_1": parseFloat(value) * 0.21,
+        "importe_neto_1": parseFloat(value) - (parseFloat(value) * 0.21)
       });
     }
-    else if (value && name === "id_forma_cobro_alquiler") {
+    else if (value && name === "importe_total_2") {
+      setForm({
+        ...form,
+        [name]: parseFloat(value),
+        "importe_iva_2": parseFloat(value) * 0.21,
+        "importe_neto_2": parseFloat(value) - (parseFloat(value) * 0.21)
+      });
+    }
+    else if (value && name === "importe_total_3") {
+      setForm({
+        ...form,
+        [name]: parseFloat(value),
+        "importe_iva_3": parseFloat(value) * 0.21,
+        "importe_neto_3": parseFloat(value) - (parseFloat(value) * 0.21)
+      });
+    }
+    else if (value && name === "id_forma_cobro_alquiler_1") {
       setForm({
         ...form,
         [name]: value,
-        "cuenta_contable_forma_cobro_alquiler": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
-        "cuenta_secundaria_forma_cobro_alquiler": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
+        "cuenta_contable_forma_cobro_alquiler_1": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
+        "cuenta_secundaria_forma_cobro_alquiler_1": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
+      });
+    }
+    else if (value && name === "id_forma_cobro_alquiler_2") {
+      setForm({
+        ...form,
+        [name]: value,
+        "cuenta_contable_forma_cobro_alquiler_2": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
+        "cuenta_secundaria_forma_cobro_alquiler_2": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
+      });
+    }
+    else if (value && name === "id_forma_cobro_alquiler_3") {
+      setForm({
+        ...form,
+        [name]: value,
+        "cuenta_contable_forma_cobro_alquiler_3": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
+        "cuenta_secundaria_forma_cobro_alquiler_3": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
       });
     }
     else if (value && name === "id_cliente") {
@@ -408,7 +465,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
             </div>
           </div>
         }
-        <div className={styles.formNormal}>
+        <div className={styles.form3fr}>
 
           <div className={styles.inputContainer}>
             <span>Fecha desde</span>
@@ -446,23 +503,16 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
-            <span>Importe total</span>
-            <input type="number" name='importe_total' value={form["importe_total"]}
+            <span>Observacion</span>
+            <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
           </div>
+
+        </div>
+        <div className={styles.form4fr}>
           <div className={styles.inputContainer}>
-            <span>Importe neto</span>
-            <input type="number" name='importe_neto' disabled value={form["importe_neto"]}
-              onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>IVA</span>
-            <input type="number" name='importe_iva' disabled value={form["importe_iva"]}
-              onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Formas de cobro</span>
-            <select name="id_forma_cobro_alquiler" value={form["id_forma_cobro_alquiler"]}
+            <span>Forma de cobro</span>
+            <select name="id_forma_cobro_alquiler_1" value={form["id_forma_cobro_alquiler_1"]}
               onChange={handleChange} id="">
               <option value={""} disabled selected>{"Seleccione una opción"}</option>
               {
@@ -473,11 +523,78 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
             </select>
           </div>
           <div className={styles.inputContainer}>
-            <span>Observacion</span>
-            <textarea type="text" name='observacion' value={form["observacion"]}
+            <span>Importe total</span>
+            <input type="number" name='importe_total_1' value={form["importe_total_1"]}
               onChange={handleChange} />
           </div>
-
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="number" name='importe_neto_1' disabled value={form["importe_neto_1"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>IVA</span>
+            <input type="number" name='importe_iva_1' disabled value={form["importe_iva_1"]}
+              onChange={handleChange} />
+          </div>
+        </div>
+        <div className={styles.form4fr}>
+          <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+            <select name="id_forma_cobro_alquiler_2" value={form["id_forma_cobro_alquiler_2"]}
+              onChange={handleChange} id="">
+              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              {
+                formasDeCobro?.length && formasDeCobro?.map(e => {
+                  return <option key={e.id} value={e.id}>{e.nombre}</option>
+                })
+              }
+            </select>
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe total</span>
+            <input type="number" name='importe_total_2' value={form["importe_total_2"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="number" name='importe_neto_2' disabled value={form["importe_neto_2"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>IVA</span>
+            <input type="number" name='importe_iva_2' disabled value={form["importe_iva_2"]}
+              onChange={handleChange} />
+          </div>
+        </div>
+        <div className={styles.form4fr}>
+          <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+            <select name="id_forma_cobro_alquiler_3" value={form["id_forma_cobro_alquiler_3"]}
+              onChange={handleChange} id="">
+              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              {
+                formasDeCobro?.length && formasDeCobro?.map(e => {
+                  return <option key={e.id} value={e.id}>{e.nombre}</option>
+                })
+              }
+            </select>
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe total</span>
+            <input type="number" name='importe_total_3' value={form["importe_total_3"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="number" name='importe_neto_3' disabled value={form["importe_neto_3"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>IVA</span>
+            <input type="number" name='importe_iva_3' disabled value={form["importe_iva_3"]}
+              onChange={handleChange} />
+          </div>
         </div>
       </form>
       <button
