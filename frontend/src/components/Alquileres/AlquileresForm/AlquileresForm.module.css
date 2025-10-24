@@ -32,6 +32,14 @@
   position: relative;
 }
 
+.formContrato {
+  display: flex;
+  gap: 1rem;
+  padding: 2rem;
+  justify-items: anchor-center;
+  position: relative;
+}
+
 .form2Inputs {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
