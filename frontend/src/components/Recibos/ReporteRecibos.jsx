@@ -354,6 +354,28 @@ const ReporteRecibos = () => {
                         displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
                     />
                 </Column>
+                <Column
+                    dataField="id_forma_cobro_2"
+                    caption="Forma de pago 2"
+                    alignment="right"
+                >
+                    <Lookup
+                        dataSource={formasDeCobro} // El array con ID y nombre
+                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
+                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                    />
+                </Column>
+                <Column
+                    dataField="id_forma_cobro_3"
+                    caption="Forma de pago 3"
+                    alignment="right"
+                >
+                    <Lookup
+                        dataSource={formasDeCobro} // El array con ID y nombre
+                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
+                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                    />
+                </Column>
                 <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
