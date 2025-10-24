@@ -597,7 +597,7 @@ export const postContratoAlquiler = async (req, res) => {
   let idContrato;
   let id_factura;
   let transaction_giama_renting = await giama_renting.transaction();
-  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction(); 
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_alquiler
   )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
@@ -630,7 +630,6 @@ export const postContratoAlquiler = async (req, res) => {
   let deposito_3_formateado = deposito_3 ? parseFloat(deposito_3) : 0
 
   const deposito_total = deposito_formateado + deposito_2_formateado + deposito_3_formateado
-
   //verificar campos obligatorios
   const camposObligatorios = ["fecha_desde_contrato", "fecha_hasta_contrato"];
   const campoFaltante = verificarCamposObligatorios(
@@ -757,7 +756,7 @@ export const postContratoAlquiler = async (req, res) => {
     return res.send(body);
   }
   //chequear que se explicite el no ingreso del deposito/alquiler
-  if (ingresa_deposito == 1 && (!deposito || !deposito_2 || !deposito_3)) {
+  if (ingresa_deposito == 1 && (!deposito && !deposito_2 && !deposito_3)) {
     return res.send({
       status: false,
       message:
