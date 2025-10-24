@@ -84,7 +84,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     id_cliente: '',
     fecha_desde_alquiler: fechaDesdePorDefecto,
     fecha_hasta_alquiler: fechaHastaPorDefecto,
-    fecha_recibo: '',
+    fecha_recibo_alquiler: '',
     importe_neto_1: '',
     importe_iva_1: '',
     importe_total_1: '',
@@ -97,7 +97,6 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     importe_iva_3: '',
     importe_total_3: '',
     id_forma_cobro_alquiler_3: '',
-    fecha_recibo_alquiler: '',
     importe_neto: '',
     importe_iva: '',
     importe_total: '',
@@ -126,7 +125,6 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           ...form,
           id_contrato: idContrato,
           ingresa_alquiler: 1,
-          fecha_recibo: '',
           importe_iva: '',
           fecha_recibo_alquiler: '',
           usuario: username,
@@ -187,11 +185,13 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     alquilerByIdContrato, contratoById])
 
   useEffect(() => {
-    setForm({
-      ...form,
-      fecha_desde_alquiler: fechaDesdePorDefecto,
-      fecha_hasta_alquiler: fechaHastaPorDefecto
-    })
+    if (!isError) {
+      setForm({
+        ...form,
+        fecha_desde_alquiler: fechaDesdePorDefecto,
+        fecha_hasta_alquiler: fechaHastaPorDefecto
+      })
+    }
 
   }, [fechaDesdePorDefecto, fechaHastaPorDefecto])
 
@@ -322,24 +322,24 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_1": parseFloat(value) * 0.21,
-        "importe_neto_1": parseFloat(value) - (parseFloat(value) * 0.21)
+        "importe_iva_1": (parseFloat(value) * 0.21).toFixed(2),
+        "importe_neto_1": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
       });
     }
     else if (value && name === "importe_total_2") {
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_2": parseFloat(value) * 0.21,
-        "importe_neto_2": parseFloat(value) - (parseFloat(value) * 0.21)
+        "importe_iva_2": (parseFloat(value) * 0.21).toFixed(2),
+        "importe_neto_2": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
       });
     }
     else if (value && name === "importe_total_3") {
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_3": parseFloat(value) * 0.21,
-        "importe_neto_3": parseFloat(value) - (parseFloat(value) * 0.21)
+        "importe_iva_3": (parseFloat(value) * 0.21).toFixed(2),
+        "importe_neto_3": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
       });
     }
     else if (value && name === "id_forma_cobro_alquiler_1") {
