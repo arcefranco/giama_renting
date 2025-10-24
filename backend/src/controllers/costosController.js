@@ -660,7 +660,7 @@ async function registrarCostoIngresoIndividual({
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
-      `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria,
+      `SELECT ingreso_egreso, cuenta_contable, cuenta_secundaria
       FROM conceptos_costos WHERE id = :id_concepto`,
       {
         type: QueryTypes.SELECT,
