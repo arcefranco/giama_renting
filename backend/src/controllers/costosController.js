@@ -1299,6 +1299,8 @@ async function registrarIngresoIndividual({
           null,
           null,
           id_forma_cobro,
+          null,
+          null,
           nro_factura,
           transaction_costos_ingresos
         );

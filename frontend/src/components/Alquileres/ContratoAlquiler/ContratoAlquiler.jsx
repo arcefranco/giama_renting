@@ -70,14 +70,22 @@ const ContratoAlquiler = () => {
     apellido_cliente: '',
     ingresa_deposito: 1,
     deposito: '',
+    deposito_2: '',
+    deposito_3: '',
     fecha_recibo_deposito: '',
     id_forma_cobro_contrato: '',
+    id_forma_cobro_contrato_2: '',
+    id_forma_cobro_contrato_3: '',
+    cuenta_contable_forma_cobro_contrato: '',
+    cuenta_secundaria_forma_cobro_contrato: '',
+    cuenta_contable_forma_cobro_contrato_2: '',
+    cuenta_secundaria_forma_cobro_contrato_2: '',
+    cuenta_contable_forma_cobro_contrato_3: '',
+    cuenta_secundaria_forma_cobro_contrato_3: '',
     usuario: username,
     sucursal_vehiculo: "",
     fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
     fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
-    cuenta_contable_forma_cobro_contrato: '',
-    cuenta_secundaria_forma_cobro_contrato: '',
   });
   const { vehiculos, vehiculo } = useSelector((state) => state.vehiculosReducer)
   const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
@@ -94,7 +102,11 @@ const ContratoAlquiler = () => {
         apellido_cliente: '',
         ingresa_deposito: 1,
         deposito: '',
+        deposito_2: '',
+        deposito_3: '',
         id_forma_cobro_contrato: '',
+        id_forma_cobro_contrato_2: '',
+        id_forma_cobro_contrato_3: '',
         usuario: username,
         sucursal_vehiculo: "",
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
@@ -102,6 +114,10 @@ const ContratoAlquiler = () => {
         fecha_recibo_deposito: '',
         cuenta_contable_forma_cobro_contrato: '',
         cuenta_secundaria_forma_cobro_contrato: '',
+        cuenta_contable_forma_cobro_contrato_2: '',
+        cuenta_secundaria_forma_cobro_contrato_2: '',
+        cuenta_contable_forma_cobro_contrato_3: '',
+        cuenta_secundaria_forma_cobro_contrato_3: '',
       })
       dispatch(reset())
     }
@@ -136,13 +152,21 @@ const ContratoAlquiler = () => {
         id_cliente: '',
         ingresa_deposito: 1,
         deposito: '',
+        deposito_2: '',
+        deposito_3: '',
         id_forma_cobro_contrato: '',
+        id_forma_cobro_contrato_2: '',
+        id_forma_cobro_contrato_3: '',
         usuario: username,
         sucursal_vehiculo: '',
         fecha_desde_contrato: fechaDesdePorDefecto,
         fecha_hasta_contrato: fechaHastaPorDefecto,
         cuenta_contable_forma_cobro_contrato: '',
         cuenta_secundaria_forma_cobro_contrato: '',
+        cuenta_contable_forma_cobro_contrato_2: '',
+        cuenta_secundaria_forma_cobro_contrato_2: '',
+        cuenta_contable_forma_cobro_contrato_3: '',
+        cuenta_secundaria_forma_cobro_contrato_3: '',
       })
     }
   }, [contratoById, id]);
@@ -161,6 +185,22 @@ const ContratoAlquiler = () => {
         [name]: value,
         "cuenta_contable_forma_cobro_contrato": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
         "cuenta_secundaria_forma_cobro_contrato": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
+      });
+    }
+    else if (value && name === "id_forma_cobro_contrato_2") {
+      setFormContrato({
+        ...formContrato,
+        [name]: value,
+        "cuenta_contable_forma_cobro_contrato_2": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
+        "cuenta_secundaria_forma_cobro_contrato_2": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
+      });
+    }
+    else if (value && name === "id_forma_cobro_contrato_3") {
+      setFormContrato({
+        ...formContrato,
+        [name]: value,
+        "cuenta_contable_forma_cobro_contrato_3": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
+        "cuenta_secundaria_forma_cobro_contrato_3": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
       });
     }
     else if (value && name === "id_cliente") {
@@ -515,7 +555,7 @@ const ContratoAlquiler = () => {
       </div>
       {
         !id &&
-        <div className={styles.container} style={{ height: "20rem" }}>
+        <div className={styles.container}>
           <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
             <input
               type="checkbox"
@@ -533,37 +573,99 @@ const ContratoAlquiler = () => {
 
           <h2>Depósito en garantía</h2>
 
-          <form action="" className={`${styles.form} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
+          <form action="" className={`${styles.formDeposito} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
+            <div>
+              <div className={styles.inputContainer}>
+                <span>Fecha del recibo</span>
+                <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
+                  onChange={handleChangeContrato} />
+              </div>
 
-            <div className={styles.inputContainer}>
-              <span>Importe total</span>
-              <input
-                type="number"
-                name="deposito"
-                value={formContrato.deposito}
-                onChange={handleChangeContrato}
-              />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+              <div className={styles.inputContainer}>
+                <span>Forma de cobro</span>
+                <select name="id_forma_cobro_contrato" disabled={id ? true : false}
+                  value={formContrato["id_forma_cobro_contrato"]}
+                  onChange={handleChangeContrato} id="">
+                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  {
+                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                      return <option key={e.id} value={e.id}>{e.nombre}</option>
+                    })
+                  }
+                </select>
+              </div>
+
+              <div className={styles.inputContainer}>
+                <span>Importe total</span>
+                <input
+                  type="number"
+                  name="deposito"
+                  value={formContrato.deposito}
+                  onChange={handleChangeContrato}
+                />
+
+              </div>
+
+            </div>
+            {/* FORMA COBRO DEPOSITO 2 */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+              <div className={styles.inputContainer}>
+                <span>Forma de cobro</span>
+                <select name="id_forma_cobro_contrato_2" disabled={id ? true : false}
+                  value={formContrato["id_forma_cobro_contrato_2"]}
+                  onChange={handleChangeContrato} id="">
+                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  {
+                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                      return <option key={e.id} value={e.id}>{e.nombre}</option>
+                    })
+                  }
+                </select>
+              </div>
+
+              <div className={styles.inputContainer}>
+                <span>Importe total</span>
+                <input
+                  type="number"
+                  name="deposito_2"
+                  value={formContrato.deposito_2}
+                  onChange={handleChangeContrato}
+                />
+
+              </div>
+
+            </div>
+            {/* FORMA COBRO DEPOSITO 3 */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+              <div className={styles.inputContainer}>
+                <span>Forma de cobro</span>
+                <select name="id_forma_cobro_contrato_3" disabled={id ? true : false}
+                  value={formContrato["id_forma_cobro_contrato_3"]}
+                  onChange={handleChangeContrato} id="">
+                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  {
+                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                      return <option key={e.id} value={e.id}>{e.nombre}</option>
+                    })
+                  }
+                </select>
+              </div>
+
+              <div className={styles.inputContainer}>
+                <span>Importe total</span>
+                <input
+                  type="number"
+                  name="deposito_3"
+                  value={formContrato.deposito_3}
+                  onChange={handleChangeContrato}
+                />
+
+              </div>
 
             </div>
 
-            <div className={styles.inputContainer}>
-              <span>Formas de cobro</span>
-              <select name="id_forma_cobro_contrato" disabled={id ? true : false}
-                value={formContrato["id_forma_cobro_contrato"]}
-                onChange={handleChangeContrato} id="">
-                <option value={""} disabled selected>{"Seleccione una opción"}</option>
-                {
-                  formasDeCobro?.length && formasDeCobro?.map(e => {
-                    return <option key={e.id} value={e.id}>{e.nombre}</option>
-                  })
-                }
-              </select>
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Fecha del recibo</span>
-              <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
-                onChange={handleChangeContrato} />
-            </div>
           </form>
         </div>
       }
