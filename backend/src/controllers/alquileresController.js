@@ -917,9 +917,9 @@ export const postContratoAlquiler = async (req, res) => {
         id_vehiculo,
         idContrato,
         null,
-        id_forma_cobro_alquiler_1,
-        id_forma_cobro_alquiler_2,
-        id_forma_cobro_alquiler_3,
+        id_forma_cobro_alquiler_1 ? id_forma_cobro_alquiler_1 : null,
+        id_forma_cobro_alquiler_2 ? id_forma_cobro_alquiler_2 : null,
+        id_forma_cobro_alquiler_3 ? id_forma_cobro_alquiler_3 : null,
         id_factura,
         transaction_giama_renting
       );
@@ -944,9 +944,9 @@ export const postContratoAlquiler = async (req, res) => {
         id_vehiculo,
         idContrato,
         null,
-        id_forma_cobro_contrato,
-        id_forma_cobro_contrato_2,
-        id_forma_cobro_contrato_3,
+        id_forma_cobro_contrato ? id_forma_cobro_contrato : null,
+        id_forma_cobro_contrato_2 ? id_forma_cobro_contrato_2 : null,
+        id_forma_cobro_contrato_3 ? id_forma_cobro_contrato_3 : null,
         null,
         transaction_giama_renting
       );
@@ -1107,6 +1107,7 @@ export const postContratoAlquiler = async (req, res) => {
         concepto,
         transaction_pa7_giama_renting
       );
+
     }
     } catch (error) {
       console.log(error);
