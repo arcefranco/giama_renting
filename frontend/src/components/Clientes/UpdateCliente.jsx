@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import {getProvincias, getTiposDocumento, getTiposResponsable} from '../../reducers/Generales/generalesSlice'
+import { getProvincias, getTiposDocumento, getTiposResponsable } from '../../reducers/Generales/generalesSlice'
 import { getClientesById, updateCliente, reset, getDateroByIdCliente } from '../../reducers/Clientes/clientesSlice';
 import styles from './UpdateCliente.module.css';
 import { paises } from '../../paises.js';
@@ -14,7 +14,7 @@ const UpdateCliente = () => {
   const dispatch = useDispatch();
   const { provincias, tipos_documento, tipos_responsable } = useSelector(state => state.generalesReducer);
   const { cliente, isError, isSuccess, isLoading, message, datero } = useSelector(state => state.clientesReducer);
-  const {username} = useSelector((state) => state.loginReducer)
+  const { username } = useSelector((state) => state.loginReducer)
   const [errors, setErrors] = useState({});
   const [formValido, setFormValido] = useState(false);
   const [tiposResponsableClientes, setTiposResponsableClientes] = useState(null)
@@ -42,7 +42,7 @@ const UpdateCliente = () => {
     telefono_alternativo: '',
     ciudad: '',
     mail: '',
-    notas:'',
+    notas: '',
     resolucion_datero: 0,
     usuario_resolucion_datero: username ? username : "",
     //datero
@@ -71,8 +71,8 @@ const UpdateCliente = () => {
     dispatch(getProvincias());
     dispatch(getTiposResponsable());
     dispatch(getTiposDocumento()),
-    dispatch(getClientesById({id: id}));
-    dispatch(getDateroByIdCliente({id_cliente: id}))
+      dispatch(getClientesById({ id: id }));
+    dispatch(getDateroByIdCliente({ id_cliente: id }))
   }, [id]);
   useEffect(() => {
     setFormData({
@@ -106,18 +106,18 @@ const UpdateCliente = () => {
         telefono_alternativo: cliente[0]?.telefono_alternativo || '',
         ciudad: cliente[0]?.ciudad || '',
         mail: cliente[0]?.mail || '',
-        notas: cliente[0]?.notas ||'',
+        notas: cliente[0]?.notas || '',
         resolucion_datero: cliente[0]?.resolucion_datero || '',
         usuario_resolucion_datero: username ? username : "",
         composicion_familiar: datero[0]?.composicion_familiar || '',
         tiene_o_tuvo_vehiculo: datero[0]?.tiene_o_tuvo_vehiculo || '',
         tipo_servicio: datero[0]?.tipo_servicio || '',
-        certificado_domicilio:datero[0]?.certificado_domicilio || '',
+        certificado_domicilio: datero[0]?.certificado_domicilio || '',
         score_veraz: datero[0]?.score_veraz || '',
         nivel_deuda: datero[0]?.nivel_deuda || '',
         situacion_deuda: datero[0]?.situacion_deuda || '',
         libre_de_deuda: datero[0]?.libre_de_deuda || 0,
-        antecedentes_penales:datero[0]?.antecedentes_penales || '',
+        antecedentes_penales: datero[0]?.antecedentes_penales || '',
         fecha_antecedentes: datero[0]?.fecha_antecedentes || '',
         cantidad_viajes_uber: datero[0]?.cantidad_viajes_uber || '',
         cantidad_viajes_cabify: datero[0]?.cantidad_viajes_cabify || '',
@@ -126,20 +126,20 @@ const UpdateCliente = () => {
         antiguedad_cabify: datero[0]?.antiguedad_cabify || '',
         antiguedad_didi: datero[0]?.antiguedad_didi || '',
         trabajos_anteriores: datero[0]?.trabajos_anteriores || '',
-        observacion_perfil:datero[0]?.observacion_perfil || ''
+        observacion_perfil: datero[0]?.observacion_perfil || ''
       });
     }
   }, [cliente, datero]);
 
-useToastFeedback({
-  isError,
-  isSuccess,
-  message,
-  resetAction: reset
-})
-useEffect(() => {
-    const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') || 
-    (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));
+  useToastFeedback({
+    isError,
+    isSuccess,
+    message,
+    resetAction: reset
+  })
+  useEffect(() => {
+    const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') ||
+      (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));
     const camposObligatoriosCompletos =
       form["tipo_documento"] !== '' &&
       form["nro_documento"] !== '' &&
@@ -147,12 +147,12 @@ useEffect(() => {
       form["nro_direccion"] !== '' &&
       form["codigo_postal"] !== '' &&
       form["celular"] !== '' &&
-      form["mail"] !== '' 
+      form["mail"] !== ''
 
     setFormValido(isButtonEnabled && camposObligatoriosCompletos);
-}, [form]);
+  }, [form]);
 
-useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const imprimir = params.get('imprimir');
 
@@ -185,7 +185,7 @@ useEffect(() => {
         });
 
         const ventana = window.open('', '', 'width=800,height=600');
-  ventana.document.write(`
+        ventana.document.write(`
     <html>
       <head>
         <title>Hoja de datos driver</title>
@@ -224,87 +224,123 @@ useEffect(() => {
         ventana.close();
       }, 1000); // esperás 1s para asegurar que el formulario se renderice
     }
-}, [location]);
+  }, [location]);
 
-useEffect(() => {
-if(tipos_responsable?.length){
-  const ids = [1, 4, 5];
-  const resultado = tipos_responsable.filter(item => ids.includes(item.id));
-  setTiposResponsableClientes(resultado)
-}
-}, [tipos_responsable])
+  useEffect(() => {
+    if (tipos_responsable?.length) {
+      const ids = [1, 4, 5];
+      const resultado = tipos_responsable.filter(item => ids.includes(item.id));
+      setTiposResponsableClientes(resultado)
+    }
+  }, [tipos_responsable])
 
-useEffect(() => {
-if(tipos_documento?.length){
-  const ids = [6,7];
-  const resultado = tipos_documento.filter(item => ids.includes(item.id));
-  setTiposDocumentoClientes(resultado)
-}
-}, [tipos_documento])
+  useEffect(() => {
+    if (tipos_documento?.length) {
+      const ids = [6, 7];
+      const resultado = tipos_documento.filter(item => ids.includes(item.id));
+      setTiposDocumentoClientes(resultado)
+    }
+  }, [tipos_documento])
 
 
-const handleChange = (e) => {
-  const { name, value } = e.target;
-  if(name == "resolucion_datero"){
-    setFormData({
-      ...form,
-      resolucion_datero: parseInt(value)
-    })
-  }else{
-    setFormData({
-      ...form,
-      [name]: value,
-    }); 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name == "resolucion_datero") {
+      setFormData({
+        ...form,
+        resolucion_datero: parseInt(value)
+      })
+    } else {
+      setFormData({
+        ...form,
+        [name]: value,
+      });
+    }
+  };
+
+  const handleCheckChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData(prevForm => ({
+      ...prevForm,
+      [name]: checked ? 1 : 0
+    }));
   }
-};
 
-const handleCheckChange = (e) => {
-const { name, checked } = e.target;
-setFormData(prevForm => ({
-  ...prevForm,
-  [name]: checked ? 1 : 0
-}));}
-
-const handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const body = { ...form, id: id };
     dispatch(updateCliente(body));
-};
-const handlePrint = () => {
-  const formContent = formRef.current;
-  if (!formContent) return;
+  };
+  const handlePrint = () => {
+    const formContent = formRef.current;
+    if (!formContent) return;
 
-  // Clonamos el formulario para no modificar el DOM real
-  const clonedForm = formContent.cloneNode(true);
+    // Clonamos el formulario para no modificar el DOM real
+    const clonedForm = formContent.cloneNode(true);
 
-  // Convertimos inputs, selects y textareas en texto
-  const inputs = clonedForm.querySelectorAll('input, select, textarea');
+    // Tomamos referencias a los elementos del formulario original
+    const originalInputs = formContent.querySelectorAll('input, select, textarea');
+    // Y a los del clon
+    const clonedInputs = clonedForm.querySelectorAll('input, select, textarea');
 
-  inputs.forEach((input) => {
-    const wrapper = document.createElement('div');
-    wrapper.style.marginBottom = '8px';
+    // Creamos un mapa por nombre para encontrar el correspondiente en el clon
+    const clonedByName = {};
+    clonedInputs.forEach((el) => {
+      if (el.name) clonedByName[el.name] = el;
+    });
 
-    let valueToShow = '';
+    // Recorremos los originales para leer los valores reales manejados por React
+    originalInputs.forEach((input) => {
+      const name = input.name;
+      if (!name) return;
 
-    if (input.type === 'checkbox') {
-      valueToShow = input.checked ? 'Sí' : 'No';
-    } else if (input.type === 'date') {
-      // Formatear la fecha si tiene valor
-      if (input.value) {
-        const date = new Date(input.value);
-        valueToShow = date.toLocaleDateString('es-AR'); // formato argentino
+      const clonedEl = clonedByName[name];
+      if (!clonedEl) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.marginBottom = '8px';
+
+      let valueToShow = '';
+
+      if (input.type === 'checkbox') {
+        valueToShow = input.checked ? 'Sí' : 'No';
+      } else if (input.tagName.toLowerCase() === 'select') {
+        // Para selects mostramos el texto de la opción seleccionada
+        const sel = input;
+        const selectedOption = sel.options[sel.selectedIndex];
+        valueToShow = selectedOption ? selectedOption.text : '';
+      } else if (input.type === 'date') {
+        if (input.value) {
+          const date = new Date(input.value);
+          // evitar "Invalid Date"
+          if (!isNaN(date)) valueToShow = date.toLocaleDateString('es-AR');
+          else valueToShow = input.value;
+        }
+      } else {
+        valueToShow = input.value ?? '';
       }
-    } else {
-      valueToShow = input.value;
-    }
 
-    wrapper.textContent = valueToShow;
-    input.parentNode.replaceChild(wrapper, input);
-  });
+      // Intentamos sustituir el elemento en el clon por el wrapper.
+      // (Si por alguna razón no tiene parentNode, lo insertamos después)
+      if (clonedEl.parentNode) {
+        clonedEl.parentNode.replaceChild(wrapper, clonedEl);
+        wrapper.textContent = valueToShow;
+      } else {
+        // fallback: añadimos al final del clon
+        const fallback = document.createElement('div');
+        fallback.style.marginBottom = '8px';
+        fallback.textContent = `${name}: ${valueToShow}`;
+        clonedForm.appendChild(fallback);
+      }
+    });
 
-  const ventana = window.open('', '', 'width=800,height=600');
+    // También opcional: eliminar botones/inputs de tipo submit del clon para limpieza
+    const buttons = clonedForm.querySelectorAll('button, input[type="submit"], input[type="button"]');
+    buttons.forEach(b => b.remove());
 
-  ventana.document.write(`
+    const ventana = window.open('', '', 'width=800,height=600');
+
+    ventana.document.write(`
     <html>
       <head>
         <title>Hoja de datos driver</title>
@@ -338,17 +374,18 @@ const handlePrint = () => {
     </html>
   `);
 
-  ventana.document.close();
-  ventana.focus();
-  ventana.print();
-  ventana.close();
-};
-const renderFecha = (fecha) => {
-if(fecha){
-  let splitFecha = fecha.split("-") 
-  return splitFecha[0] + "-" + splitFecha[1]  + "-" + splitFecha[2]
+    ventana.document.close();
+    ventana.focus();
+    ventana.print();
+    ventana.close();
+  };
+  const renderFecha = (fecha) => {
+    if (fecha) {
+      let splitFecha = fecha.split("-")
+      return splitFecha[0] + "-" + splitFecha[1] + "-" + splitFecha[2]
 
-}}
+    }
+  }
   return (
     <div>
       <div className={styles.container}>
@@ -361,304 +398,304 @@ if(fecha){
         )}
         <h2>Modificar datos del cliente</h2>
         <button
-        type="button"
-        style={{width: "6rem"}}
-        className={styles.sendBtn}
-        onClick={handlePrint}
+          type="button"
+          style={{ width: "6rem" }}
+          className={styles.sendBtn}
+          onClick={handlePrint}
         >
-        Imprimir datero
+          Imprimir datero
         </button>
-    <form ref={formRef} className={styles.form}>
-      <fieldset className={styles.fieldSet}>
-        <legend>Datos personales</legend>
-        <div className={styles.inputContainer}>
-          <span>Nombre</span>
-          <input type="text" name='nombre' value={form["nombre"]}
-          onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Apellido</span>
-          <input type="text" name='apellido' value={form["apellido"]}
-          onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Razón Social</span>
-          <input type="text" name='razon_social' value={form["razon_social"]}
-          onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Fecha de nacimiento</span>
-          <input type="date" onBlur={() => setErrors({ ...errors, ["fecha_nacimiento"]: !form["fecha_nacimiento"] ? 'Campo obligatorio' : '' })}
-          name='fecha_nacimiento' value={form["fecha_nacimiento"]}
-          onChange={handleChange} />
-          {errors["fecha_nacimiento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["fecha_nacimiento"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Nacionalidad</span>
-          <select name="nacionalidad" value={form["nacionalidad"]}
-          onChange={handleChange} id="">
-            <option value={""} disabled /* selected */>{"Seleccione un pais"}</option>
-            {
-              paises?.length && paises?.map(e => {
-                return <option key={e.name} value={e.name}>{e.name}</option>
-              })
-            }
-          </select>
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Tipo de contribuyente</span>
-          <select name="tipo_contribuyente" value={form["tipo_contribuyente"]}
-          onChange={handleChange} id="">
-            <option value={""} disabled /* selected */>{"Seleccione"}</option>
-            {
-              tiposResponsableClientes?.length && tiposResponsableClientes?.map(e => {
-                return <option key={e.id} value={e.id}>{e.nombre}</option>
-              })
-            }
-          </select>
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Tipo documento</span>
-          <select name="tipo_documento" 
-          value={form["tipo_documento"]}
-          onBlur={() => setErrors({ ...errors, ["tipo_documento"]: !form["tipo_documento"] ? 'Campo obligatorio' : '' })}
-          onChange={handleChange} id="">
-            <option value={""} disabled /* selected */>{"Seleccione"}</option>
-            {
-              tiposDocumentoClientes?.length && tiposDocumentoClientes?.map(e => {
-                return <option key={e.id} value={e.id}>{e.nombre}</option>
-              })
-            }
-          </select>
-          {errors["tipo_documento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["tipo_documento"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Nro. Documento</span>
-        <input type="number" 
-        onBlur={() => setErrors({ ...errors, ["nro_documento"]: !form["nro_documento"] ? 'Campo obligatorio' : '' })} 
-        name='nro_documento' value={form["nro_documento"]}
-        onChange={handleChange} />
-        {errors["nro_documento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nro_documento"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Doc. expedido por</span>
-          <select name="doc_expedido_por" value={form["doc_expedido_por"]}
-          onChange={handleChange} id="">
-            <option value={""} disabled /* selected */>{"Seleccione un pais"}</option>
-            {
-              paises?.length && paises?.map(e => {
-                return <option key={e.name} value={e.name}>{e.name}</option>
-              })
-            }
-          </select>
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Dirección</span>
-        <input type="text" name='direccion'
-        onBlur={() => setErrors({ ...errors, ["direccion"]: !form["direccion"] ? 'Campo obligatorio' : '' })} 
-        value={form["direccion"]}
-        onChange={handleChange} />
-        {errors["direccion"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["direccion"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Nro. direccion</span>
-        <input type="number"
-        onBlur={() => setErrors({ ...errors, ["nro_direccion"]: !form["nro_direccion"] ? 'Campo obligatorio' : '' })} 
-        name='nro_direccion' value={form["nro_direccion"]}
-        onChange={handleChange} />
-        {errors["nro_direccion"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nro_direccion"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Piso</span>
-        <input type="number" name='piso' value={form["piso"]}
-        onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Depto</span>
-        <input type="text" name='depto' value={form["depto"]}
-        onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Código Postal</span>
-        <input type="number" 
-        onBlur={() => setErrors({ ...errors, ["codigo_postal"]: !form["codigo_postal"] ? 'Campo obligatorio' : '' })} 
-        name='codigo_postal' value={form["codigo_postal"]}
-        onChange={handleChange} />
-        {errors["codigo_postal"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["codigo_postal"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Celular</span>
-        <input type="number"
-        onBlur={() => setErrors({ ...errors, ["celular"]: !form["celular"] ? 'Campo obligatorio' : '' })}  
-        name='celular' value={form["celular"]}
-        onChange={handleChange} />
-        {errors["celular"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["celular"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Tél. alternativo</span>
-        <input type="number"
-        name='telefono_alternativo' value={form["telefono_alternativo"]}
-        onChange={handleChange}/>
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Provincia</span>
-        <select name="provincia" value={form["provincia"]}
-        onChange={handleChange} id="">
-          <option value={""} disabled /* selected */>{"Seleccione una provincia"}</option>
-            {
-              provincias?.length && provincias?.map(e => {
-                return <option key={e.id} value={e.id}>{e.nombre}</option>
-              })
-            }
-        </select>
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Ciudad</span>
-        <input type="text" name='ciudad' value={form["ciudad"]}
-        onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Mail</span>
-        <input type="text" 
-        onBlur={() => setErrors({ ...errors, ["mail"]: !form["mail"] ? 'Campo obligatorio' : '' })} 
-        name='mail' value={form["mail"]}
-        onChange={handleChange} />
-        {errors["mail"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["mail"]}</span>}
-        </div>
-        <div className={styles.inputContainer}>
-        <span>Notas</span>
-        <textarea name='notas' value={form["notas"]} onChange={handleChange}/>
-        </div>
-        </fieldset>
-        <fieldset className={styles.fieldSet}>
-          <div className={styles.inputContainer}>
-            <span>Composición familiar</span>
-            <input type="text" name='composicion_familiar' value={form["composicion_familiar"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Tiene o tuvo vehículo</span>
-            <input type="text" name='tiene_o_tuvo_vehiculo' value={form["tiene_o_tuvo_vehiculo"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Tipo de servicio a su nombre</span>
-            <input type="text" name='tipo_servicio' value={form["tipo_servicio"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer} style={{alignItems: "start"}}>
-            <span>Certificado de domicilio</span>
-            <input type="checkbox" name='certificado_domicilio' value={form["certificado_domicilio"]}
-            onChange={handleCheckChange} checked={form.certificado_domicilio === 1}/>
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Score en veraz</span>
-            <input type="text" name='score_veraz' value={form["score_veraz"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Nivel de deuda</span>
-            <input type="text" name='nivel_deuda' value={form["nivel_deuda"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Situación</span>
-            <input type="number" name='situacion_deuda' value={form["situacion_deuda"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer} style={{alignItems: "start"}}>
-            <span>Presenta libre de deuda</span>
-            <input type="checkbox" name='libre_de_deuda' value={form["libre_de_deuda"]}
-            onChange={handleCheckChange} checked={form.libre_de_deuda === 1}/>
-          </div>
-          <div className={styles.inputContainer} style={{alignItems: "start"}}>
-            <span>Antecedentes penales</span>
-            <input type="checkbox" name='antecedentes_penales' 
-            value={form["antecedentes_penales"]}
-            onChange={handleCheckChange} checked={form.antecedentes_penales === 1}/>
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Fecha</span>
-            <input type="date" name='fecha_antecedentes' value={form["fecha_antecedentes"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Cant. viajes UBER</span>
-            <input type="number" name='cantidad_viajes_uber' value={form["cantidad_viajes_uber"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Cant. viajes CABIFY</span>
-            <input type="number" name='cantidad_viajes_cabify' value={form["cantidad_viajes_cabify"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Cant. viajes DIDI</span>
-            <input type="number" name='cantidad_viajes_didi' value={form["cantidad_viajes_didi"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Antigüedad UBER</span>
-            <input type="text" name='antiguedad_uber' value={form["antiguedad_uber"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Antigüedad CABIFY</span>
-            <input type="text" name='antiguedad_cabify' value={form["antiguedad_cabify"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-                  <span>Antigüedad DIDI</span>
-            <input type="text" name='antiguedad_didi' value={form["antiguedad_didi"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Trabajos anteriores o actuales a detallar</span>
-            <textarea name='trabajos_anteriores' value={form["trabajos_anteriores"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Observación del perfil del chofer</span>
-            <textarea name='observacion_perfil' value={form["observacion_perfil"]}
-            onChange={handleChange} />
-          </div>
-          <div className={styles.inputContainer}>
-          <span>Resolución datero</span>
-          <select name="resolucion_datero" value={form["resolucion_datero"]}
-          onChange={handleChange} id="">
-            <option value={0}>Pendiente de aprobación</option>
-            <option value={1}>Aprobado</option>
-            <option value={2}>Rechazado</option>
-          </select>
-          </div>
-        </fieldset>
-        <fieldset className={styles.fieldSet}>
-          <legend>Datos de licencia</legend>
-        <div className={styles.inputContainer}>
-        <span>Licencia</span>
-        <input type="number" 
-        name='licencia' value={form["licencia"]}
-        onChange={handleChange} />
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Licencia expedida por</span>
-          <select name="lic_expedida_por" value={form["lic_expedida_por"]}
-          onChange={handleChange} id="">
-            <option value={""} disabled /* selected */>{"Seleccione un pais"}</option>
-            {
-              paises?.length && paises?.map(e => {
-                return <option key={e.name} value={e.name}>{e.name}</option>
-              })
-            }
-          </select>
-        </div>
-        <div className={styles.inputContainer}>
-          <span>Fecha de vencimiento</span>
-          <input type="date" name='fecha_vencimiento' value={form["fecha_vencimiento"]}
-          onChange={handleChange} />
-        </div>
-      </fieldset>
-    </form>
+        <form ref={formRef} className={styles.form}>
+          <fieldset className={styles.fieldSet}>
+            <legend>Datos personales</legend>
+            <div className={styles.inputContainer}>
+              <span>Nombre</span>
+              <input type="text" name='nombre' value={form["nombre"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Apellido</span>
+              <input type="text" name='apellido' value={form["apellido"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Razón Social</span>
+              <input type="text" name='razon_social' value={form["razon_social"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Fecha de nacimiento</span>
+              <input type="date" onBlur={() => setErrors({ ...errors, ["fecha_nacimiento"]: !form["fecha_nacimiento"] ? 'Campo obligatorio' : '' })}
+                name='fecha_nacimiento' value={form["fecha_nacimiento"]}
+                onChange={handleChange} />
+              {errors["fecha_nacimiento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["fecha_nacimiento"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Nacionalidad</span>
+              <select name="nacionalidad" value={form["nacionalidad"]}
+                onChange={handleChange} id="">
+                <option value={""} disabled /* selected */>{"Seleccione un pais"}</option>
+                {
+                  paises?.length && paises?.map(e => {
+                    return <option key={e.name} value={e.name}>{e.name}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Tipo de contribuyente</span>
+              <select name="tipo_contribuyente" value={form["tipo_contribuyente"]}
+                onChange={handleChange} id="">
+                <option value={""} disabled /* selected */>{"Seleccione"}</option>
+                {
+                  tiposResponsableClientes?.length && tiposResponsableClientes?.map(e => {
+                    return <option key={e.id} value={e.id}>{e.nombre}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Tipo documento</span>
+              <select name="tipo_documento"
+                value={form["tipo_documento"]}
+                onBlur={() => setErrors({ ...errors, ["tipo_documento"]: !form["tipo_documento"] ? 'Campo obligatorio' : '' })}
+                onChange={handleChange} id="">
+                <option value={""} disabled /* selected */>{"Seleccione"}</option>
+                {
+                  tiposDocumentoClientes?.length && tiposDocumentoClientes?.map(e => {
+                    return <option key={e.id} value={e.id}>{e.nombre}</option>
+                  })
+                }
+              </select>
+              {errors["tipo_documento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["tipo_documento"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Nro. Documento</span>
+              <input type="number"
+                onBlur={() => setErrors({ ...errors, ["nro_documento"]: !form["nro_documento"] ? 'Campo obligatorio' : '' })}
+                name='nro_documento' value={form["nro_documento"]}
+                onChange={handleChange} />
+              {errors["nro_documento"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nro_documento"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Doc. expedido por</span>
+              <select name="doc_expedido_por" value={form["doc_expedido_por"]}
+                onChange={handleChange} id="">
+                <option value={""} disabled /* selected */>{"Seleccione un pais"}</option>
+                {
+                  paises?.length && paises?.map(e => {
+                    return <option key={e.name} value={e.name}>{e.name}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Dirección</span>
+              <input type="text" name='direccion'
+                onBlur={() => setErrors({ ...errors, ["direccion"]: !form["direccion"] ? 'Campo obligatorio' : '' })}
+                value={form["direccion"]}
+                onChange={handleChange} />
+              {errors["direccion"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["direccion"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Nro. direccion</span>
+              <input type="number"
+                onBlur={() => setErrors({ ...errors, ["nro_direccion"]: !form["nro_direccion"] ? 'Campo obligatorio' : '' })}
+                name='nro_direccion' value={form["nro_direccion"]}
+                onChange={handleChange} />
+              {errors["nro_direccion"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["nro_direccion"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Piso</span>
+              <input type="number" name='piso' value={form["piso"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Depto</span>
+              <input type="text" name='depto' value={form["depto"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Código Postal</span>
+              <input type="number"
+                onBlur={() => setErrors({ ...errors, ["codigo_postal"]: !form["codigo_postal"] ? 'Campo obligatorio' : '' })}
+                name='codigo_postal' value={form["codigo_postal"]}
+                onChange={handleChange} />
+              {errors["codigo_postal"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["codigo_postal"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Celular</span>
+              <input type="number"
+                onBlur={() => setErrors({ ...errors, ["celular"]: !form["celular"] ? 'Campo obligatorio' : '' })}
+                name='celular' value={form["celular"]}
+                onChange={handleChange} />
+              {errors["celular"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["celular"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Tél. alternativo</span>
+              <input type="number"
+                name='telefono_alternativo' value={form["telefono_alternativo"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Provincia</span>
+              <select name="provincia" value={form["provincia"]}
+                onChange={handleChange} id="">
+                <option value={""} disabled /* selected */>{"Seleccione una provincia"}</option>
+                {
+                  provincias?.length && provincias?.map(e => {
+                    return <option key={e.id} value={e.id}>{e.nombre}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Ciudad</span>
+              <input type="text" name='ciudad' value={form["ciudad"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Mail</span>
+              <input type="text"
+                onBlur={() => setErrors({ ...errors, ["mail"]: !form["mail"] ? 'Campo obligatorio' : '' })}
+                name='mail' value={form["mail"]}
+                onChange={handleChange} />
+              {errors["mail"] && <span style={{ color: 'red', fontSize: '10px' }}>{errors["mail"]}</span>}
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Notas</span>
+              <textarea name='notas' value={form["notas"]} onChange={handleChange} />
+            </div>
+          </fieldset>
+          <fieldset className={styles.fieldSet}>
+            <div className={styles.inputContainer}>
+              <span>Composición familiar</span>
+              <input type="text" name='composicion_familiar' value={form["composicion_familiar"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Tiene o tuvo vehículo</span>
+              <input type="text" name='tiene_o_tuvo_vehiculo' value={form["tiene_o_tuvo_vehiculo"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Tipo de servicio a su nombre</span>
+              <input type="text" name='tipo_servicio' value={form["tipo_servicio"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer} style={{ alignItems: "start" }}>
+              <span>Certificado de domicilio</span>
+              <input type="checkbox" name='certificado_domicilio' value={form["certificado_domicilio"]}
+                onChange={handleCheckChange} checked={form.certificado_domicilio === 1} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Score en veraz</span>
+              <input type="text" name='score_veraz' value={form["score_veraz"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Nivel de deuda</span>
+              <input type="text" name='nivel_deuda' value={form["nivel_deuda"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Situación</span>
+              <input type="number" name='situacion_deuda' value={form["situacion_deuda"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer} style={{ alignItems: "start" }}>
+              <span>Presenta libre de deuda</span>
+              <input type="checkbox" name='libre_de_deuda' value={form["libre_de_deuda"]}
+                onChange={handleCheckChange} checked={form.libre_de_deuda === 1} />
+            </div>
+            <div className={styles.inputContainer} style={{ alignItems: "start" }}>
+              <span>Antecedentes penales</span>
+              <input type="checkbox" name='antecedentes_penales'
+                value={form["antecedentes_penales"]}
+                onChange={handleCheckChange} checked={form.antecedentes_penales === 1} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Fecha</span>
+              <input type="date" name='fecha_antecedentes' value={form["fecha_antecedentes"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Cant. viajes UBER</span>
+              <input type="number" name='cantidad_viajes_uber' value={form["cantidad_viajes_uber"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Cant. viajes CABIFY</span>
+              <input type="number" name='cantidad_viajes_cabify' value={form["cantidad_viajes_cabify"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Cant. viajes DIDI</span>
+              <input type="number" name='cantidad_viajes_didi' value={form["cantidad_viajes_didi"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Antigüedad UBER</span>
+              <input type="text" name='antiguedad_uber' value={form["antiguedad_uber"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Antigüedad CABIFY</span>
+              <input type="text" name='antiguedad_cabify' value={form["antiguedad_cabify"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Antigüedad DIDI</span>
+              <input type="text" name='antiguedad_didi' value={form["antiguedad_didi"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Trabajos anteriores o actuales a detallar</span>
+              <textarea name='trabajos_anteriores' value={form["trabajos_anteriores"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Observación del perfil del chofer</span>
+              <textarea name='observacion_perfil' value={form["observacion_perfil"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Resolución datero</span>
+              <select name="resolucion_datero" value={form["resolucion_datero"]}
+                onChange={handleChange} id="">
+                <option value={0}>Pendiente de aprobación</option>
+                <option value={1}>Aprobado</option>
+                <option value={2}>Rechazado</option>
+              </select>
+            </div>
+          </fieldset>
+          <fieldset className={styles.fieldSet}>
+            <legend>Datos de licencia</legend>
+            <div className={styles.inputContainer}>
+              <span>Licencia</span>
+              <input type="number"
+                name='licencia' value={form["licencia"]}
+                onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Licencia expedida por</span>
+              <select name="lic_expedida_por" value={form["lic_expedida_por"]}
+                onChange={handleChange} id="">
+                <option value={""} disabled /* selected */>{"Seleccione un pais"}</option>
+                {
+                  paises?.length && paises?.map(e => {
+                    return <option key={e.name} value={e.name}>{e.name}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Fecha de vencimiento</span>
+              <input type="date" name='fecha_vencimiento' value={form["fecha_vencimiento"]}
+                onChange={handleChange} />
+            </div>
+          </fieldset>
+        </form>
 
         <button
           className={styles.sendBtn}
