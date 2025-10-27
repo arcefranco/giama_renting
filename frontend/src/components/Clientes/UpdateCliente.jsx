@@ -152,40 +152,64 @@ const UpdateCliente = () => {
     setFormValido(isButtonEnabled && camposObligatoriosCompletos);
   }, [form]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const imprimir = params.get('imprimir');
+  const imprimirFormulario = () => {
+    const formContent = formRef.current;
+    if (!formContent) return;
 
-    if (imprimir === 'true') {
-      // Esperamos que el DOM se cargue completamente antes de imprimir
-      setTimeout(() => {
-        const formContent = formRef.current;
-        if (!formContent) return;
+    const clonedForm = formContent.cloneNode(true);
 
-        const clonedForm = formContent.cloneNode(true);
-        const inputs = clonedForm.querySelectorAll('input, select, textarea');
-        inputs.forEach((input) => {
-          const wrapper = document.createElement('div');
-          wrapper.style.marginBottom = '8px';
+    const originalInputs = formContent.querySelectorAll('input, select, textarea');
+    const clonedInputs = clonedForm.querySelectorAll('input, select, textarea');
 
-          let valueToShow = '';
-          if (input.type === 'checkbox') {
-            valueToShow = input.checked ? 'Sí' : 'No';
-          } else if (input.type === 'date') {
-            if (input.value) {
-              const date = new Date(input.value);
-              valueToShow = date.toLocaleDateString('es-AR');
-            }
-          } else {
-            valueToShow = input.value;
-          }
+    const clonedByName = {};
+    clonedInputs.forEach((el) => {
+      if (el.name) clonedByName[el.name] = el;
+    });
 
-          wrapper.textContent = valueToShow;
-          input.parentNode.replaceChild(wrapper, input);
-        });
+    originalInputs.forEach((input) => {
+      const name = input.name;
+      if (!name) return;
 
-        const ventana = window.open('', '', 'width=800,height=600');
-        ventana.document.write(`
+      const clonedEl = clonedByName[name];
+      if (!clonedEl) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.marginBottom = '8px';
+
+      let valueToShow = '';
+
+      if (input.type === 'checkbox') {
+        valueToShow = input.checked ? 'Sí' : 'No';
+      } else if (input.tagName.toLowerCase() === 'select') {
+        const selectedOption = input.options[input.selectedIndex];
+        valueToShow = selectedOption ? selectedOption.text : '';
+      } else if (input.type === 'date') {
+        if (input.value) {
+          const date = new Date(input.value);
+          if (!isNaN(date)) valueToShow = date.toLocaleDateString('es-AR');
+          else valueToShow = input.value;
+        }
+      } else {
+        valueToShow = input.value ?? '';
+      }
+
+      if (clonedEl.parentNode) {
+        clonedEl.parentNode.replaceChild(wrapper, clonedEl);
+        wrapper.textContent = valueToShow;
+      } else {
+        const fallback = document.createElement('div');
+        fallback.style.marginBottom = '8px';
+        fallback.textContent = `${name}: ${valueToShow}`;
+        clonedForm.appendChild(fallback);
+      }
+    });
+
+    const buttons = clonedForm.querySelectorAll('button, input[type="submit"], input[type="button"]');
+    buttons.forEach(b => b.remove());
+
+    const ventana = window.open('', '', 'width=800,height=600');
+
+    ventana.document.write(`
     <html>
       <head>
         <title>Hoja de datos driver</title>
@@ -218,13 +242,25 @@ const UpdateCliente = () => {
       </body>
     </html>
   `);
-        ventana.document.close();
-        ventana.focus();
-        ventana.print();
-        ventana.close();
-      }, 1000); // esperás 1s para asegurar que el formulario se renderice
+
+    ventana.document.close();
+    ventana.focus();
+    ventana.print();
+    ventana.close();
+  };
+
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const imprimir = params.get('imprimir');
+
+    if (imprimir === 'true') {
+      setTimeout(() => {
+        imprimirFormulario();
+      }, 1000);
     }
   }, [location]);
+
 
   useEffect(() => {
     if (tipos_responsable?.length) {
@@ -272,113 +308,9 @@ const UpdateCliente = () => {
     dispatch(updateCliente(body));
   };
   const handlePrint = () => {
-    const formContent = formRef.current;
-    if (!formContent) return;
-
-    // Clonamos el formulario para no modificar el DOM real
-    const clonedForm = formContent.cloneNode(true);
-
-    // Tomamos referencias a los elementos del formulario original
-    const originalInputs = formContent.querySelectorAll('input, select, textarea');
-    // Y a los del clon
-    const clonedInputs = clonedForm.querySelectorAll('input, select, textarea');
-
-    // Creamos un mapa por nombre para encontrar el correspondiente en el clon
-    const clonedByName = {};
-    clonedInputs.forEach((el) => {
-      if (el.name) clonedByName[el.name] = el;
-    });
-
-    // Recorremos los originales para leer los valores reales manejados por React
-    originalInputs.forEach((input) => {
-      const name = input.name;
-      if (!name) return;
-
-      const clonedEl = clonedByName[name];
-      if (!clonedEl) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.style.marginBottom = '8px';
-
-      let valueToShow = '';
-
-      if (input.type === 'checkbox') {
-        valueToShow = input.checked ? 'Sí' : 'No';
-      } else if (input.tagName.toLowerCase() === 'select') {
-        // Para selects mostramos el texto de la opción seleccionada
-        const sel = input;
-        const selectedOption = sel.options[sel.selectedIndex];
-        valueToShow = selectedOption ? selectedOption.text : '';
-      } else if (input.type === 'date') {
-        if (input.value) {
-          const date = new Date(input.value);
-          // evitar "Invalid Date"
-          if (!isNaN(date)) valueToShow = date.toLocaleDateString('es-AR');
-          else valueToShow = input.value;
-        }
-      } else {
-        valueToShow = input.value ?? '';
-      }
-
-      // Intentamos sustituir el elemento en el clon por el wrapper.
-      // (Si por alguna razón no tiene parentNode, lo insertamos después)
-      if (clonedEl.parentNode) {
-        clonedEl.parentNode.replaceChild(wrapper, clonedEl);
-        wrapper.textContent = valueToShow;
-      } else {
-        // fallback: añadimos al final del clon
-        const fallback = document.createElement('div');
-        fallback.style.marginBottom = '8px';
-        fallback.textContent = `${name}: ${valueToShow}`;
-        clonedForm.appendChild(fallback);
-      }
-    });
-
-    // También opcional: eliminar botones/inputs de tipo submit del clon para limpieza
-    const buttons = clonedForm.querySelectorAll('button, input[type="submit"], input[type="button"]');
-    buttons.forEach(b => b.remove());
-
-    const ventana = window.open('', '', 'width=800,height=600');
-
-    ventana.document.write(`
-    <html>
-      <head>
-        <title>Hoja de datos driver</title>
-        <style>
-          body {
-            font-family: sans-serif;
-            font-size: 12px;
-            padding: 20px;
-          }
-          fieldset {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            border: 1px solid #aaa;
-            padding: 10px;
-            margin: 10px;
-          }
-          div {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 12px;
-          }
-          div span {
-            font-weight: bold;
-            margin-bottom: 4px;
-          }
-        </style>
-      </head>
-      <body>
-        ${clonedForm.innerHTML}
-      </body>
-    </html>
-  `);
-
-    ventana.document.close();
-    ventana.focus();
-    ventana.print();
-    ventana.close();
+    imprimirFormulario();
   };
+
   const renderFecha = (fecha) => {
     if (fecha) {
       let splitFecha = fecha.split("-")
