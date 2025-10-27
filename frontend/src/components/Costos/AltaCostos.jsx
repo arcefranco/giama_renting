@@ -13,6 +13,7 @@ import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import Swal from 'sweetalert2';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
+import Select from 'react-select';
 
 const AltaCostos = () => {
   const dispatch = useDispatch()
@@ -98,19 +99,11 @@ const AltaCostos = () => {
   }, [isEgresos, isIngresos, tipo])
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "cuenta_contable") {
-      setForm({
-        ...form,
-        "cuenta_contable": value,
-        "cuenta_secundaria": cuentasContables?.find(e => e.Codigo == value)?.CuentaSecundaria
-      })
-    } else {
-      setForm({
-        ...form,
-        [name]: value,
-      });
+    setForm({
+      ...form,
+      [name]: value,
+    });
 
-    }
   };
   const handleCheckChange = (e) => {
     const { name, checked } = e.target;
@@ -126,6 +119,13 @@ const AltaCostos = () => {
   const handleActualizar = () => {
     dispatch(getConceptosCostos())
   }
+  const customStylesCuenta = {
+    container: (provided) => ({
+      ...provided,
+      width: '10rem',
+      fontSize: "10px"
+    })
+  };
   const renderModificarCell = (data) => {
     return (
       <button
@@ -174,6 +174,16 @@ const AltaCostos = () => {
       </button>
     );
   };
+
+  const cuentasOptions = cuentasContables.map(e => ({
+    value: e.Codigo,
+    label: (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <option key={e.Codigo} value={e.Codigo}>{e.Codigo} - {e.Nombre}</option>
+      </div>
+    ),
+    searchKey: `${e.Nombre}`.toLowerCase(),
+  }));
   return (
     <div>
       <div className={styles.container}>
@@ -198,7 +208,6 @@ const AltaCostos = () => {
           showBorders={true}
           style={{ fontFamily: "IBM" }}
           rowAlternationEnabled={true}
-          allowColumnResizing={true}
           height={300}
           columnAutoWidth={true}>
           <Column dataField="nombre" width={200} caption="Nombre" alignment="left" />
@@ -235,15 +244,28 @@ const AltaCostos = () => {
           </div>
           <div className={styles.inputContainer}>
             <span>Cuenta contable</span>
-            <select name="cuenta_contable" value={form["cuenta_contable"]}
-              onChange={handleChange} id="">
-              <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
-              {
-                cuentasContables?.length && cuentasContables?.map(e => {
-                  return <option key={e.Codigo} value={e.Codigo}>{e.Codigo} - {e.Nombre}</option>
-                })
+            <Select
+
+              options={cuentasOptions}
+              placeholder="Seleccione una cuenta"
+              value={form.cuenta_contable
+                ? cuentasOptions.find(opt => opt.value == form.cuenta_contable)
+                : null}
+              onChange={(e) => {
+                const selectedCuenta = cuentasContables?.find(c => c.Codigo === e.value);
+                console.log(selectedCuenta)
+                setForm({
+                  ...form,
+                  cuenta_contable: selectedCuenta.Codigo,
+                  cuenta_secundaria: selectedCuenta.CuentaSecundaria
+                });
+              }}
+              filterOption={(option, inputValue) =>
+                option.data.searchKey.includes(inputValue.toLowerCase())
               }
-            </select>
+              menuPlacement='top'
+              styles={customStylesCuenta}
+            />
           </div>
           {
             tipo === "E" &&
