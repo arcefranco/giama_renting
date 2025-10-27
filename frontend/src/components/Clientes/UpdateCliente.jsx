@@ -254,12 +254,30 @@ const UpdateCliente = () => {
     const params = new URLSearchParams(location.search);
     const imprimir = params.get('imprimir');
 
-    if (imprimir === 'true') {
-      setTimeout(() => {
+    // verificamos que haya que imprimir y que los datos estén listos
+    const datosCargados =
+      cliente?.length &&
+      datero?.length &&
+      tiposResponsableClientes?.length &&
+      tiposDocumentoClientes?.length &&
+      provincias?.length;
+
+    if (imprimir === 'true' && datosCargados) {
+      // esperamos un pequeño margen por el render de React
+      const timer = setTimeout(() => {
         imprimirFormulario();
-      }, 1000);
+      }, 200); // 200ms alcanza, ya que los datos están listos
+
+      return () => clearTimeout(timer);
     }
-  }, [location]);
+  }, [
+    location,
+    cliente,
+    datero,
+    tiposResponsableClientes,
+    tiposDocumentoClientes,
+    provincias
+  ]);
 
 
   useEffect(() => {
