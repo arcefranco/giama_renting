@@ -39,6 +39,7 @@ import UpdateProveedorGPS from "./components/Parametros/ProveedoresGPS/UpdatePro
 import UpdateModelo from "./components/Parametros/Modelos/UpdateModelo";
 import UpdateSucursal from "./components/Parametros/Sucursales/UpdateSucursal";
 import ReporteRecibos from "./components/Recibos/ReporteRecibos";
+import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContrato";
 function App() {
 
   return (
@@ -109,7 +110,7 @@ function App() {
             <Route path='/alquileres/contrato' element={<ContratoAlquiler />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["3"]} />}>
-            <Route path='/contrato/actualizar/:id' element={<ContratoAlquiler />} />
+            <Route path='/contrato/actualizar/:id' element={<UpdateContrato />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["3"]} />}>
             <Route path='/alquileres/:idContrato' element={<AlquileresForm key={location.pathname} />} />
