@@ -1477,6 +1477,50 @@ export const anulacionContrato = async (req, res) => {
     fechaHastaHistorial = originalHasta;
   }
 
+try {
+  const alquileres = await giama_renting.query(
+    `
+    SELECT id, fecha_desde, fecha_hasta
+    FROM alquileres
+    WHERE id_contrato = ?
+    ORDER BY fecha_desde ASC
+    `,
+    {
+      replacements: [id_contrato],
+      type: QueryTypes.SELECT,
+    }
+  );
+
+  if (alquileres.length > 0) {
+    const primerAlquiler = alquileres[0];
+    const ultimoAlquiler = alquileres[alquileres.length - 1];
+    //Se busca el primero y el ultimo porque aunque queden huecos en el medio no se deberia poder modificar el contrato 
+    // ni desde ni hasta esas fechas
+    const primerDesde = parseISO(primerAlquiler.fecha_desde);
+    const ultimoHasta = parseISO(ultimoAlquiler.fecha_hasta);
+
+    // 🔹 Caso 1: el contrato nuevo empieza después del primer alquiler
+    if (nuevaDesde > primerDesde) {
+      return res.send({
+        status: false,
+        message: `No se puede modificar la fecha de inicio del contrato a ${formatearFechaISO(nuevaDesde)} porque existen alquileres anteriores desde ${formatearFechaISO(primerDesde)}.`,
+      });
+    }
+
+    // 🔹 Caso 2: el contrato nuevo termina antes del último alquiler
+    if (nuevaHasta < ultimoHasta) {
+      return res.send({
+        status: false,
+        message: `No se puede modificar la fecha de finalización del contrato a ${formatearFechaISO(nuevaHasta)} porque existen alquileres posteriores hasta ${formatearFechaISO(ultimoHasta)}.`,
+      });
+    }
+  }
+} catch (error) {
+  console.log(error);
+  const { body } = handleError(error, "Validación de alquileres", acciones.get);
+  return res.send(body);
+}
+
   //inserto en historial el contrato anterior
   try {
     await giama_renting.query(
@@ -1525,11 +1569,11 @@ export const anulacionContrato = async (req, res) => {
     );
   } catch (error) {
     console.log(error);
-    transaction_giama_renting.rollback();
+    transaction_giama_renting.commit();
     const { body } = handleError(error, "Contrato", acciones.update);
     return res.send(body);
   }
-  transaction_giama_renting.commit();
+  transaction_giama_renting.rollback();
   return res.send({
     status: true,
     message: "Contrato actualizado correctamente",
