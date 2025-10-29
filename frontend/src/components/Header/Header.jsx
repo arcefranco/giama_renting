@@ -11,9 +11,9 @@ const menuItems = [
     title: "Vehículos",
     items: [
       { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["2"] },
-      { label: "Listado vehículos", to: "/vehiculosReporte" },
-      { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
-      { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
+      { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["5"] },
+      { label: "Listado fichas", to: "/vehiculos/ficha/reporte", roles: ["5"] },
+      { label: "Situación de la flota", to: "/vehiculos/situacionFlota", roles: ["5"] },
       { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["2"] }
     ],
     /*     submenus: [
@@ -38,15 +38,15 @@ const menuItems = [
     title: "Clientes",
     items: [
       { label: "Ingreso de clientes", to: "/clientes", roles: ["3"] },
-      { label: "Listado de clientes", to: "/clientesReporte" },
+      { label: "Listado de clientes", to: "/clientesReporte", roles: ["5"] },
     ]
   },
   {
     title: "Alquileres",
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["3"] },
-      { label: "Listado de alquileres", to: "/alquileres/reporte" },
-      { label: "Listado de contratos", to: "/alquileres/contrato/reporte" },
+      { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["5"] },
+      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["5"] },
 
     ]
   },
