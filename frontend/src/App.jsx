@@ -67,18 +67,30 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["2", "4"]} />}>
             <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo />} />
           </Route>
-          <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo />} />
-          <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo />} />
-          <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos />} />
-          <Route path="/vehiculos/situacionFlota" element={<SituacionFlota />} />
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path="/vehiculos/situacionFlota" element={<SituacionFlota />} />
+          </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path="/vehiculos/importacionMasiva" element={<ImportacionMasiva />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["3"]} />}>
             <Route path="/clientes" element={<ClientesForm />} />
           </Route>
-          <Route path='/clientesReporte' element={<ReporteClientes />} />
-          <Route path='/clientes/imagenes/:id' element={<ImagenesClientes />} />
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path='/clientesReporte' element={<ReporteClientes />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["3", "4"]} />}>
+            <Route path='/clientes/imagenes/:id' element={<ImagenesClientes />} />
+          </Route>
           <Route element={<PrivateRoute allowedRoles={["3"]} />}>
             <Route path='/clientes/actualizar/:id' element={<UpdateCliente />} />
           </Route>
@@ -118,11 +130,15 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro />} />
           </Route>
-
-          <Route path="/recibos/reporte" element={<ReporteRecibos />} />
-
-          <Route path='/alquileres/reporte' element={<ReporteAlquileres />} />
-          <Route path='/alquileres/contrato/reporte' element={<ReporteContratos />} />
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path="/recibos/reporte" element={<ReporteRecibos />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path='/alquileres/reporte' element={<ReporteAlquileres />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+            <Route path='/alquileres/contrato/reporte' element={<ReporteContratos />} />
+          </Route>
 
           <Route path='/parametros/proveedoresGPS' element={<ProveedoresGPS />} />
           <Route path='/parametros/proveedoresGPS/:id' element={<UpdateProveedorGPS />} />
