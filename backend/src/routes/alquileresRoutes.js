@@ -28,10 +28,10 @@ alquileresRouter.use((req, res, next) => {
 alquileresRouter.post(
   "/contrato",
   auth,
-  authorizeRoles("3"),
+  authorizeRoles("2"),
   postContratoAlquiler
 );
-alquileresRouter.post("/postAlquiler", auth, authorizeRoles("3"), postAlquiler);
+alquileresRouter.post("/postAlquiler", auth, authorizeRoles("2"), postAlquiler);
 alquileresRouter.post(
   "/formaDeCobro",
   auth,

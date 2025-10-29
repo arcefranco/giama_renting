@@ -852,7 +852,8 @@ export const updateVehiculo = async (req, res) => {
     
     //FINANZAS
 
-  if(vehiculoAnterior[0]["fecha_incio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
+
+  if(vehiculoAnterior[0]["fecha_inicio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de la fecha inicio de amortización"})
   }
   if(vehiculoAnterior[0]["meses_amortizacion"] !== meses_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
@@ -897,6 +898,7 @@ export const updateVehiculo = async (req, res) => {
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de cubre asiento"})
   }
 
+ 
   let preparadoAhora =
     estado == 2 && vehiculoAnterior[0]["estado_actual"] == 1 ? true : false;
 

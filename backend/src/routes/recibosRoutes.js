@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
 import { anulacionRecibo, getReciboById, getRecibos } from "../controllers/recibosController.js";
-import { authorizeAdmin } from "../middlewares/roles.js";
 import { authorizeRoles } from "../middlewares/roles.js";
 const recibosRouter = Router();
 recibosRouter.use((req, res, next) => {
@@ -12,7 +11,7 @@ recibosRouter.use((req, res, next) => {
   next();
 });
 
-recibosRouter.post("/getReciboById", auth, getReciboById);
-recibosRouter.get("/getRecibos", auth, getRecibos);
+recibosRouter.post("/getReciboById", auth, authorizeRoles("5"), getReciboById);
+recibosRouter.get("/getRecibos", auth, authorizeRoles("5"), getRecibos);
 recibosRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo)
 export default recibosRouter;
