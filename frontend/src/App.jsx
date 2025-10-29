@@ -124,6 +124,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["3"]} />}>
             <Route path='/contrato/actualizar/:id' element={<UpdateContrato />} />
           </Route>
+          <Route element={<PrivateRoute allowedRoles={["3"]} />}>
+            <Route path='/contrato/actualizar/:id/:vehiculo' element={<UpdateContrato />} />
+          </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/:idContrato' element={<AlquileresForm key={location.pathname} />} />
           </Route>
