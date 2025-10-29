@@ -152,7 +152,11 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   }
 
   useEffect(() => {
-    if (alquilerByIdContrato?.length && contratoById?.length && !modoContrato) {
+    if (contratoById?.length && !modoContrato && !alquilerByIdContrato?.length) {
+      setMinDate(parseISO(contratoById[0]["fecha_desde"]))
+      setMaxDate(parseISO(contratoById[0]["fecha_hasta"]))
+    }
+    else if (alquilerByIdContrato?.length && contratoById?.length && !modoContrato) {
 
       const fechaHastaMasGrande = alquilerByIdContrato.reduce((max, obj) => {
         const actual = new Date(obj.fecha_hasta);
