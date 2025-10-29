@@ -21,6 +21,7 @@ import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { verificarEstadoVehiculo } from "../../helpers/verificarEstadoVehiculo.js";
 import { insertFactura } from "../../helpers/insertFactura.js";
 
+
 const insertAlquiler = async (body) => {
   const {
     id_vehiculo,
