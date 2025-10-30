@@ -70,6 +70,16 @@ export const anulacionContrato = createAsyncThunk(
     )
 );
 
+export const cambioVehiculo = createAsyncThunk(
+  "cambioVehiculo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.cambioVehiculo(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const getFormasDeCobro = createAsyncThunk(
   "getFormasDeCobro",
   async (_, { rejectWithValue }) =>
@@ -227,6 +237,21 @@ export const alquileresSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(anulacionContrato.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(cambioVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(cambioVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(cambioVehiculo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
