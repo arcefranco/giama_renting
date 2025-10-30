@@ -150,7 +150,7 @@ const ReporteAlquileres = () => {
       // ***************************************************************
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'Listado_Contratos.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'Listado_Alquileres.xlsx');
       });
     });
   };
