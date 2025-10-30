@@ -65,5 +65,5 @@ alquileresRouter.post(
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
 alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
-alquileresRouter.post("/cambioVehiculo", auth, authorizeAdmin(), cambioVehiculo);
+alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeAdmin(), cambioVehiculo);
 export default alquileresRouter;

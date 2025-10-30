@@ -1281,6 +1281,8 @@ async function registrarIngresoIndividual({
           transaction_asientos
         );
       } catch (error) {
+        await transaction_asientos.rollback();
+        await transaction_costos_ingresos.rollback();
         console.log(error);
         throw error;
       }
