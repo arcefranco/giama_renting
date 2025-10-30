@@ -14,6 +14,7 @@ import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
 import { Workbook } from 'devextreme-exceljs-fork';
 import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
+import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
 
 
@@ -38,6 +39,7 @@ const ReporteContratos = () => {
     isLoading
   } = useSelector((state) => state.alquileresReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
+  const { roles } = useSelector((state) => state.loginReducer)
   const { modelos } = useSelector((state) => state.generalesReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
   const [form, setForm] = useState({
@@ -51,6 +53,7 @@ const ReporteContratos = () => {
     message,
     resetAction: reset,
   })
+
   useEffect(() => {
     dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: form.vigentes }))
   }, [form.vigentes]);
@@ -142,6 +145,37 @@ const ReporteContratos = () => {
           }}
         >
           Modificar
+        </button>
+      );
+    }
+  }
+
+  const renderModificarVehiculo = (data) => {
+    const row = data.data
+    if (row.dias_pendientes === 0) {
+      return (
+        <button
+          style={{
+            color: "grey", fontSize: "11px",
+            textDecoration: 'underline', background: 'none', border: 'none',
+            cursor: "none"
+          }}
+          disabled
+        >
+          Modificar vehículo
+        </button>
+      )
+    } else if (row.dias_pendientes > 0) {
+      return (
+        <button
+          onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${row.id}/${row.id_vehiculo}`, '_blank')}
+          style={{
+            color: '#1976d2', fontSize: "11px",
+            textDecoration: 'underline', background: 'none', border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Modificar vehículo
         </button>
       );
     }
@@ -327,6 +361,9 @@ const ReporteContratos = () => {
         <Column dataField="deposito_garantia" alignment="right" allowHeaderFiltering={false} allowFiltering={false} caption="Depósito"
           customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
         <Column caption="" cellRender={renderModificar} alignment="center" />
+        {
+          hasAdminAccess(roles) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
+        }
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />
         <Summary calculateCustomSummary={handleCustomSummary}>
           <TotalItem

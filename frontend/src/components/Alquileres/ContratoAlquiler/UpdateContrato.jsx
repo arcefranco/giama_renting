@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
 import {
-    getContratoById, anulacionContrato, reset, getAlquilerByIdContrato
+    getContratoById, anulacionContrato, reset, getAlquilerByIdContrato, cambioVehiculo
 } from "../../../reducers/Alquileres/alquileresSlice.js";
 import { getVehiculos } from "../../../reducers/Vehiculos/vehiculosSlice.js";
 import { getModelos, getSucursales, getFormasDeCobro } from "../../../reducers/Generales/generalesSlice.js";
@@ -23,7 +23,7 @@ import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
 import { addDays } from "date-fns";
 
 const UpdateContrato = () => {
-    const { id } = useParams()
+    const { id, vehiculo } = useParams()
     const dispatch = useDispatch();
     registerLocale("es", es);
     useEffect(() => {
@@ -42,11 +42,11 @@ const UpdateContrato = () => {
     }, [])
     const { isError, isSuccess, isLoading, message, contratoById, alquilerByIdContrato } = useSelector((state) => state.alquileresReducer)
     const { username } = useSelector((state) => state.loginReducer)
-    const { vehiculos, vehiculo } = useSelector((state) => state.vehiculosReducer)
+    const { vehiculos } = useSelector((state) => state.vehiculosReducer)
     const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
     const { modelos, sucursales, formasDeCobro } = useSelector((state) => state.generalesReducer)
     const [formContrato, setFormContrato] = useState({
-        id_vehiculo: '',
+        id_vehiculo: vehiculo ? vehiculo : '',
         id_cliente: '',
         usuario: username,
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
@@ -59,7 +59,7 @@ const UpdateContrato = () => {
         resetAction: reset,
         onSuccess: () => {
             setFormContrato({
-                id_vehiculo: '',
+                id_vehiculo: vehiculo ? vehiculo : '',
                 id_cliente: '',
                 apellido_cliente: '',
                 ingresa_deposito: 1,
@@ -111,11 +111,19 @@ const UpdateContrato = () => {
     }, [contratoById, id]);
     const submitUpdate = async (e) => {
         e.preventDefault();
-        dispatch(anulacionContrato({
-            id_contrato: id,
-            fecha_desde_contrato: formContrato["fecha_desde_contrato"],
-            fecha_hasta_contrato: formContrato["fecha_hasta_contrato"]
-        }))
+        if (id && !vehiculo) {
+            dispatch(anulacionContrato({
+                id_contrato: id,
+                fecha_desde_contrato: formContrato["fecha_desde_contrato"],
+                fecha_hasta_contrato: formContrato["fecha_hasta_contrato"]
+            }))
+        }
+        else if (id && vehiculo) {
+            dispatch(cambioVehiculo({
+                id_contrato: id,
+                id_vehiculo: formContrato.id_vehiculo
+            }))
+        }
     }
 
     const getIconFromResolucion = (valor) => {
@@ -187,7 +195,7 @@ const UpdateContrato = () => {
                         <span>Vehículo</span>
                         <Select
                             options={opcionesVehiculos}
-                            isDisabled={id ? true : false}
+                            isDisabled={id && !vehiculo ? true : false}
                             value={
                                 opcionesVehiculos.find(
                                     (opt) => String(opt.value) === String(formContrato.id_vehiculo)
@@ -223,7 +231,7 @@ const UpdateContrato = () => {
                                         apellido_cliente: selectedCliente.apellido,
                                     });
                                 }}
-                                isDisabled={id ? true : false}
+                                isDisabled={true}
                                 filterOption={(option, inputValue) =>
                                     option.data.searchKey.includes(inputValue.toLowerCase())
                                 }
@@ -234,6 +242,7 @@ const UpdateContrato = () => {
                         <span>Fecha desde</span>
                         <DatePicker
                             dateFormat="dd/MM/yyyy"
+                            disabled={vehiculo ? true : false}
                             selected={formContrato.fecha_desde_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_desde_contrato: date }))}
                             minDate={formContrato.fecha_desde_contrato}
@@ -247,6 +256,7 @@ const UpdateContrato = () => {
                         <span>Fecha hasta</span>
                         <DatePicker
                             dateFormat="dd/MM/yyyy"
+                            disabled={vehiculo ? true : false}
                             selected={formContrato.fecha_hasta_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_hasta_contrato: date }))}
                             minDate={formContrato.fecha_desde_contrato}

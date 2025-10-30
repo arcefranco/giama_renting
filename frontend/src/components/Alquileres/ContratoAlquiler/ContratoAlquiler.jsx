@@ -125,6 +125,7 @@ const ContratoAlquiler = () => {
 
   useEffect(() => {
     if (id && contratoById.length) { //si estoy modificando un contrato
+      console.log("entra acá 1")
       const fechaDesde = parseISO(contratoById[0]["fecha_desde"]);
       const fechaHasta = parseISO(contratoById[0]["fecha_hasta"]);
 
@@ -147,6 +148,7 @@ const ContratoAlquiler = () => {
       fechaHastaPickers.setHours(0, 0, 0, 0);
 
     } else {
+      console.log("entra acá 2")
       setFormContrato({
         id_vehiculo: '',
         id_cliente: '',
@@ -271,41 +273,43 @@ const ContratoAlquiler = () => {
   }, [estado_cliente])
 
   useEffect(() => { /* fechas por defecto */
-    if (!formContrato.id_vehiculo || !contratosVehiculo?.length) {
-      /*volvemos a setear fechaspordefecto del momento del montaje 
-      por si el vehiculo no tiene contratos pertinentes a la fecha */
-      const proxMiercoles = getNextWednesday(hoy);
-      setFormContrato(prev => ({
-        ...prev,
-        fecha_desde_contrato: proxMiercoles,
-        fecha_hasta_contrato: addDaysHelper(proxMiercoles, 90),
-      }));
-
-      return;
-    }
-    if (!id) {// Buscar la fecha_hasta más lejana de los contratos vigentes
-      const ultimaFechaHasta = contratosVehiculo.length
-        ? new Date(
-          Math.max(
-            ...contratosVehiculo.map((c) => new Date(c.fecha_hasta).getTime())
-          )
-        )
-        : hoy;
-
-      // Obtener miércoles siguiente a esa fecha
-      const siguienteMiercoles = getNextWednesday(ultimaFechaHasta);
-
-      // Calcular fecha hasta (90 días desde el miércoles)
-      const hasta = addDaysHelper(siguienteMiercoles, 90);
-
-
-      setFormContrato((prevForm) => ({
-        ...prevForm,
-        fecha_desde_contrato: siguienteMiercoles,
-        fecha_hasta_contrato: hasta,
-      }));
-
-    }
+    /*volvemos a setear fechaspordefecto del momento del montaje 
+    por si el vehiculo no tiene contratos pertinentes a la fecha */
+    /*     if ((!formContrato.id_vehiculo || !contratosVehiculo?.length) && !isError) {
+          console.log("entra acá 3")
+          const proxMiercoles = getNextWednesday(hoy);
+          setFormContrato(prev => ({
+            ...prev,
+            fecha_desde_contrato: proxMiercoles,
+            fecha_hasta_contrato: addDaysHelper(proxMiercoles, 90),
+          }));
+    
+          return;
+          } */
+    // Buscar la fecha_hasta más lejana de los contratos vigentes
+    /*        if (!id) {
+          const ultimaFechaHasta = contratosVehiculo.length
+            ? new Date(
+              Math.max(
+                ...contratosVehiculo.map((c) => new Date(c.fecha_hasta).getTime())
+              )
+            )
+            : hoy;
+    
+          // Obtener miércoles siguiente a esa fecha
+          const siguienteMiercoles = getNextWednesday(ultimaFechaHasta);
+    
+          // Calcular fecha hasta (90 días desde el miércoles)
+          const hasta = addDaysHelper(siguienteMiercoles, 90);
+          console.log("entra acá 4")
+    
+          setFormContrato((prevForm) => ({
+            ...prevForm,
+            fecha_desde_contrato: siguienteMiercoles,
+            fecha_hasta_contrato: hasta,
+          }));
+    
+        } */
   }, [formContrato.id_vehiculo, contratosVehiculo]);
 
   useEffect(() => {
