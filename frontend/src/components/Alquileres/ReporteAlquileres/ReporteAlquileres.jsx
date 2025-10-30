@@ -6,7 +6,7 @@ import { getModelos } from "./../../../reducers/Generales/generalesSlice"
 import { useDispatch, useSelector } from "react-redux"
 import DataGrid, {
   Column, Scrolling, Paging, TotalItem, Summary,
-  SearchPanel, HeaderFilter, FilterRow
+  SearchPanel, HeaderFilter, FilterRow, Export
 } from "devextreme-react/data-grid"
 import styles from "./ReporteAlquileres.module.css"
 import 'devextreme/dist/css/dx.carmine.css';
@@ -14,6 +14,10 @@ import { ClipLoader } from "react-spinners";
 import { redondear } from "../../../helpers/redondear"
 import { ToastContainer, toast } from 'react-toastify';
 import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
+import { Workbook } from 'devextreme-exceljs-fork';
+import { saveAs } from 'file-saver-es';
+import { exportDataGrid } from 'devextreme/excel_exporter';
+import { getVehiculoExportValue, getClienteExportValue, getFechaExportValue } from '../../../helpers/exportValueDataGrid.js'
 const ReporteAlquileres = () => {
   const dispatch = useDispatch()
 
@@ -114,7 +118,42 @@ const ReporteAlquileres = () => {
   const handleSubmit = () => {
     dispatch(getAlquileres(form))
   }
+  const onExporting = (e) => {
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet('Contratos');
 
+    exportDataGrid({
+      component: e.component,
+      worksheet: worksheet,
+      autoFilterEnabled: true,
+
+      // ******* Lógica para sobrescribir los valores en el Excel *******
+      customizeCell: ({ gridCell, excelCell }) => {
+        if (gridCell.rowType === 'data') {
+          const dataField = gridCell.column.dataField;
+          const rawValue = gridCell.data[dataField]; // Valor original del array 'contratos'
+
+          // Columna Vehículo (id_vehiculo)
+          if (dataField === 'id_vehiculo') {
+            excelCell.value = getVehiculoExportValue(rawValue, vehiculos, modelos);
+          }
+          // Columna Cliente (id_cliente)
+          else if (dataField === 'id_cliente') {
+            excelCell.value = getClienteExportValue(rawValue, clientes);
+          }
+          // Columnas de Fecha (fecha_desde, fecha_hasta)
+          else if (dataField === 'fecha_desde' || dataField === 'fecha_hasta') {
+            excelCell.value = getFechaExportValue(rawValue);
+          }
+        }
+      },
+      // ***************************************************************
+    }).then(() => {
+      workbook.xlsx.writeBuffer().then((buffer) => {
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'Listado_Alquileres.xlsx');
+      });
+    });
+  };
   const handleCustomSummary = (e) => {
     console.log("summaryProcess", e.summaryProcess);
     if (e.name === "countVehiculos") {
@@ -181,9 +220,11 @@ const ReporteAlquileres = () => {
         allowColumnResizing={true}
         columnAutoWidth={true}
         height={400}
+        onExporting={onExporting}
       >
         <SearchPanel visible={true} highlightCaseSensitive={true} />
         <HeaderFilter visible={true} />
+        <Export enabled={true} fileName="Listado_Contratos" />
         <Scrolling mode="standard" />
         <Paging defaultPageSize={10} />
         <Column dataField="vehiculo_texto" caption="Vehículo" dataType="string" alignment="center" />

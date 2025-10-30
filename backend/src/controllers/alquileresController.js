@@ -23,6 +23,7 @@ import { insertFactura } from "../../helpers/insertFactura.js";
 import { getYesterdayDate } from "../../helpers/getTodayDate.js";
 import { addOneDay } from "../../helpers/addOneDay.js";
 
+
 const insertAlquiler = async (body) => {
   const {
     id_vehiculo,
