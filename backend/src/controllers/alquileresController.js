@@ -199,6 +199,12 @@ export const postAlquiler = async (req, res) => {
     return res.send(body);
   }
 
+  if(fecha_desde_alquiler > fecha_hasta_alquiler){
+    return res.send({status: false, message: `La fecha "desde" del alquiler no puede ser posterior a su fecha "hasta"`})
+  }
+
+  
+
   //buscar si el vehiculo está vendido // dominio
   try {
     const result = await giama_renting.query(
