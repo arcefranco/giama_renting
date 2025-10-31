@@ -1309,7 +1309,12 @@ export const getAlquilerByIdContrato = async (req, res) => {
     });
   try {
     const result = await giama_renting.query(
-      "SELECT * FROM alquileres WHERE id_contrato = ?",
+      `SELECT 
+        a.*, 
+        r.anulado
+      FROM alquileres a
+      LEFT JOIN recibos r ON a.nro_recibo = r.id
+      WHERE a.id_contrato = ?`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
@@ -1330,7 +1335,12 @@ export const getAlquileres = async (req, res) => {
   const { fecha_desde, fecha_hasta } = req.body;
   if (!fecha_desde || !fecha_hasta) {
     try {
-      const result = await giama_renting.query("SELECT * FROM alquileres", {
+      const result = await giama_renting.query(`SELECT 
+      a.*, 
+      r.anulado
+    FROM alquileres a
+    LEFT JOIN recibos r ON a.nro_recibo = r.id;
+`, {
         type: QueryTypes.SELECT,
       });
       return res.send(result);
@@ -1342,7 +1352,13 @@ export const getAlquileres = async (req, res) => {
   if (fecha_desde && fecha_hasta) {
     try {
       const result = await giama_renting.query(
-        "SELECT * FROM alquileres WHERE fecha_desde >= ? AND fecha_hasta <= ?",
+      `SELECT 
+      a.*, 
+      r.anulado
+      FROM alquileres a
+      LEFT JOIN recibos r ON a.nro_recibo = r.id
+      WHERE fecha_desde >= ?
+      AND fecha_hasta <= ?`,
         {
           type: QueryTypes.SELECT,
           replacements: [fecha_desde, fecha_hasta],
