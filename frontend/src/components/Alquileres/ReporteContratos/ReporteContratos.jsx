@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { getContratos, reset } from "./../../../reducers/Alquileres/alquileresSlice"
 import { getVehiculos } from "./../../../reducers/Vehiculos/vehiculosSlice"
 import { getClientes } from "./../../../reducers/Clientes/clientesSlice"
 import { getModelos } from "./../../../reducers/Generales/generalesSlice"
 import { useDispatch, useSelector } from "react-redux"
-import DataGrid, { Column, Scrolling, Paging, TotalItem, Summary, FilterRow, HeaderFilter, Export } from "devextreme-react/data-grid"
+import DataGrid, {
+  Column, Scrolling, Paging, TotalItem, Summary,
+  FilterRow, HeaderFilter, Export, Lookup
+} from "devextreme-react/data-grid"
 import styles from "./ReporteContratos.module.css"
 import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
@@ -118,6 +121,41 @@ const ReporteContratos = () => {
     });
     return clienteEncontrado?.id || null;
   };
+
+  const getClienteIdsPorNombre = (texto) => {
+    if (!texto || !clientes?.length) return []; // Devuelve array vacío
+
+    // Asegúrate de manejar strings, por si acaso
+    const normalizar = (str) => str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const textoNorm = normalizar(texto);
+
+    const clientesEncontrados = clientes.filter(c => {
+      const nombreNorm = normalizar(c.nombre);
+      const apellidoNorm = normalizar(c.apellido);
+
+      // Busca si el texto está INCLUIDO en el nombre O en el apellido
+      return nombreNorm.includes(textoNorm) || apellidoNorm.includes(textoNorm);
+    });
+
+    // Devuelve un array con todos los IDs encontrados: [5, 12, 44]
+    return clientesEncontrados.map(c => c.id);
+  };
+
+  const normalizar = (str) => {
+    if (!str) return "";
+    return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  // Creamos una versión de 'clientes' con campos normalizados para búsqueda
+  const clientesParaGrid = useMemo(() => {
+    if (!clientes?.length) return [];
+    return clientes.map(c => ({
+      ...c,
+      // Campos nuevos que usará el lookup para buscar
+      nombreNorm: normalizar(c.nombre),
+      apellidoNorm: normalizar(c.apellido)
+    }));
+  }, [clientes]);
 
   const renderModificar = (data) => {
     const row = data.data
@@ -346,16 +384,21 @@ const ReporteContratos = () => {
         <HeaderFilter visible={true} />
         <Paging defaultPageSize={20} />
         <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderVehiculo} alignment="center" />
-        <Column dataField="id_cliente" dataType="string" caption="Cliente" cellRender={renderCliente} alignment="center"
-          calculateSortValue={(data) => getClienteNombreCompletoParaOrdenar(data.id_cliente)}
+        <Column
+          dataField="id_cliente"
+          dataType="number" // Asegúrate de que coincida con el tipo de 'id' (tu ejemplo dice 5)
+          caption="Cliente"
+          cellRender={renderCliente} // Puedes mantener tu render personalizado
+          alignment="center"
           allowHeaderFiltering={false}
-          calculateFilterExpression={(filterValue, selectedFilterOperation, target) => {
-            if (!filterValue) return;
-            // Creamos una expresión personalizada: buscamos coincidencias en nombre o apellido
-            return [
-              ["id_cliente", "=", getIdClientePorNombre(filterValue)]
-            ];
-          }} />
+        >
+          <Lookup
+            dataSource={clientesParaGrid} // 1. Usa la lista pre-procesada
+            valueExpr="id"                // 2. El valor subyacente es el 'id'
+            displayExpr={(item) => item ? `${item.nombre} ${item.apellido}` : ""} // 3. Qué mostrar
+            searchExpr={["nombreNorm", "apellidoNorm"]} // 4. ¡En qué campos buscar!
+          />
+        </Column>
         <Column dataField="fecha_desde" caption="Desde" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />
         <Column dataField="fecha_hasta" caption="Hasta" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />
         <Column dataField="deposito_garantia" alignment="right" allowHeaderFiltering={false} allowFiltering={false} caption="Depósito"

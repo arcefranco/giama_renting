@@ -232,6 +232,7 @@ const ReporteAlquileres = () => {
         <Column dataField="fecha_desde" allowSearch={false} allowHeaderFiltering={false} caption="Desde" cellRender={renderFecha} alignment="center" />
         <Column dataField="fecha_hasta" allowSearch={false} allowHeaderFiltering={false} caption="Hasta" cellRender={renderFecha} alignment="center" />
         <Column dataField="importe_neto" allowSearch={false} allowHeaderFiltering={false} alignment="right" caption="Importe neto" customizeText={(e) => Math.trunc(e.value).toLocaleString()} />
+        <Column dataField="anulado" width={100} caption="Está anulado" cellRender={(data) => data.value === 1 ? "Sí" : "No"} />
         <Summary calculateCustomSummary={handleCustomSummary}>
           <TotalItem
             name="importeTotal"
