@@ -297,7 +297,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     ])
 
   const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
-    alquileres?.map(a => ({
+    alquileres?.filter(e => e.anulado === 0)?.map(a => ({
       start: new Date(a.fecha_desde),
       end: addDays(new Date(a.fecha_hasta), 1),
     }));
