@@ -612,20 +612,24 @@ export const getVehiculos = async (req, res) => {
   try {
     const resultado = await giama_renting.query(
       `SELECT 
-      vehiculos.*, 
-      (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
-      (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
-      FROM vehiculos
-      LEFT JOIN (
-      SELECT id_vehiculo 
-      FROM alquileres 
-      WHERE ? BETWEEN fecha_desde AND fecha_hasta
-      ) AS alq ON vehiculos.id = alq.id_vehiculo
-      LEFT JOIN (
-      SELECT id_vehiculo 
-      FROM contratos_alquiler 
-      WHERE ? BETWEEN fecha_desde AND fecha_hasta
-      ) AS con ON vehiculos.id = con.id_vehiculo;`,
+  vehiculos.*, 
+  (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
+  (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
+FROM vehiculos
+LEFT JOIN (
+  SELECT a.id_vehiculo
+  FROM alquileres a
+  LEFT JOIN recibos r ON a.nro_recibo = r.id
+  WHERE ? BETWEEN a.fecha_desde AND a.fecha_hasta
+    AND (r.anulado = 0 OR r.anulado IS NULL)
+  GROUP BY a.id_vehiculo
+) AS alq ON vehiculos.id = alq.id_vehiculo
+LEFT JOIN (
+  SELECT id_vehiculo 
+  FROM contratos_alquiler 
+  WHERE ? BETWEEN fecha_desde AND fecha_hasta
+  GROUP BY id_vehiculo
+) AS con ON vehiculos.id = con.id_vehiculo;`,
       {
         type: QueryTypes.SELECT,
         replacements: [hoy, hoy],
