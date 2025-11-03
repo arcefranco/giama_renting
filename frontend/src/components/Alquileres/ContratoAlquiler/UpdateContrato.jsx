@@ -11,6 +11,7 @@ import styles from "../AlquileresForm/AlquileresForm.module.css"
 import DatePicker from "react-datepicker";
 import Select from 'react-select';
 import { ToastContainer } from 'react-toastify';
+import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
@@ -21,10 +22,12 @@ import rechazadoIcon from "../../../assets/rechazado.png"
 import aprobadoIcon from "../../../assets/aprobado.png"
 import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
 import { addDays } from "date-fns";
+import Swal from 'sweetalert2';
 
 const UpdateContrato = () => {
     const { id, vehiculo } = useParams()
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     registerLocale("es", es);
     useEffect(() => {
         Promise.all([
@@ -43,8 +46,8 @@ const UpdateContrato = () => {
     const { isError, isSuccess, isLoading, message, contratoById, alquilerByIdContrato } = useSelector((state) => state.alquileresReducer)
     const { username } = useSelector((state) => state.loginReducer)
     const { vehiculos } = useSelector((state) => state.vehiculosReducer)
-    const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
-    const { modelos, sucursales, formasDeCobro } = useSelector((state) => state.generalesReducer)
+    const { clientes } = useSelector((state) => state.clientesReducer)
+    const { modelos } = useSelector((state) => state.generalesReducer)
     const [formContrato, setFormContrato] = useState({
         id_vehiculo: vehiculo ? vehiculo : '',
         id_cliente: '',
@@ -109,6 +112,24 @@ const UpdateContrato = () => {
 
         }
     }, [contratoById, id]);
+    useEffect(() => {
+        if (vehiculo && message && isSuccess) {
+            Swal.fire({
+                title: message,
+                showCancelButton: false,
+                confirmButtonText: 'Ok',
+                icon: 'success',
+                didOpen: () => {
+                    document.body.classList.remove('swal2-height-auto');
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/alquileres/contrato/reporte")
+                }
+            });
+        }
+    }, [isSuccess, message])
+
     const submitUpdate = async (e) => {
         e.preventDefault();
         if (id && !vehiculo) {
