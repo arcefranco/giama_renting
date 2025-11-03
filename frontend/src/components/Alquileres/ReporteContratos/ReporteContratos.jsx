@@ -383,6 +383,7 @@ const ReporteContratos = () => {
         <Export enabled={true} fileName="Listado_Contratos" />
         <HeaderFilter visible={true} />
         <Paging defaultPageSize={20} />
+        <Column dataField="id" caption="ID" allowHeaderFiltering={false} alignment="center" />
         <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderVehiculo} alignment="center" />
         <Column
           dataField="id_cliente"
