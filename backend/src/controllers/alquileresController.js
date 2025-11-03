@@ -1622,10 +1622,21 @@ export const cambioVehiculo = async (req, res) => {
     id_vehiculo,
   } = req.body
   /**restriccion segun alquileres cobrados */
+  /**fecha desde: si el contrato no empezo se mantiene igual;
+   *  si el contrato empezo y no tiene alquileres la fecha desde del nuevo es hoy, la fecha hasta del nuevo es la misma
+   *  la fecha desde del anterior es la misma y la fecha hasta del anterior es ayer
+   * 
+   * si el contrato empezo y SI tiene alquileres: la fecha desde del nuevo es un dia despues del ultimo dia de alquiler,
+   * la fecha hasta del nuevo es la misma
+   * la fecha desde del anterior es la misma y la fecha hasta del anterior es el ultimo dia de alquiler  */
 
   let original;
   let transaction = await giama_renting.transaction()
   let nuevaDesde;
+  let nuevaHasta;
+  let originalDesde;
+  let originalHasta;
+  let alquileres;
   const hoy = getTodayDate()
   //busco el contrato original
   try {
@@ -1647,7 +1658,7 @@ export const cambioVehiculo = async (req, res) => {
   }
 
   try {
-  const alquileres = await giama_renting.query(
+    let result = await giama_renting.query(
     `
     SELECT id, fecha_desde, fecha_hasta
     FROM alquileres
@@ -1659,37 +1670,46 @@ export const cambioVehiculo = async (req, res) => {
       type: QueryTypes.SELECT,
     }
   );
+  alquileres = result
 
-  if (alquileres.length > 0) {
-    const ultimoAlquiler = alquileres[alquileres.length - 1];
-    //Se busca el primero y el ultimo porque aunque queden huecos en el medio no se deberia poder modificar el contrato 
-    // ni desde ni hasta esas fechas
-    const ultimoHasta = ultimoAlquiler.fecha_hasta;
-    const hoy = getTodayDate()
-    nuevaDesde = addOneDay(parseISO(ultimoHasta))
-
-    if(hoy <= ultimoHasta){
-      return res.send({status: false, message: `Ultimo alquiler: ${ultimoHasta}. Fecha desde nuevo contrato`})
-    }
-
-  }
   } catch (error) {
   console.log(error);
   const { body } = handleError(error, "Validación de alquileres", acciones.get);
   return res.send(body);
   }
 
-  return res.send({status: false, message: "prueba"})
+  const vigente = hoy >= original.fecha_desde && hoy <= original.fecha_hasta
 
-  if (hoy >= original.fecha_desde && hoy <= original.fecha_hasta) {
+  if(alquileres.length && vigente){
+    const ultimoAlquiler = alquileres[alquileres.length - 1];
+    const ultimoHasta = ultimoAlquiler.fecha_hasta;
+    nuevaDesde = addOneDay(parseISO(ultimoHasta))
+    nuevaHasta = original.fecha_hasta
+    originalDesde = original.fecha_desde
+    originalHasta = ultimoHasta
+  }
+  else if (!alquileres.length && vigente) {
+    nuevaDesde = hoy
+    nuevaHasta = original.fecha_hasta
+    originalDesde = original.fecha_desde
+    originalHasta = getYesterdayDate()
+  }
+  if(!vigente && alquileres.length){
+    return res.send({status: false, message: `No se puede actualizar el contrato debido 
+      a que tiene alquieres cargados y no está en vigencia`})
+  }
+
+  if (vigente) {
   // caso 1: hoy está dentro del rango del contrato
   // → cerrar contrato actual (fecha_hasta = ayer) y abrir nuevo
   //actualizo el contrato original
   /**elimino deposito del anterior y lo pongo en el nuevo asi como asiento y nro recibo */
   try {
-    await giama_renting.query(`UPDATE contratos_alquiler SET fecha_hasta = ? WHERE id = ?`, {
+    await giama_renting.query(`UPDATE contratos_alquiler SET fecha_desde = ?, fecha_hasta = ?,
+      deposito_garantia = NULL, id_forma_cobro = NULL, id_forma_cobro_2 = NULL, id_forma_cobro_3 = NULL, fecha_cobro = NULL
+      WHERE id = ?`, {
       type: QueryTypes.UPDATE,
-      replacements: [getYesterdayDate(), id_contrato],
+      replacements: [originalDesde, originalHasta, id_contrato],
       transaction: transaction
     })
   } catch (error) {
@@ -1699,13 +1719,15 @@ export const cambioVehiculo = async (req, res) => {
     return res.send(body);
   }
   //genero el nuevo contrato igual al original pero con fecha desde y id_vehiculo cambiados
+  //FALTA: actualizar contrato actual, dejar en nulos los datos del deposito para pasarselos al nuevo
   try {
     await giama_renting.query(`INSERT INTO contratos_alquiler (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, 
       deposito_garantia, id_forma_cobro, id_forma_cobro_2, id_forma_cobro_3, fecha_cobro, nro_asiento, nro_recibo) 
       VALUES (?,?,?,?,?,?,?,?,?,?,?)`, {
         type: QueryTypes.INSERT,
-        replacements: [id_vehiculo, original["id_cliente"], getTodayDate(), original["fecha_hasta"], 
-        null, null, null, null, null, null, original["nro_asiento"], original["nro_recibo"]],
+        replacements: [id_vehiculo, original["id_cliente"], nuevaDesde, nuevaHasta, 
+        original.deposito_garantia, original.id_forma_cobro, original.id_forma_cobro_2, original.id_forma_cobro_3, 
+        original.fecha_cobro, original.nro_asiento, original.nro_recibo],
         transaction: transaction
       })
   } catch (error) {
