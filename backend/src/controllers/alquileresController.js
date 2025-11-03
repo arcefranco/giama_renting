@@ -1510,10 +1510,11 @@ export const anulacionContrato = async (req, res) => {
 try {
   const alquileres = await giama_renting.query(
     `
-    SELECT id, fecha_desde, fecha_hasta
-    FROM alquileres
-    WHERE id_contrato = ?
-    ORDER BY fecha_desde ASC
+    SELECT a.id, a.fecha_desde, a.fecha_hasta, r.anulado
+    FROM alquileres a
+    LEFT JOIN recibos r ON a.nro_recibo = r.id
+    WHERE a.id_contrato = ? AND r.anulado = 0
+    ORDER BY a.fecha_desde ASC;
     `,
     {
       replacements: [id_contrato],
