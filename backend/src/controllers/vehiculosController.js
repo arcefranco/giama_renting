@@ -612,20 +612,24 @@ export const getVehiculos = async (req, res) => {
   try {
     const resultado = await giama_renting.query(
       `SELECT 
-      vehiculos.*, 
-      (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
-      (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
-      FROM vehiculos
-      LEFT JOIN (
-      SELECT id_vehiculo 
-      FROM alquileres 
-      WHERE ? BETWEEN fecha_desde AND fecha_hasta
-      ) AS alq ON vehiculos.id = alq.id_vehiculo
-      LEFT JOIN (
-      SELECT id_vehiculo 
-      FROM contratos_alquiler 
-      WHERE ? BETWEEN fecha_desde AND fecha_hasta
-      ) AS con ON vehiculos.id = con.id_vehiculo;`,
+  vehiculos.*, 
+  (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
+  (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
+FROM vehiculos
+LEFT JOIN (
+  SELECT a.id_vehiculo
+  FROM alquileres a
+  LEFT JOIN recibos r ON a.nro_recibo = r.id
+  WHERE ? BETWEEN a.fecha_desde AND a.fecha_hasta
+    AND (r.anulado = 0 OR r.anulado IS NULL)
+  GROUP BY a.id_vehiculo
+) AS alq ON vehiculos.id = alq.id_vehiculo
+LEFT JOIN (
+  SELECT id_vehiculo 
+  FROM contratos_alquiler 
+  WHERE ? BETWEEN fecha_desde AND fecha_hasta
+  GROUP BY id_vehiculo
+) AS con ON vehiculos.id = con.id_vehiculo;`,
       {
         type: QueryTypes.SELECT,
         replacements: [hoy, hoy],
@@ -1213,29 +1217,35 @@ export const getSituacionFlota = async (req, res) => {
 
     const resultado = await giama_renting.query(
       `SELECT 
-        COALESCE(
-          CASE 
-            WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
-            WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
-            WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
-            ELSE est.nombre
-          END,
-          'Sin estado'
-        ) AS estado,
-        COUNT(*) AS cantidad
-      FROM vehiculos v
-      LEFT JOIN estados_vehiculos est ON est.id = v.estado_actual
-      LEFT JOIN (
-        SELECT id_vehiculo 
-        FROM alquileres 
-        WHERE :hoy BETWEEN fecha_desde AND fecha_hasta
-      ) alq ON alq.id_vehiculo = v.id
-      LEFT JOIN (
-        SELECT id_vehiculo 
-        FROM contratos_alquiler 
-        WHERE :hoy BETWEEN fecha_desde AND fecha_hasta
-      ) con ON con.id_vehiculo = v.id
-      GROUP BY estado`,
+  COALESCE(
+    CASE 
+      WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
+      WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
+      WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
+      ELSE est.nombre
+    END,
+    'Sin estado'
+  ) AS estado,
+  COUNT(*) AS cantidad
+FROM vehiculos v
+LEFT JOIN estados_vehiculos est 
+  ON est.id = v.estado_actual
+LEFT JOIN (
+  SELECT a.id_vehiculo
+  FROM alquileres a
+  LEFT JOIN recibos r ON a.nro_recibo = r.id
+  WHERE :hoy BETWEEN a.fecha_desde AND a.fecha_hasta
+    AND (r.anulado = 0 OR r.anulado IS NULL)
+  GROUP BY a.id_vehiculo
+) alq ON alq.id_vehiculo = v.id
+LEFT JOIN (
+  SELECT id_vehiculo 
+  FROM contratos_alquiler 
+  WHERE :hoy BETWEEN fecha_desde AND fecha_hasta
+  GROUP BY id_vehiculo
+) con ON con.id_vehiculo = v.id
+GROUP BY estado;
+`,
       {
         replacements: { hoy },
         type: QueryTypes.SELECT,
