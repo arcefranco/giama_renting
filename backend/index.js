@@ -12,8 +12,18 @@ import recibosRouter from "./src/routes/recibosRoutes.js";
 import parametrosRouter from "./src/routes/parametrosRoutes.js";
 dotenv.config();
 const app = express();
+const allowedOrigins = [
+  process.env.HOST,
+  process.env.DNS,
+];
+
 const corsOptions = {
-  origin: process.env.HOST,
+  origin: function (origin, callback) {
+      // Permitir requests sin origin (como Postman o servidores internos)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
   credentials: true, // Permite envío de cookies
 };
 app.use(cors(corsOptions));
