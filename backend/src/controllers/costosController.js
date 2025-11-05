@@ -632,9 +632,11 @@ async function registrarCostoIngresoIndividual({
   importe_tasa_IIBB_CABA,
   importe_tasa_IIBB,
   importe_tasa_IVA,
+  transaction_costos_ingresos,
+  transaction_asientos
 }) {
-  let transaction_costos_ingresos = await giama_renting.transaction();
-  let transaction_asientos = await pa7_giama_renting.transaction();
+/*   let transaction_costos_ingresos = await giama_renting.transaction();
+  let transaction_asientos = await pa7_giama_renting.transaction(); */
   let ingreso_egreso;
   let NroAsiento;
   let NroAsientoSecundario;
@@ -674,8 +676,8 @@ async function registrarCostoIngresoIndividual({
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
   } catch (error) {
     console.log(error);
-    await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback();
+/*     await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback(); */
     throw new Error(
       `Error al buscar una cuenta contable ${
         error.message ? `${" :"}${error.message}` : ""
@@ -700,8 +702,8 @@ async function registrarCostoIngresoIndividual({
       cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
     } catch (error) {
       console.log(error);
-      await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback();
+/*       await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -726,8 +728,8 @@ async function registrarCostoIngresoIndividual({
       cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
     } catch (error) {
       console.log(error);
-      await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback();
+/*       await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -863,8 +865,8 @@ async function registrarCostoIngresoIndividual({
       FA_FC
     );
   } catch (error) {
-    await transaction_asientos.rollback();
-    transaction_costos_ingresos.rollback();
+/*     await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback(); */
     throw error;
   }
   //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
@@ -1018,15 +1020,15 @@ async function registrarCostoIngresoIndividual({
         }
       );
     }
-    await transaction_costos_ingresos.commit();
-    await transaction_asientos.commit();
+/*     await transaction_costos_ingresos.commit();
+    await transaction_asientos.commit(); */
     return {
       nro_recibo: nro_recibo ? nro_recibo : null,
       genera_factura: genera_factura,
     };
   } catch (error) {
-    await transaction_costos_ingresos.rollback();
-    await transaction_asientos.rollback();
+/*     await transaction_costos_ingresos.rollback();
+    await transaction_asientos.rollback(); */
     throw new Error(error.message);
   }
 }
@@ -1050,6 +1052,8 @@ async function registrarIngresoIndividual({
   importe_neto_3,
   importe_iva_3,
   importe_total_3,
+  transaction_costos_ingresos,
+  transaction_asientos
 }) {
   let genera_recibo;
   let genera_factura;
@@ -1069,8 +1073,6 @@ async function registrarIngresoIndividual({
   let cuenta_secundaria_concepto_3;
   let nro_recibo;
   let nro_factura;
-  let transaction_costos_ingresos = await giama_renting.transaction();
-  let transaction_asientos = await pa7_giama_renting.transaction();
   let genera_recibo_final;
   let genera_factura_final;
   let conceptos_recibo = [];
@@ -1094,8 +1096,8 @@ async function registrarIngresoIndividual({
     }
   } catch (error) {
     console.log(error);
-    await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback();
+/*     await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback(); */
     throw new Error(
       `Error al buscar una cuenta contable ${
         error.message ? `${" :"}${error.message}` : ""
@@ -1125,8 +1127,8 @@ async function registrarIngresoIndividual({
     }
     } catch (error) {
       console.log(error);
-      await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback();
+/*       await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -1156,8 +1158,8 @@ async function registrarIngresoIndividual({
     }
     } catch (error) {
       console.log(error);
-      await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback();
+/*       await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -1261,8 +1263,8 @@ async function registrarIngresoIndividual({
       null
     );
   } catch (error) {
-    await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback();
+/*     await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback(); */
     throw error;
   }
   //factura
@@ -1388,12 +1390,12 @@ async function registrarIngresoIndividual({
       );
     }
   }catch(error){
-    await transaction_costos_ingresos.rollback();
-    await transaction_asientos.rollback();
+/*     await transaction_costos_ingresos.rollback();
+    await transaction_asientos.rollback(); */
     throw new Error(error.message);
   }
-    await transaction_costos_ingresos.commit();
-    await transaction_asientos.commit();
+/*     await transaction_costos_ingresos.commit();
+    await transaction_asientos.commit(); */
     return {
       nro_recibo: nro_recibo ? nro_recibo : null,
       genera_factura: genera_factura_final,
@@ -1405,11 +1407,14 @@ async function registrarIngresoIndividual({
 export const postCostos_Ingresos = async (req, res) => {
   let message;
   const { ingreso_egreso } = req.body;
+  const transaction_costos_ingresos = await giama_renting.transaction();
+  const transaction_asientos = await pa7_giama_renting.transaction();
   let nro_recibo_ingreso; 
   let genera_factura_ingreso;
   try {
     if (ingreso_egreso === "E") {
-      await registrarCostoIngresoIndividual(req.body);
+      await registrarCostoIngresoIndividual({...req.body, 
+        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
     } else if (ingreso_egreso === "I") {
       let { nro_recibo, genera_factura } = await registrarIngresoIndividual(req.body);
       nro_recibo_ingreso = nro_recibo;
@@ -1425,6 +1430,8 @@ export const postCostos_Ingresos = async (req, res) => {
     } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
       message = "Ingresado correctamente";
     }
+    await transaction_costos_ingresos.commit()
+    await transaction_asientos.commit()
     return res.send({
       status: true,
       message: message,
@@ -1432,6 +1439,8 @@ export const postCostos_Ingresos = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    transaction_asientos.rollback()
+    transaction_costos_ingresos.rollback()
     const { body } = handleError(
       error,
       "Costo/ingreso del vehículo",
