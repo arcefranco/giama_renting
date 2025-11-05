@@ -148,23 +148,25 @@ const Ingresos = () => {
     const contratoVigente = contratosVehiculo.find(c => {
       const desde = new Date(c.fecha_desde);
       const hasta = new Date(c.fecha_hasta);
+      console.log(hoy, desde, hasta)
       return hoy >= desde && hoy <= hasta;
     });
-
     // Si hay contrato vigente, actualizar el form
     if (contratoVigente) {
+      console.log("contratoVigente")
       setForm(prev => ({
         ...prev,
         id_cliente: contratoVigente.id_cliente
       }));
     } else {
+      console.log("contratoNOVigente")
       // Si no hay contrato vigente, dejar vacío
       setForm(prev => ({
         ...prev,
         id_cliente: ""
       }));
     }
-  }, [contratosVehiculo]);
+  }, [contratosVehiculo, form.id_vehiculo]);
 
   useEffect(() => { /**ACTUALIZA id_vehiculo SI EL CLIENTE TIENE UN CONTRATO VIGENTE */
     if (!contratosCliente?.length) return;
@@ -653,26 +655,26 @@ const Ingresos = () => {
           />
         </div>
         }
-        {
-          !id &&
-          <div className={styles.inputWrapper} >
-            <span>Clientes</span>
-            <div className={styles.selectWithIcon} style={{
-              width: "20rem"
-            }}>
-              <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
-                <option value={""} selected>{"Seleccione un cliente"}</option>
-                {
-                  clientes?.length && clientes.map(e => (
-                    <option key={e.id} value={e.id}>
-                      {e.nro_documento} - {e.nombre} {e.apellido}
-                    </option>
-                  ))
-                }
-              </select>
-            </div>
+
+
+        <div className={styles.inputWrapper} >
+          <span>Clientes</span>
+          <div className={styles.selectWithIcon} style={{
+            width: "20rem"
+          }}>
+            <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
+              <option value={""} selected>{"Seleccione un cliente"}</option>
+              {
+                clientes?.length && clientes.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.nro_documento} - {e.nombre} {e.apellido}
+                  </option>
+                ))
+              }
+            </select>
           </div>
-        }
+        </div>
+
 
       </div>
 
