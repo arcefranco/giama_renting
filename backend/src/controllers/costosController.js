@@ -1023,8 +1023,8 @@ async function registrarCostoIngresoIndividual({
 /*     await transaction_costos_ingresos.commit();
     await transaction_asientos.commit(); */
     return {
-      nro_recibo: nro_recibo ? nro_recibo : null,
-      genera_factura: genera_factura,
+      nro_recibo: null,
+      genera_factura: 0,
     };
   } catch (error) {
 /*     await transaction_costos_ingresos.rollback();
@@ -1416,19 +1416,24 @@ export const postCostos_Ingresos = async (req, res) => {
       await registrarCostoIngresoIndividual({...req.body, 
         transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
     } else if (ingreso_egreso === "I") {
-      let { nro_recibo, genera_factura } = await registrarIngresoIndividual(req.body);
+      let { nro_recibo, genera_factura } = await registrarIngresoIndividual({...req.body, 
+        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
       nro_recibo_ingreso = nro_recibo;
       genera_factura_ingreso = genera_factura;
     }
 
-    if (nro_recibo_ingreso && genera_factura_ingreso == 0) {
-      message = "Ingresado correctamente. Se generó el recibo.";
-    } else if (!nro_recibo_ingreso && genera_factura_ingreso == 1) {
-      message = "Ingresado correctamente. Se generó la factura.";
-    } else if (nro_recibo_ingreso && genera_factura_ingreso == 1) {
-      message = "Ingresado correctamente. Se generó la factura y el recibo.";
-    } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
-      message = "Ingresado correctamente";
+    if(ingreso_egreso === "I"){
+      if (nro_recibo_ingreso && genera_factura_ingreso == 0) {
+        message = "Ingresado correctamente. Se generó el recibo.";
+      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 1) {
+        message = "Ingresado correctamente. Se generó la factura.";
+      } else if (nro_recibo_ingreso && genera_factura_ingreso == 1) {
+        message = "Ingresado correctamente. Se generó la factura y el recibo.";
+      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
+        message = "Ingresado correctamente";
+      }
+    }else if(ingreso_egreso === "E"){
+      message = "Ingresado correctamente"
     }
     await transaction_costos_ingresos.commit()
     await transaction_asientos.commit()
