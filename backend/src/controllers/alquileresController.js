@@ -1600,7 +1600,7 @@ try {
     );
   } catch (error) {
     console.log(error);
-    transaction_giama_renting.commit();
+    transaction_giama_renting.rollback();
     const { body } = handleError(error, "Contrato", acciones.update);
     return res.send(body);
   }
