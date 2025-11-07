@@ -871,7 +871,7 @@ async function registrarCostoIngresoIndividual({
   }
   //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
   //(solo asiento primario)
-  const factor = ingreso_egreso === "E" ? -1 : 1;
+  const factor =  -1;
 
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
     await movimientosProveedoresEgresos({
@@ -943,6 +943,7 @@ async function registrarCostoIngresoIndividual({
   const suma_importes_3 =
     importeNetoFinal_3 + importeIvaFinal_3 + importeOtrosImpuestosFinal_3;
   const importeTotalFinal_3 = suma_importes_3;
+  console.log(importeOtrosImpuestosFinal_1)
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
@@ -1020,15 +1021,11 @@ async function registrarCostoIngresoIndividual({
         }
       );
     }
-/*     await transaction_costos_ingresos.commit();
-    await transaction_asientos.commit(); */
     return {
       nro_recibo: null,
       genera_factura: 0,
     };
   } catch (error) {
-/*     await transaction_costos_ingresos.rollback();
-    await transaction_asientos.rollback(); */
     throw new Error(error.message);
   }
 }
