@@ -269,6 +269,7 @@ export const movimientosProveedoresEgresos = async ({
       }
     );
     insertMovProv = result[0];
+    console.log("ID MOV PROV: ", insertMovProv)
   } catch (error) {
     console.log(error);
     throw new Error(
@@ -279,7 +280,7 @@ export const movimientosProveedoresEgresos = async ({
   }
   //c2_movprov
   try {
-    const result = await pa7_giama_renting.query(
+    await pa7_giama_renting.query(
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
       TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, NetoGravado2, NetoGravado3,
       TasaIva1, TasaIva2, TasaIva3, Iva1, Iva2, Iva3, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA,
@@ -314,7 +315,6 @@ export const movimientosProveedoresEgresos = async ({
         transaction: transaction_asientos,
       }
     );
-    insertMovProv = result[0];
   } catch (error) {
     console.log(error);
     throw new Error(
