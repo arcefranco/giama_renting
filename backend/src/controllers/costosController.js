@@ -635,8 +635,6 @@ async function registrarCostoIngresoIndividual({
   transaction_costos_ingresos,
   transaction_asientos
 }) {
-/*   let transaction_costos_ingresos = await giama_renting.transaction();
-  let transaction_asientos = await pa7_giama_renting.transaction(); */
   let ingreso_egreso;
   let NroAsiento;
   let NroAsientoSecundario;
@@ -728,8 +726,6 @@ async function registrarCostoIngresoIndividual({
       cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
     } catch (error) {
       console.log(error);
-/*       await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -865,8 +861,6 @@ async function registrarCostoIngresoIndividual({
       FA_FC
     );
   } catch (error) {
-/*     await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback(); */
     throw error;
   }
   //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
@@ -943,7 +937,6 @@ async function registrarCostoIngresoIndividual({
   const suma_importes_3 =
     importeNetoFinal_3 + importeIvaFinal_3 + importeOtrosImpuestosFinal_3;
   const importeTotalFinal_3 = suma_importes_3;
-  console.log(importeOtrosImpuestosFinal_1)
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
