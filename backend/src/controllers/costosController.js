@@ -622,9 +622,7 @@ async function registrarCostoIngresoIndividual({
   importe_iva_total_1,
   importe_iva_total_2,
   importe_iva_total_3,
-  importe_otros_impuestos_total_1,
-  importe_otros_impuestos_total_2,
-  importe_otros_impuestos_total_3,
+
 
   tasa_IIBB_CABA,
   tasa_IIBB,
@@ -657,6 +655,10 @@ async function registrarCostoIngresoIndividual({
   let cuenta_secundaria_percepcion_IIBB_CABA;
   let cuenta_percepcion_IVA;
   let cuenta_secundaria_percepcion_IVA;
+  let total_conceptos = 0;
+  if(id_concepto) total_conceptos = total_conceptos + 1
+  if(id_concepto_2) total_conceptos = total_conceptos + 1
+  if(id_concepto_3) total_conceptos = total_conceptos + 1
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
@@ -905,38 +907,31 @@ async function registrarCostoIngresoIndividual({
     });
   }
 
+  const importe_otros_impuestos_dividido = (toNumber(importe_tasa_IIBB) + toNumber(importe_tasa_IIBB_CABA) + toNumber(importe_tasa_IVA)) / total_conceptos
   const importeNetoFinal_1 = toNumber(importe_neto_total_1) * factor;
   const importeIvaFinal_1 = importe_iva_total_1
     ? toNumber(importe_iva_total_1) * factor
     : 0;
-  const importeOtrosImpuestosFinal_1 = importe_otros_impuestos_total_1
-    ? toNumber(importe_otros_impuestos_total_1) * factor
-    : 0;
   const suma_importes_1 =
-    importeNetoFinal_1 + importeIvaFinal_1 + importeOtrosImpuestosFinal_1;
+    importeNetoFinal_1 + importeIvaFinal_1 + importe_otros_impuestos_dividido;
   const importeTotalFinal_1 = suma_importes_1;
 
   const importeNetoFinal_2 = toNumber(importe_neto_total_2) * factor;
   const importeIvaFinal_2 = importe_iva_total_2
     ? toNumber(importe_iva_total_2) * factor
     : 0;
-  const importeOtrosImpuestosFinal_2 = importe_otros_impuestos_total_2
-    ? toNumber(importe_otros_impuestos_total_2) * factor
-    : 0;
   const suma_importes_2 =
-    importeNetoFinal_2 + importeIvaFinal_2 + importeOtrosImpuestosFinal_2;
+    importeNetoFinal_2 + importeIvaFinal_2 + importe_otros_impuestos_dividido;
   const importeTotalFinal_2 = suma_importes_2;
 
   const importeNetoFinal_3 = toNumber(importe_neto_total_3) * factor;
   const importeIvaFinal_3 = importe_iva_total_3
     ? toNumber(importe_iva_total_3) * factor
     : 0;
-  const importeOtrosImpuestosFinal_3 = importe_otros_impuestos_total_3
-    ? toNumber(importe_otros_impuestos_total_3) * factor
-    : 0;
   const suma_importes_3 =
-    importeNetoFinal_3 + importeIvaFinal_3 + importeOtrosImpuestosFinal_3;
+    importeNetoFinal_3 + importeIvaFinal_3 + importe_otros_impuestos_dividido;
   const importeTotalFinal_3 = suma_importes_3;
+  
   try {
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
@@ -951,7 +946,7 @@ async function registrarCostoIngresoIndividual({
           comprobante ? comprobante : null,
           importeNetoFinal_1,
           importeIvaFinal_1,
-          importeOtrosImpuestosFinal_1,
+          importe_otros_impuestos_dividido,
           importeTotalFinal_1,
           observacion,
           NroAsiento,
@@ -976,7 +971,7 @@ async function registrarCostoIngresoIndividual({
             comprobante ? comprobante : null,
             importeNetoFinal_2,
             importeIvaFinal_2,
-            importeOtrosImpuestosFinal_2,
+            importe_otros_impuestos_dividido,
             importeTotalFinal_2,
             observacion,
             NroAsiento,
@@ -1002,7 +997,7 @@ async function registrarCostoIngresoIndividual({
             comprobante ? comprobante : null,
             importeNetoFinal_3,
             importeIvaFinal_3,
-            importeOtrosImpuestosFinal_3,
+            importe_otros_impuestos_dividido,
             importeTotalFinal_3,
             observacion,
             NroAsiento,
