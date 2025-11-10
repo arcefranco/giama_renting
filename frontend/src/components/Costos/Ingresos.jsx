@@ -166,7 +166,7 @@ const Ingresos = () => {
         id_cliente: ""
       }));
     }
-  }, [contratosVehiculo, form.id_vehiculo]);
+  }, [contratosVehiculo, form.id_vehiculo, id]);
 
   useEffect(() => { /**ACTUALIZA id_vehiculo SI EL CLIENTE TIENE UN CONTRATO VIGENTE */
     if (!contratosCliente?.length) return;
