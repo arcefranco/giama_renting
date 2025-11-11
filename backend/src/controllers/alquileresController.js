@@ -895,7 +895,7 @@ export const postContratoAlquiler = async (req, res) => {
   //cambio el estado del vehiculo a "sin preparar" (1)
   try {
     await giama_renting.query(
-      "UPDATE vehiculos SET estado_actual = 1 WHERE id = ?",
+      "UPDATE vehiculos SET estado_actual = 2 WHERE id = ?",
       {
         type: QueryTypes.UPDATE,
         replacements: [id_vehiculo],
