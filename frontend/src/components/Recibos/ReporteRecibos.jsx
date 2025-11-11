@@ -16,6 +16,7 @@ import styles from "./ReporteRecibos.module.css"
 import { Workbook } from 'devextreme-exceljs-fork';
 import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
+import Swal from 'sweetalert2';
 
 const ReporteRecibos = () => {
     const dispatch = useDispatch()
@@ -165,9 +166,7 @@ const ReporteRecibos = () => {
                         textDecoration: 'underline', background: 'none', border: 'none',
                         cursor: "pointer"
                     }}
-                    onClick={() => {
-                        dispatch(anulacionRecibo({ id: row }))
-                    }}
+                    onClick={() => swalAnulacion(row)}
                 >
                     Anular
                 </button>
@@ -239,6 +238,23 @@ const ReporteRecibos = () => {
             });
         });
     };
+
+    const swalAnulacion = (id) => {
+        Swal.fire({
+            title: '¿Desea anular el recibo?',
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar',
+            icon: 'warning',
+            didOpen: () => {
+                document.body.classList.remove('swal2-height-auto');
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                dispatch(anulacionRecibo({ id: id }))
+            }
+        })
+    }
     return (
         <div className={styles.container}>
             <ToastContainer />

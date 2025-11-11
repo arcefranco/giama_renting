@@ -37,6 +37,7 @@ const Ingresos = () => {
   const { username } = useSelector((state) => state.loginReducer)
   const { modelos, formasDeCobro } = useSelector((state) => state.generalesReducer)
   const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
+  const [total, setTotal] = useState(0)
   const [form, setForm] = useState({
     id_vehiculo: id ? id : "",
     fecha: '',
@@ -366,6 +367,14 @@ const Ingresos = () => {
     }
   }, [form.importe_iva_3])
 
+  useEffect(() => {
+    let total_1 = form.importe_total ? toNumber(form.importe_total) : 0
+    let total_2 = form.importe_total_2 ? toNumber(form.importe_total_2) : 0
+    let total_3 = form.importe_total_3 ? toNumber(form.importe_total_3) : 0
+
+    setTotal(total_1 + total_2 + total_3)
+  }, [form.importe_total, form.importe_total_2, form.importe_total_3])
+
   useToastFeedback({
     isError,
     isSuccess,
@@ -435,25 +444,26 @@ const Ingresos = () => {
   }
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value && name === "importe_total") {
+    if (name === "importe_total") {
+      let total = value
       if (IVAInhabilitado) {
         setForm({
           ...form,
-          importe_total: value,
-          importe_neto: value,
+          importe_total: total,
+          importe_neto: total,
           importe_iva: ""
         })
       } else {
         setForm({
           ...form,
-          importe_total: value,
-          importe_neto: parseFloat(toNumber(value) / 1.21).toFixed(2),
-          importe_iva: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
+          importe_total: total,
+          importe_neto: parseFloat(toNumber(total) / 1.21).toFixed(2),
+          importe_iva: parseFloat(toNumber(total) - parseFloat(total / 1.21)).toFixed(2)
         })
       }
     }
     //copias de comportamiento a importes 2 y 3
-    else if (value && name === "importe_total_2") {
+    else if (name === "importe_total_2") {
       if (IVAInhabilitado2) {
         setForm({
           ...form,
@@ -470,7 +480,7 @@ const Ingresos = () => {
         })
       }
     }
-    else if (value && name === "importe_total_3") {
+    else if (name === "importe_total_3") {
       if (IVAInhabilitado3) {
         setForm({
           ...form,
@@ -917,6 +927,10 @@ const Ingresos = () => {
             <span>Observacion</span>
             <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
+          </div>
+          <div className={styles.divTotal}>
+            <span style={{ fontSize: "15px" }}>Total: </span>
+            <span>{total}</span>
           </div>
         </form>
         <button
