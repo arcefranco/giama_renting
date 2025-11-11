@@ -341,9 +341,11 @@ export const insertVehiculo = async (req) => {
     nro_chasis,
     nro_motor,
     kilometros,
+    fecha_medicion_km,
     costo,
     color,
     sucursal,
+    ubicacion,
     numero_comprobante_1,
     numero_comprobante_2,
     usuario,
@@ -352,6 +354,7 @@ export const insertVehiculo = async (req) => {
     transaction_2,
     importacion_masiva,
     meses_amortizacion_masiva,
+    observaciones
   } = req.body;
   let cuentaRODN;
   let cuentaRDN2;
@@ -421,9 +424,9 @@ export const insertVehiculo = async (req) => {
     const result = await giama_renting.query(
       `INSERT INTO vehiculos (modelo, fecha_ingreso, 
         precio_inicial, nro_chasis, nro_motor,
-        kilometros_iniciales, kilometros_actuales, meses_amortizacion, color, sucursal, 
-        nro_factura_compra, estado_actual, usuario_ultima_modificacion)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        kilometros_iniciales, kilometros_actuales, fecha_medicion_km, meses_amortizacion, color, sucursal, ubicacion,
+        nro_factura_compra, estado_actual, usuario_ultima_modificacion, observaciones)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -434,12 +437,15 @@ export const insertVehiculo = async (req) => {
           nro_motor,
           kilometros,
           kilometros,
+          fecha_medicion_km,
           meses_amortizacion_final,
           color ? color : null,
           sucursal,
+          ubicacion,
           numero_comprobante,
           1,
           usuario,
+          observaciones
         ],
         transaction: transaction_giama_renting,
       }
@@ -614,7 +620,8 @@ export const getVehiculos = async (req, res) => {
       `SELECT 
   vehiculos.*, 
   (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
-  (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado
+  (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado,
+  CONCAT(cli.nombre, ' ', cli.apellido) AS chofer_actual
 FROM vehiculos
 LEFT JOIN (
   SELECT a.id_vehiculo
@@ -624,12 +631,16 @@ LEFT JOIN (
     AND (r.anulado = 0 OR r.anulado IS NULL)
   GROUP BY a.id_vehiculo
 ) AS alq ON vehiculos.id = alq.id_vehiculo
+
 LEFT JOIN (
-  SELECT id_vehiculo 
-  FROM contratos_alquiler 
-  WHERE ? BETWEEN fecha_desde AND fecha_hasta
-  GROUP BY id_vehiculo
-) AS con ON vehiculos.id = con.id_vehiculo;`,
+  SELECT ca.id_vehiculo, ca.id_cliente
+  FROM contratos_alquiler ca
+  WHERE ? BETWEEN ca.fecha_desde AND ca.fecha_hasta
+  GROUP BY ca.id_vehiculo, ca.id_cliente
+) AS con ON vehiculos.id = con.id_vehiculo
+
+LEFT JOIN clientes cli ON con.id_cliente = cli.id;
+`,
       {
         type: QueryTypes.SELECT,
         replacements: [hoy, hoy],
@@ -812,6 +823,7 @@ export const updateVehiculo = async (req, res) => {
     fecha_inicio_amortizacion,
     nro_motor,
     kilometros,
+    fecha_medicion_km,
     proveedor_gps,
     nro_serie_gps,
     dispositivo,
@@ -822,10 +834,12 @@ export const updateVehiculo = async (req, res) => {
     calcomania,
     gnc,
     sucursal,
+    ubicacion,
     estado,
     polarizado,
     cubre_asiento,
     usuario,
+    observaciones
   } = req.body;
   let vehiculoAnterior;
   let fechaDePreparacion;
@@ -926,12 +940,12 @@ export const updateVehiculo = async (req, res) => {
   try {
     await giama_renting.query(
       `UPDATE vehiculos SET  dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
-        kilometros_actuales = :kilometros, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
+        kilometros_actuales = :kilometros, fecha_medicion_km = :fecha_medicion_km, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
         calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
-        fecha_inicio_amortizacion = :fechaDeAmortizacion, sucursal = :sucursal, estado_actual = :estado,
+        fecha_inicio_amortizacion = :fechaDeAmortizacion, sucursal = :sucursal, ubicacion = :ubicacion, estado_actual = :estado,
         polarizado = :polarizado, cubre_asiento = :cubre_asiento,
-        usuario_ultima_modificacion = :usuario
+        usuario_ultima_modificacion = :usuario, observaciones = :observaciones
         WHERE id = :id`,
       {
         type: QueryTypes.UPDATE,
@@ -941,6 +955,7 @@ export const updateVehiculo = async (req, res) => {
           nro_chasis,
           nro_motor,
           kilometros,
+          fecha_medicion_km: fecha_medicion_km ? fecha_medicion_km : null,
           proveedor_gps: proveedor_gps ? proveedor_gps : null,
           nro_serie_gps: nro_serie_gps ? nro_serie_gps : null,
           dispositivo: dispositivo ? dispositivo : null,
@@ -951,10 +966,12 @@ export const updateVehiculo = async (req, res) => {
           fechaDePreparacion,
           fechaDeAmortizacion,
           sucursal,
+          ubicacion: ubicacion ? ubicacion : null,
           estado,
           polarizado,
           cubre_asiento,
           usuario,
+          observaciones: observaciones ? observaciones : null,
           id,
         },
       }
