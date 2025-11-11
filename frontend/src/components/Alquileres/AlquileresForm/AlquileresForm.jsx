@@ -523,7 +523,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
-            <span>Observacion</span>
+            <span>Observación</span>
             <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
           </div>

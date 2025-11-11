@@ -33,6 +33,7 @@ const VehiculosForm = () => {
     nro_chasis: '',
     nro_motor: '',
     kilometros: '',
+    fecha_medicion_km: '',
     proveedor_gps: '',
     nro_serie_gps: '',
     costo: '',
@@ -40,11 +41,13 @@ const VehiculosForm = () => {
     meses_amortizacion: '',
     color: '',
     sucursal: '',
+    ubicacion: '',
     numero_comprobante_1: '',
     numero_comprobante_2: '',
     cuenta_contable: '',
     cuenta_secundaria: '',
     proveedor_vehiculo: '',
+    observaciones: '',
     usuario: username
 
   })
@@ -76,6 +79,7 @@ const VehiculosForm = () => {
         nro_chasis: '',
         nro_motor: '',
         kilometros: '',
+        fecha_medicion_km: '',
         proveedor_gps: '',
         costo: '',
         nro_serie_gps: '',
@@ -83,11 +87,13 @@ const VehiculosForm = () => {
         meses_amortizacion: '',
         color: '',
         sucursal: '',
+        ubicacion: '',
         numero_comprobante_1: '',
         numero_comprobante_2: '',
         cuenta_contable: '',
         cuenta_secundaria: '',
         proveedor_vehiculo: '',
+        observaciones: ''
       })
       setImagenes([])
     }
@@ -222,6 +228,11 @@ const VehiculosForm = () => {
             <input type="number" name='kilometros' value={form["kilometros"]}
               onChange={handleChange} />
           </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha medicion km</span>
+            <input type="date" name='fecha_medicion_km' value={form["fecha_medicion_km"]}
+              onChange={handleChange} />
+          </div>
           {/*     <div className={styles.inputContainer}>
         <span>Proveedor GPS</span>
         <select name="proveedor_gps" value={form["proveedor_gps"]}
@@ -285,12 +296,22 @@ const VehiculosForm = () => {
             </select>
           </div>
           <div className={styles.inputContainer}>
+            <span>Ubicación</span>
+            <input type="text" name='ubicacion' value={form["ubicacion"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
             <span>Proveedor</span>
             <select name="proveedor_vehiculo" value={form.proveedor_vehiculo} disabled>
               {proveedores_vehiculo.map((m) => (
                 <option key={m.Codigo} value={m.Codigo}>{m.RazonSocial}</option>
               ))}
             </select>
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Observaciones</span>
+            <textarea type="text" name='observaciones' value={form["observaciones"]} maxLength={100}
+              onChange={handleChange} />
           </div>
           <div></div>
           <div className={styles.inputContainer} style={{ gridColumn: "span 1" }}>

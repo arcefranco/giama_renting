@@ -200,6 +200,7 @@ const ReporteVehiculos = () => {
           }}
           cellRender={({ data }) => renderEstadoVehiculo(data)}
         />
+        <Column dataField="chofer_actual" caption="Chofer actual" />
         <Column dataField="id" caption="ID" width={50} />
         <Column dataField="modelo" width={75} caption="Modelo"
           cellRender={({ data }) => getNombreModelo(data.modelo)} />
@@ -214,6 +215,7 @@ const ReporteVehiculos = () => {
         <Column dataField="nro_motor" caption="Nro. Motor" />
         <Column dataField="kilometros_iniciales" width={100} caption="Km Iniciales" format="fixedPoint" />
         <Column dataField="kilometros_actuales" width={100} caption="Km Actuales" format="fixedPoint" />
+        <Column dataField="fecha_medicion_km" width={100} caption="Fecha medición km" cellRender={renderFecha} />
         <Column
           dataField="proveedor_gps"
           caption="Proveedor GPS"
@@ -225,6 +227,7 @@ const ReporteVehiculos = () => {
         <Column dataField="meses_amortizacion" width={75} caption="Amortización (Meses)" />
         <Column dataField="color" caption="Color" width={75} />
         <Column dataField="sucursal" caption="Sucursal" cellRender={({ data }) => getNombreSucursales(data.sucursal)} />
+        <Column dataField="ubicacion" caption="Ubicación actual" />
         <Column dataField="calcomania" caption="Calcomanía" width={75}
           cellRender={({ data }) => {
             if (data["calcomania"] === 1) {
@@ -242,6 +245,7 @@ const ReporteVehiculos = () => {
             }
           }} />
         <Column dataField="fecha_inicio_amortizacion" caption="Fecha amortización" alignment="center" cellRender={renderFecha} />
+        <Column dataField="observaciones" caption="Observaciones" width={200} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderIngresosCell} />
