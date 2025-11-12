@@ -45,6 +45,7 @@ const UpdateContrato = () => {
     const { vehiculos, vehiculo } = useSelector((state) => state.vehiculosReducer)
     const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
     const { modelos, sucursales, formasDeCobro } = useSelector((state) => state.generalesReducer)
+    const [rangosOcupados, setRangosOcupados] = useState([])
     const [formContrato, setFormContrato] = useState({
         id_vehiculo: '',
         id_cliente: '',
@@ -159,11 +160,14 @@ const UpdateContrato = () => {
             width: '22rem'
         })
     };
-    const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
-        alquileres?.filter(e => e.anulado === 0)?.map(a => ({
-            start: new Date(a.fecha_desde),
-            end: new Date(a.fecha_hasta),
-        }));
+    useEffect(() => {
+        if (alquilerByIdContrato.length) {
+            setRangosOcupados(alquilerByIdContrato?.filter(e => e.anulado === 0)?.map(a => ({
+                start: new Date(a.fecha_desde),
+                end: new Date(a.fecha_hasta),
+            })))
+        }
+    }, [alquilerByIdContrato])
     return (
         <div>
             <ToastContainer />
@@ -239,7 +243,7 @@ const UpdateContrato = () => {
                             minDate={formContrato.fecha_desde_contrato}
                             maxDate={formContrato.fecha_hasta_contrato}
                             placeholderText="Seleccione una fecha"
-                            excludeDateIntervals={obtenerRangosOcupados(alquilerByIdContrato)}
+                            excludeDateIntervals={rangosOcupados}
                             locale="es"
                         />
                     </div>
@@ -249,10 +253,10 @@ const UpdateContrato = () => {
                             dateFormat="dd/MM/yyyy"
                             selected={formContrato.fecha_hasta_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_hasta_contrato: date }))}
-                            minDate={formContrato.fecha_desde_contrato}
-                            maxDate={formContrato.fecha_hasta_contrato}
+                            /*                             minDate={formContrato.fecha_desde_contrato}
+                                                        maxDate={formContrato.fecha_hasta_contrato} */
                             placeholderText="Seleccione una fecha"
-                            excludeDateIntervals={obtenerRangosOcupados(alquilerByIdContrato)}
+                            excludeDateIntervals={rangosOcupados}
                             locale="es"
                         />
                     </div>
