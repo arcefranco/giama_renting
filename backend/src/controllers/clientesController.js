@@ -73,6 +73,7 @@ export const postCliente = async (req, res) => {
     "nro_direccion",
     "codigo_postal",
     "celular",
+    "provincia",
     "mail",
   ];
   const campoFaltante = verificarCamposObligatorios(
