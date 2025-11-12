@@ -154,6 +154,16 @@ const ReporteContratos = () => {
     }));
   }, [clientes]);
 
+  const vehiculosGrid = useMemo(() => {
+    if (!clientes?.length) return [];
+    return vehiculos.map(c => ({
+      ...c,
+      // Campos nuevos que usará el lookup para buscar
+      dominio: normalizar(c.dominio),
+      modelo: normalizar(c.modelo)
+    }));
+  }, [vehiculos]);
+
   const renderModificar = (data) => {
     const row = data.data
     if (row.dias_pendientes === 0) {
@@ -350,7 +360,15 @@ const ReporteContratos = () => {
         <HeaderFilter visible={true} />
         <Paging defaultPageSize={20} />
         <Column dataField="id" caption="ID" allowHeaderFiltering={false} alignment="center" />
-        <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderVehiculo} alignment="center" />
+        <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} cellRender={renderVehiculo} alignment="center" >
+          <Lookup
+            dataSource={vehiculosGrid}
+            valueExpr="id"
+            displayExpr={(item) => item ? `${item.dominio}` : ""}
+            searchExpr={["dominio"]}
+          />
+
+        </Column>
         <Column
           dataField="id_cliente"
           dataType="number" // Asegúrate de que coincida con el tipo de 'id' (tu ejemplo dice 5)
@@ -360,10 +378,10 @@ const ReporteContratos = () => {
           allowHeaderFiltering={false}
         >
           <Lookup
-            dataSource={clientesParaGrid} // 1. Usa la lista pre-procesada
-            valueExpr="id"                // 2. El valor subyacente es el 'id'
-            displayExpr={(item) => item ? `${item.nombre} ${item.apellido}` : ""} // 3. Qué mostrar
-            searchExpr={["nombreNorm", "apellidoNorm"]} // 4. ¡En qué campos buscar!
+            dataSource={clientesParaGrid}
+            valueExpr="id"
+            displayExpr={(item) => item ? `${item.nombre} ${item.apellido}` : ""}
+            searchExpr={["nombreNorm", "apellidoNorm"]}
           />
         </Column>
         <Column dataField="fecha_desde" caption="Desde" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />
