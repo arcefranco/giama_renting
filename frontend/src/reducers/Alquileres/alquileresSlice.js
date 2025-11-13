@@ -8,6 +8,7 @@ const initialState = {
   alquileresVehiculo: [],
   alquileres: [],
   contratos: [],
+  contratosAVencer: [],
   alquilerByIdContrato: [],
   contratoById: [],
   contratosVehiculo: [],
@@ -149,6 +150,16 @@ export const getContratos = createAsyncThunk(
     )
 );
 
+export const getContratosAVencer = createAsyncThunk(
+  "getContratosAVencer",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.getContratosAVencer(data),
+      responses.array,
+      rejectWithValue
+    )
+);
+
 export const getAnulaciones = createAsyncThunk(
   "getAnulaciones",
   async (data, { rejectWithValue }) =>
@@ -162,7 +173,7 @@ export const alquileresSlice = createSlice({
   name: "alquileres",
   initialState,
   reducers: {
-    reset: () => ({ ...initialState }),
+    reset: (state) => ({ ...initialState, contratosAVencer: state.contratosAVencer }),
     reset_nro_recibo: (state) => {
       state.nro_recibo_alquiler = null;
       state.nro_recibo_deposito = null;
@@ -370,6 +381,22 @@ export const alquileresSlice = createSlice({
       state.contratos = action.payload;
     });
     builder.addCase(getContratos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getContratosAVencer.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getContratosAVencer.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.contratosAVencer = action.payload;
+    });
+    builder.addCase(getContratosAVencer.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
