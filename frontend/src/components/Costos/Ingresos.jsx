@@ -21,7 +21,7 @@ import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { getReciboIngresoById, resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
 import Swal from 'sweetalert2';
-import { toNumber } from '../../../../backend/helpers/toNumber.js';
+import { toNumber } from '../../helpers/toNumber.js';
 import { getToday } from '../../helpers/getTodayDate.js'
 
 const Ingresos = () => {
