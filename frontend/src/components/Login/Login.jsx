@@ -1,25 +1,26 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './Login.module.css';
 import tick from '../../assets/tick.png';
 import cross from '../../assets/cross.png';
 import Eye from '../../assets/Eye.svg';
 import EyeHidden from '../../assets/Eye-Hidden.svg';
 import Car from "../../assets/Vector.png"
-import { logIn } from '../../reducers/Login/loginSlice'; 
+import { logIn } from '../../reducers/Login/loginSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { getContratosAVencer } from '../../reducers/Alquileres/alquileresSlice';
 const Login = () => {
-const dispatch = useDispatch(); 
-const navigate = useNavigate();
-  const {status, message, isSuccess, isError} = useSelector(state => state.loginReducer) 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { status, message, isSuccess, isError, roles } = useSelector(state => state.loginReducer)
   const [email, setEmail] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-useEffect(() => {
+  useEffect(() => {
 
-    if(!isError && message){
+    if (!isError && message) {
       toast.error(message, {
         position: "bottom-center",
         autoClose: 5000,
@@ -29,18 +30,21 @@ useEffect(() => {
         draggable: true,
         progress: undefined,
         theme: "colored",
-        })
+      })
     }
 
-    
+
 
   }, [isError])
-  
+
   useEffect(() => {
-  if (isSuccess && status) {
-    navigate("/home");
-  }
-}, [isSuccess, status, navigate]);
+    if (isSuccess && status) {
+      if (roles.includes("1") || roles.includes("2")) {
+        dispatch(getContratosAVencer())
+      }
+      navigate("/home");
+    }
+  }, [isSuccess, status, navigate]);
 
   const validateEmail = (value) => {
     setEmail(value);
@@ -50,22 +54,22 @@ useEffect(() => {
     setShowPassword(!showPassword);
   };
   const handleSubmit = (e) => {
-      e.preventDefault()
-      dispatch(logIn({
-        email: email,
-        password: password
-       }))
+    e.preventDefault()
+    dispatch(logIn({
+      email: email,
+      password: password
+    }))
   }
   return (
     <div className={styles.container}>
-    <ToastContainer /> 
-    <div className={`${styles.elipse} ${styles.elipseSuperiorIzquierda}`}></div>
-    <div className={`${styles.elipse} ${styles.elipseInferiorDerecha}`}></div>
-    <h1 className={styles.title}></h1>
-    <form className={styles.loginForm}>
+      <ToastContainer />
+      <div className={`${styles.elipse} ${styles.elipseSuperiorIzquierda}`}></div>
+      <div className={`${styles.elipse} ${styles.elipseInferiorDerecha}`}></div>
+      <h1 className={styles.title}></h1>
+      <form className={styles.loginForm}>
         <div className={styles.formHeader}>Iniciar sesión</div>
         <div className={styles.formContent}>
-        <div className={styles.inputWrapper}>
+          <div className={styles.inputWrapper}>
             <input
               className={styles.input}
               type="text"
@@ -100,14 +104,14 @@ useEffect(() => {
           <a className={styles.a} href="/recovery">¿Olvidaste tu contraseña?</a>
           {
             isValidEmail ?
-          <button className={styles.button} onClick={handleSubmit}>Ingresar</button>
-          :
-          <button className={styles.buttonDisabled}>Ingresar</button>
+              <button className={styles.button} onClick={handleSubmit}>Ingresar</button>
+              :
+              <button className={styles.buttonDisabled}>Ingresar</button>
           }
         </div>
       </form>
-    <div className={styles.svg}><img src={Car} style={{width: "17rem"}} alt="" /></div>
-  </div>
+      <div className={styles.svg}><img src={Car} style={{ width: "17rem" }} alt="" /></div>
+    </div>
   )
 }
 

@@ -139,6 +139,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["5"]} />}>
             <Route path='/alquileres/contrato/reporte' element={<ReporteContratos />} />
           </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/alquileres/contrato/reporte/a-vencer' element={<ReporteContratos />} />
+          </Route>
 
           <Route path='/parametros/proveedoresGPS' element={<ProveedoresGPS />} />
           <Route path='/parametros/proveedoresGPS/:id' element={<UpdateProveedorGPS />} />
