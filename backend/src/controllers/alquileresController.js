@@ -167,6 +167,7 @@ export const postAlquiler = async (req, res) => {
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   let nro_recibo;
+  let nro_factura;
   let estadoCliente;
   let dominio;
   let concepto;
@@ -328,6 +329,26 @@ export const postAlquiler = async (req, res) => {
   }
   concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
   hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio}`;
+
+  //inserto factura
+  try {
+    nro_factura = await insertFactura(
+      id_cliente,
+      importe_neto,
+      importe_iva,
+      importe_total,
+      usuario,
+      NroAsiento,
+      NroAsientoSecundario,
+      concepto,
+      transaction_giama_renting,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    const { body } = handleError(error, "Factura", acciones.post);
+    return res.send(body);
+  }
+
   //inserto recibo
   try {
     nro_recibo = await insertRecibo(
@@ -342,31 +363,13 @@ export const postAlquiler = async (req, res) => {
       id_forma_cobro_alquiler_1 ? id_forma_cobro_alquiler_1 : null,
       id_forma_cobro_alquiler_2 ? id_forma_cobro_alquiler_2 : null,
       id_forma_cobro_alquiler_3 ? id_forma_cobro_alquiler_3 : null,
-      null,
+      nro_factura,
       transaction_giama_renting
     );
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
     const { body } = handleError(error, "Recibo de alquiler", acciones.post);
-    return res.send(body);
-  }
-  //inserto factura
-  try {
-    await insertFactura(
-      id_cliente,
-      importe_neto,
-      importe_iva,
-      importe_total,
-      usuario,
-      NroAsiento,
-      NroAsientoSecundario,
-      concepto,
-      transaction_giama_renting,
-      transaction_pa7_giama_renting
-    );
-  } catch (error) {
-    const { body } = handleError(error, "Factura", acciones.post);
     return res.send(body);
   }
   //inserto alquiler
@@ -1312,6 +1315,44 @@ export const getContratosByIdCliente = async (req, res) => {
     return res.send(body);
   }
 };
+
+export const getContratosAVencer = async (req, res) => {
+  let result;
+    try {
+      result = await giama_renting.query(
+        `SELECT 
+      c.*, 
+      (
+        DATEDIFF(c.fecha_hasta, c.fecha_desde) 
+        - IFNULL((
+            SELECT SUM(DATEDIFF(alq.fecha_hasta, alq.fecha_desde))
+            FROM alquileres alq
+            WHERE alq.id_contrato = c.id
+          ), 0)
+      ) AS dias_pendientes,
+      a.id AS ultimo_alquiler_id,
+      a.fecha_desde AS ultima_fecha_desde,
+      a.fecha_hasta AS ultima_fecha_hasta
+    FROM contratos_alquiler c
+    LEFT JOIN alquileres a 
+      ON a.id = (
+        SELECT MAX(id)
+        FROM alquileres
+        WHERE alquileres.id_contrato = c.id
+      )
+        WHERE (a.fecha_hasta < c.fecha_hasta OR a.id IS NULL)
+        AND DATEDIFF(c.fecha_hasta, CURDATE()) BETWEEN 0 AND 7
+        ORDER BY a.id;`,
+        { type: QueryTypes.SELECT }
+      );
+
+    return res.send(result);
+  } catch (error) {
+    const { body } = handleError(error, "Contratos", acciones.get);
+    return res.send(body);
+  }
+
+}
 
 export const getAlquilerByIdContrato = async (req, res) => {
   const { id } = req.body;
