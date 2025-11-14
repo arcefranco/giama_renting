@@ -333,27 +333,30 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (value && name === "importe_total_1") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_1": (parseFloat(value) * 0.21).toFixed(2),
-        "importe_neto_1": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
+        "importe_iva_1": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_1": valor_sin_iva
       });
     }
     else if (value && name === "importe_total_2") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_2": (parseFloat(value) * 0.21).toFixed(2),
-        "importe_neto_2": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
+        "importe_iva_2": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_2": valor_sin_iva
       });
     }
     else if (value && name === "importe_total_3") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_3": (parseFloat(value) * 0.21).toFixed(2),
-        "importe_neto_3": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
+        "importe_iva_3": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_3": valor_sin_iva
       });
     }
     else if (value && name === "id_forma_cobro_alquiler_1") {
