@@ -42,7 +42,7 @@ export const insertFactura = async (
   }
   if (!clienteObtenido.tipo_contribuyente)
     throw new Error("El cliente debe aclarar su tipo responsable");
-  if (clienteObtenido.tipo_contribuyente == 1) tipo_factura = "FA";
+  if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA"; 
   else tipo_factura = "FB";
   //obtengo el nombre de la provincia del cliente
   try {
@@ -114,7 +114,6 @@ export const insertFactura = async (
     );
     CodigoCliente = result[0];
   }
-  console.log(getTodayDate());
   //inserto la factura
   try {
     const result = await pa7_giama_renting.query(
