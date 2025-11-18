@@ -1231,46 +1231,6 @@ async function registrarIngresoIndividual({
   } catch (error) {
     throw error;
   }
-  //realizo el asiento
-  try {
-    NroAsiento = await asientos_costos_ingresos(
-      fecha,
-      cuenta_concepto,
-      cuenta_secundaria_concepto,
-      cuenta_forma_cobro,
-      cuenta_secundaria_forma_cobro,
-      toNumber(importe_neto),
-      toNumber(importe_neto_2),
-      toNumber(importe_neto_3),
-      toNumber(importe_iva),
-      toNumber(importe_iva_2),
-      toNumber(importe_iva_3),
-      0,
-      0,
-      0,
-      cuenta_concepto_2,
-      cuenta_secundaria_concepto_2,
-      cuenta_concepto_3,
-      cuenta_secundaria_concepto_3,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      observacion,
-      null,
-      "I",
-      transaction_asientos,
-      NroAsiento,
-      NroAsientoSecundario,
-      null
-    );
-  } catch (error) {
-/*     await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback(); */
-    throw error;
-  }
   //factura
   if (genera_factura_final) {
       try {
@@ -1315,6 +1275,46 @@ async function registrarIngresoIndividual({
         throw error;
       }
     }
+      //realizo el asiento
+  try {
+    NroAsiento = await asientos_costos_ingresos(
+      fecha,
+      cuenta_concepto,
+      cuenta_secundaria_concepto,
+      cuenta_forma_cobro,
+      cuenta_secundaria_forma_cobro,
+      toNumber(importe_neto),
+      toNumber(importe_neto_2),
+      toNumber(importe_neto_3),
+      toNumber(importe_iva),
+      toNumber(importe_iva_2),
+      toNumber(importe_iva_3),
+      0,
+      0,
+      0,
+      cuenta_concepto_2,
+      cuenta_secundaria_concepto_2,
+      cuenta_concepto_3,
+      cuenta_secundaria_concepto_3,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      observacion,
+      nro_recibo ? nro_recibo : null,
+      "I",
+      transaction_asientos,
+      NroAsiento,
+      NroAsientoSecundario,
+      null
+    );
+  } catch (error) {
+/*     await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback(); */
+    throw error;
+  }
   //inserto en tabla costos_ingresos
     try {
     await giama_renting.query(
