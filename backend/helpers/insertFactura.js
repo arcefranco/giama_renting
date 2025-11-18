@@ -97,7 +97,7 @@ export const insertFactura = async (
     const result = await pa7_giama_renting.query(
       `
         INSERT INTO clientesfacturacion (RazonSocial, CUIT, TipoDocumento, TipoResponsable,
-        Domicilio, Localidad, Provincia) VALUES (?,?,?,?,?,?,?)`,
+        Domicilio, Localidad, Provincia, Activo) VALUES (?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -108,6 +108,7 @@ export const insertFactura = async (
           domicilio,
           clienteObtenido.ciudad,
           nombre_provincia ? nombre_provincia : null,
+          1
         ],
         transaction: transaction_pa7_giama_renting,
       }
