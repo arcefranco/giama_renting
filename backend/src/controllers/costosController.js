@@ -1047,6 +1047,7 @@ async function registrarIngresoIndividual({
   let genera_recibo_3;
   let genera_factura_3;
   let NroAsiento;
+  let CUIT;
   let NroAsientoSecundario;
   let cuenta_forma_cobro;
   let cuenta_secundaria_forma_cobro;
@@ -1061,6 +1062,24 @@ async function registrarIngresoIndividual({
   let genera_recibo_final;
   let genera_factura_final;
   let conceptos_recibo = [];
+  //buscar CUIT del cliente
+    try {
+    const result = await giama_renting.query(
+      "SELECT nro_documento FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "documento del cliente",
+      acciones.get
+    );
+    return res.send(body);
+  }
   try {
     const result = await giama_renting.query(
       `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
@@ -1164,7 +1183,7 @@ async function registrarIngresoIndividual({
     genera_factura_final = false;
   }
   //armo el detalle del recibo segun nombres de concepto que generen recibo
-  const detalle_recibo = conceptos_recibo.join(" + ");
+  const detalle_recibo = conceptos_recibo.join(" + ").concat(` CUIT/CUIL: ${CUIT}`);
   //suma de importes_totales que generan recibo
   const importe_total_recibo = 
   (genera_recibo   ? toNumber(importe_total)   : 0) +

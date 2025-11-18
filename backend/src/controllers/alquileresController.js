@@ -169,6 +169,7 @@ export const postAlquiler = async (req, res) => {
   let nro_recibo;
   let nro_factura;
   let estadoCliente;
+  let CUIT;
   let dominio;
   let concepto;
   let importe_total_1_formateado = importe_total_1 ? parseFloat(importe_total_1) : 0
@@ -229,6 +230,25 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "Fecha de venta del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
+  }
+
+  //buscar CUIT del cliente
+    try {
+    const result = await giama_renting.query(
+      "SELECT nro_documento FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "documento del cliente",
       acciones.get
     );
     return res.send(body);
@@ -328,7 +348,7 @@ export const postAlquiler = async (req, res) => {
     return res.send(body);
   }
   concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
-  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio}`;
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
 
   //inserto factura
   try {
@@ -612,6 +632,7 @@ export const postContratoAlquiler = async (req, res) => {
   let cuentaDEPO;
   let cuentaDEP2;
   let idContrato;
+  let CUIT;
   let id_factura;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction(); 
@@ -668,6 +689,24 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send({ status: false, message: estadoCliente });
   } catch (error) {
     const { body } = handleError(error, "Estado del cliente", acciones.get);
+    return res.send(body);
+  }
+  //buscar CUIT del cliente
+    try {
+    const result = await giama_renting.query(
+      "SELECT nro_documento FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "documento del cliente",
+      acciones.get
+    );
     return res.send(body);
   }
   //buscar el estado del vehículo
@@ -862,7 +901,7 @@ export const postContratoAlquiler = async (req, res) => {
   }
   const detalle_alquiler = `Alquiler desde ${formatearFechaISOText(
     fecha_desde_alquiler
-  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio}`;
+  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
   //inserto contrato
   try {
     const [result] = await giama_renting.query(
@@ -947,7 +986,7 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send(body);
     }
   }
-  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio}`;
+  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
   //inserto recibo del depósito del contrato
   if (ingresa_deposito == 1) {
     try {
