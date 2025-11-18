@@ -1531,7 +1531,7 @@ export const getContratos = async (req, res) => {
     if (vigentes) {
       result = await giama_renting.query(
         baseQuery + `
-        WHERE (a.fecha_hasta < c.fecha_hasta OR a.id IS NULL)
+        WHERE (a.fecha_hasta <= c.fecha_hasta OR a.id IS NULL)
         ORDER BY a.id;`,
         { type: QueryTypes.SELECT }
       );
