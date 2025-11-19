@@ -370,6 +370,7 @@ const ReporteRecibos = () => {
                         displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
                     />
                 </Column>
+                <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column
                     dataField="id_forma_cobro_2"
                     caption="Forma de pago 2"
@@ -381,6 +382,7 @@ const ReporteRecibos = () => {
                         displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
                     />
                 </Column>
+                <Column dataField="importe_total_2" caption="Importe 2" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column
                     dataField="id_forma_cobro_3"
                     caption="Forma de pago 3"
@@ -392,7 +394,8 @@ const ReporteRecibos = () => {
                         displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
                     />
                 </Column>
-                <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+                <Column dataField="importe_total_3" caption="Importe 3" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+
                 <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
                 <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
