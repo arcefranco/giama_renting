@@ -374,7 +374,7 @@ export const postAlquiler = async (req, res) => {
     nro_recibo = await insertRecibo(
       fecha_recibo_alquiler,
       concepto,
-      importe_total_1_formateado,
+      importe_total,
       usuario,
       id_cliente,
       id_vehiculo,
@@ -386,7 +386,8 @@ export const postAlquiler = async (req, res) => {
       nro_factura,
       transaction_giama_renting,
       importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
-      importe_total_3_formateado > 0 ? importe_total_3_formateado : null
+      importe_total_3_formateado > 0 ? importe_total_3_formateado : null,
+      importe_total_1_formateado > 0 ? importe_total_1_formateado : null,
     );
   } catch (error) {
     console.log(error);
@@ -975,7 +976,7 @@ export const postContratoAlquiler = async (req, res) => {
       nro_recibo_alquiler = await insertRecibo(
         fecha_recibo_alquiler,
         detalle_alquiler,
-        importe_total_1_formateado,
+        importe_total,
         usuario,
         id_cliente,
         id_vehiculo,
@@ -987,7 +988,8 @@ export const postContratoAlquiler = async (req, res) => {
         id_factura,
         transaction_giama_renting,
         importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
-        importe_total_3_formateado > 0 ? importe_total_3_formateado : null
+        importe_total_3_formateado > 0 ? importe_total_3_formateado : null,
+        importe_total_1_formateado > 0 ? importe_total_1_formateado : null
       );
     } catch (error) {
       console.log(error);
@@ -1004,7 +1006,7 @@ export const postContratoAlquiler = async (req, res) => {
       nro_recibo_deposito = await insertRecibo(
         fecha_recibo_deposito,
         conceptoDeposito,
-        deposito_formateado,
+        deposito_total,
         usuario,
         id_cliente,
         id_vehiculo,
@@ -1016,7 +1018,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         transaction_giama_renting,
         deposito_2_formateado > 0 ? deposito_2_formateado : null,
-        deposito_3_formateado > 0 ? deposito_3_formateado : null
+        deposito_3_formateado > 0 ? deposito_3_formateado : null,
+        deposito_formateado > 0 ? deposito_formateado : null
       );
     } catch (error) {
       console.log(error);
