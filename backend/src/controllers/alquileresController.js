@@ -1112,7 +1112,7 @@ export const postContratoAlquiler = async (req, res) => {
       );
       await asientoContable(
         "c_movimientos",
-        NroAsiento,
+        NroAsiento_alquiler,
         cuentaIV21,
         "H",
         importe_iva,
