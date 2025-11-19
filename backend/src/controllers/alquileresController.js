@@ -374,7 +374,7 @@ export const postAlquiler = async (req, res) => {
     nro_recibo = await insertRecibo(
       fecha_recibo_alquiler,
       concepto,
-      importe_total,
+      importe_total_1_formateado,
       usuario,
       id_cliente,
       id_vehiculo,
@@ -384,7 +384,9 @@ export const postAlquiler = async (req, res) => {
       id_forma_cobro_alquiler_2 ? id_forma_cobro_alquiler_2 : null,
       id_forma_cobro_alquiler_3 ? id_forma_cobro_alquiler_3 : null,
       nro_factura,
-      transaction_giama_renting
+      transaction_giama_renting,
+      importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
+      importe_total_3_formateado > 0 ? importe_total_3_formateado : null
     );
   } catch (error) {
     console.log(error);
@@ -973,7 +975,7 @@ export const postContratoAlquiler = async (req, res) => {
       nro_recibo_alquiler = await insertRecibo(
         fecha_recibo_alquiler,
         detalle_alquiler,
-        importe_total,
+        importe_total_1_formateado,
         usuario,
         id_cliente,
         id_vehiculo,
@@ -983,7 +985,9 @@ export const postContratoAlquiler = async (req, res) => {
         id_forma_cobro_alquiler_2 ? id_forma_cobro_alquiler_2 : null,
         id_forma_cobro_alquiler_3 ? id_forma_cobro_alquiler_3 : null,
         id_factura,
-        transaction_giama_renting
+        transaction_giama_renting,
+        importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
+        importe_total_3_formateado > 0 ? importe_total_3_formateado : null
       );
     } catch (error) {
       console.log(error);
@@ -1000,7 +1004,7 @@ export const postContratoAlquiler = async (req, res) => {
       nro_recibo_deposito = await insertRecibo(
         fecha_recibo_deposito,
         conceptoDeposito,
-        deposito_total,
+        deposito_formateado,
         usuario,
         id_cliente,
         id_vehiculo,
@@ -1010,7 +1014,9 @@ export const postContratoAlquiler = async (req, res) => {
         id_forma_cobro_contrato_2 ? id_forma_cobro_contrato_2 : null,
         id_forma_cobro_contrato_3 ? id_forma_cobro_contrato_3 : null,
         null,
-        transaction_giama_renting
+        transaction_giama_renting,
+        deposito_2_formateado > 0 ? deposito_2_formateado : null,
+        deposito_3_formateado > 0 ? deposito_3_formateado : null
       );
     } catch (error) {
       console.log(error);

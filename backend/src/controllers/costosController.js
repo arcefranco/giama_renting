@@ -1268,7 +1268,9 @@ async function registrarIngresoIndividual({
           null,
           null,
           nro_factura,
-          transaction_costos_ingresos
+          transaction_costos_ingresos,
+          null,
+          null
         );
       } catch (error) {
         console.log(error);
