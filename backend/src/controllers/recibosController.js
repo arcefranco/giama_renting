@@ -91,27 +91,35 @@ export const getReciboById = async (req, res) => {
         r.fecha,
         r.detalle,
         r.importe_total,
+        r.importe_total_2,
+        r.importe_total_3,
         r.usuario_alta,
         r.fecha_alta_registro,
         r.id_cliente,
         r.id_vehiculo,
         r.id_forma_cobro,
+        r.id_forma_cobro_2,
+        r.id_forma_cobro_3,
         c.nombre AS nombre_cliente,
         c.apellido AS apellido_cliente,
         c.direccion,
         c.nro_direccion AS numero_direccion,
-        f.nombre AS nombre_forma_cobro,
+	f1.nombre AS nombre_forma_cobro,      
+	f2.nombre AS nombre_forma_cobro_2,    
+	f3.nombre AS nombre_forma_cobro_3, 
         u.nombre AS nombre_usuario,
         s.nombre AS nombre_sucursal,
         v.dominio AS dominio_vehiculo,
         v.dominio_provisorio AS dominio_provisorio_vehiculo
       FROM recibos r
       LEFT JOIN clientes c ON c.id = r.id_cliente
-      LEFT JOIN formas_cobro f ON f.id = r.id_forma_cobro
+LEFT JOIN formas_cobro f1 ON f1.id = r.id_forma_cobro
+LEFT JOIN formas_cobro f2 ON f2.id = r.id_forma_cobro_2
+LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
       LEFT JOIN usuarios u ON u.email = r.usuario_alta
       LEFT JOIN vehiculos v ON v.id = r.id_vehiculo
       LEFT JOIN sucursales s ON s.id = v.sucursal
-      WHERE r.id = ?
+      WHERE r.id = ?;
       `,
       {
         type: QueryTypes.SELECT,
@@ -175,9 +183,6 @@ export const getReciboById = async (req, res) => {
             <p><b>Fecha Pago: </b>  ${formatearFechaISOText(recibo.fecha)}</p>
           </div>
            <div>
-            <p><b>Tipo Pago: </b> ${recibo.nombre_forma_cobro}</p>
-          </div>
-           <div>
             <p><b>Creado por: </b> ${recibo.nombre_usuario}</p>
           </div>
            <div>
@@ -197,10 +202,31 @@ export const getReciboById = async (req, res) => {
         <div style="font-size: 12px">
         <p><b>Dominio: ${recibo.dominio_vehiculo ? recibo.dominio_vehiculo : recibo.dominio_provisorio_vehiculo ? recibo.dominio_provisorio_vehiculo : "SIN DOMINIO"}</b></p>
         </div>
+        <div style="font-size: 12px">
+         <p>${recibo.detalle}</p>
+        </div>
         <div style="display: flex;  justify-content: space-between; font-size: 12px">
-        <p>${recibo.detalle}</p>
+        <p>${recibo.nombre_forma_cobro}</p>
         <p>$${recibo.importe_total}</p>
         </div>
+        ${
+          recibo.nombre_forma_cobro_2 ? `
+          <div style="display: flex;  justify-content: space-between; font-size: 12px">
+          <p>${recibo.nombre_forma_cobro_2}</p>
+          <p>$${recibo.importe_total_2}</p>
+          </div>
+          `
+          : ""
+        }
+        ${
+          recibo.nombre_forma_cobro_3 ? `
+          <div style="display: flex;  justify-content: space-between; font-size: 12px">
+          <p>${recibo.nombre_forma_cobro_3}</p>
+          <p>$${recibo.importe_total_3}</p>
+          </div>
+          `
+          : ""
+        }
         <hr/>
         <div style="margin-top: 40px; text-align: right;">
           <p>_________________________</p>
