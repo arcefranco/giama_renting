@@ -207,7 +207,7 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
         </div>
         <div style="display: flex;  justify-content: space-between; font-size: 12px">
         <p>${recibo.nombre_forma_cobro}</p>
-        <p>$${recibo.importe_total}</p>
+        <p>$${recibo.importe_total_1}</p>
         </div>
         ${
           recibo.nombre_forma_cobro_2 ? `
