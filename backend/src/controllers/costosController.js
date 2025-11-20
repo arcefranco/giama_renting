@@ -1270,6 +1270,7 @@ async function registrarIngresoIndividual({
           nro_factura,
           transaction_costos_ingresos,
           null,
+          null,
           null
         );
       } catch (error) {
