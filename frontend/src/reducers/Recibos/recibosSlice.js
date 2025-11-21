@@ -9,6 +9,7 @@ const initialState = {
   html_recibo_ingreso: null,
   html_recibo: null,
   recibos: [],
+  recibos_forma_cobro: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -72,6 +73,16 @@ export const anulacionRecibo = createAsyncThunk(
     handleAsyncThunk(
       () => recibosService.anulacionRecibo(data),
       responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const getRecibosByFormaCobro = createAsyncThunk(
+  "getRecibosByFormaCobro",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => recibosService.getRecibosByFormaCobro(data),
+      responses.array,
       rejectWithValue
     )
 );
@@ -152,6 +163,21 @@ export const recibosSlice = createSlice({
       state.recibos = action.payload;
     });
     builder.addCase(getRecibos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getRecibosByFormaCobro.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getRecibosByFormaCobro.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.recibos_forma_cobro = action.payload;
+    });
+    builder.addCase(getRecibosByFormaCobro.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

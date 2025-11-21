@@ -1,4 +1,4 @@
-import { getFunction, postObjectFunction, postFunction } from "../axios/axiosFunctions";
+import { getFunction, postObjectFunction, postFunction, postArrayFunction } from "../axios/axiosFunctions";
 
 export const getReciboById = async (id) => {
   return postObjectFunction("recibos/getReciboById", id);
@@ -12,9 +12,14 @@ export const anulacionRecibo = async (id) => {
   return postFunction("recibos/anulacionRecibo", id)
 }
 
+export const getRecibosByFormaCobro = async (id) => {
+  return postArrayFunction("recibos/getRecibosByFormaCobro", id)
+}
+
 const recibosService = {
   getReciboById,
   getRecibos,
-  anulacionRecibo
+  anulacionRecibo,
+  getRecibosByFormaCobro
 };
 export default recibosService;
