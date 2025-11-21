@@ -91,6 +91,7 @@ export const getReciboById = async (req, res) => {
         r.fecha,
         r.detalle,
         r.importe_total,
+        r.importe_total_1,
         r.importe_total_2,
         r.importe_total_3,
         r.usuario_alta,
@@ -250,7 +251,7 @@ export const getRecibos = async (req, res) => {
     return res.send(resultado);
   } catch (error) {
     console.log("error en backend getRecibos: ", error)
-    const { body } = handleError(error, "Recibo", acciones.get);
+    const { body } = handleError(error, "recibos", acciones.get);
     return res.send(body);
   }
 }
@@ -624,4 +625,52 @@ export const anulacionRecibo = async (req, res) => {
   }
 
 };
+
+export const getRecibosByFormaCobro = async (req, res) => {
+  console.log(req.body)
+  const {id_forma_cobro} = req.body
+  try {
+    const result = await giama_renting.query(`
+    (
+    SELECT 
+        r.id AS id_recibo,
+        r.fecha,
+        r.detalle,
+        r.id_forma_cobro AS id_forma_cobro,
+        r.importe_total_1 AS importe
+    FROM recibos r
+    WHERE r.id_forma_cobro = ?
+)
+UNION ALL
+(
+    SELECT 
+        r.id AS id_recibo,
+        r.fecha,
+        r.detalle,
+        r.id_forma_cobro_2 AS id_forma_cobro,
+        r.importe_total_2 AS importe
+    FROM recibos r
+    WHERE r.id_forma_cobro_2 = ?
+)
+UNION ALL
+(
+    SELECT 
+        r.id AS id_recibo,
+        r.fecha,
+        r.detalle,
+        r.id_forma_cobro_3 AS id_forma_cobro,
+        r.importe_total_3 AS importe
+    FROM recibos r
+    WHERE r.id_forma_cobro_3 = ?
+)`, {
+  type: QueryTypes.SELECT,
+  replacements: [id_forma_cobro, id_forma_cobro, id_forma_cobro]
+})
+return res.send(result)
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(error, "recibos", acciones.get);
+    return res.send(body);
+  }
+}
 
