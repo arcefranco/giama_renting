@@ -370,7 +370,7 @@ const ReporteRecibos = () => {
                         displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
                     />
                 </Column>
-                <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+                <Column dataField="importe_total_1" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column
                     dataField="id_forma_cobro_2"
                     caption="Forma de pago 2"
