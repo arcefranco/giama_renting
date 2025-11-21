@@ -228,6 +228,10 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
           `
           : ""
         }
+        <div style="display: flex;  justify-content: space-between; font-size: 14px">
+        <p><b>Total</b></p>
+        <p><b>$${recibo.importe_total}</b></p>
+        </div>
         <hr/>
         <div style="margin-top: 40px; text-align: right;">
           <p>_________________________</p>
