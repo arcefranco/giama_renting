@@ -365,9 +365,9 @@ const ReporteRecibos = () => {
                     alignment="right"
                 >
                     <Lookup
-                        dataSource={formasDeCobro} // El array con ID y nombre
-                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
-                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                        dataSource={formasDeCobro}
+                        valueExpr="id"
+                        displayExpr="nombre"
                     />
                 </Column>
                 <Column dataField="importe_total_1" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
@@ -377,9 +377,9 @@ const ReporteRecibos = () => {
                     alignment="right"
                 >
                     <Lookup
-                        dataSource={formasDeCobro} // El array con ID y nombre
-                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
-                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                        dataSource={formasDeCobro}
+                        valueExpr="id"
+                        displayExpr="nombre"
                     />
                 </Column>
                 <Column dataField="importe_total_2" caption="Importe 2" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
@@ -389,9 +389,9 @@ const ReporteRecibos = () => {
                     alignment="right"
                 >
                     <Lookup
-                        dataSource={formasDeCobro} // El array con ID y nombre
-                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
-                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                        dataSource={formasDeCobro}
+                        valueExpr="id"
+                        displayExpr="nombre"
                     />
                 </Column>
                 <Column dataField="importe_total_3" caption="Importe 3" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
