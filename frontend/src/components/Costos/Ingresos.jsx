@@ -60,6 +60,7 @@ const Ingresos = () => {
     importe_total_3: '',
   })
   const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
+  const [opcionesClientes, setOpcionesClientes] = useState([])
   const [conceptosFiltrados, setConceptosFiltrados] = useState([])
   const [generaRecibo, setGeneraRecibo] = useState(false)
   const [generaFactura, setGeneraFactura] = useState(false)
@@ -129,6 +130,25 @@ const Ingresos = () => {
     }
   }, [vehiculos, modelos])
 
+  useEffect(() => { /**OPCIONES DE CLIENTES PARA EL SELECT */
+    if (clientes?.length) {
+      setOpcionesClientes(clientes?.map(e => {
+        let CUIT = e.nro_documento
+        let nombre = e.nombre
+        let apellido = e.apellido
+        return {
+          value: e.id,
+          label: (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
+              <span>{CUIT} {nombre} {apellido}</span>
+            </div>
+          ),
+          searchKey: `${nombre} ${apellido}`.toLowerCase(),
+        };
+      }))
+    }
+  }, [clientes])
+
   useEffect(() => { /**OBTENGO COSTOS DEL VEHICULO DESDE EL SELECT */
     if (!id && form.id_vehiculo) {
       dispatch(getCostosIngresosByIdVehiculo({ id: form.id_vehiculo })),
@@ -141,59 +161,59 @@ const Ingresos = () => {
     dispatch(getContratosByIdCliente({ id: form.id_cliente }))
   }, [form.id_cliente])
 
-  useEffect(() => { /**ACTUALIZA id_cliente SI EL VEHICULO TIENE UN CONTRATO VIGENTE */
-    if (!contratosVehiculo?.length) return;
-
-    const hoy = getToday()
-    // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
-    const contratoVigente = contratosVehiculo.find(c => {
-      const desde = new Date(c.fecha_desde);
-      const hasta = new Date(c.fecha_hasta);
-      console.log(hoy, desde, hasta)
-      return hoy >= desde && hoy <= hasta;
-    });
-    // Si hay contrato vigente, actualizar el form
-    if (contratoVigente) {
-      console.log("contratoVigente")
-      setForm(prev => ({
-        ...prev,
-        id_cliente: contratoVigente.id_cliente
-      }));
-    } else {
-      console.log("contratoNOVigente")
-      // Si no hay contrato vigente, dejar vacío
-      setForm(prev => ({
-        ...prev,
-        id_cliente: ""
-      }));
-    }
-  }, [contratosVehiculo, form.id_vehiculo, id]);
-
-  useEffect(() => { /**ACTUALIZA id_vehiculo SI EL CLIENTE TIENE UN CONTRATO VIGENTE */
-    if (!contratosCliente?.length) return;
-
-    const hoy = getToday()
-    // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
-    const contratoVigente = contratosCliente.find(c => {
-      const desde = new Date(c.fecha_desde);
-      const hasta = new Date(c.fecha_hasta);
-      return hoy >= desde && hoy <= hasta;
-    });
-
-    // Si hay contrato vigente, actualizar el form
-    if (contratoVigente) {
-      setForm(prev => ({
-        ...prev,
-        id_vehiculo: contratoVigente.id_vehiculo
-      }));
-    } else {
-      // Si no hay contrato vigente, dejar vacío
-      setForm(prev => ({
-        ...prev,
-        id_vehiculo: ""
-      }));
-    }
-  }, [contratosCliente]);
+  /*   useEffect(() => { 
+      if (!contratosVehiculo?.length) return;
+  
+      const hoy = getToday()
+      // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
+      const contratoVigente = contratosVehiculo.find(c => {
+        const desde = new Date(c.fecha_desde);
+        const hasta = new Date(c.fecha_hasta);
+        console.log(hoy, desde, hasta)
+        return hoy >= desde && hoy <= hasta;
+      });
+      // Si hay contrato vigente, actualizar el form
+      if (contratoVigente) {
+        console.log("contratoVigente")
+        setForm(prev => ({
+          ...prev,
+          id_cliente: contratoVigente.id_cliente
+        }));
+      } else {
+        console.log("contratoNOVigente")
+        // Si no hay contrato vigente, dejar vacío
+        setForm(prev => ({
+          ...prev,
+          id_cliente: ""
+        }));
+      }
+    }, [contratosVehiculo, form.id_vehiculo, id]);
+  
+    useEffect(() => { 
+      if (!contratosCliente?.length) return;
+  
+      const hoy = getToday()
+      // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
+      const contratoVigente = contratosCliente.find(c => {
+        const desde = new Date(c.fecha_desde);
+        const hasta = new Date(c.fecha_hasta);
+        return hoy >= desde && hoy <= hasta;
+      });
+  
+      // Si hay contrato vigente, actualizar el form
+      if (contratoVigente) {
+        setForm(prev => ({
+          ...prev,
+          id_vehiculo: contratoVigente.id_vehiculo
+        }));
+      } else {
+        // Si no hay contrato vigente, dejar vacío
+        setForm(prev => ({
+          ...prev,
+          id_vehiculo: ""
+        }));
+      }
+    }, [contratosCliente]); */
 
   useEffect(() => { /**FILTRADO DE CONCEPTOS */
     if (conceptos?.length) {
@@ -672,7 +692,7 @@ const Ingresos = () => {
           <div className={styles.selectWithIcon} style={{
             width: "20rem"
           }}>
-            <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
+            {/*             <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
               <option value={""} selected>{"Seleccione un cliente"}</option>
               {
                 clientes?.length && clientes.map(e => (
@@ -681,7 +701,27 @@ const Ingresos = () => {
                   </option>
                 ))
               }
-            </select>
+            </select> */}
+            <Select
+              options={opcionesClientes}
+              value={
+                opcionesClientes?.find(
+                  (opt) => String(opt.value) === String(form.id_cliente)
+                ) || null
+              }
+              onChange={(option) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  id_cliente: option?.value || "",
+                }));
+              }}
+              placeholder="Seleccione un cliente"
+              filterOption={(option, inputValue) =>
+                option.data.searchKey.includes(inputValue.toLowerCase())
+              }
+              styles={customStyles}
+
+            />
           </div>
         </div>
 
