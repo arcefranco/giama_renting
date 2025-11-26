@@ -436,7 +436,7 @@ export const postAlquiler = async (req, res) => {
         concepto,
         transaction_pa7_giama_renting,
         nro_recibo,
-        getTodayDate(),
+        fecha_recibo_alquiler,
         NroAsientoSecundario,
         null
       );
@@ -451,7 +451,7 @@ export const postAlquiler = async (req, res) => {
         concepto,
         transaction_pa7_giama_renting,
         nro_recibo,
-        getTodayDate(),
+        fecha_recibo_alquiler,
         NroAsientoSecundario,
         null
       );
@@ -466,7 +466,7 @@ export const postAlquiler = async (req, res) => {
         concepto,
         transaction_pa7_giama_renting,
         nro_recibo,
-        getTodayDate(),
+        fecha_recibo_alquiler,
         NroAsientoSecundario,
         null
       );
@@ -480,7 +480,7 @@ export const postAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting,
       nro_recibo,
-      getTodayDate(),
+      fecha_recibo_alquiler,
       NroAsientoSecundario,
       null
     );
@@ -493,7 +493,7 @@ export const postAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting,
       nro_recibo,
-      getTodayDate(),
+      fecha_recibo_alquiler,
       NroAsientoSecundario,
       null
     );
@@ -508,7 +508,8 @@ export const postAlquiler = async (req, res) => {
         importe_total_1,
         concepto,
         transaction_pa7_giama_renting,
-        nro_recibo
+        nro_recibo,
+        fecha_recibo_alquiler
       );
     }
     if(cuenta_secundaria_forma_cobro_alquiler_2){
@@ -520,7 +521,8 @@ export const postAlquiler = async (req, res) => {
         importe_total_2,
         concepto,
         transaction_pa7_giama_renting,
-        nro_recibo
+        nro_recibo,
+        fecha_recibo_alquiler
       );
     }
     if(cuenta_secundaria_forma_cobro_alquiler_3){
@@ -532,7 +534,8 @@ export const postAlquiler = async (req, res) => {
         importe_total_3,
         concepto,
         transaction_pa7_giama_renting,
-        nro_recibo
+        nro_recibo,
+        fecha_recibo_alquiler
       );
     }
     await asientoContable(
@@ -544,7 +547,7 @@ export const postAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting,
       nro_recibo,
-      getTodayDate(),
+      fecha_recibo_alquiler,
       null,
       null
     );
@@ -557,7 +560,7 @@ export const postAlquiler = async (req, res) => {
       concepto,
       transaction_pa7_giama_renting,
       nro_recibo,
-      getTodayDate(),
+      fecha_recibo_alquiler,
       null,
       null
     );
