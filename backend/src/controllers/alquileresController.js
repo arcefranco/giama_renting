@@ -1144,7 +1144,8 @@ export const postContratoAlquiler = async (req, res) => {
         importe_total_1,
         concepto,
         transaction_pa7_giama_renting,
-        nro_recibo_alquiler
+        nro_recibo_alquiler,
+        fecha_recibo_alquiler
       );
     }
     if(cuenta_secundaria_forma_cobro_alquiler_2){
