@@ -789,14 +789,7 @@ export const postContratoAlquiler = async (req, res) => {
   //buscar si el vehiculo está reservado (en la tabla contratos por id) en las fechas seleccionadas
   try {
     const result = await giama_renting.query(
-      `SELECT 
-      a.fecha_desde, 
-      a.fecha_hasta, 
-      r.anulado
-      FROM alquileres a
-      LEFT JOIN recibos r ON a.nro_recibo = r.id
-      WHERE a.id_vehiculo = ?
-      AND r.anulado = 0;`,
+    "SELECT fecha_desde, fecha_hasta FROM contratos_alquiler WHERE id_vehiculo = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
@@ -822,7 +815,7 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send({
         status: false,
         message:
-          "El vehículo ya está alquilado en alguna de las fechas seleccionadas.",
+          "El vehículo ya está contratado en alguna de las fechas seleccionadas.",
       });
     }
   } catch (error) {
@@ -873,7 +866,14 @@ export const postContratoAlquiler = async (req, res) => {
   if (ingresa_alquiler == 1) { //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
     try {
       const result = await giama_renting.query(
-        "SELECT fecha_desde, fecha_hasta FROM alquileres WHERE id_vehiculo = ?",
+             `SELECT 
+      a.fecha_desde, 
+      a.fecha_hasta, 
+      r.anulado
+      FROM alquileres a
+      LEFT JOIN recibos r ON a.nro_recibo = r.id
+      WHERE a.id_vehiculo = ?
+      AND r.anulado = 0;`,
         {
           type: QueryTypes.SELECT,
           replacements: [id_vehiculo],
@@ -911,6 +911,7 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send(body);
     }
   }
+
   if (ingresa_deposito == 1 || ingresa_alquiler == 1) {
     try {
       NroAsiento_alquiler = await getNumeroAsiento();
@@ -1607,10 +1608,11 @@ export const getContratoById = async (req, res) => {
 
 export const anulacionContrato = async (req, res) => {
   const { id_contrato, fecha_desde_contrato, fecha_hasta_contrato } = req.body;
-
-  if(fecha_desde_contrato === "0000-00-00" || fecha_hasta_contrato === "0000-00-00"){
+/*   if(!fecha_desde_contrato || !fecha_hasta_contrato){
     return res.send({status: false, message: "Debe seleccionar nuevas fechas desde y hasta para continuar"})
-  }
+  }  */
+
+/*   return res.send({status: false, message: "prueba"}) */
 
   let contratoAnterior;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -1636,7 +1638,7 @@ export const anulacionContrato = async (req, res) => {
   }
 
 
-
+  try {
   const originalDesde = parseISO(contratoAnterior.fecha_desde);
   const originalHasta = parseISO(contratoAnterior.fecha_hasta);
   const nuevaDesde = parseISO(fecha_desde_contrato);
@@ -1646,6 +1648,12 @@ export const anulacionContrato = async (req, res) => {
   originalHasta.setHours(0, 0, 0, 0);
   nuevaDesde.setHours(0, 0, 0, 0);
   nuevaHasta.setHours(0, 0, 0, 0);
+  } catch (error) {
+    console.log(error);
+    const { body } = handleError(error, "fechas de contratos vigente/nuevo", acciones.get);
+    return res.send(body);
+  }
+
 
   let fechaDesdeHistorial = null;
   let fechaHastaHistorial = null;
