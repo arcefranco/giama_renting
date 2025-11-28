@@ -789,19 +789,27 @@ export const postContratoAlquiler = async (req, res) => {
   //buscar si el vehiculo está reservado (en la tabla contratos por id) en las fechas seleccionadas
   try {
     const result = await giama_renting.query(
-      "SELECT fecha_desde, fecha_hasta FROM contratos_alquiler WHERE id_vehiculo = ?",
+      `SELECT 
+      a.fecha_desde, 
+      a.fecha_hasta, 
+      r.anulado
+      FROM alquileres a
+      LEFT JOIN recibos r ON a.nro_recibo = r.id
+      WHERE a.id_vehiculo = ?
+      AND r.anulado = 0;`,
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
       }
     );
-    contratosVigentes = result;
+    alquileresVigentes = result;
     const parseDate = (str) => new Date(str);
-    const nuevaDesde = parseDate(fecha_desde_contrato);
-    const nuevaHasta = parseDate(fecha_hasta_contrato);
-
-    // Recorremos los contratos existentes y verificamos si se superponen
-    const hayConflicto = contratosVigentes?.some(
+    const nuevaDesde = parseDate(fecha_desde_alquiler);
+    const nuevaHasta = parseDate(fecha_hasta_alquiler);
+    console.log(nuevaDesde);
+    console.log(nuevaHasta);
+    // Recorremos los alquileres existentes y verificamos si se superponen
+    const hayConflicto = alquileresVigentes?.some(
       ({ fecha_desde, fecha_hasta }) => {
         const desdeExistente = parseDate(fecha_desde);
         const hastaExistente = parseDate(fecha_hasta);
@@ -814,12 +822,16 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send({
         status: false,
         message:
-          "El vehículo se encuentra reservado en alguna de las fechas seleccionadas.",
+          "El vehículo ya está alquilado en alguna de las fechas seleccionadas.",
       });
     }
   } catch (error) {
     console.log(error);
-    const { body } = handleError(error, "Reservas del vehiculo", acciones.get);
+    const { body } = handleError(
+      error,
+      "alquileres del vehiculo",
+      acciones.get
+    );
     return res.send(body);
   }
   //chequear que se explicite el no ingreso del deposito/alquiler
