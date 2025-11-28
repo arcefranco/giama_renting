@@ -1602,8 +1602,7 @@ export const prorrateoIE = async (req, res) => {
     const { body } = handleError(error, "Parámetro", acciones.get);
     return res.send(body);
   }
-  const cantidad = arrayVehiculos.length;
-  const netoDividido = Math.floor((importe_neto / cantidad) * 100) / 100;
+
   //insert movimientos fijos (TOTAL e IVA)
   try {
     asientoContable(
@@ -1661,11 +1660,6 @@ export const prorrateoIE = async (req, res) => {
   } catch (error) {
     return res.send({ status: false, message: error.message });
   }
-
-  const diferencia = importe_neto - netoDividido * cantidad;
-  const totalDividido = importe_total / cantidad;
-  const ivaDividido = importe_iva / cantidad;
-  const otrosImpuestosDividido = importe_otros_impuestos / cantidad;
   if (cta_cte_proveedores == 1) {
     try {
       await movimientosProveedoresEgresos({
@@ -1714,6 +1708,13 @@ export const prorrateoIE = async (req, res) => {
       return res.send(body);
     }
   }
+  const cantidad = arrayVehiculos.length;
+  const netoDividido = Math.floor((importe_neto / cantidad) * 100) / 100;
+  const diferencia = importe_neto - netoDividido * cantidad;
+  const totalDividido = importe_total / cantidad;
+  const ivaDividido = importe_iva / cantidad;
+  const otrosImpuestosDividido = importe_otros_impuestos / cantidad;
+
   for (const [index, id_vehiculo] of arrayVehiculos.entries()) {
     let importeAUsar = netoDividido;
     let importeTotalAusar = totalDividido;
