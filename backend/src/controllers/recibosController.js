@@ -494,6 +494,7 @@ export const anulacionRecibo = async (req, res) => {
 
 
     if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
+      console.log("if 1")
       await pa7_giama_renting.query("DELETE FROM facturasitems WHERE IdFactura = ?", {
         type: QueryTypes.DELETE,
         replacements: [id_factura],
@@ -518,18 +519,20 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-      await transaction_giama_renting.commit();
-      await transaction_pa7_giama_renting.commit();
+      await transaction_giama_renting.commit(); 
+      await transaction_pa7_giama_renting.commit();  
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
 
     } else if (!NumeroFacturaEmitida || !CAE || !VtoCAE) {
+           console.log("if 2")
       return res.send({
         status: false,
         message: "La factura aún no puede ser eliminada",
       });
 
     } else {
+             console.log("else")
       // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
       const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
       let id_ndc;
@@ -537,7 +540,7 @@ export const anulacionRecibo = async (req, res) => {
       const result = await pa7_giama_renting.query(
         `INSERT INTO facturas 
          (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, ${Object.keys(otrosCampos).join(", ")})
-         VALUES (?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
+         VALUES (?,?,?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
           replacements: ["CB", FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
@@ -592,8 +595,8 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-      await transaction_giama_renting.commit()
-      await transaction_pa7_giama_renting.commit()
+      await transaction_giama_renting.commit(); 
+      await transaction_pa7_giama_renting.commit();  
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
     } catch (error) {
@@ -617,8 +620,8 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_giama_renting
       })
 
-      await transaction_giama_renting.commit();
-      await transaction_pa7_giama_renting.commit();
+      await transaction_giama_renting.commit(); 
+      await transaction_pa7_giama_renting.commit();  
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
     } catch (error) {
