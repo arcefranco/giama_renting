@@ -20,6 +20,12 @@ export const insertFactura = async (
   let nombre_provincia;
   let tipo_factura;
   let id_factura;
+
+  let importe_total_preliminar = importe_neto + importe_iva
+
+  if(importe_total !== importe_total_preliminar){
+    throw new Error("El importe total no coincide con la suma de los importes iva y neto")
+  }
   //buscar datos del cliente
   try {
     const result = await giama_renting.query(
