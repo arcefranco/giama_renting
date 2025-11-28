@@ -461,6 +461,7 @@ export const anulacionRecibo = async (req, res) => {
   let VtoCAE;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let tipo_NC;
 
   try {
     const result = await giama_renting.query(
@@ -488,9 +489,16 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: false, message: "Factura no encontrada" });
     }
     const factura = result[0];
+    console.log("factura: ",factura)
     NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
     CAE = factura.CAE;
     VtoCAE = factura.VtoCAE;
+    if(factura.Tipo === "FA"){
+      tipo_NC = "CA"
+    }else if(factura.Tipo === "FB"){
+      tipo_NC = "CB"
+    }
+
 
 
     if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
@@ -535,6 +543,9 @@ export const anulacionRecibo = async (req, res) => {
              console.log("else")
       // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
       const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
+      if (!tipo_NC) {
+        return res.send({status: false, message: "No está aclarado el tipo de nota de crédito"})
+      }
       let id_ndc;
       let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
       const result = await pa7_giama_renting.query(
@@ -543,7 +554,7 @@ export const anulacionRecibo = async (req, res) => {
          VALUES (?,?,?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
-          replacements: ["CB", FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
+          replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
           transaction: transaction_pa7_giama_renting
         }
       );
