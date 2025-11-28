@@ -232,7 +232,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     let total_2 = form.importe_total_2 ? toNumber(form.importe_total_2) : 0
     let total_3 = form.importe_total_3 ? toNumber(form.importe_total_3) : 0
 
-    setTotal(total_1 + total_2 + total_3)
+    setTotal((total_1 + total_2 + total_3).toFixed(2))
   }, [form.importe_total_1, form.importe_total_2, form.importe_total_3])
 
   useEffect(() => {

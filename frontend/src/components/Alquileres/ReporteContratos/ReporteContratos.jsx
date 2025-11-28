@@ -114,8 +114,8 @@ const ReporteContratos = () => {
   }, [clientes]);
 
   const vehiculosGrid = useMemo(() => {
-    if (!clientes?.length) return [];
-    return vehiculos.map(c => ({
+    if (!vehiculos?.length) return [];
+    return vehiculos?.map(c => ({
       ...c,
       // Campos nuevos que usará el lookup para buscar
       dominio: normalizar(c.dominio),
