@@ -1608,6 +1608,10 @@ export const getContratoById = async (req, res) => {
 export const anulacionContrato = async (req, res) => {
   const { id_contrato, fecha_desde_contrato, fecha_hasta_contrato } = req.body;
 
+  if(fecha_desde_contrato === "0000-00-00" || fecha_hasta_contrato === "0000-00-00"){
+    return res.send({status: false, message: "Debe seleccionar nuevas fechas desde y hasta para continuar"})
+  }
+
   let contratoAnterior;
   let transaction_giama_renting = await giama_renting.transaction();
 
