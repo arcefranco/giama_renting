@@ -1608,11 +1608,10 @@ export const getContratoById = async (req, res) => {
 
 export const anulacionContrato = async (req, res) => {
   const { id_contrato, fecha_desde_contrato, fecha_hasta_contrato } = req.body;
-/*   if(!fecha_desde_contrato || !fecha_hasta_contrato){
+ if(!fecha_desde_contrato || !fecha_hasta_contrato){
     return res.send({status: false, message: "Debe seleccionar nuevas fechas desde y hasta para continuar"})
-  }  */
+  } 
 
-/*   return res.send({status: false, message: "prueba"}) */
 
   let contratoAnterior;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -1637,12 +1636,16 @@ export const anulacionContrato = async (req, res) => {
     return res.send(body);
   }
 
+  let originalDesde;
+  let originalHasta;
+  let nuevaDesde;
+  let nuevaHasta;
 
   try {
-  const originalDesde = parseISO(contratoAnterior.fecha_desde);
-  const originalHasta = parseISO(contratoAnterior.fecha_hasta);
-  const nuevaDesde = parseISO(fecha_desde_contrato);
-  const nuevaHasta = parseISO(fecha_hasta_contrato);
+  originalDesde = parseISO(contratoAnterior.fecha_desde);
+  originalHasta = parseISO(contratoAnterior.fecha_hasta);
+  nuevaDesde = parseISO(fecha_desde_contrato);
+  nuevaHasta = parseISO(fecha_hasta_contrato);
 
   originalDesde.setHours(0, 0, 0, 0);
   originalHasta.setHours(0, 0, 0, 0);
@@ -1706,6 +1709,9 @@ if (conflictoContratoCliente) {
     con la nueva fecha seleccionada`
   });
 } else {
+  if (formatearFechaISO(nuevaDesde).startsWith("00") || formatearFechaISO(nuevaHasta).startsWith("00")){
+      return res.send({status: false, message: "Fechas inválidas"})
+    }
     try {
       await giama_renting.query(
         `UPDATE contratos_alquiler SET fecha_desde = ?, 
@@ -1793,6 +1799,9 @@ if (conflictoContratoCliente) {
   }
   
     //inserto en historial el contrato anterior
+    if (formatearFechaISO(fechaDesdeHistorial).startsWith("19") || formatearFechaISO(fechaHastaHistorial).startsWith("19")){
+      return res.send({status: false, message: "Fechas inválidas"})
+    }
     try {
       await giama_renting.query(
         `INSERT INTO historial_anulaciones_contratos
@@ -1824,6 +1833,9 @@ if (conflictoContratoCliente) {
       return res.send(body);
     }
     //actualizo el contrato en tabla contratos_alquiler
+    if (formatearFechaISO(nuevaDesde).startsWith("00") || formatearFechaISO(nuevaHasta).startsWith("00")){
+      return res.send({status: false, message: "Fechas inválidas"})
+    }
     try {
       await giama_renting.query(
         `UPDATE contratos_alquiler SET fecha_desde = ?, 
@@ -1846,7 +1858,7 @@ if (conflictoContratoCliente) {
     }
 
   }
-  transaction_giama_renting.commit();
+  transaction_giama_renting.rollback();
   return res.send({
     status: true,
     message: "Contrato actualizado correctamente",
