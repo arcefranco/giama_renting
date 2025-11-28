@@ -253,8 +253,8 @@ const UpdateContrato = () => {
                             dateFormat="dd/MM/yyyy"
                             selected={formContrato.fecha_hasta_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_hasta_contrato: date }))}
-                            /*                             minDate={formContrato.fecha_desde_contrato}
-                                                        maxDate={formContrato.fecha_hasta_contrato} */
+                            minDate={formContrato.fecha_desde_contrato}
+                            /*  maxDate={formContrato.fecha_hasta_contrato} */
                             placeholderText="Seleccione una fecha"
                             excludeDateIntervals={rangosOcupados}
                             locale="es"

@@ -65,6 +65,13 @@ const UpdateCliente = () => {
     trabajos_anteriores: "",
     observacion_perfil: ""
   })
+  const renderFecha = (fecha) => {
+    if (fecha) {
+      let splitFecha = fecha.split("-")
+      return splitFecha[0] + "-" + splitFecha[1] + "-" + splitFecha[2]
+
+    }
+  }
   const formRef = useRef(null);
   const location = useLocation();
   useEffect(() => {
@@ -185,9 +192,8 @@ const UpdateCliente = () => {
         valueToShow = selectedOption ? selectedOption.text : '';
       } else if (input.type === 'date') {
         if (input.value) {
-          const date = new Date(input.value);
-          if (!isNaN(date)) valueToShow = date.toLocaleDateString('es-AR');
-          else valueToShow = input.value;
+          const [yyyy, mm, dd] = input.value.split("-");
+          valueToShow = `${dd}/${mm}/${yyyy}`;
         }
       } else {
         valueToShow = input.value ?? '';
@@ -329,13 +335,7 @@ const UpdateCliente = () => {
     imprimirFormulario();
   };
 
-  const renderFecha = (fecha) => {
-    if (fecha) {
-      let splitFecha = fecha.split("-")
-      return splitFecha[0] + "-" + splitFecha[1] + "-" + splitFecha[2]
 
-    }
-  }
   return (
     <div>
       <div className={styles.container}>
