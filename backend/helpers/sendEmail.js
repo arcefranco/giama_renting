@@ -14,10 +14,29 @@ export const sendEmail = async (email, token) => {
       context: {
         text: process.env.HOST + "/password/" + token + "/",
       },
-      /*   html: '<p>Click <a href="http://localhost:3000/reset-password/' + id + '/' + token + '">here</a> to reset your password</p>', // html body */
     });
   } catch (error) {
     console.log(error);
     return JSON.stringify(error);
   }
 };
+
+export const sendEmailImportes = async (id_factura) => {
+  try {
+    transporter.sendMail({
+      //Envio el mail a la casilla que encontramos segun su nombre de usuario
+      from: "info@giama.com.ar",
+      to: "farce@giama.com.ar",
+      subject: "Error importes facturas",
+      template: "facturas",
+      context: {
+        text: id_factura,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return JSON.stringify(error);
+  }
+};
+
+

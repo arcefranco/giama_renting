@@ -1,6 +1,7 @@
 import { giama_renting, pa7_giama_renting } from "./connection.js";
 import { QueryTypes } from "sequelize";
 import { getTodayDate } from "./getTodayDate.js";
+import { sendEmailImportes } from "./sendEmail.js";
 
 export const insertFactura = async (
   id_cliente,
@@ -21,11 +22,8 @@ export const insertFactura = async (
   let tipo_factura;
   let id_factura;
 
-  let importe_total_preliminar = importe_neto + importe_iva
+  let importe_total_preliminar = parseFloat(importe_neto) + parseFloat(importe_iva)
 
-  if(importe_total !== importe_total_preliminar){
-    throw new Error("El importe total no coincide con la suma de los importes iva y neto")
-  }
   //buscar datos del cliente
   try {
     const result = await giama_renting.query(
@@ -182,6 +180,9 @@ export const insertFactura = async (
     throw new Error(
       `Error al insertar la factura ${error.message && error.message}`
     );
+  }
+  if(parseFloat(importe_total) !== parseFloat(importe_total_preliminar)){
+    sendEmailImportes(id_factura)
   }
   return id_factura;
 };
