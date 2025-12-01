@@ -20,6 +20,8 @@ import { verificarCamposObligatorios } from "../../helpers/verificarCampoObligat
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { verificarEstadoVehiculo } from "../../helpers/verificarEstadoVehiculo.js";
 import { insertFactura } from "../../helpers/insertFactura.js";
+import { getYesterdayDate } from "../../helpers/getTodayDate.js";
+import { addOneDay } from "../../helpers/addOneDay.js";
 
 
 const insertAlquiler = async (body) => {
@@ -393,6 +395,26 @@ export const postAlquiler = async (req, res) => {
     console.log(error);
     transaction_giama_renting.rollback();
     const { body } = handleError(error, "Recibo de alquiler", acciones.post);
+    return res.send(body);
+  }
+  //inserto factura
+  try {
+    await insertFactura(
+      id_cliente,
+      importe_neto,
+      importe_iva,
+      importe_total,
+      usuario,
+      NroAsiento,
+      NroAsientoSecundario,
+      concepto,
+      transaction_giama_renting,
+      transaction_pa7_giama_renting
+    );
+  } catch (error) {
+    await transaction_giama_renting.rollback()
+    await transaction_pa7_giama_renting.rollback()
+    const { body } = handleError(error, "Factura", acciones.post);
     return res.send(body);
   }
   //inserto alquiler
@@ -1767,21 +1789,31 @@ if (conflictoContratoCliente) {
         type: QueryTypes.SELECT,
       }
     );
-  
-    if (alquileres.length > 0) {
-      const primerAlquiler = alquileres[0];
-      const ultimoAlquiler = alquileres[alquileres.length - 1];
-      //Se busca el primero y el ultimo porque aunque queden huecos en el medio no se deberia poder modificar el contrato 
-      // ni desde ni hasta esas fechas
-      const primerDesde = parseISO(primerAlquiler.fecha_desde);
-      const ultimoHasta = parseISO(ultimoAlquiler.fecha_hasta);
-  
-      // 🔹 Caso 1: el contrato nuevo empieza después del primer alquiler
-      if (nuevaDesde > primerDesde) {
-        return res.send({
-          status: false,
-          message: `No se puede modificar la fecha de inicio del contrato a ${formatearFechaISO(nuevaDesde)} porque existen alquileres anteriores desde ${formatearFechaISO(primerDesde)}.`,
-        });
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    const { body } = handleError(
+      error,
+      "Historial de anulaciones",
+      acciones.post
+    );
+    return res.send(body);
+  }
+  console.log(formatearFechaISO(nuevaDesde))
+  console.log(formatearFechaISO(nuevaHasta))
+  //actualizo el contrato en tabla contratos_alquiler
+  try {
+    await giama_renting.query(
+      `UPDATE contratos_alquiler SET fecha_desde = ?, 
+      fecha_hasta = ? WHERE id = ?`,
+      {
+        type: QueryTypes.UPDATE,
+        replacements: [
+          formatearFechaISO(nuevaDesde),
+          formatearFechaISO(nuevaHasta),
+          id_contrato,
+        ],
+        transaction: transaction_giama_renting,
       }
   
       // 🔹 Caso 2: el contrato nuevo termina antes del último alquiler
@@ -1864,6 +1896,172 @@ if (conflictoContratoCliente) {
     message: "Contrato actualizado correctamente",
   });
 };
+
+export const cambioVehiculo = async (req, res) => {
+  const {
+    id_contrato,
+    id_vehiculo,
+  } = req.body
+  /**restriccion segun alquileres cobrados */
+  /**fecha desde: si el contrato no empezo se mantiene igual;
+   *  si el contrato empezo y no tiene alquileres la fecha desde del nuevo es hoy, la fecha hasta del nuevo es la misma
+   *  la fecha desde del anterior es la misma y la fecha hasta del anterior es ayer
+   * 
+   * si el contrato empezo y SI tiene alquileres: la fecha desde del nuevo es un dia despues del ultimo dia de alquiler,
+   * la fecha hasta del nuevo es la misma
+   * la fecha desde del anterior es la misma y la fecha hasta del anterior es el ultimo dia de alquiler  */
+
+  let original;
+  let transaction = await giama_renting.transaction()
+  let nuevaDesde;
+  let nuevaHasta;
+  let originalDesde;
+  let originalHasta;
+  let alquileres;
+  const hoy = getTodayDate()
+  //busco el contrato original
+  try {
+    const result = await giama_renting.query(`SELECT * FROM contratos_alquiler WHERE id = ?`, {
+      type: QueryTypes.SELECT,
+      replacements: [id_contrato]
+    })
+    if(!result.length){
+      return res.send({status: false, message: "Contrato no encontrado"})
+    }
+    original = result[0]
+  } catch (error) {
+    console.log(error);
+    const { body } = handleError(error, "contrato", acciones.get);
+    return res.send(body);
+  }
+  if(original["id_vehiculo"] === id_vehiculo){
+    return res.send({status: false, message: "Debe modificar el vehículo para realizar esta acción"})
+  }
+
+  try {
+    let result = await giama_renting.query(
+    `
+    SELECT id, fecha_desde, fecha_hasta
+    FROM alquileres
+    WHERE id_contrato = ?
+    ORDER BY fecha_desde ASC
+    `,
+    {
+      replacements: [id_contrato],
+      type: QueryTypes.SELECT,
+    }
+  );
+  alquileres = result
+
+  } catch (error) {
+  console.log(error);
+  const { body } = handleError(error, "Validación de alquileres", acciones.get);
+  return res.send(body);
+  }
+
+  const vigente = hoy >= original.fecha_desde && hoy <= original.fecha_hasta
+
+  if(alquileres.length && vigente){
+    const ultimoAlquiler = alquileres[alquileres.length - 1];
+    const ultimoHasta = ultimoAlquiler.fecha_hasta;
+    nuevaDesde = addOneDay(parseISO(ultimoHasta))
+    nuevaHasta = original.fecha_hasta
+    originalDesde = original.fecha_desde
+    originalHasta = ultimoHasta
+  }
+  else if (!alquileres.length && vigente) {
+    nuevaDesde = hoy
+    nuevaHasta = original.fecha_hasta
+    originalDesde = original.fecha_desde
+    originalHasta = getYesterdayDate()
+  }
+  if(!vigente && alquileres.length){
+    return res.send({status: false, message: `No se puede actualizar el contrato debido 
+      a que tiene alquieres cargados y no está en vigencia`})
+  }
+
+  if (vigente) {
+  // caso 1: hoy está dentro del rango del contrato
+  // → cerrar contrato actual (fecha_hasta = ayer) y abrir nuevo
+  //actualizo el contrato original
+  /**elimino deposito del anterior y lo pongo en el nuevo asi como asiento y nro recibo */
+  try {
+    await giama_renting.query(`UPDATE contratos_alquiler SET fecha_desde = ?, fecha_hasta = ?,
+      deposito_garantia = NULL, id_forma_cobro = NULL, id_forma_cobro_2 = NULL, id_forma_cobro_3 = NULL, fecha_cobro = NULL
+      WHERE id = ?`, {
+      type: QueryTypes.UPDATE,
+      replacements: [originalDesde, originalHasta, id_contrato],
+      transaction: transaction
+    })
+  } catch (error) {
+    console.log(error);
+    await transaction.rollback();
+    const { body } = handleError(error, "contrato", acciones.update);
+    return res.send(body);
+  }
+  //genero el nuevo contrato igual al original pero con fecha desde y id_vehiculo cambiados
+  //FALTA: actualizar contrato actual, dejar en nulos los datos del deposito para pasarselos al nuevo
+  try {
+    await giama_renting.query(`INSERT INTO contratos_alquiler (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, 
+      deposito_garantia, id_forma_cobro, id_forma_cobro_2, id_forma_cobro_3, fecha_cobro, nro_asiento, nro_recibo) 
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`, {
+        type: QueryTypes.INSERT,
+        replacements: [id_vehiculo, original["id_cliente"], nuevaDesde, nuevaHasta, 
+        original.deposito_garantia, original.id_forma_cobro, original.id_forma_cobro_2, original.id_forma_cobro_3, 
+        original.fecha_cobro, original.nro_asiento, original.nro_recibo],
+        transaction: transaction
+      })
+  } catch (error) {
+    console.log(error);
+    await transaction.rollback();
+    const { body } = handleError(error, "contrato", acciones.post);
+    return res.send(body);
+  }
+  try {
+    await giama_renting.query(`UPDATE vehiculos SET estado_actual = ? WHERE id = ?`, {
+      type: QueryTypes.UPDATE,
+      replacements: [1, id_vehiculo],
+      transaction: transaction
+    })
+  } catch (error) {
+    console.log(error);
+    await transaction.rollback();
+    const { body } = handleError(error, "contrato", acciones.update);
+    return res.send(body);
+  }
+  } else {
+  // caso 2: hoy está fuera del rango (antes o después)
+  // → solo actualizar el vehículo, sin duplicar contrato
+  try {
+    await giama_renting.query(`UPDATE contratos_alquiler SET id_vehiculo = ? WHERE id = ?`, {
+      type: QueryTypes.UPDATE,
+      replacements: [id_vehiculo, id_contrato],
+      transaction: transaction
+    })
+  } catch (error) {
+    console.log(error);
+    await transaction.rollback();
+    const { body } = handleError(error, "contrato", acciones.update);
+    return res.send(body);
+  }
+  try {
+    await giama_renting.query(`UPDATE vehiculos SET estado_actual = ? WHERE id = ?`, {
+      type: QueryTypes.UPDATE,
+      replacements: [1, id_vehiculo],
+      transaction: transaction
+    })
+  } catch (error) {
+    console.log(error);
+    await transaction.rollback();
+    const { body } = handleError(error, "contrato", acciones.update);
+    return res.send(body);
+  }
+  }
+
+
+  await transaction.commit()
+  return res.send({status: true, message: "Contrato actualizado correctamente"})
+}
 
 export const anulacionAlquiler = async (req, res) => {
   //ANULACION DE CONTRATO
