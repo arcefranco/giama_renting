@@ -230,3 +230,14 @@
   margin-left: 0.5rem;
   cursor: pointer;
 }
+
+.divTotal {
+  place-content: space-evenly;
+  flex-direction: row;
+  place-self: center;
+  place-items: center;
+  width: 8rem;
+  height: 5rem;
+  margin: .5rem;
+  padding: .5rem;
+}

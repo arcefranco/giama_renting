@@ -27,6 +27,7 @@ const UpdateVehiculo = () => {
     nro_chasis: '',
     nro_motor: '',
     kilometros: '',
+    fecha_medicion_km: '',
     proveedor_gps: '',
     nro_serie_gps: '',
     dispositivo: '',
@@ -37,9 +38,11 @@ const UpdateVehiculo = () => {
     calcomania: 0,
     gnc: 0,
     sucursal: '',
+    ubicacion: '',
     estado: '',
     polarizado: '',
-    cubre_asiento: ''
+    cubre_asiento: '',
+    observaciones: ''
   });
 
   useEffect(() => {
@@ -73,6 +76,7 @@ const UpdateVehiculo = () => {
         fecha_inicio_amortizacion: vehiculo[0].fecha_inicio_amortizacion || '',
         nro_motor: vehiculo[0].nro_motor || '',
         kilometros: vehiculo[0].kilometros_actuales || '',
+        fecha_medicion_km: vehiculo[0].fecha_medicion_km || '',
         proveedor_gps: vehiculo[0].proveedor_gps || '',
         nro_serie_gps: vehiculo[0].nro_serie_gps || '',
         dispositivo: vehiculo[0].dispositivo_peaje || '',
@@ -83,10 +87,11 @@ const UpdateVehiculo = () => {
         polarizado: vehiculo[0].polarizado || 0,
         cubre_asiento: vehiculo[0].cubre_asiento || 0,
         sucursal: vehiculo[0].sucursal || '',
+        ubicacion: vehiculo[0].ubicacion || '',
         estado: vehiculo[0].estado_actual || '',
         dominio: vehiculo[0].dominio ? vehiculo[0].dominio : "",
         dominio_provisorio: vehiculo[0].dominio_provisorio ? vehiculo[0].dominio_provisorio : "",
-
+        observaciones: vehiculo[0].observaciones ? vehiculo[0].observaciones : "",
       });
     }
   }, [vehiculo]);
@@ -197,6 +202,12 @@ const UpdateVehiculo = () => {
               <input type="text" name="color" value={form.color} onChange={handleChange} />
             </div>
 
+            <div className={styles.inputContainer}>
+              <span>Observaciones</span>
+              <textarea type="text" name='observaciones' value={form["observaciones"]} maxLength={100}
+                onChange={handleChange} />
+            </div>
+
           </fieldset>
           <fieldset className={styles.fieldSet}>
             <legend>Preparación del vehículo</legend>
@@ -220,6 +231,12 @@ const UpdateVehiculo = () => {
             </div>
 
             <div className={styles.inputContainer}>
+              <span>Fecha medición km</span>
+              <input type="date" name="fecha_medicion_km" value={form.fecha_medicion_km}
+                onChange={handleChange} />
+            </div>
+
+            <div className={styles.inputContainer}>
               <span>Dispositivo Peaje</span>
               <input disabled={disabledAdm} type="text" name="dispositivo" value={form.dispositivo} onChange={handleChange} />
             </div>
@@ -231,6 +248,10 @@ const UpdateVehiculo = () => {
                   <option key={m.id} value={m.id}>{m.nombre}</option>
                 ))}
               </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Ubicación</span>
+              <input /* disabled={disabledAdm}  */ type="text" name="ubicacion" value={form.ubicacion} onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>Proveedor GPS</span>

@@ -21,7 +21,7 @@ import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { getReciboIngresoById, resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
 import Swal from 'sweetalert2';
-import { toNumber } from '../../../../backend/helpers/toNumber.js';
+import { toNumber } from '../../helpers/toNumber.js';
 import { getToday } from '../../helpers/getTodayDate.js'
 
 const Ingresos = () => {
@@ -37,6 +37,7 @@ const Ingresos = () => {
   const { username } = useSelector((state) => state.loginReducer)
   const { modelos, formasDeCobro } = useSelector((state) => state.generalesReducer)
   const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
+  const [total, setTotal] = useState(0)
   const [form, setForm] = useState({
     id_vehiculo: id ? id : "",
     fecha: '',
@@ -59,6 +60,7 @@ const Ingresos = () => {
     importe_total_3: '',
   })
   const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
+  const [opcionesClientes, setOpcionesClientes] = useState([])
   const [conceptosFiltrados, setConceptosFiltrados] = useState([])
   const [generaRecibo, setGeneraRecibo] = useState(false)
   const [generaFactura, setGeneraFactura] = useState(false)
@@ -128,6 +130,25 @@ const Ingresos = () => {
     }
   }, [vehiculos, modelos])
 
+  useEffect(() => { /**OPCIONES DE CLIENTES PARA EL SELECT */
+    if (clientes?.length) {
+      setOpcionesClientes(clientes?.map(e => {
+        let CUIT = e.nro_documento
+        let nombre = e.nombre
+        let apellido = e.apellido
+        return {
+          value: e.id,
+          label: (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
+              <span>{CUIT} {nombre} {apellido}</span>
+            </div>
+          ),
+          searchKey: `${nombre} ${apellido}`.toLowerCase(),
+        };
+      }))
+    }
+  }, [clientes])
+
   useEffect(() => { /**OBTENGO COSTOS DEL VEHICULO DESDE EL SELECT */
     if (!id && form.id_vehiculo) {
       dispatch(getCostosIngresosByIdVehiculo({ id: form.id_vehiculo })),
@@ -140,57 +161,59 @@ const Ingresos = () => {
     dispatch(getContratosByIdCliente({ id: form.id_cliente }))
   }, [form.id_cliente])
 
-  useEffect(() => { /**ACTUALIZA id_cliente SI EL VEHICULO TIENE UN CONTRATO VIGENTE */
-    if (!contratosVehiculo?.length) return;
-
-    const hoy = getToday()
-    // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
-    const contratoVigente = contratosVehiculo.find(c => {
-      const desde = new Date(c.fecha_desde);
-      const hasta = new Date(c.fecha_hasta);
-      return hoy >= desde && hoy <= hasta;
-    });
-
-    // Si hay contrato vigente, actualizar el form
-    if (contratoVigente) {
-      setForm(prev => ({
-        ...prev,
-        id_cliente: contratoVigente.id_cliente
-      }));
-    } else {
-      // Si no hay contrato vigente, dejar vacío
-      setForm(prev => ({
-        ...prev,
-        id_cliente: ""
-      }));
-    }
-  }, [contratosVehiculo]);
-
-  useEffect(() => { /**ACTUALIZA id_vehiculo SI EL CLIENTE TIENE UN CONTRATO VIGENTE */
-    if (!contratosCliente?.length) return;
-
-    const hoy = getToday()
-    // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
-    const contratoVigente = contratosCliente.find(c => {
-      const desde = new Date(c.fecha_desde);
-      const hasta = new Date(c.fecha_hasta);
-      return hoy >= desde && hoy <= hasta;
-    });
-
-    // Si hay contrato vigente, actualizar el form
-    if (contratoVigente) {
-      setForm(prev => ({
-        ...prev,
-        id_vehiculo: contratoVigente.id_vehiculo
-      }));
-    } else {
-      // Si no hay contrato vigente, dejar vacío
-      setForm(prev => ({
-        ...prev,
-        id_vehiculo: ""
-      }));
-    }
-  }, [contratosCliente]);
+  /*   useEffect(() => { 
+      if (!contratosVehiculo?.length) return;
+  
+      const hoy = getToday()
+      // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
+      const contratoVigente = contratosVehiculo.find(c => {
+        const desde = new Date(c.fecha_desde);
+        const hasta = new Date(c.fecha_hasta);
+        console.log(hoy, desde, hasta)
+        return hoy >= desde && hoy <= hasta;
+      });
+      // Si hay contrato vigente, actualizar el form
+      if (contratoVigente) {
+        console.log("contratoVigente")
+        setForm(prev => ({
+          ...prev,
+          id_cliente: contratoVigente.id_cliente
+        }));
+      } else {
+        console.log("contratoNOVigente")
+        // Si no hay contrato vigente, dejar vacío
+        setForm(prev => ({
+          ...prev,
+          id_cliente: ""
+        }));
+      }
+    }, [contratosVehiculo, form.id_vehiculo, id]);
+  
+    useEffect(() => { 
+      if (!contratosCliente?.length) return;
+  
+      const hoy = getToday()
+      // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
+      const contratoVigente = contratosCliente.find(c => {
+        const desde = new Date(c.fecha_desde);
+        const hasta = new Date(c.fecha_hasta);
+        return hoy >= desde && hoy <= hasta;
+      });
+  
+      // Si hay contrato vigente, actualizar el form
+      if (contratoVigente) {
+        setForm(prev => ({
+          ...prev,
+          id_vehiculo: contratoVigente.id_vehiculo
+        }));
+      } else {
+        // Si no hay contrato vigente, dejar vacío
+        setForm(prev => ({
+          ...prev,
+          id_vehiculo: ""
+        }));
+      }
+    }, [contratosCliente]); */
 
   useEffect(() => { /**FILTRADO DE CONCEPTOS */
     if (conceptos?.length) {
@@ -364,6 +387,14 @@ const Ingresos = () => {
     }
   }, [form.importe_iva_3])
 
+  useEffect(() => {
+    let total_1 = form.importe_total ? toNumber(form.importe_total) : 0
+    let total_2 = form.importe_total_2 ? toNumber(form.importe_total_2) : 0
+    let total_3 = form.importe_total_3 ? toNumber(form.importe_total_3) : 0
+
+    setTotal(total_1 + total_2 + total_3)
+  }, [form.importe_total, form.importe_total_2, form.importe_total_3])
+
   useToastFeedback({
     isError,
     isSuccess,
@@ -433,25 +464,26 @@ const Ingresos = () => {
   }
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value && name === "importe_total") {
+    if (name === "importe_total") {
+      let total = value
       if (IVAInhabilitado) {
         setForm({
           ...form,
-          importe_total: value,
-          importe_neto: value,
+          importe_total: total,
+          importe_neto: total,
           importe_iva: ""
         })
       } else {
         setForm({
           ...form,
-          importe_total: value,
-          importe_neto: parseFloat(toNumber(value) / 1.21).toFixed(2),
-          importe_iva: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
+          importe_total: total,
+          importe_neto: parseFloat(toNumber(total) / 1.21).toFixed(2),
+          importe_iva: parseFloat(toNumber(total) - parseFloat(total / 1.21)).toFixed(2)
         })
       }
     }
     //copias de comportamiento a importes 2 y 3
-    else if (value && name === "importe_total_2") {
+    else if (name === "importe_total_2") {
       if (IVAInhabilitado2) {
         setForm({
           ...form,
@@ -468,7 +500,7 @@ const Ingresos = () => {
         })
       }
     }
-    else if (value && name === "importe_total_3") {
+    else if (name === "importe_total_3") {
       if (IVAInhabilitado3) {
         setForm({
           ...form,
@@ -653,26 +685,46 @@ const Ingresos = () => {
           />
         </div>
         }
-        {
-          !id &&
-          <div className={styles.inputWrapper} >
-            <span>Clientes</span>
-            <div className={styles.selectWithIcon} style={{
-              width: "20rem"
-            }}>
-              <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
-                <option value={""} selected>{"Seleccione un cliente"}</option>
-                {
-                  clientes?.length && clientes.map(e => (
-                    <option key={e.id} value={e.id}>
-                      {e.nro_documento} - {e.nombre} {e.apellido}
-                    </option>
-                  ))
-                }
-              </select>
-            </div>
+
+
+        <div className={styles.inputWrapper} >
+          <span>Clientes</span>
+          <div className={styles.selectWithIcon} style={{
+            width: "20rem"
+          }}>
+            {/*             <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
+              <option value={""} selected>{"Seleccione un cliente"}</option>
+              {
+                clientes?.length && clientes.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.nro_documento} - {e.nombre} {e.apellido}
+                  </option>
+                ))
+              }
+            </select> */}
+            <Select
+              options={opcionesClientes}
+              value={
+                opcionesClientes?.find(
+                  (opt) => String(opt.value) === String(form.id_cliente)
+                ) || null
+              }
+              onChange={(option) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  id_cliente: option?.value || "",
+                }));
+              }}
+              placeholder="Seleccione un cliente"
+              filterOption={(option, inputValue) =>
+                option.data.searchKey.includes(inputValue.toLowerCase())
+              }
+              styles={customStyles}
+
+            />
           </div>
-        }
+        </div>
+
 
       </div>
 
@@ -915,6 +967,10 @@ const Ingresos = () => {
             <span>Observacion</span>
             <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
+          </div>
+          <div className={styles.divTotal}>
+            <span style={{ fontSize: "15px" }}>Total: </span>
+            <span>{total}</span>
           </div>
         </form>
         <button

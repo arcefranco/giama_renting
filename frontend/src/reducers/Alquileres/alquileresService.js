@@ -40,6 +40,10 @@ const getContratos = async (form) => {
   return postArrayFunction("alquileres/contratos", form);
 };
 
+const getContratosAVencer = async (form) => {
+  return postArrayFunction("alquileres/contratosAVencer", form);
+};
+
 const getAnulaciones = async (form) => {
   return postArrayFunction("alquileres/getAnulaciones", form);
 };
@@ -71,6 +75,7 @@ const alquileresService = {
   getAlquileresByIdVehiculo,
   getAlquileres,
   getContratos,
+  getContratosAVencer,
   getAlquilerByIdContrato,
   getContratoById,
   anulacionAlquiler,

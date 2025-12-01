@@ -62,6 +62,13 @@ alquileresRouter.post(
   authorizeRoles("2", "3", "4"),
   getContratos
 );
+
+alquileresRouter.post(
+  "/contratosAVencer",
+  auth,
+  authorizeRoles("2", "3", "4"),
+  getContratosAVencer
+);
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
 alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);

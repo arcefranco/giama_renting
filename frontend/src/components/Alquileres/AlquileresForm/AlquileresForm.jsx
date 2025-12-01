@@ -26,6 +26,7 @@ import { toLocalDateOnly } from '../../../helpers/toLocalDateOnly.js';
 import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
 import { getReciboAlquilerById, resetAlquiler } from "../../../reducers/Recibos/recibosSlice.js"
 import Swal from 'sweetalert2';
+import { toNumber } from '../../../helpers/toNumber.js';
 
 const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   minDateContrato, maxDateContrato, vehiculo, cliente, fecha_recibo_deposito }) => {
@@ -76,6 +77,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   const [minDate, setMinDate] = useState(null)
   const [maxDate, setMaxDate] = useState(null)
   const [sendBtnDisabled, setSendBtnDisabled] = useState(true)
+  const [total, setTotal] = useState(0)
   const [form, setForm] = useState({
     id_contrato: idContrato ? idContrato : "",
     ingresa_alquiler: 1,
@@ -226,6 +228,14 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   }, [nro_recibo_alquiler]);
 
   useEffect(() => {
+    let total_1 = form.importe_total_1 ? toNumber(form.importe_total_1) : 0
+    let total_2 = form.importe_total_2 ? toNumber(form.importe_total_2) : 0
+    let total_3 = form.importe_total_3 ? toNumber(form.importe_total_3) : 0
+
+    setTotal((total_1 + total_2 + total_3).toFixed(2))
+  }, [form.importe_total_1, form.importe_total_2, form.importe_total_3])
+
+  useEffect(() => {
     if (html_recibo_alquiler && !modoContrato) {
       Swal.fire({
         title: '¿Desea imprimir el recibo?',
@@ -323,27 +333,30 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (value && name === "importe_total_1") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_1": (parseFloat(value) * 0.21).toFixed(2),
-        "importe_neto_1": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
+        "importe_iva_1": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_1": valor_sin_iva
       });
     }
     else if (value && name === "importe_total_2") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_2": (parseFloat(value) * 0.21).toFixed(2),
-        "importe_neto_2": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
+        "importe_iva_2": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_2": valor_sin_iva
       });
     }
     else if (value && name === "importe_total_3") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({
         ...form,
         [name]: parseFloat(value),
-        "importe_iva_3": (parseFloat(value) * 0.21).toFixed(2),
-        "importe_neto_3": (parseFloat(value) - (parseFloat(value) * 0.21)).toFixed(2)
+        "importe_iva_3": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_3": valor_sin_iva
       });
     }
     else if (value && name === "id_forma_cobro_alquiler_1") {
@@ -523,7 +536,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
-            <span>Observacion</span>
+            <span>Observación</span>
             <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
           </div>
@@ -615,6 +628,10 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
             <input type="number" name='importe_iva_3' disabled value={form["importe_iva_3"]}
               onChange={handleChange} />
           </div>
+        </div>
+        <div className={styles.divTotal}>
+          <span style={{ fontSize: "15px" }}>Total: </span>
+          <span>{total}</span>
         </div>
       </form>
       <button

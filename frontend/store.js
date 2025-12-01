@@ -18,6 +18,12 @@ const loginPersistConfig = {
   storage,
   whitelist: ["username", "roles", "nombre"],
 };
+
+const alquileresPersistConfig = {
+  key: "alquileres",
+  storage,
+  whitelist: ["contratosAVencer"],
+};
 const reducer = combineReducers({
   loginReducer: persistReducer(loginPersistConfig, loginReducer),
   generalesReducer,
@@ -26,7 +32,7 @@ const reducer = combineReducers({
   egresosReducer,
   clientesReducer,
   costosReducer,
-  alquileresReducer,
+  alquileresReducer: persistReducer(alquileresPersistConfig, alquileresReducer),
   usuariosReducer,
   recibosReducer,
   parametrosReducer,

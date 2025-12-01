@@ -15,7 +15,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
-import * as xlsx from "xlsx";
+import {validacionCUIT} from "../../helpers/validacionCUIT.js"
 
 export const postCliente = async (req, res) => {
   const {
@@ -73,6 +73,7 @@ export const postCliente = async (req, res) => {
     "nro_direccion",
     "codigo_postal",
     "celular",
+    "provincia",
     "mail",
   ];
   const campoFaltante = verificarCamposObligatorios(
@@ -88,6 +89,14 @@ export const postCliente = async (req, res) => {
     });
   }
 
+  const CUITvalido = validacionCUIT(nro_documento)
+
+  if(!CUITvalido){
+    return res.send({
+      status: false,
+      message: `El CUIT ingresado no es válido`,
+    });
+  }
   const transaction = await giama_renting.transaction();
   let insertId;
   try {

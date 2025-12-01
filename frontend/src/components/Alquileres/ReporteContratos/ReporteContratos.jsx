@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { getContratos, reset } from "./../../../reducers/Alquileres/alquileresSlice"
 import { getVehiculos } from "./../../../reducers/Vehiculos/vehiculosSlice"
 import { getClientes } from "./../../../reducers/Clientes/clientesSlice"
@@ -19,12 +20,10 @@ import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
 import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
-
-
-
 const ReporteContratos = () => {
   const dispatch = useDispatch()
-
+  const location = useLocation();
+  const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
   useEffect(() => {
     Promise.all([
       dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: 1 })),
@@ -36,6 +35,7 @@ const ReporteContratos = () => {
 
   const {
     contratos,
+    contratosAVencer,
     message,
     isError,
     isSuccess,
@@ -62,13 +62,6 @@ const ReporteContratos = () => {
   }, [form.vigentes]);
   const handleActualizar = () => {
     dispatch(getContratos({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"], vigentes: form["vigentes"] }))
-  }
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({
-      ...form,
-      [name]: value
-    })
   }
   const handleCheckChange = (e) => {
     const { name, checked } = e.target;
@@ -105,41 +98,7 @@ const ReporteContratos = () => {
       </div>
     }
   }
-  const getClienteNombreCompletoParaOrdenar = (id_cliente) => {
-    const cliente = clientes?.find(e => e.id == id_cliente);
-    // Combina apellido y nombre para ordenar correctamente por apellido primero
-    return cliente ? `${cliente.nombre} ${cliente.apellido}` : '';
-  };
 
-  const getIdClientePorNombre = (texto) => {
-    if (!texto || !clientes?.length) return null;
-    const normalizar = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const textoNorm = normalizar(texto);
-    const clienteEncontrado = clientes.find(c => {
-      const nombreCompleto = normalizar(`${c.nombre} ${c.apellido}`);
-      return nombreCompleto.includes(textoNorm);
-    });
-    return clienteEncontrado?.id || null;
-  };
-
-  const getClienteIdsPorNombre = (texto) => {
-    if (!texto || !clientes?.length) return []; // Devuelve array vacío
-
-    // Asegúrate de manejar strings, por si acaso
-    const normalizar = (str) => str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const textoNorm = normalizar(texto);
-
-    const clientesEncontrados = clientes.filter(c => {
-      const nombreNorm = normalizar(c.nombre);
-      const apellidoNorm = normalizar(c.apellido);
-
-      // Busca si el texto está INCLUIDO en el nombre O en el apellido
-      return nombreNorm.includes(textoNorm) || apellidoNorm.includes(textoNorm);
-    });
-
-    // Devuelve un array con todos los IDs encontrados: [5, 12, 44]
-    return clientesEncontrados.map(c => c.id);
-  };
 
   const normalizar = (str) => {
     if (!str) return "";
@@ -156,6 +115,16 @@ const ReporteContratos = () => {
       apellidoNorm: normalizar(c.apellido)
     }));
   }, [clientes]);
+
+  const vehiculosGrid = useMemo(() => {
+    if (!vehiculos?.length) return [];
+    return vehiculos?.map(c => ({
+      ...c,
+      // Campos nuevos que usará el lookup para buscar
+      dominio: normalizar(c.dominio),
+      modelo: normalizar(c.modelo)
+    }));
+  }, [vehiculos]);
 
   const renderModificar = (data) => {
     const row = data.data
@@ -250,9 +219,7 @@ const ReporteContratos = () => {
     }
   }
 
-  const handleSubmit = () => {
-    dispatch(getContratos(form))
-  }
+
 
   const handleCustomSummary = (e) => {
     if (e.name === "countVehiculos") {
@@ -369,7 +336,7 @@ const ReporteContratos = () => {
       </div>
       <DataGrid
         className={styles.dataGrid}
-        dataSource={contratos || []}
+        dataSource={esAVencer ? (contratosAVencer || []) : contratos || []}
         showBorders={true}
         style={{ fontFamily: "IBM" }}
         rowAlternationEnabled={true}
@@ -384,7 +351,15 @@ const ReporteContratos = () => {
         <HeaderFilter visible={true} />
         <Paging defaultPageSize={20} />
         <Column dataField="id" caption="ID" allowHeaderFiltering={false} alignment="center" />
-        <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderVehiculo} alignment="center" />
+        <Column dataField="id_vehiculo" caption="Vehículo" allowHeaderFiltering={false} cellRender={renderVehiculo} alignment="center" >
+          <Lookup
+            dataSource={vehiculosGrid}
+            valueExpr="id"
+            displayExpr={(item) => item ? `${item.dominio}` : ""}
+            searchExpr={["dominio"]}
+          />
+
+        </Column>
         <Column
           dataField="id_cliente"
           dataType="number" // Asegúrate de que coincida con el tipo de 'id' (tu ejemplo dice 5)
@@ -394,10 +369,10 @@ const ReporteContratos = () => {
           allowHeaderFiltering={false}
         >
           <Lookup
-            dataSource={clientesParaGrid} // 1. Usa la lista pre-procesada
-            valueExpr="id"                // 2. El valor subyacente es el 'id'
-            displayExpr={(item) => item ? `${item.nombre} ${item.apellido}` : ""} // 3. Qué mostrar
-            searchExpr={["nombreNorm", "apellidoNorm"]} // 4. ¡En qué campos buscar!
+            dataSource={clientesParaGrid}
+            valueExpr="id"
+            displayExpr={(item) => item ? `${item.nombre} ${item.apellido}` : ""}
+            searchExpr={["nombreNorm", "apellidoNorm"]}
           />
         </Column>
         <Column dataField="fecha_desde" caption="Desde" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />

@@ -16,6 +16,7 @@ import styles from "./ReporteRecibos.module.css"
 import { Workbook } from 'devextreme-exceljs-fork';
 import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
+import Swal from 'sweetalert2';
 
 const ReporteRecibos = () => {
     const dispatch = useDispatch()
@@ -165,9 +166,7 @@ const ReporteRecibos = () => {
                         textDecoration: 'underline', background: 'none', border: 'none',
                         cursor: "pointer"
                     }}
-                    onClick={() => {
-                        dispatch(anulacionRecibo({ id: row }))
-                    }}
+                    onClick={() => swalAnulacion(row)}
                 >
                     Anular
                 </button>
@@ -239,6 +238,23 @@ const ReporteRecibos = () => {
             });
         });
     };
+
+    const swalAnulacion = (id) => {
+        Swal.fire({
+            title: '¿Desea anular el recibo?',
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar',
+            icon: 'warning',
+            didOpen: () => {
+                document.body.classList.remove('swal2-height-auto');
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                dispatch(anulacionRecibo({ id: id }))
+            }
+        })
+    }
     return (
         <div className={styles.container}>
             <ToastContainer />
@@ -349,34 +365,38 @@ const ReporteRecibos = () => {
                     alignment="right"
                 >
                     <Lookup
-                        dataSource={formasDeCobro} // El array con ID y nombre
-                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
-                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                        dataSource={formasDeCobro}
+                        valueExpr="id"
+                        displayExpr="nombre"
                     />
                 </Column>
+                <Column dataField="importe_total_1" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column
                     dataField="id_forma_cobro_2"
                     caption="Forma de pago 2"
                     alignment="right"
                 >
                     <Lookup
-                        dataSource={formasDeCobro} // El array con ID y nombre
-                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
-                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                        dataSource={formasDeCobro}
+                        valueExpr="id"
+                        displayExpr="nombre"
                     />
                 </Column>
+                <Column dataField="importe_total_2" caption="Importe 2" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column
                     dataField="id_forma_cobro_3"
                     caption="Forma de pago 3"
                     alignment="right"
                 >
                     <Lookup
-                        dataSource={formasDeCobro} // El array con ID y nombre
-                        valueExpr="id"             // El campo de 'formasDeCobro' que coincide con 'dataField' (id_forma_cobro)
-                        displayExpr="nombre"       // El campo de 'formasDeCobro' que se mostrará
+                        dataSource={formasDeCobro}
+                        valueExpr="id"
+                        displayExpr="nombre"
                     />
                 </Column>
-                <Column dataField="importe_total" caption="Importe" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+                <Column dataField="importe_total_3" caption="Importe 3" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+                <Column dataField="importe_total" caption="Importe total" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+
                 <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
                 <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""

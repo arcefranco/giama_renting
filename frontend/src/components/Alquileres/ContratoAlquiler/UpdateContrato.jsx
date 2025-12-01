@@ -188,11 +188,14 @@ const UpdateContrato = () => {
             width: '22rem'
         })
     };
-    const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
-        alquileres?.map(a => ({
-            start: new Date(a.fecha_desde),
-            end: addDays(new Date(a.fecha_hasta), 1),
-        }));
+    useEffect(() => {
+        if (alquilerByIdContrato.length) {
+            setRangosOcupados(alquilerByIdContrato?.filter(e => e.anulado === 0)?.map(a => ({
+                start: new Date(a.fecha_desde),
+                end: new Date(a.fecha_hasta),
+            })))
+        }
+    }, [alquilerByIdContrato])
     return (
         <div>
             <ToastContainer />
@@ -269,7 +272,7 @@ const UpdateContrato = () => {
                             minDate={formContrato.fecha_desde_contrato}
                             maxDate={formContrato.fecha_hasta_contrato}
                             placeholderText="Seleccione una fecha"
-                            excludeDateIntervals={obtenerRangosOcupados(alquilerByIdContrato)}
+                            excludeDateIntervals={rangosOcupados}
                             locale="es"
                         />
                     </div>
@@ -281,9 +284,9 @@ const UpdateContrato = () => {
                             selected={formContrato.fecha_hasta_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_hasta_contrato: date }))}
                             minDate={formContrato.fecha_desde_contrato}
-                            maxDate={formContrato.fecha_hasta_contrato}
+                            /*  maxDate={formContrato.fecha_hasta_contrato} */
                             placeholderText="Seleccione una fecha"
-                            excludeDateIntervals={obtenerRangosOcupados(alquilerByIdContrato)}
+                            excludeDateIntervals={rangosOcupados}
                             locale="es"
                         />
                     </div>

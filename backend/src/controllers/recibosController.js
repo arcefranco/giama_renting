@@ -91,27 +91,36 @@ export const getReciboById = async (req, res) => {
         r.fecha,
         r.detalle,
         r.importe_total,
+        r.importe_total_1,
+        r.importe_total_2,
+        r.importe_total_3,
         r.usuario_alta,
         r.fecha_alta_registro,
         r.id_cliente,
         r.id_vehiculo,
         r.id_forma_cobro,
+        r.id_forma_cobro_2,
+        r.id_forma_cobro_3,
         c.nombre AS nombre_cliente,
         c.apellido AS apellido_cliente,
         c.direccion,
         c.nro_direccion AS numero_direccion,
-        f.nombre AS nombre_forma_cobro,
+	f1.nombre AS nombre_forma_cobro,      
+	f2.nombre AS nombre_forma_cobro_2,    
+	f3.nombre AS nombre_forma_cobro_3, 
         u.nombre AS nombre_usuario,
         s.nombre AS nombre_sucursal,
         v.dominio AS dominio_vehiculo,
         v.dominio_provisorio AS dominio_provisorio_vehiculo
       FROM recibos r
       LEFT JOIN clientes c ON c.id = r.id_cliente
-      LEFT JOIN formas_cobro f ON f.id = r.id_forma_cobro
+LEFT JOIN formas_cobro f1 ON f1.id = r.id_forma_cobro
+LEFT JOIN formas_cobro f2 ON f2.id = r.id_forma_cobro_2
+LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
       LEFT JOIN usuarios u ON u.email = r.usuario_alta
       LEFT JOIN vehiculos v ON v.id = r.id_vehiculo
       LEFT JOIN sucursales s ON s.id = v.sucursal
-      WHERE r.id = ?
+      WHERE r.id = ?;
       `,
       {
         type: QueryTypes.SELECT,
@@ -175,9 +184,6 @@ export const getReciboById = async (req, res) => {
             <p><b>Fecha Pago: </b>  ${formatearFechaISOText(recibo.fecha)}</p>
           </div>
            <div>
-            <p><b>Tipo Pago: </b> ${recibo.nombre_forma_cobro}</p>
-          </div>
-           <div>
             <p><b>Creado por: </b> ${recibo.nombre_usuario}</p>
           </div>
            <div>
@@ -197,9 +203,34 @@ export const getReciboById = async (req, res) => {
         <div style="font-size: 12px">
         <p><b>Dominio: ${recibo.dominio_vehiculo ? recibo.dominio_vehiculo : recibo.dominio_provisorio_vehiculo ? recibo.dominio_provisorio_vehiculo : "SIN DOMINIO"}</b></p>
         </div>
+        <div style="font-size: 12px">
+         <p>${recibo.detalle}</p>
+        </div>
         <div style="display: flex;  justify-content: space-between; font-size: 12px">
-        <p>${recibo.detalle}</p>
-        <p>$${recibo.importe_total}</p>
+        <p>${recibo.nombre_forma_cobro}</p>
+        <p>$${recibo.importe_total_1}</p>
+        </div>
+        ${
+          recibo.nombre_forma_cobro_2 ? `
+          <div style="display: flex;  justify-content: space-between; font-size: 12px">
+          <p>${recibo.nombre_forma_cobro_2}</p>
+          <p>$${recibo.importe_total_2}</p>
+          </div>
+          `
+          : ""
+        }
+        ${
+          recibo.nombre_forma_cobro_3 ? `
+          <div style="display: flex;  justify-content: space-between; font-size: 12px">
+          <p>${recibo.nombre_forma_cobro_3}</p>
+          <p>$${recibo.importe_total_3}</p>
+          </div>
+          `
+          : ""
+        }
+        <div style="display: flex;  justify-content: space-between; font-size: 14px">
+        <p><b>Total</b></p>
+        <p><b>$${recibo.importe_total}</b></p>
         </div>
         <hr/>
         <div style="margin-top: 40px; text-align: right;">
@@ -224,7 +255,7 @@ export const getRecibos = async (req, res) => {
     return res.send(resultado);
   } catch (error) {
     console.log("error en backend getRecibos: ", error)
-    const { body } = handleError(error, "Recibo", acciones.get);
+    const { body } = handleError(error, "recibos", acciones.get);
     return res.send(body);
   }
 }
@@ -430,6 +461,7 @@ export const anulacionRecibo = async (req, res) => {
   let VtoCAE;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let tipo_NC;
 
   try {
     const result = await giama_renting.query(
@@ -457,12 +489,20 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: false, message: "Factura no encontrada" });
     }
     const factura = result[0];
+    console.log("factura: ",factura)
     NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
     CAE = factura.CAE;
     VtoCAE = factura.VtoCAE;
+    if(factura.Tipo === "FA"){
+      tipo_NC = "CA"
+    }else if(factura.Tipo === "FB"){
+      tipo_NC = "CB"
+    }
+
 
 
     if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
+      console.log("if 1")
       await pa7_giama_renting.query("DELETE FROM facturasitems WHERE IdFactura = ?", {
         type: QueryTypes.DELETE,
         replacements: [id_factura],
@@ -487,29 +527,34 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-      await transaction_giama_renting.commit();
-      await transaction_pa7_giama_renting.commit();
+      await transaction_giama_renting.commit(); 
+      await transaction_pa7_giama_renting.commit();  
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
 
     } else if (!NumeroFacturaEmitida || !CAE || !VtoCAE) {
+           console.log("if 2")
       return res.send({
         status: false,
         message: "La factura aún no puede ser eliminada",
       });
 
     } else {
+             console.log("else")
       // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
       const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
+      if (!tipo_NC) {
+        return res.send({status: false, message: "No está aclarado el tipo de nota de crédito"})
+      }
       let id_ndc;
       let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
       const result = await pa7_giama_renting.query(
         `INSERT INTO facturas 
          (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, ${Object.keys(otrosCampos).join(", ")})
-         VALUES (?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
+         VALUES (?,?,?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
-          replacements: ["CB", FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
+          replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, ...Object.values(otrosCampos)],
           transaction: transaction_pa7_giama_renting
         }
       );
@@ -561,8 +606,8 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-      await transaction_giama_renting.commit()
-      await transaction_pa7_giama_renting.commit()
+      await transaction_giama_renting.commit(); 
+      await transaction_pa7_giama_renting.commit();  
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
     } catch (error) {
@@ -586,8 +631,8 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_giama_renting
       })
 
-      await transaction_giama_renting.commit();
-      await transaction_pa7_giama_renting.commit();
+      await transaction_giama_renting.commit(); 
+      await transaction_pa7_giama_renting.commit();  
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
     } catch (error) {
@@ -598,4 +643,52 @@ export const anulacionRecibo = async (req, res) => {
   }
 
 };
+
+export const getRecibosByFormaCobro = async (req, res) => {
+  console.log(req.body)
+  const {id_forma_cobro} = req.body
+  try {
+    const result = await giama_renting.query(`
+    (
+    SELECT 
+        r.id AS id_recibo,
+        r.fecha,
+        r.detalle,
+        r.id_forma_cobro AS id_forma_cobro,
+        r.importe_total_1 AS importe
+    FROM recibos r
+    WHERE r.id_forma_cobro = ?
+)
+UNION ALL
+(
+    SELECT 
+        r.id AS id_recibo,
+        r.fecha,
+        r.detalle,
+        r.id_forma_cobro_2 AS id_forma_cobro,
+        r.importe_total_2 AS importe
+    FROM recibos r
+    WHERE r.id_forma_cobro_2 = ?
+)
+UNION ALL
+(
+    SELECT 
+        r.id AS id_recibo,
+        r.fecha,
+        r.detalle,
+        r.id_forma_cobro_3 AS id_forma_cobro,
+        r.importe_total_3 AS importe
+    FROM recibos r
+    WHERE r.id_forma_cobro_3 = ?
+)`, {
+  type: QueryTypes.SELECT,
+  replacements: [id_forma_cobro, id_forma_cobro, id_forma_cobro]
+})
+return res.send(result)
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(error, "recibos", acciones.get);
+    return res.send(body);
+  }
+}
 

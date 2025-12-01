@@ -1,6 +1,7 @@
 import { giama_renting, pa7_giama_renting } from "./connection.js";
 import { QueryTypes } from "sequelize";
 import { getTodayDate } from "./getTodayDate.js";
+import { sendEmailImportes } from "./sendEmail.js";
 
 export const insertFactura = async (
   id_cliente,
@@ -20,6 +21,9 @@ export const insertFactura = async (
   let nombre_provincia;
   let tipo_factura;
   let id_factura;
+
+  let importe_total_preliminar = parseFloat(importe_neto) + parseFloat(importe_iva)
+
   //buscar datos del cliente
   try {
     const result = await giama_renting.query(
@@ -42,7 +46,7 @@ export const insertFactura = async (
   }
   if (!clienteObtenido.tipo_contribuyente)
     throw new Error("El cliente debe aclarar su tipo responsable");
-  if (clienteObtenido.tipo_contribuyente == 1) tipo_factura = "FA";
+  if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA"; 
   else tipo_factura = "FB";
   //obtengo el nombre de la provincia del cliente
   try {
@@ -97,7 +101,7 @@ export const insertFactura = async (
     const result = await pa7_giama_renting.query(
       `
         INSERT INTO clientesfacturacion (RazonSocial, CUIT, TipoDocumento, TipoResponsable,
-        Domicilio, Localidad, Provincia) VALUES (?,?,?,?,?,?,?)`,
+        Domicilio, Localidad, Provincia, Activo) VALUES (?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -108,13 +112,13 @@ export const insertFactura = async (
           domicilio,
           clienteObtenido.ciudad,
           nombre_provincia ? nombre_provincia : null,
+          1
         ],
         transaction: transaction_pa7_giama_renting,
       }
     );
     CodigoCliente = result[0];
   }
-  console.log(getTodayDate());
   //inserto la factura
   try {
     const result = await pa7_giama_renting.query(
@@ -176,6 +180,9 @@ export const insertFactura = async (
     throw new Error(
       `Error al insertar la factura ${error.message && error.message}`
     );
+  }
+  if(parseFloat(importe_total) !== parseFloat(importe_total_preliminar)){
+    sendEmailImportes(id_factura)
   }
   return id_factura;
 };

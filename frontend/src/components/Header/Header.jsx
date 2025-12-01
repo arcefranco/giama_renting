@@ -3,8 +3,10 @@ import styles from "./Header.module.css"
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { logOut } from "../../reducers/Login/loginSlice";
+import { getContratosAVencer } from "../../reducers/Alquileres/alquileresSlice";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import notification from "../../assets/notification.svg"
 
 const menuItems = [
   {
@@ -67,7 +69,8 @@ const menuItems = [
       { label: "Carga de ingresos", to: "/costos/ingresos", roles: ["2"] },
       { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateoIE", roles: ["2"] },
-      { label: "Listado de recibos", to: "/recibos/reporte" }
+      { label: "Listado de recibos", to: "/recibos/reporte" },
+      /*       { label: "Recibos por forma de cobro", to: "/recibos_formas_cobro" }, */
     ]
   },
   ,
@@ -82,6 +85,7 @@ const menuItems = [
 
 const Header = () => {
   const { roles, nombre, username } = useSelector((state) => state.loginReducer)
+  const { contratosAVencer } = useSelector((state) => state.alquileresReducer)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const handleLogout = () => {
@@ -134,7 +138,33 @@ const Header = () => {
         </ul>
       </nav>
 
+
       <div className={styles.userSection}>
+        {
+          (roles.includes("1") || roles.includes("2")) &&
+          <div className={styles.notifItem}>
+            <img style={{ width: "32px" }} src={notification} alt="" />
+            <div className={styles.dropdownNotif}>
+              {
+                contratosAVencer.length ?
+                  `Contratos a una semana o menos de vencer: ${contratosAVencer?.length}`
+                  :
+                  `No hay contratos a una semana (o menos) de vencer`
+              }
+              {
+                contratosAVencer.length &&
+                <div className={styles.containerBtnNotif} style={{
+                  display: "flex",
+                  justifyContent: "space-around"
+                }}>
+                  <button onClick={() => navigate("/alquileres/contrato/reporte/a-vencer")}>Ir</button>
+                  <button onClick={() => dispatch(getContratosAVencer())}>Actualizar</button>
+                </div>
+              }
+            </div>
+          </div>
+
+        }
         {nombre && <span>Hola, {nombre}</span>}
         <button className={styles.logoutBtn} onClick={handleLogout}>
           Salir
