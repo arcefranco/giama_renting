@@ -14,10 +14,10 @@ import {
   anulacionContrato,
   getAlquilerByIdContrato,
   getContratosByIdCliente,
-  getContratosAVencer,
+  cambioVehiculo,
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
-import { authorizeRoles } from "../middlewares/roles.js";
+import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
 const alquileresRouter = Router();
 alquileresRouter.use((req, res, next) => {
   res.header(
@@ -72,4 +72,5 @@ alquileresRouter.post(
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
 alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
+alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeAdmin(), cambioVehiculo);
 export default alquileresRouter;
