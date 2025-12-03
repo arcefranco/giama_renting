@@ -1814,7 +1814,7 @@ if (conflictoContratoCliente) {
           id_contrato,
         ],
         transaction: transaction_giama_renting,
-      }
+      })
   
       // 🔹 Caso 2: el contrato nuevo termina antes del último alquiler
       if (nuevaHasta < ultimoHasta) {
@@ -1823,7 +1823,7 @@ if (conflictoContratoCliente) {
           message: `No se puede modificar la fecha de finalización del contrato a ${formatearFechaISO(nuevaHasta)} porque existen alquileres posteriores hasta ${formatearFechaISO(ultimoHasta)}.`,
         });
       }
-    }
+    
   } catch (error) {
     console.log(error);
     const { body } = handleError(error, "Validación de alquileres", acciones.get);
