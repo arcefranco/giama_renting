@@ -1890,7 +1890,7 @@ if (conflictoContratoCliente) {
     }
 
   }
-  transaction_giama_renting.rollback();
+  transaction_giama_renting.commit();
   return res.send({
     status: true,
     message: "Contrato actualizado correctamente",
