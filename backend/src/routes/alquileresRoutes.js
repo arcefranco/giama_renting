@@ -15,6 +15,7 @@ import {
   getAlquilerByIdContrato,
   getContratosByIdCliente,
   cambioVehiculo,
+  getContratosAVencer
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
