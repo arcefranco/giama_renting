@@ -1764,7 +1764,7 @@ if (conflictoContratoCliente) {
 
   }else{
     // Detectamos acorte al inicio
-    if (nuevaDesde > originalDesde) {
+  if (nuevaDesde > originalDesde) {
       fechaDesdeHistorial = originalDesde;
       fechaHastaHistorial = subDays(nuevaDesde, 1); // día anterior
     }
@@ -1789,6 +1789,17 @@ if (conflictoContratoCliente) {
         type: QueryTypes.SELECT,
       }
     );
+  if(alquileres.length){
+    const ultimoAlquiler = alquileres[alquileres.length - 1];
+    const ultimoHasta = ultimoAlquiler.fecha_hasta;
+    if (nuevaHasta < ultimoHasta) {
+        return res.send({
+          status: false,
+          message: `No se puede modificar la fecha de finalización del contrato a ${formatearFechaISO(nuevaHasta)} porque existen alquileres posteriores hasta ${formatearFechaISO(ultimoHasta)}.`,
+        });
+      }
+
+    }
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
@@ -1801,34 +1812,6 @@ if (conflictoContratoCliente) {
   }
   console.log(formatearFechaISO(nuevaDesde))
   console.log(formatearFechaISO(nuevaHasta))
-  //actualizo el contrato en tabla contratos_alquiler
-  try {
-    await giama_renting.query(
-      `UPDATE contratos_alquiler SET fecha_desde = ?, 
-      fecha_hasta = ? WHERE id = ?`,
-      {
-        type: QueryTypes.UPDATE,
-        replacements: [
-          formatearFechaISO(nuevaDesde),
-          formatearFechaISO(nuevaHasta),
-          id_contrato,
-        ],
-        transaction: transaction_giama_renting,
-      })
-  
-      // 🔹 Caso 2: el contrato nuevo termina antes del último alquiler
-      if (nuevaHasta < ultimoHasta) {
-        return res.send({
-          status: false,
-          message: `No se puede modificar la fecha de finalización del contrato a ${formatearFechaISO(nuevaHasta)} porque existen alquileres posteriores hasta ${formatearFechaISO(ultimoHasta)}.`,
-        });
-      }
-    
-  } catch (error) {
-    console.log(error);
-    const { body } = handleError(error, "Validación de alquileres", acciones.get);
-    return res.send(body);
-  }
   
     //inserto en historial el contrato anterior
     if (formatearFechaISO(fechaDesdeHistorial).startsWith("19") || formatearFechaISO(fechaHastaHistorial).startsWith("19")){
