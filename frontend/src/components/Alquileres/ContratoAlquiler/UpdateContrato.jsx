@@ -48,6 +48,7 @@ const UpdateContrato = () => {
     const { vehiculos } = useSelector((state) => state.vehiculosReducer)
     const { clientes } = useSelector((state) => state.clientesReducer)
     const { modelos } = useSelector((state) => state.generalesReducer)
+    const [rangosOcupados, setRangosOcupados] = useState([])
     const [formContrato, setFormContrato] = useState({
         id_vehiculo: vehiculo ? vehiculo : '',
         id_cliente: '',
