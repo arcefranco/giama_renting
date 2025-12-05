@@ -1505,16 +1505,36 @@ export const prorrateoIE = async (req, res) => {
   let cuenta_secundaria_forma_cobro;
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
+
+  if(importe_total <= 0 || !importe_total){
+    transaction_asientos.rollback();
+    transaction_costos_ingresos.rollback();
+    return res.send({status: false, message: "No se puede ingresar con importes vacíos"})
+    
+  }
+
   let FA_FC =
     tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+
+
+
   let numero_comprobante = `${padWithZeros(
     numero_comprobante_1,
     5
   )}${padWithZeros(numero_comprobante_2, 8)}`;
+
+
+
+
   let comprobante = `${FA_FC}-${padWithZeros(
     numero_comprobante_1,
     5
   )}-${padWithZeros(numero_comprobante_2, 8)}`;
+
+
+
+
+
   if (!arrayVehiculos?.length) {
     return res.send({
       status: false,
