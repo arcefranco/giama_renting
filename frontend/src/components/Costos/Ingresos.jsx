@@ -149,7 +149,7 @@ const Ingresos = () => {
 
             </div>
           ),
-          searchKey: `${CUIT} ${nombre} ${apellido} ${razon_social}`.toLowerCase(),
+          searchKey: `${CUIT} ${nombre ? nombre : razon_social} ${apellido ? apellido : razon_social} ${razon_social}`.toLowerCase(),
         };
       }))
     }
