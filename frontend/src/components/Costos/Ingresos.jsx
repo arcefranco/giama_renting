@@ -136,14 +136,20 @@ const Ingresos = () => {
         let CUIT = e.nro_documento
         let nombre = e.nombre
         let apellido = e.apellido
+        let razon_social = e.razon_social
         return {
           value: e.id,
           label: (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontSize: "15px" }}>
-              <span>{CUIT} {nombre} {apellido}</span>
+              {
+                nombre ? <span>{CUIT} {nombre} {apellido}</span> :
+                  razon_social ? <span>{CUIT} {razon_social}</span> :
+                    <span>{CUIT}</span>
+              }
+
             </div>
           ),
-          searchKey: `${nombre} ${apellido}`.toLowerCase(),
+          searchKey: `${CUIT} ${nombre ? nombre : razon_social} ${apellido ? apellido : razon_social} ${razon_social}`.toLowerCase(),
         };
       }))
     }

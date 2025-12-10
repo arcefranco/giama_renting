@@ -41,6 +41,7 @@ import UpdateSucursal from "./components/Parametros/Sucursales/UpdateSucursal";
 import ReporteRecibos from "./components/Recibos/ReporteRecibos";
 import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContrato";
 import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
+import PagosClientes from "./PagosClientes";
 function App() {
 
   return (
@@ -125,6 +126,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/contrato/actualizar/:id' element={<UpdateContrato />} />
           </Route>
+          <Route element={<PrivateRoute allowedRoles={["3"]} />}>
+            <Route path='/contrato/actualizar/:id/:vehiculo' element={<UpdateContrato />} />
+          </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/:idContrato' element={<AlquileresForm key={location.pathname} />} />
           </Route>
@@ -153,6 +157,7 @@ function App() {
           <Route path='/parametros/modelos/:id' element={<UpdateModelo />} />
           <Route path='/parametros/sucursales' element={<Sucursales />} />
           <Route path='/parametros/sucursales/:id' element={<UpdateSucursal />} />
+          <Route path="/pagosClientes" element={<PagosClientes />} />
         </Route>
       </Route>
     </Routes>
