@@ -2598,7 +2598,8 @@ export const postAlquiler_2 = async (req, res) => {
   }
 
   concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
-  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT} - 
+  ASIENTO: ${NroAsiento}`;
 
 
   //inserto factura
@@ -3328,7 +3329,8 @@ export const postContratoAlquiler_2 = async (req, res) => {
   }
   const detalle_alquiler = `Alquiler desde ${formatearFechaISOText(
     fecha_desde_alquiler
-  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio} CUIT/CUIL: ${CUIT}- ASIENTO: ${NroAsiento_alquiler_pago}`;
+  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio} CUIT/CUIL: ${CUIT}- 
+  ASIENTO: ${NroAsiento_alquiler_pago}`;
   //inserto contrato
   try {
     const [result] = await giama_renting.query(
@@ -3411,7 +3413,8 @@ export const postContratoAlquiler_2 = async (req, res) => {
       return res.send(body);
     }
   }
-  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_deposito_pago}`;
+  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT} - 
+  ASIENTO: ${NroAsiento_deposito_pago}`;
   //inserto recibo del depósito del contrato
   if (ingresa_deposito == 1 && deposito_total_pago > 0) {
     try {
