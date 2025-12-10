@@ -1,0 +1,56 @@
+@font-face {
+  font-family: 'Amazon';
+  src: url('./fonts/AmazonLight.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM';
+  src: url('./fonts/IBM.ttf') format('truetype');
+}
+:root {
+/*   font-family: 'Amazon' sans-serif; */
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgb(0, 0, 0);
+  background-color: #ffffffdd;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+body.swal2-height-auto {
+  height: 100% !important;
+}
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  height: 100% !important;
+}
+h1 h2 h3 {
+  font-family: 'Amazon', sans-serif;
+}
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+
+html, body, #root {
+  height: 100%;
+  color: black;
+  min-width: -webkit-fill-available;
+  margin: 0;
+  padding: 0;
+  font-family: 'Amazon', sans-serif;
+}
