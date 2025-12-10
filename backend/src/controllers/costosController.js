@@ -582,6 +582,473 @@ const asientos_costos_ingresos = async (
   }
   return NroAsiento;
 };
+
+const asientos_ingresos_2 = async (
+  //FUNCION AUXILIAR
+  debe_ingreso,
+  Fecha,
+  cuenta_concepto,
+  cuenta_secundaria_concepto,
+  cuenta_forma_cobro,
+  cuenta_secundaria_forma_cobro,
+  importe_neto_total_1,
+  importe_neto_total_2,
+  importe_neto_total_3,
+  importe_iva_total_1,
+  importe_iva_total_2,
+  importe_iva_total_3,
+  cuenta_concepto_2,
+  cuenta_secundaria_concepto_2,
+  cuenta_concepto_3,
+  cuenta_secundaria_concepto_3,
+  observacion,
+  comprobante,
+  transaction,
+  NroAsiento_deuda,
+  NroAsientoSecundario_deuda,
+  NroAsiento_pago,
+  NroAsientoSecundario_pago
+) => {
+  let cuentaIVA;
+  let cuentaSecundariaIVA;
+  const importe_neto_deuda =  (parseFloat(debe_ingreso) / 1.21).toFixed(2)
+  const importe_iva_deuda =  (debe_ingreso - importe_neto_deuda).toFixed(2)
+  let importe_total_asientos =
+    importe_neto_total_1 +
+    importe_neto_total_2 +
+    importe_neto_total_3 +
+    importe_iva_total_1 +
+    importe_iva_total_2 +
+    importe_iva_total_3;
+
+  try {
+    cuentaIVA = await getParametro("IV21");
+    if (cuenta_secundaria_concepto) {
+        cuentaSecundariaIVA = await getParametro("IV22");
+    }
+  } catch (error) {
+    throw error;
+  }
+
+  if (
+    (importe_neto_total_1 && !cuenta_concepto) ||
+    (!importe_neto_total_1 && cuenta_concepto) ||
+    (importe_neto_total_2 && !cuenta_concepto_2) ||
+    (!importe_neto_total_2 && cuenta_concepto_2) ||
+    (importe_neto_total_3 && !cuenta_concepto_3) ||
+    (!importe_neto_total_3 && cuenta_concepto_3)
+  ) {
+    throw new Error(
+      "No puede asignar un importe sin un concepto ni un concepto sin un importe"
+    );
+  }
+
+  try {
+    //DEUDA
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      "cuenta_nueva",
+      "D",
+      debe_ingreso,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuenta_concepto,
+      "H",
+      importe_neto_total_1,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaIVA,
+      "H",
+      importe_iva_total_1,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    if(cuenta_concepto_2){
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuenta_concepto_2,
+      "H",
+      importe_neto_total_2,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaIVA,
+      "H",
+      importe_iva_total_2,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    }
+    if(cuenta_concepto_3){
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuenta_concepto_3,
+      "H",
+      importe_neto_total_3,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaIVA,
+      "H",
+      importe_iva_total_3,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario_deuda,
+      null
+    )
+    }
+    //DEUDA (secundarios)
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      "cuenta_nueva_secundaria",
+      "D",
+      debe_ingreso,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuenta_secundaria_concepto,
+      "H",
+      importe_neto_deuda,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    await asientoContable(
+      "c2_movimientos",
+      NroAsiento_deuda,
+      cuentaIVA,
+      "H",
+      importe_iva_deuda,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    if(cuenta_concepto_2){
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuenta_secundaria_concepto_2,
+      "H",
+      importe_neto_total_2,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuentaSecundariaIVA,
+      "H",
+      importe_iva_total_2,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    }
+    if(cuenta_concepto_3){
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuenta_secundaria_concepto_3,
+      "H",
+      importe_neto_total_3,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuentaSecundariaIVA,
+      "H",
+      importe_iva_total_3,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      null,
+      null
+    )
+    }
+
+  
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_concepto,
+      "H",
+      importe_neto_total_1,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario,
+      TipoComprobante
+    );
+
+    if (importe_neto_total_2) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_concepto_2,
+        "H",
+        importe_neto_total_2,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_neto_total_3) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_concepto_3,
+        "H",
+        importe_neto_total_3,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_iva_total_1 > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        "H",
+        importe_iva_total_1,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_iva_total_2 > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        "H",
+        importe_iva_total_2,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    if (importe_iva_total_3 > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        "H",
+        importe_iva_total_3,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        NroAsientoSecundario,
+        TipoComprobante
+      );
+    }
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_forma_cobro,
+      "D",
+      importe_total_asientos,
+      observacion,
+      transaction,
+      comprobante,
+      Fecha,
+      NroAsientoSecundario,
+      TipoComprobante
+    );
+    if (cuenta_secundaria_concepto) {
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_concepto,
+        "H",
+        importe_neto_total_1,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        null,
+        TipoComprobante
+      );
+      if (importe_neto_total_2) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuenta_secundaria_concepto_2,
+          "H",
+          importe_neto_total_2,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_neto_total_3) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuenta_secundaria_concepto_3,
+          "H",
+          importe_neto_total_3,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_iva_total_1 > 0) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuentaSecundariaIVA,
+          "H",
+          importe_iva_total_1,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_iva_total_2 > 0) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuentaSecundariaIVA,
+          "H",
+          importe_iva_total_2,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      if (importe_iva_total_3 > 0) {
+        await asientoContable(
+          "c2_movimientos",
+          NroAsientoSecundario,
+          cuentaSecundariaIVA,
+          "H",
+          importe_iva_total_3,
+          observacion,
+          transaction,
+          comprobante,
+          Fecha,
+          null,
+          TipoComprobante
+        );
+      }
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_forma_cobro,
+        "D",
+        importe_total_asientos,
+        observacion,
+        transaction,
+        comprobante,
+        Fecha,
+        null,
+        TipoComprobante
+      );
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+  return NroAsiento;
+};
 //FUNCION AUXILIAR
 async function registrarCostoIngresoIndividual({
   id_vehiculo,
@@ -1100,8 +1567,6 @@ async function registrarIngresoIndividual({
     }
   } catch (error) {
     console.log(error);
-/*     await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback(); */
     throw new Error(
       `Error al buscar una cuenta contable ${
         error.message ? `${" :"}${error.message}` : ""
@@ -1314,6 +1779,397 @@ async function registrarIngresoIndividual({
       NroAsiento,
       NroAsientoSecundario,
       null
+    );
+  } catch (error) {
+/*     await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback(); */
+    throw error;
+  }
+  //inserto en tabla costos_ingresos
+    try {
+    await giama_renting.query(
+      `INSERT INTO costos_ingresos 
+      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          id_vehiculo,
+          fecha,
+          id_concepto,
+          null,
+          importe_neto,
+          importe_iva,
+          null,
+          importe_total,
+          observacion,
+          NroAsiento,
+          id_forma_cobro ? id_forma_cobro : null,
+          id_cliente ? id_cliente : null,
+          nro_recibo ? nro_recibo : null,
+        ],
+        transaction: transaction_costos_ingresos,
+      }
+    );
+    if (id_concepto_2) {
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+        (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            fecha,
+            id_concepto_2,
+            null,
+            importe_neto_2,
+            importe_iva_2,
+            null,
+            importe_total_2,
+            observacion,
+            NroAsiento,
+            id_forma_cobro ? id_forma_cobro : null,
+            id_cliente ? id_cliente : null,
+            nro_recibo ? nro_recibo : null,
+          ],
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
+    if (id_concepto_3) {
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+        (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            fecha,
+            id_concepto_3,
+            null,
+            importe_neto_3,
+            importe_iva_3,
+            null,
+            importe_total_3,
+            observacion,
+            NroAsiento,
+            id_forma_cobro ? id_forma_cobro : null,
+            id_cliente ? id_cliente : null,
+            nro_recibo ? nro_recibo : null,
+          ],
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
+  }catch(error){
+/*     await transaction_costos_ingresos.rollback();
+    await transaction_asientos.rollback(); */
+    throw new Error(error.message);
+  }
+/*     await transaction_costos_ingresos.commit();
+    await transaction_asientos.commit(); */
+    return {
+      nro_recibo: nro_recibo ? nro_recibo : null,
+      genera_factura: genera_factura_final,
+    };
+
+  
+}
+
+async function registrarIngresoIndividual_2({
+  debe_ingreso,
+  id_vehiculo,
+  fecha,
+  id_forma_cobro,
+  id_cliente,
+  observacion,
+  usuario,
+  id_concepto,
+  importe_neto,
+  importe_iva,
+  importe_total,
+  id_concepto_2,
+  importe_neto_2,
+  importe_iva_2,
+  importe_total_2,
+  id_concepto_3,
+  importe_neto_3,
+  importe_iva_3,
+  importe_total_3,
+  transaction_costos_ingresos,
+  transaction_asientos
+}) {
+  let genera_recibo;
+  let genera_factura;
+  let genera_recibo_2;
+  let genera_factura_2;
+  let genera_recibo_3;
+  let genera_factura_3;
+  let NroAsiento_pago;
+  let NroAsientoSecundario_pago;
+  let NroAsiento_deuda;
+  let NroAsientoSecundario_deuda;
+  let CUIT;
+  let cuenta_forma_cobro;
+  let cuenta_secundaria_forma_cobro;
+  let cuenta_concepto;
+  let cuenta_secundaria_concepto;
+  let cuenta_concepto_2;
+  let cuenta_secundaria_concepto_2;
+  let cuenta_concepto_3;
+  let cuenta_secundaria_concepto_3;
+  let nro_recibo;
+  let nro_factura;
+  let genera_recibo_final;
+  let genera_factura_final;
+  let conceptos_recibo = [];
+  //buscar CUIT del cliente
+    try {
+    const result = await giama_renting.query(
+      "SELECT nro_documento FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "documento del cliente",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
+      FROM conceptos_costos WHERE id = :id_concepto`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: { id_concepto },
+      }
+    );
+    if (!result.length)
+      throw new Error("No se encontró el concepto especificado");
+    cuenta_concepto = result[0]["cuenta_contable"];
+    cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
+    genera_recibo = result[0]["genera_recibo"];
+    genera_factura = result[0]["genera_factura"];
+    if (result[0]["genera_recibo"] === 1) {
+    conceptos_recibo.push(result[0]["nombre"]);
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error(
+      `Error al buscar una cuenta contable ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
+    );
+  }
+
+  //obtengo cuentas_concepto 2 y 3 si hay
+  if (id_concepto_2) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+      FROM conceptos_costos WHERE id = :id_concepto_2`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { id_concepto_2 },
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró el concepto especificado");
+      cuenta_concepto_2 = result[0]["cuenta_contable"];
+      cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
+      genera_recibo_2 = result[0]["genera_recibo"];
+      genera_factura_2 = result[0]["genera_factura"];
+      if (result[0]["genera_recibo"] === 1) {
+      conceptos_recibo.push(result[0]["nombre"]);
+    }
+    } catch (error) {
+      console.log(error);
+/*       await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback(); */
+      throw new Error(
+        `Error al buscar una cuenta contable ${
+          error.message ? `${" :"}${error.message}` : ""
+        }`
+      );
+    }
+  }
+
+  if (id_concepto_3) {
+    try {
+      const result = await giama_renting.query(
+        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+      FROM conceptos_costos WHERE id = :id_concepto_3`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { id_concepto_3 },
+        }
+      );
+      if (!result.length)
+        throw new Error("No se encontró el concepto especificado");
+      cuenta_concepto_3 = result[0]["cuenta_contable"];
+      cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
+      genera_recibo_3 = result[0]["genera_recibo"];
+      genera_factura_3 = result[0]["genera_factura"];
+      if (result[0]["genera_recibo"] === 1) {
+      conceptos_recibo.push(result[0]["nombre"]);
+    }
+    } catch (error) {
+      console.log(error);
+/*       await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback(); */
+      throw new Error(
+        `Error al buscar una cuenta contable ${
+          error.message ? `${" :"}${error.message}` : ""
+        }`
+      );
+    }
+  }
+  if (genera_recibo === 1 || genera_recibo_2 === 1 || genera_recibo_3 === 1) {
+    genera_recibo_final = true;
+  } else {
+    genera_recibo_final = false;
+  }
+  //para el string que se devuelve al usuario, chequeamos tambien si se generó factura o no
+  if (genera_factura === 1 || genera_factura_2 === 1 || genera_factura_3 === 1) {
+    genera_factura_final = true;
+  } else {
+    genera_factura_final = false;
+  }
+  //armo el detalle del recibo segun nombres de concepto que generen recibo
+  const detalle_recibo = conceptos_recibo.join(" + ").concat(` CUIT/CUIL: ${CUIT}`);
+  //suma de importes_totales que generan recibo
+  const importe_total_recibo = 
+  (genera_recibo   ? toNumber(importe_total)   : 0) +
+  (genera_recibo_2 ? toNumber(importe_total_2) : 0) +
+  (genera_recibo_3 ? toNumber(importe_total_3) : 0);
+
+  //suma de importes para facturas
+  const importe_total_factura = 
+  (genera_factura   ? toNumber(importe_total)   : 0) +
+  (genera_factura_2 ? toNumber(importe_total_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_total_3) : 0);
+  const importe_neto_factura = 
+  (genera_factura   ? toNumber(importe_neto)   : 0) +
+  (genera_factura_2 ? toNumber(importe_neto_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_neto_3) : 0);
+  const importe_iva_factura = 
+  (genera_factura   ? toNumber(importe_iva)   : 0) +
+  (genera_factura_2 ? toNumber(importe_iva_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_iva_3) : 0);
+
+  //obtengo cuentas de forma_cobro
+  try {
+    const result = await giama_renting.query(
+      "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_forma_cobro],
+      }
+    );
+    if (!result.length)
+      throw new Error("No se encontró la forma de cobro especificada");
+    cuenta_forma_cobro = result[0]["cuenta_contable"];
+    cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
+  } catch (error) {
+    throw new Error(
+      `Error al buscar cuentas contables de la forma de cobro ${
+        error.message ? `: ${error.message}` : ""
+      }`
+    );
+  }
+  //obtengo numeros de asiento
+  try {
+    NroAsiento_pago = await getNumeroAsiento();
+    NroAsientoSecundario_pago = await getNumeroAsiento();
+    NroAsiento_deuda = await getNumeroAsiento();
+    NroAsientoSecundario_deuda = await getNumeroAsientoSecundario();
+  } catch (error) {
+    throw error;
+  }
+  //factura
+  if (genera_factura_final) {
+      try {
+        nro_factura = await insertFactura(
+          id_cliente,
+          importe_neto_factura,
+          importe_iva_factura,
+          importe_total_factura,
+          usuario,
+          NroAsiento_pago,
+          NroAsientoSecundario_pago,
+          observacion,
+          transaction_costos_ingresos,
+          transaction_asientos
+        );
+      } catch (error) {
+        await transaction_asientos.rollback();
+        await transaction_costos_ingresos.rollback();
+        console.log(error);
+        throw error;
+      }
+    }
+    //recibo
+    if (genera_recibo_final) {
+      try {
+        //inserto recibo
+        nro_recibo = await insertRecibo(
+          fecha,
+          detalle_recibo,
+          importe_total_recibo,
+          usuario,
+          id_cliente,
+          id_vehiculo,
+          null,
+          null,
+          id_forma_cobro,
+          null,
+          null,
+          nro_factura,
+          transaction_costos_ingresos,
+          null,
+          null,
+          importe_total_recibo
+        );
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    }
+      //realizo el asiento
+  try {
+    NroAsiento = await asientos_ingresos_2(
+      debe_ingreso,
+      fecha,
+      cuenta_concepto,
+      cuenta_secundaria_concepto,
+      cuenta_forma_cobro,
+      cuenta_secundaria_forma_cobro,
+      toNumber(importe_neto),
+      toNumber(importe_neto_2),
+      toNumber(importe_neto_3),
+      toNumber(importe_iva),
+      toNumber(importe_iva_2),
+      toNumber(importe_iva_3),
+      cuenta_concepto_2,
+      cuenta_secundaria_concepto_2,
+      cuenta_concepto_3,
+      cuenta_secundaria_concepto_3,
+      observacion,
+      nro_recibo ? nro_recibo : null,
+      transaction_asientos,
+      NroAsiento_deuda,
+      NroAsientoSecundario_deuda,
+      NroAsiento_pago,
+      NroAsientoSecundario_pago,
+
     );
   } catch (error) {
 /*     await transaction_asientos.rollback();
