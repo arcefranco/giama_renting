@@ -1,0 +1,147 @@
+.container {
+    position: relative;
+    padding: 2rem;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+  
+  .dataGrid {
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .refreshButton {
+    background-color: #800000;
+    color: white;
+    padding: 8px 16px;
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .refreshButton:hover {
+    background-color: #a52a2a;
+  }
+
+  .spinnerOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .loadingText {
+    font-size: 16px;
+    color: #800020;
+    font-weight: bold;
+  }
+
+  .spanPreparado {
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 9rem;
+    height: 1rem;
+    padding: 3px 6px;
+    background: #ffa809a1;
+  }
+
+  .spanNoPreparado {
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 9rem;
+    height: 1rem;
+    padding: 3px 6px;
+    color: #ffff;
+    background: #ff0909a1;
+  }
+
+    .spanReparacion {
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 9rem;
+    height: 1rem;
+    padding: 3px 6px;
+    color: #ffff;
+    background: #000000;
+  }
+
+  .spanNoDisponible {
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 9rem;
+    height: 1rem;
+    padding: 3px 6px;
+    color: #ffff;
+    background: #8c8c8c;
+  }
+
+  .spanSeguro {
+    display: flex;
+    justify-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 4px;
+    width: 9rem;
+    height: 1rem;
+    padding: 3px 6px;
+    color: #ffff;
+    background: #61c2ff;
+  }
+
+  .spanAlquilado {
+  display: flex;
+  justify-self: center;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  border-radius: 4px;
+  width: 9rem;
+  height: 1rem;
+  padding: 3px 6px;
+  color: #fff;
+  background: #6f8babb0;
+}
+
+  .spanVendido {
+  display: flex;
+  justify-self: center;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  border-radius: 4px;
+  width: 9rem;
+  height: 1rem;
+  padding: 3px 6px;
+  color: #fff;
+  background: #6fd66ab0;
+}

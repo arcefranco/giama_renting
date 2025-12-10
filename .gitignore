@@ -1,0 +1,72 @@
+# ============================================================
+# GLOBAL IGNORE FOR GIAMA_RENTING (ROOT-LEVEL)
+# ============================================================
+
+# -------------------------------
+# Node dependencies
+# -------------------------------
+node_modules/
+**/node_modules/
+
+# -------------------------------
+# Build artifacts
+# -------------------------------
+dist/
+**/dist/
+build/
+**/build/
+
+# -------------------------------
+# Environment variables
+# -------------------------------
+.env
+*.env
+backend/.env
+frontend/.env
+
+# -------------------------------
+# Logs
+# -------------------------------
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# -------------------------------
+# Lock files (si querés ignorarlos)
+# -------------------------------
+package-lock.json
+**/package-lock.json
+
+# -------------------------------
+# Vite
+# -------------------------------
+**/dist-ssr/
+**/.vite/
+
+# -------------------------------
+# OS files
+# -------------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------------
+# IDEs and editors
+# -------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# -------------------------------
+# Misc
+# -------------------------------
+*.local
