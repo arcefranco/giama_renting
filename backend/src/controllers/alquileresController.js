@@ -1094,7 +1094,7 @@ export const postContratoAlquiler = async (req, res) => {
       return res.send(body);
     }
   }
-  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
+  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_deposito}`;
   //inserto recibo del depósito del contrato
   if (ingresa_deposito == 1) {
     try {
@@ -3328,7 +3328,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
   }
   const detalle_alquiler = `Alquiler desde ${formatearFechaISOText(
     fecha_desde_alquiler
-  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
+  )} hasta ${formatearFechaISOText(fecha_hasta_alquiler)} Dominio: ${dominio} CUIT/CUIL: ${CUIT}- ASIENTO: ${NroAsiento_alquiler_pago}`;
   //inserto contrato
   try {
     const [result] = await giama_renting.query(
@@ -3411,7 +3411,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
       return res.send(body);
     }
   }
-  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
+  const conceptoDeposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_deposito_pago}`;
   //inserto recibo del depósito del contrato
   if (ingresa_deposito == 1 && deposito_total_pago > 0) {
     try {
