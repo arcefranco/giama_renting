@@ -992,6 +992,9 @@ async function registrarCostoIngresoIndividual({
   let cuenta_percepcion_IVA;
   let cuenta_secundaria_percepcion_IVA;
   let total_conceptos = 0;
+
+  let dominio;
+  let observacion_asientos;
   if(id_concepto) total_conceptos = total_conceptos + 1
   if(id_concepto_2) total_conceptos = total_conceptos + 1
   if(id_concepto_3) total_conceptos = total_conceptos + 1
@@ -1020,6 +1023,30 @@ async function registrarCostoIngresoIndividual({
       }`
     );
   }
+  //busco el dominio del vehiculo para observacion asientos
+  try {
+    const result = await giama_renting.query(
+      "SELECT  dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
+
+    if (result[0]["dominio"]) dominio = result[0]["dominio"];
+    else if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+      dominio = result[0]["dominio_provisorio"];
+    else dominio = "SIN DOMINIO";
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "dominio del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  observacion_asientos = `${observacion} (${dominio})`
+
 
   //obtengo cuentas_concepto 2 y 3 si hay
   if (id_concepto_2) {
@@ -1190,7 +1217,7 @@ async function registrarCostoIngresoIndividual({
       cuenta_secundaria_percepcion_IIBB_CABA,
       cuenta_percepcion_IVA,
       cuenta_secundaria_percepcion_IVA,
-      observacion,
+      observacion_asientos,
       nro_comprobante,
       ingreso_egreso,
       transaction_asientos,
@@ -1398,6 +1425,8 @@ async function registrarIngresoIndividual({
   let genera_recibo_final;
   let genera_factura_final;
   let conceptos_recibo = [];
+  let dominio;
+  let observacion_asientos;
   //buscar CUIT del cliente
     try {
     const result = await giama_renting.query(
@@ -1416,6 +1445,29 @@ async function registrarIngresoIndividual({
     );
     return res.send(body);
   }
+    //busco el dominio del vehiculo para observacion asientos
+  try {
+    const result = await giama_renting.query(
+      "SELECT  dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
+
+    if (result[0]["dominio"]) dominio = result[0]["dominio"];
+    else if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+      dominio = result[0]["dominio_provisorio"];
+    else dominio = "SIN DOMINIO";
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "dominio del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  observacion_asientos = `${observacion} (${dominio})`
   try {
     const result = await giama_renting.query(
       `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
@@ -1641,7 +1693,7 @@ async function registrarIngresoIndividual({
       null,
       null,
       null,
-      observacion,
+      observacion_asientos,
       nro_recibo ? nro_recibo : null,
       "I",
       transaction_asientos,
@@ -1803,6 +1855,8 @@ async function registrarIngresoIndividual_2({
   let genera_recibo_final;
   let genera_factura_final;
   let conceptos_recibo = [];
+  let dominio;
+  let observacion_asientos;
   let importe_iva_formateado = importe_iva ? parseFloat(importe_iva) : 0
   let importe_iva_2_formateado = importe_iva_2 ? parseFloat(importe_iva_2) : 0 
   let importe_iva_3_formateado = importe_iva_3 ? parseFloat(importe_iva_3) : 0
@@ -1825,6 +1879,29 @@ async function registrarIngresoIndividual_2({
     );
     return res.send(body);
   }
+      //busco el dominio del vehiculo para observacion asientos
+  try {
+    const result = await giama_renting.query(
+      "SELECT  dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
+
+    if (result[0]["dominio"]) dominio = result[0]["dominio"];
+    else if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+      dominio = result[0]["dominio_provisorio"];
+    else dominio = "SIN DOMINIO";
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "dominio del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  observacion_asientos = `${observacion} (${dominio})`
   try {
     const result = await giama_renting.query(
       `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
@@ -2096,7 +2173,7 @@ async function registrarIngresoIndividual_2({
       cuenta_secundaria_concepto_2,
       cuenta_concepto_3,
       cuenta_secundaria_concepto_3,
-      observacion,
+      observacion_asientos,
       nro_recibo ? nro_recibo : null,
       transaction_asientos,
       NroAsiento_deuda,
