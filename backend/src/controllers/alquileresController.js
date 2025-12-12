@@ -939,7 +939,7 @@ export const postContratoAlquiler = async (req, res) => {
 
   //OBTENGO CUENTAS CONTABLES DE FORMAS COBRO
   try {
-      if(id_forma_cobro_contrato){
+  if(id_forma_cobro_contrato){
     cuenta_contable_forma_cobro_contrato = await getCuentaContableFormaCobro(id_forma_cobro_contrato)
     cuenta_secundaria_forma_cobro_contrato = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato)
   }
