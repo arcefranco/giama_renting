@@ -23,6 +23,7 @@ import { insertFactura } from "../../helpers/insertFactura.js";
 import { getYesterdayDate } from "../../helpers/getTodayDate.js";
 import { addOneDay } from "../../helpers/addOneDay.js";
 import { insertPago } from "../../helpers/insertPago.js";
+import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../../helpers/getCuentaContableFormaCobro.js";
 
 
 const insertAlquiler = async (body) => {
@@ -672,16 +673,13 @@ export const postContratoAlquiler = async (req, res) => {
     ingresa_deposito,
     deposito,
     id_forma_cobro_contrato,
-    cuenta_contable_forma_cobro_contrato,
-    cuenta_secundaria_forma_cobro_contrato,
+
     deposito_2,
     id_forma_cobro_contrato_2,
-    cuenta_contable_forma_cobro_contrato_2,
-    cuenta_secundaria_forma_cobro_contrato_2,
+
     deposito_3,
     id_forma_cobro_contrato_3,
-    cuenta_contable_forma_cobro_contrato_3,
-    cuenta_secundaria_forma_cobro_contrato_3,
+
     sucursal_vehiculo,
     //alquiler
     ingresa_alquiler,
@@ -694,8 +692,7 @@ export const postContratoAlquiler = async (req, res) => {
     importe_iva_1,
     importe_total_1,
     id_forma_cobro_alquiler_1,
-    cuenta_contable_forma_cobro_alquiler_1,
-    cuenta_secundaria_forma_cobro_alquiler_1,
+
     importe_neto_2,
     importe_iva_2,
     importe_total_2,
@@ -704,10 +701,7 @@ export const postContratoAlquiler = async (req, res) => {
     importe_iva_3,
     importe_total_3,
     id_forma_cobro_alquiler_3,
-    cuenta_contable_forma_cobro_alquiler_2,
-    cuenta_secundaria_forma_cobro_alquiler_2,
-    cuenta_contable_forma_cobro_alquiler_3,
-    cuenta_secundaria_forma_cobro_alquiler_3,
+
   } = req.body;
   console.log(req.body);
   let alquileresVigentes;
@@ -729,7 +723,20 @@ export const postContratoAlquiler = async (req, res) => {
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_alquiler
   )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
-  let contratosVigentes;
+  let cuenta_contable_forma_cobro_contrato;
+  let cuenta_secundaria_forma_cobro_contrato;
+  let cuenta_contable_forma_cobro_contrato_2;
+  let cuenta_secundaria_forma_cobro_contrato_2;
+  let cuenta_contable_forma_cobro_contrato_3;
+  let cuenta_secundaria_forma_cobro_contrato_3;
+
+  let cuenta_contable_forma_cobro_alquiler_1;
+  let cuenta_secundaria_forma_cobro_alquiler_1;
+  let cuenta_contable_forma_cobro_alquiler_2;
+  let cuenta_secundaria_forma_cobro_alquiler_2;
+  let cuenta_contable_forma_cobro_alquiler_3;
+  let cuenta_secundaria_forma_cobro_alquiler_3;
+
   let nro_recibo_alquiler;
   let nro_recibo_deposito;
   let fecha_desde_alquiler_parseada = formatearFechaISO(fecha_desde_alquiler);
@@ -929,6 +936,45 @@ export const postContratoAlquiler = async (req, res) => {
         "Debe especificar que no ingresa alquiler. Faltan datos para el ingreso del mismo.",
     });
   }
+
+  //OBTENGO CUENTAS CONTABLES DE FORMAS COBRO
+  try {
+      if(id_forma_cobro_contrato){
+    cuenta_contable_forma_cobro_contrato = await getCuentaContableFormaCobro(id_forma_cobro_contrato)
+    cuenta_secundaria_forma_cobro_contrato = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato)
+  }
+  if(id_forma_cobro_contrato_2){
+    cuenta_contable_forma_cobro_contrato_2 = await getCuentaContableFormaCobro(id_forma_cobro_contrato_2)
+    cuenta_secundaria_forma_cobro_contrato_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_2)
+  }
+
+  if(id_forma_cobro_contrato_2){
+    cuenta_contable_forma_cobro_contrato_3 = await getCuentaContableFormaCobro(id_forma_cobro_contrato_3)
+    cuenta_secundaria_forma_cobro_contrato_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_3)
+  }
+
+  if(id_forma_cobro_alquiler_1) {
+    cuenta_contable_forma_cobro_alquiler_1 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1) 
+    cuenta_secundaria_forma_cobro_alquiler_1 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1)
+  }
+
+  if(id_forma_cobro_alquiler_2) {
+    cuenta_contable_forma_cobro_alquiler_2 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2) 
+    cuenta_secundaria_forma_cobro_alquiler_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2)
+  }
+
+  if(id_forma_cobro_alquiler_3) {
+    cuenta_contable_forma_cobro_alquiler_3 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3) 
+    cuenta_secundaria_forma_cobro_alquiler_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3)
+  }
+  } catch (error) {
+    console.log(error);
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
+  }
+
+
+
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU, ALQU_2, DEPO Y DEP2
   try {
     cuentaIV21 = await getParametro("IV21");
