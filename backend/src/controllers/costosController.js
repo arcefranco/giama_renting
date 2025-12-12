@@ -616,8 +616,6 @@ const asientos_ingresos_2 = async (
 ) => {
   let cuentaIVA;
   let cuentaSecundariaIVA;
-  const importe_neto_deuda =  (parseFloat(debe_ingreso) / 1.21).toFixed(2)
-  const importe_iva_deuda =  (debe_ingreso - importe_neto_deuda).toFixed(2)
   let total_cobro_1_formateado = total_cobro_1 ? parseFloat(total_cobro_1) : 0
   let total_cobro_2_formateado = total_cobro_2 ? parseFloat(total_cobro_2) : 0 
   let total_cobro_3_formateado = total_cobro_3 ? parseFloat(total_cobro_3) : 0
@@ -744,7 +742,7 @@ const asientos_ingresos_2 = async (
       NroAsientoSecundario_deuda,
       cuenta_secundaria_concepto,
       "H",
-      importe_neto_deuda,
+      importe_neto_total_1,
       observacion,
       transaction,
       comprobante,
