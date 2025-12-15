@@ -9,6 +9,7 @@ import {
   postCostos_Ingresos,
   prorrateoIE,
   updateConceptoCostos,
+  postCostos_Ingresos_2
 } from "../controllers/costosController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
@@ -53,6 +54,12 @@ costosRouter.post(
   auth,
   authorizeRoles("2"),
   postCostos_Ingresos
+);
+costosRouter.post(
+  "/costos_ingresos_2",
+  auth,
+  authorizeRoles("2"),
+  postCostos_Ingresos_2
 );
 costosRouter.post(
   "/costos_ingresos_id_vehiculo",

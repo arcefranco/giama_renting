@@ -135,6 +135,7 @@ export const logIn = async (req, res) => {
       replacements: [email],
       type: QueryTypes.SELECT,
     });
+
   } catch (error) {
     console.log(error);
     return res.send({
@@ -142,10 +143,13 @@ export const logIn = async (req, res) => {
       message: JSON.stringify(error),
     });
   }
-  if (!user.length)
+  if (user.length === 0){
     return res.send({ status: false, message: "Email no registrado" });
+  }
+    
   try {
     let result = await bcrypt.compare(password, user[0].password);
+
     if (result) {
       const token = jwt.sign(
         {

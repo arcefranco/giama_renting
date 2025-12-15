@@ -2327,6 +2327,57 @@ export const postCostos_Ingresos = async (req, res) => {
   }
 };
 
+export const postCostos_Ingresos_2 = async (req, res) => {
+  let message;
+  const { ingreso_egreso } = req.body;
+  const transaction_costos_ingresos = await giama_renting.transaction();
+  const transaction_asientos = await pa7_giama_renting.transaction();
+  let nro_recibo_ingreso; 
+  let genera_factura_ingreso;
+  try {
+    if (ingreso_egreso === "E") {
+      await registrarCostoIngresoIndividual({...req.body, 
+        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
+    } else if (ingreso_egreso === "I") {
+      let { nro_recibo, genera_factura } = await registrarIngresoIndividual_2({...req.body, 
+        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
+      nro_recibo_ingreso = nro_recibo;
+      genera_factura_ingreso = genera_factura;
+    }
+
+    if(ingreso_egreso === "I"){
+      if (nro_recibo_ingreso && genera_factura_ingreso == 0) {
+        message = "Ingresado correctamente. Se generó el recibo.";
+      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 1) {
+        message = "Ingresado correctamente. Se generó la factura.";
+      } else if (nro_recibo_ingreso && genera_factura_ingreso == 1) {
+        message = "Ingresado correctamente. Se generó la factura y el recibo.";
+      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
+        message = "Ingresado correctamente";
+      }
+    }else if(ingreso_egreso === "E"){
+      message = "Ingresado correctamente"
+    }
+    await transaction_costos_ingresos.commit()
+    await transaction_asientos.commit()
+    return res.send({
+      status: true,
+      message: message,
+      nro_recibo_ingreso: nro_recibo_ingreso ? nro_recibo_ingreso : null,
+    });
+  } catch (error) {
+    console.log(error);
+    transaction_asientos.rollback()
+    transaction_costos_ingresos.rollback()
+    const { body } = handleError(
+      error,
+      "Costo/ingreso del vehículo",
+      acciones.post
+    );
+    return res.send(body);
+  }
+};
+
 export const prorrateoIE = async (req, res) => {
   const {
     arrayVehiculos,
