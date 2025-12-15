@@ -1913,7 +1913,7 @@ if (conflictoContratoCliente) {
     );
     return res.send(body);
   }
-  return res.send({status: false, message: "prueba"})
+
   console.log(formatearFechaISO(nuevaDesde))
   console.log(formatearFechaISO(nuevaHasta))
   
