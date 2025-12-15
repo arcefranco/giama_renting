@@ -251,6 +251,9 @@ export const postAlquiler = async (req, res) => {
   if(!id_forma_cobro_alquiler_1 && !id_forma_cobro_alquiler_2 && !id_forma_cobro_alquiler_3){
     return res.send({status: false, message: "Debe elegir al menos un medio de pago para ingresar un alquiler"})
   }
+  if(importe_neto + importe_iva !== importe_total){
+    return res.send({status: false, message: "La suma de los importes no coincide"})
+  }
   //buscar el estado del cliente
   try {
     estadoCliente = await verificarCliente(id_cliente);
