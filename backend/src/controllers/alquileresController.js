@@ -1509,8 +1509,7 @@ export const getContratosByIdVehiculo = async (req, res) => {
     const result = await giama_renting.query(
       `SELECT * 
       FROM contratos_alquiler 
-      WHERE id_vehiculo = ? 
-      AND fecha_hasta >= CURDATE();`,
+      WHERE id_vehiculo = ?`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
@@ -1892,10 +1891,11 @@ if (conflictoContratoCliente) {
         type: QueryTypes.SELECT,
       }
     );
+
   if(alquileres.length){
     const ultimoAlquiler = alquileres[alquileres.length - 1];
     const ultimoHasta = ultimoAlquiler.fecha_hasta;
-    if (nuevaHasta < ultimoHasta) {
+    if (formatearFechaISO(nuevaHasta) < ultimoHasta) {
         return res.send({
           status: false,
           message: `No se puede modificar la fecha de finalización del contrato a ${formatearFechaISO(nuevaHasta)} porque existen alquileres posteriores hasta ${formatearFechaISO(ultimoHasta)}.`,
@@ -1913,6 +1913,7 @@ if (conflictoContratoCliente) {
     );
     return res.send(body);
   }
+  return res.send({status: false, message: "prueba"})
   console.log(formatearFechaISO(nuevaDesde))
   console.log(formatearFechaISO(nuevaHasta))
   
