@@ -21,6 +21,16 @@ export const postCostos_Ingresos = createAsyncThunk(
     )
 );
 
+export const postCostos_Ingresos_2 = createAsyncThunk(
+  "postCostos_Ingresos_2",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.postCostos_Ingresos_2(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const ingresosSlice = createSlice({
   name: "ingresos",
   initialState,
@@ -47,6 +57,22 @@ export const ingresosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(postCostos_Ingresos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postCostos_Ingresos_2.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postCostos_Ingresos_2.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.nro_recibo_ingreso = action.payload.nro_recibo_ingreso ? action.payload.nro_recibo_ingreso : null;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postCostos_Ingresos_2.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
