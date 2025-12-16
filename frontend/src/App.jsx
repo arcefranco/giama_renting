@@ -15,6 +15,7 @@ import UpdateCliente from './components/Clientes/UpdateCliente';
 import AltaCostos from './components/Costos/AltaCostos';
 import UpdateConcepto from './components/Costos/UpdateConcepto';
 import Ingresos from "./components/Costos/Ingresos";
+import Ingresos_2 from "./components/Costos/Ingresos_2";
 import FormasDeCobro from './components/Alquileres/FormasDeCobro/FormasDeCobro';
 import AlquileresForm from './components/Alquileres/AlquileresForm/AlquileresForm';
 import ProrrateoIE from './components/Costos/ProrrateoIE';
@@ -107,6 +108,9 @@ function App() {
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/ingresos' element={<Ingresos />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/costos/ingresos_2' element={<Ingresos_2 />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/egresos' element={<Egresos />} />

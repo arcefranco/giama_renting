@@ -76,12 +76,6 @@ const ContratoAlquiler = () => {
     id_forma_cobro_contrato: '',
     id_forma_cobro_contrato_2: '',
     id_forma_cobro_contrato_3: '',
-    cuenta_contable_forma_cobro_contrato: '',
-    cuenta_secundaria_forma_cobro_contrato: '',
-    cuenta_contable_forma_cobro_contrato_2: '',
-    cuenta_secundaria_forma_cobro_contrato_2: '',
-    cuenta_contable_forma_cobro_contrato_3: '',
-    cuenta_secundaria_forma_cobro_contrato_3: '',
     usuario: username,
     sucursal_vehiculo: "",
     fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
@@ -112,12 +106,6 @@ const ContratoAlquiler = () => {
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
         fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
         fecha_recibo_deposito: '',
-        cuenta_contable_forma_cobro_contrato: '',
-        cuenta_secundaria_forma_cobro_contrato: '',
-        cuenta_contable_forma_cobro_contrato_2: '',
-        cuenta_secundaria_forma_cobro_contrato_2: '',
-        cuenta_contable_forma_cobro_contrato_3: '',
-        cuenta_secundaria_forma_cobro_contrato_3: '',
       })
       dispatch(reset())
     }
@@ -163,12 +151,6 @@ const ContratoAlquiler = () => {
         sucursal_vehiculo: '',
         fecha_desde_contrato: fechaDesdePorDefecto,
         fecha_hasta_contrato: fechaHastaPorDefecto,
-        cuenta_contable_forma_cobro_contrato: '',
-        cuenta_secundaria_forma_cobro_contrato: '',
-        cuenta_contable_forma_cobro_contrato_2: '',
-        cuenta_secundaria_forma_cobro_contrato_2: '',
-        cuenta_contable_forma_cobro_contrato_3: '',
-        cuenta_secundaria_forma_cobro_contrato_3: '',
       })
     }
   }, [contratoById, id]);
@@ -181,31 +163,7 @@ const ContratoAlquiler = () => {
   };
   const handleChangeContrato = (e) => {
     const { name, value } = e.target;
-    if (value && name === "id_forma_cobro_contrato") {
-      setFormContrato({
-        ...formContrato,
-        [name]: value,
-        "cuenta_contable_forma_cobro_contrato": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
-        "cuenta_secundaria_forma_cobro_contrato": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
-      });
-    }
-    else if (value && name === "id_forma_cobro_contrato_2") {
-      setFormContrato({
-        ...formContrato,
-        [name]: value,
-        "cuenta_contable_forma_cobro_contrato_2": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
-        "cuenta_secundaria_forma_cobro_contrato_2": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
-      });
-    }
-    else if (value && name === "id_forma_cobro_contrato_3") {
-      setFormContrato({
-        ...formContrato,
-        [name]: value,
-        "cuenta_contable_forma_cobro_contrato_3": formasDeCobro?.find(e => e.id == value)?.cuenta_contable,
-        "cuenta_secundaria_forma_cobro_contrato_3": formasDeCobro?.find(e => e.id == value)?.cuenta_secundaria
-      });
-    }
-    else if (value && name === "id_cliente") {
+    if (value && name === "id_cliente") {
       setFormContrato({
         ...formContrato,
         [name]: value,
@@ -272,45 +230,7 @@ const ContratoAlquiler = () => {
     }
   }, [estado_cliente])
 
-  useEffect(() => { /* fechas por defecto */
-    /*volvemos a setear fechaspordefecto del momento del montaje 
-    por si el vehiculo no tiene contratos pertinentes a la fecha */
-    /*     if ((!formContrato.id_vehiculo || !contratosVehiculo?.length) && !isError) {
-          console.log("entra acá 3")
-          const proxMiercoles = getNextWednesday(hoy);
-          setFormContrato(prev => ({
-            ...prev,
-            fecha_desde_contrato: proxMiercoles,
-            fecha_hasta_contrato: addDaysHelper(proxMiercoles, 90),
-          }));
-    
-          return;
-          } */
-    // Buscar la fecha_hasta más lejana de los contratos vigentes
-    /*        if (!id) {
-          const ultimaFechaHasta = contratosVehiculo.length
-            ? new Date(
-              Math.max(
-                ...contratosVehiculo.map((c) => new Date(c.fecha_hasta).getTime())
-              )
-            )
-            : hoy;
-    
-          // Obtener miércoles siguiente a esa fecha
-          const siguienteMiercoles = getNextWednesday(ultimaFechaHasta);
-    
-          // Calcular fecha hasta (90 días desde el miércoles)
-          const hasta = addDaysHelper(siguienteMiercoles, 90);
-          console.log("entra acá 4")
-    
-          setFormContrato((prevForm) => ({
-            ...prevForm,
-            fecha_desde_contrato: siguienteMiercoles,
-            fecha_hasta_contrato: hasta,
-          }));
-    
-        } */
-  }, [formContrato.id_vehiculo, contratosVehiculo]);
+
 
   useEffect(() => {
     if (nro_recibo_alquiler) {

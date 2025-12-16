@@ -273,7 +273,7 @@ const UpdateContrato = () => {
                             minDate={formContrato.fecha_desde_contrato}
                             maxDate={formContrato.fecha_hasta_contrato}
                             placeholderText="Seleccione una fecha"
-                            excludeDateIntervals={rangosOcupados}
+/*                             excludeDateIntervals={rangosOcupados} */
                             locale="es"
                         />
                     </div>
@@ -287,7 +287,7 @@ const UpdateContrato = () => {
                             minDate={formContrato.fecha_desde_contrato}
                             /*  maxDate={formContrato.fecha_hasta_contrato} */
                             placeholderText="Seleccione una fecha"
-                            excludeDateIntervals={rangosOcupados}
+/*                             excludeDateIntervals={rangosOcupados} */
                             locale="es"
                         />
                     </div>
