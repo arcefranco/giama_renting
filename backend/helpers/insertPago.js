@@ -1,6 +1,7 @@
 import { giama_renting } from "./connection.js";
 import { QueryTypes } from "sequelize";
-
+import { handleError } from "./handleError.js";
+import { acciones } from "./handleError.js";
 export const insertPago = async (
 id_cliente,
 fecha,  /**fecha del recibo */
@@ -29,7 +30,7 @@ try {
       "nombre de la forma de cobro",
       acciones.get
     );
-    return res.send(body);
+    throw new Error(body);
   }
 observacion_final = `${nombre_forma_cobro} + ${observacion}`
 try {
