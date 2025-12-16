@@ -16,6 +16,7 @@ import {
   movimientosProveedoresEgresos,
 } from "../../helpers/movimientosProveedores.js";
 import { toNumber } from "../../helpers/toNumber.js";
+import { insertPago } from "../../helpers/insertPago.js";
 
 export const getCuentasContables = async (req, res) => {
   try {
@@ -657,7 +658,7 @@ const asientos_ingresos_2 = async (
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
-      "cuenta_nueva",
+      110308,//cuenta_nueva,
       "D",
       debe_ingreso,
       observacion,
@@ -727,7 +728,7 @@ const asientos_ingresos_2 = async (
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_deuda,
-      "cuenta_nueva_secundaria",
+      110308,//"cuenta_nueva_secundaria",
       "D",
       debe_ingreso,
       observacion,
@@ -842,7 +843,7 @@ const asientos_ingresos_2 = async (
     await asientoContable(
       "c_movimientos",
       NroAsiento_pago,
-      "cuenta_nueva",
+      110308,//"cuenta_nueva",
       "H",
       importe_total_cobro,
       observacion,
@@ -900,7 +901,7 @@ const asientos_ingresos_2 = async (
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_pago,
-      "cuenta_nueva_secundaria",
+      110308,//"cuenta_nueva_secundaria",
       "H",
       importe_total_cobro,
       observacion,
@@ -1949,8 +1950,6 @@ async function registrarIngresoIndividual_2({
     }
     } catch (error) {
       console.log(error);
-/*       await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -1980,8 +1979,6 @@ async function registrarIngresoIndividual_2({
     }
     } catch (error) {
       console.log(error);
-/*       await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback(); */
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -2018,12 +2015,6 @@ async function registrarIngresoIndividual_2({
   (genera_recibo_3 ? toNumber(total_cobro_3) : 0);
 
   //suma de importes para facturas
-/*   const importe_total_factura = 
-  (genera_factura   ? toNumber(total_cobro_1)   : 0) +
-  (genera_factura_2 ? toNumber(total_cobro_2) : 0) +
-  (genera_factura_3 ? toNumber(total_cobro_3) : 0);
-  const importe_neto_factura = (importe_total_factura / 1.21).toFixed(2)
-  const importe_iva_factura = (importe_total_factura - importe_neto_factura).toFixed(2) */
   const importe_neto_factura = 
   (genera_factura   ? toNumber(importe_neto)   : 0) +
   (genera_factura_2 ? toNumber(importe_neto_2) : 0) +
@@ -2032,6 +2023,14 @@ async function registrarIngresoIndividual_2({
   (genera_factura   ? toNumber(importe_iva)   : 0) +
   (genera_factura_2 ? toNumber(importe_iva_2) : 0) +
   (genera_factura_3 ? toNumber(importe_iva_3) : 0);
+  const importe_total_factura = 
+  (genera_factura   ? toNumber(importe_total)   : 0) +
+  (genera_factura_2 ? toNumber(importe_total_2) : 0) +
+  (genera_factura_3 ? toNumber(importe_total_3) : 0);
+
+  if((parseFloat(importe_neto_factura) + parseFloat(importe_iva_factura)).toFixed(2) != parseFloat(importe_total_factura)){
+    return res.send({status: false, message: "La suma de los importes no coincide"})
+  }
 
   //obtengo cuentas de forma_cobro
   if(id_forma_cobro_1){
@@ -2107,8 +2106,8 @@ async function registrarIngresoIndividual_2({
           importe_iva_factura,
           importe_total_factura,
           usuario,
-          NroAsiento_pago,
-          NroAsientoSecundario_pago,
+          NroAsiento_deuda,
+          NroAsientoSecundario_deuda,
           observacion,
           transaction_costos_ingresos,
           transaction_asientos
@@ -2121,7 +2120,7 @@ async function registrarIngresoIndividual_2({
       }
     }
     //recibo
-    if (genera_recibo_final) {
+    if (genera_recibo_final && importe_total_recibo > 0) {
       try {
         //inserto recibo
         nro_recibo = await insertRecibo(
@@ -2138,16 +2137,16 @@ async function registrarIngresoIndividual_2({
           id_forma_cobro_3,
           nro_factura,
           transaction_costos_ingresos,
-          null,
-          null,
-          importe_total_recibo
+          total_cobro_2,
+          total_cobro_3,
+          total_cobro_1
         );
       } catch (error) {
         console.log(error);
         throw error;
       }
     }
-      //realizo el asiento
+      //realizo el asiento 
   try {
     await asientos_ingresos_2(
       debe_ingreso,
@@ -2183,6 +2182,26 @@ async function registrarIngresoIndividual_2({
   } catch (error) {
     throw error;
   }
+  //realizo los pagos (si hay)
+  try {
+    if(id_forma_cobro_1){
+      await insertPago(id_cliente, fecha, usuario, id_forma_cobro_1, total_cobro_1, 
+        nro_recibo, observacion, NroAsiento_pago, transaction_costos_ingresos
+      )
+    }
+    if(id_forma_cobro_2){
+      await insertPago(id_cliente, fecha, usuario, id_forma_cobro_2, total_cobro_2, 
+        nro_recibo, observacion, NroAsiento_pago, transaction_costos_ingresos
+      )
+    }
+    if(id_forma_cobro_3){
+      await insertPago(id_cliente, fecha, usuario, id_forma_cobro_3, total_cobro_3, 
+        nro_recibo, observacion, NroAsiento_pago, transaction_costos_ingresos
+      )
+    }
+  } catch (error) {
+    throw error
+  }
   //inserto en tabla costos_ingresos
     try {
     await giama_renting.query(
@@ -2202,7 +2221,7 @@ async function registrarIngresoIndividual_2({
           importe_total,
           observacion,
           NroAsiento_deuda,
-          id_forma_cobro ? id_forma_cobro : null,
+          null,
           id_cliente ? id_cliente : null,
           nro_recibo ? nro_recibo : null,
         ],
@@ -2226,8 +2245,8 @@ async function registrarIngresoIndividual_2({
             null,
             importe_total_2,
             observacion,
-            NroAsiento,
-            id_forma_cobro ? id_forma_cobro : null,
+            NroAsiento_deuda,
+            null,
             id_cliente ? id_cliente : null,
             nro_recibo ? nro_recibo : null,
           ],
@@ -2252,8 +2271,8 @@ async function registrarIngresoIndividual_2({
             null,
             importe_total_3,
             observacion,
-            NroAsiento,
-            id_forma_cobro ? id_forma_cobro : null,
+            NroAsiento_deuda,
+            null,
             id_cliente ? id_cliente : null,
             nro_recibo ? nro_recibo : null,
           ],
@@ -2262,12 +2281,8 @@ async function registrarIngresoIndividual_2({
       );
     }
   }catch(error){
-/*     await transaction_costos_ingresos.rollback();
-    await transaction_asientos.rollback(); */
     throw new Error(error.message);
   }
-/*     await transaction_costos_ingresos.commit();
-    await transaction_asientos.commit(); */
     return {
       nro_recibo: nro_recibo ? nro_recibo : null,
       genera_factura: genera_factura_final,
