@@ -128,20 +128,6 @@ const ReporteContratos = () => {
 
   const renderModificar = (data) => {
     const row = data.data
-    if (row.dias_pendientes === 0) {
-      return (
-        <button
-          style={{
-            color: "grey", fontSize: "11px",
-            textDecoration: 'underline', background: 'none', border: 'none',
-            cursor: "none"
-          }}
-          disabled
-        >
-          Modificar
-        </button>
-      )
-    } else if (row.dias_pendientes > 0) {
       return (
         <button
           onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
@@ -154,12 +140,10 @@ const ReporteContratos = () => {
           Modificar
         </button>
       );
-    }
   }
 
   const renderModificarVehiculo = (data) => {
     const row = data.data
-    if (row.dias_pendientes === 0) {
       return (
         <button
           style={{
@@ -172,38 +156,11 @@ const ReporteContratos = () => {
           Modificar vehículo
         </button>
       )
-    } else if (row.dias_pendientes > 0) {
-      return (
-        <button
-          onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${row.id}/${row.id_vehiculo}`, '_blank')}
-          style={{
-            color: '#1976d2', fontSize: "11px",
-            textDecoration: 'underline', background: 'none', border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          Modificar vehículo
-        </button>
-      );
-    }
   }
 
   const renderRenovarAlquiler = (data) => {
     const row = data.data
-    if (row.dias_pendientes === 0) {
-      return (
-        <button
-          style={{
-            color: "grey", fontSize: "11px",
-            textDecoration: 'underline', background: 'none', border: 'none',
-            cursor: "none"
-          }}
-          disabled
-        >
-          Renovar alquiler
-        </button>
-      )
-    } else if (row.dias_pendientes > 0) {
+
       return (
         <button
           onClick={() => window.open(`${import.meta.env.VITE_BASENAME}alquileres/${data.data.id}`, '_blank')}
@@ -216,7 +173,7 @@ const ReporteContratos = () => {
           Renovar alquiler
         </button>
       );
-    }
+    
   }
 
 
@@ -309,23 +266,6 @@ const ReporteContratos = () => {
         </div>
       )}
       <h2>Listado de contratos</h2>
-      {/*       <div className={styles.filter}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          columnGap: "4rem"
-        }}>
-          <div className={styles.inputContainer}>
-            <span>Fecha desde: </span>
-            <input name='fecha_desde' value={form["fecha_desde"]} onChange={handleChange} type="date" />
-          </div>
-          <div className={styles.inputContainer}>
-            <span>Fecha hasta: </span>
-            <input name='fecha_hasta' value={form["fecha_hasta"]} onChange={handleChange} type="date" />
-          </div>
-        </div>
-        <button className={styles.searchButton} onClick={handleSubmit}>Buscar</button>
-      </div> */}
       <button onClick={handleActualizar} className={styles.refreshButton}>
         🔄 Actualizar reporte
       </button>

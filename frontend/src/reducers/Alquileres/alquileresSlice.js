@@ -51,6 +51,16 @@ export const postContratoAlquiler = createAsyncThunk(
     )
 );
 
+export const postContratoAlquiler_2 = createAsyncThunk(
+  "postContratoAlquiler_2",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.postContratoAlquiler_2(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const anulacionAlquiler = createAsyncThunk(
   "anulacionAlquiler",
   async (data, { rejectWithValue }) =>

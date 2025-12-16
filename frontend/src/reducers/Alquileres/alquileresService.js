@@ -16,6 +16,10 @@ const postContratoAlquiler = async (form) => {
   return postFunction("alquileres/contrato", form);
 };
 
+const postContratoAlquiler_2 = async (form) => {
+  return postFunction("alquileres/contrato_2", form);
+};
+
 const anulacionAlquiler = async (form) => {
   return postFunction("alquileres/anulacion", form);
 };
@@ -82,6 +86,7 @@ const alquileresService = {
   anulacionContrato,
   getAnulaciones,
   postContratoAlquiler,
+  postContratoAlquiler_2,
   getContratosByIdVehiculo,
   getContratosByIdCliente,
   cambioVehiculo,
