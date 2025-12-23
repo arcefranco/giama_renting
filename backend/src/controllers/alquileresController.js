@@ -685,7 +685,6 @@ export const postContratoAlquiler = async (req, res) => {
     deposito_3,
     id_forma_cobro_contrato_3,
 
-    sucursal_vehiculo,
     //alquiler
     ingresa_alquiler,
     fecha_desde_alquiler,
@@ -693,6 +692,7 @@ export const postContratoAlquiler = async (req, res) => {
     fecha_recibo_alquiler,
     fecha_recibo_deposito,
     observacion,
+
     importe_neto_1,
     importe_iva_1,
     importe_total_1,
@@ -702,6 +702,7 @@ export const postContratoAlquiler = async (req, res) => {
     importe_iva_2,
     importe_total_2,
     id_forma_cobro_alquiler_2,
+
     importe_neto_3,
     importe_iva_3,
     importe_total_3,
@@ -3068,17 +3069,13 @@ export const postContratoAlquiler_2 = async (req, res) => {
     ingresa_deposito,
     deposito,
     id_forma_cobro_contrato,
-    cuenta_contable_forma_cobro_contrato,
-    cuenta_secundaria_forma_cobro_contrato,
+
     deposito_2,
     id_forma_cobro_contrato_2,
-    cuenta_contable_forma_cobro_contrato_2,
-    cuenta_secundaria_forma_cobro_contrato_2,
+
     deposito_3,
     id_forma_cobro_contrato_3,
-    cuenta_contable_forma_cobro_contrato_3,
-    cuenta_secundaria_forma_cobro_contrato_3,
-    sucursal_vehiculo,
+
     //alquiler
     ingresa_alquiler,
     fecha_desde_alquiler,
@@ -3086,24 +3083,22 @@ export const postContratoAlquiler_2 = async (req, res) => {
     fecha_recibo_alquiler,
     fecha_recibo_deposito,
     observacion,
+
     importe_neto_1,
     importe_iva_1,
     importe_total_1,
     id_forma_cobro_alquiler_1,
-    cuenta_contable_forma_cobro_alquiler_1,
-    cuenta_secundaria_forma_cobro_alquiler_1,
+
     importe_neto_2,
     importe_iva_2,
     importe_total_2,
     id_forma_cobro_alquiler_2,
+
     importe_neto_3,
     importe_iva_3,
     importe_total_3,
     id_forma_cobro_alquiler_3,
-    cuenta_contable_forma_cobro_alquiler_2,
-    cuenta_secundaria_forma_cobro_alquiler_2,
-    cuenta_contable_forma_cobro_alquiler_3,
-    cuenta_secundaria_forma_cobro_alquiler_3,
+
   } = req.body;
   console.log(req.body);
   let alquileresVigentes;
@@ -3129,6 +3124,19 @@ export const postContratoAlquiler_2 = async (req, res) => {
   let concepto = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
     fecha_desde_alquiler
   )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)}`;
+  let cuenta_contable_forma_cobro_contrato;
+  let cuenta_secundaria_forma_cobro_contrato;
+  let cuenta_contable_forma_cobro_contrato_2;
+  let cuenta_secundaria_forma_cobro_contrato_2;
+  let cuenta_contable_forma_cobro_contrato_3;
+  let cuenta_secundaria_forma_cobro_contrato_3;
+
+  let cuenta_contable_forma_cobro_alquiler_1;
+  let cuenta_secundaria_forma_cobro_alquiler_1;
+  let cuenta_contable_forma_cobro_alquiler_2;
+  let cuenta_secundaria_forma_cobro_alquiler_2;
+  let cuenta_contable_forma_cobro_alquiler_3;
+  let cuenta_secundaria_forma_cobro_alquiler_3;
   let contratosVigentes;
   let nro_recibo_alquiler;
   let nro_recibo_deposito;
@@ -3341,6 +3349,42 @@ export const postContratoAlquiler_2 = async (req, res) => {
       message:
         "Debe especificar que no ingresa alquiler. Faltan datos para el ingreso del mismo.",
     });
+  }
+
+  //OBTENGO CUENTAS CONTABLES DE FORMAS COBRO
+  try {
+  if(id_forma_cobro_contrato){
+    cuenta_contable_forma_cobro_contrato = await getCuentaContableFormaCobro(id_forma_cobro_contrato)
+    cuenta_secundaria_forma_cobro_contrato = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato)
+  }
+  if(id_forma_cobro_contrato_2){
+    cuenta_contable_forma_cobro_contrato_2 = await getCuentaContableFormaCobro(id_forma_cobro_contrato_2)
+    cuenta_secundaria_forma_cobro_contrato_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_2)
+  }
+
+  if(id_forma_cobro_contrato_3){
+    cuenta_contable_forma_cobro_contrato_3 = await getCuentaContableFormaCobro(id_forma_cobro_contrato_3)
+    cuenta_secundaria_forma_cobro_contrato_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_3)
+  }
+
+  if(id_forma_cobro_alquiler_1) {
+    cuenta_contable_forma_cobro_alquiler_1 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1) 
+    cuenta_secundaria_forma_cobro_alquiler_1 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1)
+  }
+
+  if(id_forma_cobro_alquiler_2) {
+    cuenta_contable_forma_cobro_alquiler_2 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2) 
+    cuenta_secundaria_forma_cobro_alquiler_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2)
+  }
+
+  if(id_forma_cobro_alquiler_3) {
+    cuenta_contable_forma_cobro_alquiler_3 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3) 
+    cuenta_secundaria_forma_cobro_alquiler_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3)
+  }
+  } catch (error) {
+    console.log(error);
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
   }
   //OBTENGO NUMEROS DE CUENTA IV21, IV21_2, ALQU, ALQU_2, DEPO Y DEP2
   try {
@@ -3657,7 +3701,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
     await asientoContable(
       "c_movimientos", 
       NroAsiento_alquiler_deuda, 
-      "cuenta_nueva", 
+      110308,//"cuenta_nueva", 
       "D", 
       debe_alquiler,
       observacion,
@@ -3669,7 +3713,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
     )
     await asientoContable(
       "c_movimientos", 
-      NroAsiento, 
+      NroAsiento_alquiler_deuda, 
       cuentaALQU, 
       "H", 
       importe_neto_alquiler_deuda,
@@ -3682,7 +3726,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
     )
     await asientoContable(
       "c_movimientos", 
-      NroAsiento, 
+      NroAsiento_alquiler_deuda, 
       cuentaIV21, 
       "H", 
       importe_iva_alquiler_deuda,
@@ -3697,7 +3741,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
     await asientoContable(
       "c2_movimientos", 
       NroAsientoSecundario_alquiler_deuda, 
-      "cuenta_nueva_secundaria", 
+      110308,//"cuenta_nueva_secundaria", 
       "D", 
       debe_alquiler,
       observacion,
@@ -3796,7 +3840,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
       await asientoContable(
           "c_movimientos",
           NroAsiento_alquiler_pago,
-          "cuenta_nueva",
+          110308,//"cuenta_nueva",
           "H",
           importe_total_pago_alquiler,
           concepto,
@@ -3853,9 +3897,9 @@ export const postContratoAlquiler_2 = async (req, res) => {
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_alquiler_pago,
-        "cuenta_nueva_secundaria",
+        110308,//"cuenta_nueva_secundaria",
         "H",
-        importe_total_pago,
+        importe_total_pago_alquiler,
         concepto,
         transaction_pa7_giama_renting,
         nro_recibo_alquiler,
@@ -3877,7 +3921,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
     await asientoContable(
       "c_movimientos", 
       NroAsiento_deposito_deuda, 
-      "cuenta_nueva", 
+      110308,//"cuenta_nueva", 
       "D", 
       debe_deposito,
       observacion,
@@ -3917,7 +3961,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
     await asientoContable(
       "c2_movimientos", 
       NroAsientoSecundario_deposito_deuda, 
-      "cuenta_nueva_secundaria", 
+      110308,//"cuenta_nueva_secundaria", 
       "D", 
       debe_alquiler,
       observacion,
@@ -4009,7 +4053,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
         await asientoContable(
           "c_movimientos",
           NroAsiento_deposito_pago,
-          "cuenta_nueva",
+          110308,//"cuenta_nueva",
           "H",
           deposito_total_pago,
           conceptoDeposito,
@@ -4062,7 +4106,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
           await asientoContable(
             "c2_movimientos",
             NroAsientoSecundario_deposito_pago,
-            "cuenta_nueva_secundaria",
+            110308,//"cuenta_nueva_secundaria",
             "H",
             deposito_total_pago,
             conceptoDeposito,
