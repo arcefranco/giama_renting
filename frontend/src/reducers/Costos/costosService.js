@@ -38,6 +38,10 @@ const prorrateoIE = async (form) => {
   return postFunction("costos/prorrateoIE", form);
 };
 
+const prorrateo = async (form) => {
+  return postFunction("costos/prorrateo", form);
+};
+
 const costosService = {
   getCuentasContables,
   postConceptoCostos,
@@ -49,5 +53,6 @@ const costosService = {
   postCostos_Ingresos_2,
   getCostosIngresosByIdVehiculo,
   prorrateoIE,
+  prorrateo
 };
 export default costosService;

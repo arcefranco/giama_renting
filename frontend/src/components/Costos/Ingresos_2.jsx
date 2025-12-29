@@ -31,7 +31,6 @@ const Ingresos_2 = () => {
   const dispatch = useDispatch()
   const { costos_ingresos_vehiculo, conceptos, isLoading: isLoadingCostos } = useSelector((state) => state.costosReducer)
   const { isError, isSuccess, isLoading, message, nro_recibo_ingreso } = useSelector((state) => state.ingresosReducer)
-  const { contratosVehiculo, contratosCliente } = useSelector((state) => state.alquileresReducer);
   const { vehiculo, vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
   const { username } = useSelector((state) => state.loginReducer)

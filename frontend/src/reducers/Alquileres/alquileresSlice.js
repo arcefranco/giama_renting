@@ -233,6 +233,23 @@ export const alquileresSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
+    builder.addCase(postContratoAlquiler_2.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postContratoAlquiler_2.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.nro_recibo_alquiler = action.payload.nro_recibo_alquiler;
+      state.nro_recibo_deposito = action.payload.nro_recibo_deposito;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postContratoAlquiler_2.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
     builder.addCase(anulacionAlquiler.pending, (state) => {
       state.isLoading = true;
     });
