@@ -3458,7 +3458,7 @@ export const prorrateo = async (req, res) => {
       await asientoContable(
         "c_movimientos",
         NroAsiento,
-        cuenta_concepto,
+        cuenta_concepto_2,
         "D",
         importeAUsar_2,
         observacion + ` (${dominio})`,
@@ -3471,7 +3471,7 @@ export const prorrateo = async (req, res) => {
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
-        cuenta_secundaria_concepto,
+        cuenta_secundaria_concepto_2,
         "D",
         importeAUsar_2,
         observacion + ` (${dominio})`,
@@ -3486,7 +3486,7 @@ export const prorrateo = async (req, res) => {
       await asientoContable(
         "c_movimientos",
         NroAsiento,
-        cuenta_concepto,
+        cuenta_concepto_3,
         "D",
         importeAUsar_3,
         observacion + ` (${dominio})`,
@@ -3499,7 +3499,7 @@ export const prorrateo = async (req, res) => {
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
-        cuenta_secundaria_concepto,
+        cuenta_secundaria_concepto_3,
         "D",
         importeAUsar_3,
         observacion + ` (${dominio})`,
@@ -3609,11 +3609,11 @@ export const prorrateo = async (req, res) => {
     }
   }
 
-  await transaction_costos_ingresos.rollback();
-  await transaction_asientos.rollback();
+  await transaction_costos_ingresos.commit();
+  await transaction_asientos.commit();
   //registro en costos_ingresos
   return res.send({
     status: true,
-    message: "Se ingresaron los egresos correctamente",
+    message: "Prorrateo realizado correctamente",
   });
 };
