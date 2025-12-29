@@ -266,6 +266,7 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
   let NroAsiento;
   let NroAsientoSecundario;
   let nro_asiento_original;
+  let fecha;
   try {
     const result_costo = await giama_renting.query(
       `SELECT * FROM costos_ingresos 
@@ -296,6 +297,20 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
     console.log(error)
     throw new Error("Error al buscar ingresos/alquiler asociado")
   }
+  //busco la fecha del recibo 
+  try {
+    let result = await giama_renting.query("SELECT Fecha FROM recibos WHERE id = ?", {
+      type: QueryTypes.SELECT,
+      replacements: [id]
+    })
+    console.log(result)
+    fecha = result[0]["Fecha"]
+  } catch (error) {
+    console.log(error)
+    throw new Error("Error al buscar fecha del recibo")
+  }
+
+
   //busco numeros de asiento
   try {
     NroAsiento = await getNumeroAsiento();
@@ -305,7 +320,7 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
   }
   //realizo los asientos
   try {
-  const today = getTodayDate()
+
   const nro_comprobante = padWithZeros(`${NroAsiento}`, 13)
 await giama_renting.query(
   `INSERT INTO c_movimientos (
@@ -320,7 +335,7 @@ await giama_renting.query(
     AsientoSecundario
   )
   SELECT
-    :today AS Fecha,
+    :fecha AS Fecha,
     :NroAsiento AS NroAsiento,
     Cuenta,
     CASE WHEN DH = 'D' THEN 'H' ELSE 'D' END AS DH,
@@ -334,7 +349,7 @@ await giama_renting.query(
   `,
   {
     type: QueryTypes.INSERT,
-    replacements: {today, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
+    replacements: {fecha, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
     transaction: transaction_pa7_giama_renting
   }
 );
@@ -351,7 +366,7 @@ await giama_renting.query(
     NroComprobante
   )
   SELECT
-    :today AS Fecha,
+    :fecha AS Fecha,
     :NroAsientoSecundario AS NroAsiento,
     Cuenta,
     CASE WHEN DH = 'D' THEN 'H' ELSE 'D' END AS DH,
@@ -364,7 +379,7 @@ await giama_renting.query(
   `,
   {
     type: QueryTypes.INSERT,
-    replacements: {today, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
+    replacements: {fecha, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
     transaction: transaction_pa7_giama_renting
   }
 );
@@ -502,7 +517,7 @@ export const anulacionRecibo = async (req, res) => {
 
 
     if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
-      console.log("if 1")
+
       await pa7_giama_renting.query("DELETE FROM facturasitems WHERE IdFactura = ?", {
         type: QueryTypes.DELETE,
         replacements: [id_factura],
@@ -533,14 +548,14 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: true, message: "Recibo anulado correctamente" });
 
     } else if (!NumeroFacturaEmitida || !CAE || !VtoCAE) {
-           console.log("if 2")
+
       return res.send({
         status: false,
         message: "La factura aún no puede ser eliminada",
       });
 
     } else {
-             console.log("else")
+
       // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
       const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
       if (!tipo_NC) {
