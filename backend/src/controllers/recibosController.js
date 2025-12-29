@@ -249,7 +249,18 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
 
 export const getRecibos = async (req, res) => {
   try {
-    const resultado = await giama_renting.query("SELECT * FROM recibos", {
+    const resultado = await giama_renting.query(`SELECT
+  r.*,
+  CASE
+    WHEN r.anulado = 1 THEN (
+      SELECT cm.NroAsiento
+      FROM pa7_giama_renting.c_movimientos cm
+      WHERE cm.concepto LIKE CONCAT('%Anulación de recibo ', r.id, '%')
+      LIMIT 1
+    )
+    ELSE NULL
+  END AS AsientoAnulacion
+FROM recibos r;`, {
       type: QueryTypes.SELECT
     })
     return res.send(resultado);
@@ -575,7 +586,7 @@ export const anulacionRecibo = async (req, res) => {
       );
       console.log(result);
       id_ndc = result[0]
-      //o queda claro que se hace con facturasitems // se hace un solo registro igual pero x "anulacion factura x"
+      
       const descripcion_facturas_items = `Anulación factura ${Tipo} ${padWithZeros(PuntoVenta, 5)}-${padWithZeros(NumeroFacturaEmitida, 8)}`
       await giama_renting.query(
         `INSERT INTO facturasitems (
