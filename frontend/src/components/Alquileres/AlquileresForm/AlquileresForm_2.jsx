@@ -1,0 +1,622 @@
+import React, { useState, useEffect, useMemo } from 'react'
+import { useParams } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux'
+import { ToastContainer, toast } from 'react-toastify';
+import { getModelos, getFormasDeCobro } from '../../../reducers/Generales/generalesSlice.js'
+import {
+  reset,
+  postAlquiler,
+  getAlquilerByIdContrato,
+  getContratoById,
+  reset_nro_recibo
+} from '../../../reducers/Alquileres/alquileresSlice.js'
+
+import { getVehiculos } from '../../../reducers/Vehiculos/vehiculosSlice.js'
+import { getClientes } from '../../../reducers/Clientes/clientesSlice.js'
+import { ClipLoader } from "react-spinners";
+import styles from "./AlquileresForm.module.css"
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import es from "date-fns/locale/es";
+import { parseISO } from 'date-fns';
+import Select from 'react-select';
+import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo.jsx';
+import { toLocalDateOnly } from '../../../helpers/toLocalDateOnly.js';
+import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
+import { getReciboAlquilerById, resetAlquiler } from "../../../reducers/Recibos/recibosSlice.js"
+import Swal from 'sweetalert2';
+import { toNumber } from '../../../helpers/toNumber.js';
+
+const AlquileresForm_2 = ({ modoContrato = false, onSubmitFinal,
+  minDateContrato, maxDateContrato, vehiculo, cliente, fecha_recibo_deposito }) => {
+  const dispatch = useDispatch()
+  const { idContrato } = useParams()
+  useEffect(() => {
+    Promise.all([
+      dispatch(getVehiculos()),
+      dispatch(getClientes()),
+      dispatch(getModelos()),
+      dispatch(getFormasDeCobro()),
+    ])
+    if (idContrato) {
+      dispatch(getAlquilerByIdContrato({ id: idContrato })),
+        dispatch(getContratoById({ id: idContrato }))
+    }
+    return () => {
+      dispatch(reset_nro_recibo())
+      dispatch(resetAlquiler())
+      dispatch(reset())
+    }
+  }, [])
+  const { isError, isSuccess, isLoading,
+    message, alquilerByIdContrato, contratoById, nro_recibo_alquiler } = useSelector((state) => state.alquileresReducer)
+  const { html_recibo_alquiler } = useSelector((state) => state.recibosReducer);
+  const { vehiculos } = useSelector((state) => state.vehiculosReducer)
+  const { clientes } = useSelector((state) => state.clientesReducer)
+  const { modelos, formasDeCobro } = useSelector((state) => state.generalesReducer)
+  const { username } = useSelector((state) => state.loginReducer)
+  registerLocale("es", es);
+  const getNextWednesday = (fromDate) => {
+    const date = new Date(fromDate);
+    const day = date.getDay();
+    const diff = (3 - day + 7) % 7; // 3 = miércoles
+    if (diff === 0) return date;
+    date.setDate(date.getDate() + diff);
+    return date;
+  };
+  // Suma N días a una fecha
+  const addDays = (date, days) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  };
+
+  const [fechaDesdePorDefecto, setFechaDesdePorDefecto] = useState(null)
+  const [fechaHastaPorDefecto, setFechaHastaPorDefecto] = useState(null)
+  const [minDate, setMinDate] = useState(null)
+  const [maxDate, setMaxDate] = useState(null)
+  const [sendBtnDisabled, setSendBtnDisabled] = useState(true)
+  const [total, setTotal] = useState(0)
+  const [form, setForm] = useState({
+    debe_alquiler: '',
+    id_contrato: idContrato ? idContrato : "",
+    ingresa_alquiler: 1,
+    apellido_cliente: '',
+    id_vehiculo: "",
+    id_cliente: '',
+    fecha_desde_alquiler: fechaDesdePorDefecto,
+    fecha_hasta_alquiler: fechaHastaPorDefecto,
+    fecha_recibo_alquiler: '',
+    importe_neto_1: '',
+    importe_iva_1: '',
+    importe_total_1: '',
+    id_forma_cobro_alquiler_1: '',
+    importe_neto_2: '',
+    importe_iva_2: '',
+    importe_total_2: '',
+    id_forma_cobro_alquiler_2: '',
+    importe_neto_3: '',
+    importe_iva_3: '',
+    importe_total_3: '',
+    id_forma_cobro_alquiler_3: '',
+    importe_neto: '',
+    importe_iva: '',
+    importe_total: '',
+    id_forma_cobro_alquiler: '',
+    usuario: username,
+    observacion: ''
+  })
+  if (!modoContrato) {
+    useToastFeedback({
+      isError,
+      isSuccess,
+      message,
+      resetAction: reset,
+      onSuccess: () => {
+        Promise.all([
+          dispatch(reset()),
+          dispatch(getAlquilerByIdContrato({ id: idContrato }))
+        ])
+        setForm({
+          ...form,
+          debe_alquiler: '',
+          id_contrato: idContrato,
+          ingresa_alquiler: 1,
+          importe_iva: '',
+          fecha_recibo_alquiler: '',
+          usuario: username,
+          importe_iva_1: '',
+          importe_neto_1: '',
+          importe_total_1: '',
+          id_forma_cobro_alquiler_1: '',
+          importe_neto_2: '',
+          importe_iva_2: '',
+          importe_total_2: '',
+          id_forma_cobro_alquiler_2: '',
+          importe_neto_3: '',
+          importe_iva_3: '',
+          importe_total_3: '',
+          id_forma_cobro_alquiler_3: '',
+        })
+      }
+    })
+  }
+
+  useEffect(() => {
+    if (contratoById?.length && !modoContrato && !alquilerByIdContrato?.length) {
+      setMinDate(parseISO(contratoById[0]["fecha_desde"]))
+      setMaxDate(parseISO(contratoById[0]["fecha_hasta"]))
+    }
+    else if (alquilerByIdContrato?.length && contratoById?.length && !modoContrato) {
+
+      const fechaHastaMasGrande = alquilerByIdContrato.reduce((max, obj) => {
+        const actual = new Date(obj.fecha_hasta);
+        const maxDate = new Date(max);
+        return actual > maxDate ? actual : maxDate;
+      }, alquilerByIdContrato[0].fecha_hasta); //valor inicial del reduce
+      const proxMiercoles = getNextWednesday(fechaHastaMasGrande)
+      setFechaDesdePorDefecto(proxMiercoles)
+      setFechaHastaPorDefecto(addDays(proxMiercoles, 6))
+      setMinDate(parseISO(contratoById[0]["fecha_desde"]))
+      /*el limite es el contrato y no las fechas segun 
+      los alquileres previos del contrato por si hay un hueco de días */
+      /*se parsean porque llegan en formato yyyy-mm-dd */
+      setMaxDate(parseISO(contratoById[0]["fecha_hasta"]))
+    }
+    if (modoContrato && minDateContrato && maxDateContrato) {
+      /*seteamos el limite de fechas en modo contrato*/
+      setMinDate(new Date(minDateContrato))
+      setMaxDate(new Date(maxDateContrato))
+      /*seteamos fechas por defecto en modo contrato */
+      const proxMiercoles = getNextWednesday(minDateContrato)
+      setForm({
+        ...form,
+        fecha_desde_alquiler: proxMiercoles,
+        fecha_hasta_alquiler: addDays(proxMiercoles, 6)
+      })
+    }
+
+  }, [modoContrato, minDateContrato, maxDateContrato,
+    alquilerByIdContrato, contratoById])
+
+  useEffect(() => {
+    if (!isError) {
+      setForm({
+        ...form,
+        fecha_desde_alquiler: fechaDesdePorDefecto,
+        fecha_hasta_alquiler: fechaHastaPorDefecto
+      })
+    }
+
+  }, [fechaDesdePorDefecto, fechaHastaPorDefecto])
+
+  useEffect(() => {
+    if (fecha_recibo_deposito) {
+      setForm({
+        ...form,
+        fecha_recibo_alquiler: fecha_recibo_deposito
+      })
+    }
+  }, [fecha_recibo_deposito])
+
+  useEffect(() => {
+    if (contratoById?.length && clientes?.length) {
+      setForm({
+        ...form,
+        id_vehiculo: contratoById[0]["id_vehiculo"],
+        id_cliente: contratoById[0]["id_cliente"],
+        apellido_cliente: clientes?.find(e => e.id == contratoById[0]?.id_cliente)?.apellido
+      })
+    }
+  }, [contratoById, clientes])
+
+  useEffect(() => {
+    if (nro_recibo_alquiler && !modoContrato) {
+      dispatch(getReciboAlquilerById({ id: nro_recibo_alquiler }));
+    }
+  }, [nro_recibo_alquiler]);
+
+  useEffect(() => {
+    let total_1 = form.importe_total_1 ? toNumber(form.importe_total_1) : 0
+    let total_2 = form.importe_total_2 ? toNumber(form.importe_total_2) : 0
+    let total_3 = form.importe_total_3 ? toNumber(form.importe_total_3) : 0
+
+    setTotal((total_1 + total_2 + total_3).toFixed(2))
+  }, [form.importe_total_1, form.importe_total_2, form.importe_total_3])
+
+  useEffect(() => {
+    if (html_recibo_alquiler && !modoContrato) {
+      Swal.fire({
+        title: '¿Desea imprimir el recibo?',
+        showCancelButton: true,
+        confirmButtonText: 'Sí',
+        cancelButtonText: 'Cancelar',
+        icon: 'warning',
+        didOpen: () => {
+          document.body.classList.remove('swal2-height-auto');
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const win = window.open('', '_blank');
+          win.document.write(html_recibo_alquiler);
+          win.document.close();
+
+          // Esperamos un poco para que cargue todo el HTML (incluida la imagen)
+          setTimeout(() => {
+            win.focus();
+            win.print();
+
+            // Opcional: cerrar automáticamente después de imprimir
+            win.onafterprint = () => {
+              win.close();
+            };
+          }, 500); // Ajustá el delay si fuera necesario
+        }
+      }).finally(() => {
+        dispatch(resetAlquiler())
+      });
+    }
+  }, [html_recibo_alquiler]);
+
+  useEffect(() => {
+    const camposCompletos = [
+      form.id_vehiculo,
+      form.id_cliente,
+      form.fecha_desde_alquiler,
+      form.fecha_hasta_alquiler,
+    ].every(Boolean);
+    let formas_cobro_boolean = !form.id_forma_cobro_alquiler_1 && !form.id_forma_cobro_alquiler_2 && !form.id_forma_cobro_alquiler_3 ? true : false
+    let importes_total_boolean = !form.importe_total_1 && !form.importe_total_2 && !form.importe_total_3 ? true : false
+    if (form.ingresa_alquiler == 1 && !modoContrato && (!camposCompletos || (formas_cobro_boolean || importes_total_boolean)) /* (!form.id_vehiculo || !form.id_cliente || !form.fecha_desde_alquiler
+      || !form.fecha_hasta_alquiler || !form.importe_neto || !form.importe_iva || !form.importe_total || !form.id_forma_cobro_alquiler)*/) {
+      console.log("entra (bloque 1)");
+      setSendBtnDisabled(true)
+    }
+    else if (form.ingresa_alquiler == 0 && modoContrato && (!vehiculo || !cliente)) {
+      console.log(form.ingresa_alquiler, vehiculo, cliente)
+      console.log("entra (bloque 2)");
+      setSendBtnDisabled(true)
+    }
+    else if (form.ingresa_alquiler == 1 && modoContrato && (!vehiculo || !cliente || !form.fecha_desde_alquiler
+      || !form.fecha_hasta_alquiler || formas_cobro_boolean || importes_total_boolean
+    )) {
+      console.log("entra (bloque 3)");
+      setSendBtnDisabled(true)
+    }
+    else {
+      setSendBtnDisabled(false)
+    }
+
+  },
+    [form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler, form.fecha_hasta_alquiler,
+    form.importe_neto_1, form.importe_iva_1, form.importe_total_1, form.id_forma_cobro_alquiler_1,
+    form.importe_neto_2, form.importe_iva_2, form.importe_total_2, form.id_forma_cobro_alquiler_2,
+    form.importe_neto_3, form.importe_iva_3, form.importe_total_3, form.id_forma_cobro_alquiler_3,
+      modoContrato
+    ])
+
+const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
+    alquileres?.filter(e => e.anulado === 0)?.map(a => ({
+        start: new Date(a.fecha_desde),
+        end: addDays(new Date(a.fecha_hasta), 1),
+}));
+
+  const opcionesVehiculos = vehiculos.filter(v => { return !v.fecha_venta }).map(e => {
+    return {
+      value: e.id,
+      label: (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+          <span>{e.dominio ? e.dominio :
+            e.dominio_provisorio ? e.dominio_provisorio : ""} - {modelos.find(m => m.id == e.modelo)?.nombre}</span>
+          {renderEstadoVehiculo(e, "chico")}
+        </div>
+      )
+    };
+  });
+  const customStyles = {
+    container: (provided) => ({
+      ...provided,
+      width: '22rem'
+    })
+  };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (value && name === "importe_total_1") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
+      setForm({
+        ...form,
+        [name]: parseFloat(value),
+        "importe_iva_1": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_1": valor_sin_iva
+      });
+    }
+    else if (value && name === "importe_total_2") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
+      setForm({
+        ...form,
+        [name]: parseFloat(value),
+        "importe_iva_2": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_2": valor_sin_iva
+      });
+    }
+    else if (value && name === "importe_total_3") {
+      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
+      setForm({
+        ...form,
+        [name]: parseFloat(value),
+        "importe_iva_3": (parseFloat(value) - valor_sin_iva).toFixed(2),
+        "importe_neto_3": valor_sin_iva
+      });
+    }
+    else if (value && name === "id_cliente") {
+      setForm({
+        ...form,
+        [name]: value,
+        "apellido_cliente": clientes?.find(e => e.id == value)?.apellido
+      });
+    }
+    else {
+      setForm({
+        ...form,
+        [name]: value,
+      });
+
+    }
+  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (modoContrato) {
+      onSubmitFinal(form);
+    } else {
+      const formFixed = {
+        ...form,
+        fecha_desde_alquiler: toLocalDateOnly(form.fecha_desde_alquiler),
+        fecha_hasta_alquiler: toLocalDateOnly(form.fecha_hasta_alquiler),
+      }
+      dispatch(postAlquiler(formFixed));
+    }
+  }
+
+
+  return (
+    <div className={styles.container}>
+      {
+        !modoContrato && <ToastContainer />
+      }
+
+      {isLoading && (
+        <div className={styles.spinnerOverlay}>
+          <ClipLoader
+            size={60}
+            color="#800020" // bordó
+            loading={true}
+          />
+          <p className={styles.loadingText}>Cargando...</p>
+        </div>
+      )}
+      {
+        modoContrato ?
+          <h2>Semana adelantada de alquiler</h2> :
+          <h2>Alta de alquiler</h2>
+      }
+      {
+        modoContrato &&
+        <div>
+          <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+            <input
+              type="checkbox"
+              id="sinGarantia"
+              checked={form.ingresa_alquiler === 0}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  ingresa_alquiler: e.target.checked ? 0 : 1,
+                  importe_neto: "",
+                  importe_iva: "",
+                  importe_total: "",
+                  fecha_desde_alquiler: fechaDesdePorDefecto,
+                  fecha_hasta_alquiler: fechaHastaPorDefecto
+                })
+              }
+            />
+            <label htmlFor="sinGarantia" style={{ marginLeft: '0.5rem' }}>No ingresa semana adelantada de alquiler</label>
+          </div>
+        </div>
+
+      }
+      <form action="" encType="multipart/form-data" className={`${form.ingresa_alquiler === 0 ? styles.disabledForm : ''}`}>
+        {
+          !modoContrato &&
+          <div className={styles.form2Inputs}>
+            <div className={styles.inputContainer}>
+              <span>Vehículo</span>
+              <Select
+                options={opcionesVehiculos}
+                isDisabled={true}
+                value={
+                  opcionesVehiculos.find(
+                    (opt) => String(opt.value) === String(form.id_vehiculo)
+                  ) || null
+                }
+                placeholder="Seleccione un vehículo"
+                styles={customStyles}
+              />
+            </div>
+            <div></div>
+
+            <div className={styles.inputWrapper} >
+              <span>Clientes</span>
+              <div className={styles.selectWithIcon} style={{
+                width: "20rem"
+              }}>
+                <select name="id_cliente" value={form["id_cliente"]} disabled>
+                  <option value={""} disabled selected>{"Seleccione un cliente"}</option>
+                  {
+                    clientes?.length && clientes.map(e => (
+                      <option key={e.id} value={e.id}>
+                        {e.nro_documento} - {e.nombre} {e.apellido}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+        }
+        <div className={styles.form3fr}>
+          <div className={styles.inputContainer}>
+            <span>Total alquiler</span>
+            <input type="number" name='debe_alquiler' value={form["debe_alquiler"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha desde</span>
+            <DatePicker
+              dateFormat="dd/MM/yyyy"
+              selected={form.fecha_desde_alquiler}
+              onChange={(date) => setForm(prev => ({ ...prev, fecha_desde_alquiler: date }))}
+              excludeDateIntervals={!modoContrato ?
+                obtenerRangosOcupados(alquilerByIdContrato) : null} /* si extendemos el alquiler, 
+                        no permitimos que se elijan fechas ya elegidas */
+              minDate={minDate}
+              maxDate={maxDate}
+              placeholderText="Seleccione una fecha"
+              locale="es"
+            />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha hasta</span>
+            <DatePicker
+              dateFormat="dd/MM/yyyy"
+              selected={form.fecha_hasta_alquiler}
+              onChange={(date) => setForm(prev => ({ ...prev, fecha_hasta_alquiler: date }))}
+              excludeDateIntervals={!modoContrato ?
+                obtenerRangosOcupados(alquilerByIdContrato) : null} /* si extendemos el alquiler, 
+                        no permitimos que se elijan fechas ya elegidas */
+              minDate={minDate}
+              maxDate={maxDate}
+              placeholderText="Seleccione una fecha"
+              locale="es"
+            />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha del recibo</span>
+            <input type="date" name='fecha_recibo_alquiler' value={form["fecha_recibo_alquiler"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Observación</span>
+            <textarea type="text" name='observacion' value={form["observacion"]}
+              onChange={handleChange} />
+          </div>
+
+        </div>
+        <hr style={{width: "30rem"}}/>
+        <h3>Pago</h3>
+        <div className={styles.form4fr}>
+          <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+            <select name="id_forma_cobro_alquiler_1" value={form["id_forma_cobro_alquiler_1"]}
+              onChange={handleChange} id="">
+              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              {
+                formasDeCobro?.length && formasDeCobro?.map(e => {
+                  return <option key={e.id} value={e.id}>{e.nombre}</option>
+                })
+              }
+            </select>
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe total</span>
+            <input type="number" name='importe_total_1' value={form["importe_total_1"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="number" name='importe_neto_1' disabled value={form["importe_neto_1"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>IVA</span>
+            <input type="number" name='importe_iva_1' disabled value={form["importe_iva_1"]}
+              onChange={handleChange} />
+          </div>
+        </div>
+        <div className={styles.form4fr}>
+          <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+            <select name="id_forma_cobro_alquiler_2" value={form["id_forma_cobro_alquiler_2"]}
+              onChange={handleChange} id="">
+              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              {
+                formasDeCobro?.length && formasDeCobro?.map(e => {
+                  return <option key={e.id} value={e.id}>{e.nombre}</option>
+                })
+              }
+            </select>
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe total</span>
+            <input type="number" name='importe_total_2' value={form["importe_total_2"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="number" name='importe_neto_2' disabled value={form["importe_neto_2"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>IVA</span>
+            <input type="number" name='importe_iva_2' disabled value={form["importe_iva_2"]}
+              onChange={handleChange} />
+          </div>
+        </div>
+        <div className={styles.form4fr}>
+          <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+            <select name="id_forma_cobro_alquiler_3" value={form["id_forma_cobro_alquiler_3"]}
+              onChange={handleChange} id="">
+              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              {
+                formasDeCobro?.length && formasDeCobro?.map(e => {
+                  return <option key={e.id} value={e.id}>{e.nombre}</option>
+                })
+              }
+            </select>
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe total</span>
+            <input type="number" name='importe_total_3' value={form["importe_total_3"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="number" name='importe_neto_3' disabled value={form["importe_neto_3"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>IVA</span>
+            <input type="number" name='importe_iva_3' disabled value={form["importe_iva_3"]}
+              onChange={handleChange} />
+          </div>
+        </div>
+        {
+            !modoContrato ? 
+        <div className={styles.divTotal}>
+          <span style={{ fontSize: "15px" }}>{"Total (cobrado)"}: </span>
+          <span>{total}</span>
+        </div> : <div></div>
+        }
+
+      </form>
+      <button
+        className={styles.sendBtn} onClick={handleSubmit}
+        disabled={sendBtnDisabled}>
+        Enviar
+      </button>
+    </div>
+  )
+}
+
+export default AlquileresForm_2

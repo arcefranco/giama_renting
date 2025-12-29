@@ -43,6 +43,8 @@ import ReporteRecibos from "./components/Recibos/ReporteRecibos";
 import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContrato";
 import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
 import PagosClientes from "./PagosClientes";
+import ContratoAlquiler_2 from "./components/Alquileres/ContratoAlquiler/ContratoAlquiler_2";
+import Prorrateo from "./components/Costos/Prorrateo";
 function App() {
 
   return (
@@ -125,7 +127,13 @@ function App() {
             <Route path='/costos/prorrateoIE' element={<ProrrateoIE />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/costos/prorrateo' element={<Prorrateo />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/contrato' element={<ContratoAlquiler />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/alquileres/contrato_2' element={<ContratoAlquiler_2 />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/contrato/actualizar/:id' element={<UpdateContrato />} />

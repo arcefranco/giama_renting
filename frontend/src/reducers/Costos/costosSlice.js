@@ -102,6 +102,16 @@ export const prorrateoIE = createAsyncThunk(
     )
 );
 
+export const prorrateo = createAsyncThunk(
+  "prorrateo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.prorrateo(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const costosSlice = createSlice({
   name: "costos",
   initialState,
@@ -258,6 +268,21 @@ export const costosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(prorrateoIE.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(prorrateo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(prorrateo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(prorrateo.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

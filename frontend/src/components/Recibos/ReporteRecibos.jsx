@@ -396,6 +396,7 @@ const ReporteRecibos = () => {
                 </Column>
                 <Column dataField="importe_total_3" caption="Importe 3" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column dataField="importe_total" caption="Importe total" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
+                <Column dataField="AsientoAnulacion" caption="Asiento anulación" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
 
                 <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
