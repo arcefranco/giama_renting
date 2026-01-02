@@ -1233,6 +1233,7 @@ async function registrarCostoIngresoIndividual({
 
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
     await movimientosProveedoresEgresos({
+      fecha,
       cod_proveedor,
       tipo_comprobante,
       numero_comprobante_1,
@@ -1269,14 +1270,18 @@ async function registrarCostoIngresoIndividual({
     });
   }
 
-  const importe_otros_impuestos_dividido = (toNumber(importe_tasa_IIBB) + toNumber(importe_tasa_IIBB_CABA) + toNumber(importe_tasa_IVA)) / total_conceptos
+  const importe_otros_impuestos_dividido = ((toNumber(importe_tasa_IIBB) + toNumber(importe_tasa_IIBB_CABA) + toNumber(importe_tasa_IVA)) / total_conceptos) * factor
+  console.log("OTROS IMPUESTOS: ", importe_otros_impuestos_dividido)
   const importeNetoFinal_1 = toNumber(importe_neto_total_1) * factor;
   const importeIvaFinal_1 = importe_iva_total_1
     ? toNumber(importe_iva_total_1) * factor
     : 0;
   const suma_importes_1 =
     importeNetoFinal_1 + importeIvaFinal_1 + importe_otros_impuestos_dividido;
+  console.log("SUMA: ", importeNetoFinal_1, importeIvaFinal_1, importe_otros_impuestos_dividido)
+  console.log("RESULTADO: ", suma_importes_1)
   const importeTotalFinal_1 = suma_importes_1;
+
 
   const importeNetoFinal_2 = toNumber(importe_neto_total_2) * factor;
   const importeIvaFinal_2 = importe_iva_total_2
@@ -2732,6 +2737,7 @@ export const prorrateoIE = async (req, res) => {
   if (cta_cte_proveedores == 1) {
     try {
       await movimientosProveedoresEgresos({
+        fecha,
         cod_proveedor,
         tipo_comprobante,
         numero_comprobante_1,
@@ -3324,6 +3330,7 @@ export const prorrateo = async (req, res) => {
   if (cta_cte_proveedores == 1) {
     try {
       await movimientosProveedoresEgresos({
+        fecha,
         cod_proveedor,
         tipo_comprobante,
         numero_comprobante_1,
