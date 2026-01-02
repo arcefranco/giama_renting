@@ -175,6 +175,7 @@ export const movimientosProveedores = async ({
 };
 
 export const movimientosProveedoresEgresos = async ({
+  fecha,
   cod_proveedor,
   tipo_comprobante,
   numero_comprobante_1,
@@ -242,11 +243,11 @@ export const movimientosProveedoresEgresos = async ({
       {
         type: QueryTypes.INSERT,
         replacements: [
-          getTodayDate(),
+          fecha,
           cod_proveedor,
           FA_FC,
           NroComprobante,
-          getTodayDate(),
+          fecha,
           importe_neto_no_gravado_total,
           importe_neto_21_total,
           importe_neto_27_total,
@@ -289,11 +290,11 @@ export const movimientosProveedoresEgresos = async ({
       {
         type: QueryTypes.INSERT,
         replacements: [
-          getTodayDate(),
+          fecha,
           cod_proveedor,
           FA_FC,
           NroComprobante,
-          getTodayDate(),
+          fecha,
           importe_neto_no_gravado_total,
           importe_neto_21_total,
           importe_neto_27_total,
@@ -401,7 +402,7 @@ export const movimientosProveedoresEgresos = async ({
           ConceptoComprobante,
           DenomComprobante,
           NroComprobante,
-          getTodayDate(),
+          fecha,
           tipo_comprobante,
           insertMovProv,
           tipo_comprobante,
