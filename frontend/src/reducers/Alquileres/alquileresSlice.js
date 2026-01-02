@@ -41,6 +41,16 @@ export const postAlquiler = createAsyncThunk(
     )
 );
 
+export const postAlquiler_2 = createAsyncThunk(
+  "postAlquiler_2",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.postAlquiler_2(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const postContratoAlquiler = createAsyncThunk(
   "postContratoAlquiler",
   async (data, { rejectWithValue }) =>
@@ -211,6 +221,22 @@ export const alquileresSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(postAlquiler.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postAlquiler_2.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postAlquiler_2.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.nro_recibo_alquiler = action.payload.data;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postAlquiler_2.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
