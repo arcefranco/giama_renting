@@ -45,6 +45,7 @@ import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
 import PagosClientes from "./PagosClientes";
 import ContratoAlquiler_2 from "./components/Alquileres/ContratoAlquiler/ContratoAlquiler_2";
 import Prorrateo from "./components/Costos/Prorrateo";
+import AlquileresForm_2 from "./components/Alquileres/AlquileresForm/AlquileresForm_2";
 function App() {
 
   return (
@@ -143,6 +144,9 @@ function App() {
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/:idContrato' element={<AlquileresForm key={location.pathname} />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/alquileres_2/:idContrato' element={<AlquileresForm_2 key={location.pathname} />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro />} />
