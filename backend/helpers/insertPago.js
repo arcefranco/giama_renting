@@ -32,7 +32,8 @@ try {
     );
     throw new Error(body);
   }
-observacion_final = `${nombre_forma_cobro} + ${observacion}`
+observacion_final = `Forma de cobro: ${nombre_forma_cobro} ${" "} - ${" "}
+Observación: ${observacion}`
 try {
     await giama_renting.query(`
     INSERT INTO pagos_clientes 

@@ -2487,38 +2487,40 @@ export const getAnulaciones = async (req, res) => {
 export const postAlquiler_2 = async (req, res) => {
   const {
     debe_alquiler,
+    debe_alquiler_neto,
+    debe_alquiler_iva,
     id_contrato,
     //datos del cliente para el concepto:
     apellido_cliente,
     //no incluye fecha_cobro, hasta ahora se coloca fecha de hoy
-    usuario,
-    fecha_recibo_alquiler,
     id_vehiculo,
     id_cliente,
     fecha_desde_alquiler,
     fecha_hasta_alquiler,
-    observacion,
-
+    fecha_recibo_alquiler,
+    
     importe_total_1,
     id_forma_cobro_alquiler_1,
-    cuenta_contable_forma_cobro_alquiler_1,
-    cuenta_secundaria_forma_cobro_alquiler_1,
 
     importe_total_2,
     id_forma_cobro_alquiler_2,
-
+    
     importe_total_3,
     id_forma_cobro_alquiler_3,
-    cuenta_contable_forma_cobro_alquiler_2,
-    cuenta_secundaria_forma_cobro_alquiler_2,
-    cuenta_contable_forma_cobro_alquiler_3,
-    cuenta_secundaria_forma_cobro_alquiler_3,
+
+    usuario,
+    observacion,
   } = req.body;
   let fechaDesdeSplit = fecha_desde_alquiler.split("-");
   let fechaHastaSplit = fecha_hasta_alquiler.split("-");
   let alquileresVigentes;
-  let NroAsiento;
-  let NroAsientoSecundario;
+
+  let NroAsiento_deuda;
+  let NroAsientoSecundario_deuda;
+  let NroAsiento_pago;
+  let NroAsientoSecundario_pago;
+
+
   let cuentaIV21;
   let cuentaIV21_2;
   let cuentaALQU;
@@ -2532,17 +2534,20 @@ export const postAlquiler_2 = async (req, res) => {
   let dominio;
   let concepto;
 
+  let cuenta_contable_forma_cobro_alquiler_1;
+  let cuenta_secundaria_forma_cobro_alquiler_1;
+  let cuenta_contable_forma_cobro_alquiler_2;
+  let cuenta_secundaria_forma_cobro_alquiler_2;
+  let cuenta_contable_forma_cobro_alquiler_3;
+  let cuenta_secundaria_forma_cobro_alquiler_3
+
   let importe_total_1_formateado = importe_total_1 ? parseFloat(importe_total_1) : 0
   let importe_total_2_formateado = importe_total_2 ? parseFloat(importe_total_2) : 0 
   let importe_total_3_formateado = importe_total_3 ? parseFloat(importe_total_3) : 0
 
   const importe_total_pago = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
-  const importe_neto_deuda =  (parseFloat(debe_alquiler) / 1.21).toFixed(2)
-  const importe_iva_deuda =  (debe_alquiler - importe_neto_deuda).toFixed(2)
 
-  if(!id_forma_cobro_alquiler_1 && !id_forma_cobro_alquiler_2 && !id_forma_cobro_alquiler_3){
-    return res.send({status: false, message: "Debe elegir al menos un medio de pago para ingresar un alquiler"})
-  }
+
   //buscar el estado del cliente
   try {
     estadoCliente = await verificarCliente(id_cliente);
@@ -2691,9 +2696,32 @@ export const postAlquiler_2 = async (req, res) => {
     const { body } = handleError(error, "parámetro");
     return res.send(body);
   }
+  //obtengo cuentas contables de las formas de cobro
   try {
-    NroAsiento = await getNumeroAsiento();
-    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  if(id_forma_cobro_alquiler_1) {
+    cuenta_contable_forma_cobro_alquiler_1 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1) 
+    cuenta_secundaria_forma_cobro_alquiler_1 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1)
+  }
+
+  if(id_forma_cobro_alquiler_2) {
+    cuenta_contable_forma_cobro_alquiler_2 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2) 
+    cuenta_secundaria_forma_cobro_alquiler_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2)
+  }
+
+  if(id_forma_cobro_alquiler_3) {
+    cuenta_contable_forma_cobro_alquiler_3 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3) 
+    cuenta_secundaria_forma_cobro_alquiler_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3)
+  }
+  } catch (error) {
+    console.log(error);
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
+  }
+  try {
+    NroAsiento_deuda = await getNumeroAsiento();
+    NroAsientoSecundario_deuda = await getNumeroAsientoSecundario();
+    NroAsiento_pago = await getNumeroAsiento();
+    NroAsientoSecundario_pago = await getNumeroAsientoSecundario();
   } catch (error) {
     console.log("THIS: ", error);
     const { body } = handleError(error, "número de asiento");
@@ -2702,19 +2730,19 @@ export const postAlquiler_2 = async (req, res) => {
 
   concepto = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
   hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT} - 
-  ASIENTO: ${NroAsiento}`;
+  ASIENTO: ${NroAsiento_deuda}`;
 
 
   //inserto factura
   try {
     nro_factura = await insertFactura(
       id_cliente,
-      importe_neto,
-      importe_iva,
-      importe_total_pago,
+      debe_alquiler_neto,
+      debe_alquiler_iva,
+      debe_alquiler,
       usuario,
-      NroAsiento,
-      NroAsientoSecundario,
+      NroAsiento_deuda,
+      NroAsientoSecundario_deuda,
       concepto,
       transaction_giama_renting,
       transaction_pa7_giama_renting
@@ -2761,10 +2789,10 @@ export const postAlquiler_2 = async (req, res) => {
       id_cliente: id_cliente,
       fecha_desde_alquiler: fecha_desde_alquiler,
       fecha_hasta_alquiler: fecha_hasta_alquiler,
-      importe_neto: importe_neto,
-      importe_iva: importe_iva,
+      importe_neto: debe_alquiler_neto,
+      importe_iva: debe_alquiler_iva,
       importe_total: debe_alquiler,
-      NroAsiento: NroAsiento,
+      NroAsiento: NroAsiento_deuda,
       observacion: observacion,
       id_contrato: id_contrato,
       transaction: transaction_giama_renting,
@@ -2782,9 +2810,10 @@ export const postAlquiler_2 = async (req, res) => {
 
   //se insertan pagos en pagos_clientes segun cantidad de medios de pago
   if(id_forma_cobro_alquiler_1){
+
   try {
     await insertPago(id_cliente, fecha_recibo_alquiler, usuario, id_forma_cobro_alquiler_1,
-      importe_total_1_formateado, nro_recibo, observacion, NroAsiento, transaction_giama_renting
+      importe_total_1_formateado, nro_recibo, observacion, NroAsiento_pago, transaction_giama_renting
     )
     
   } catch (error) {
@@ -2800,9 +2829,10 @@ export const postAlquiler_2 = async (req, res) => {
   }
 
   if(id_forma_cobro_alquiler_2){
+
   try {
     await insertPago(id_cliente, fecha_recibo_alquiler, usuario, id_forma_cobro_alquiler_2,
-      importe_total_2_formateado, nro_recibo, observacion, NroAsiento, transaction_giama_renting
+      importe_total_2_formateado, nro_recibo, observacion, NroAsiento_pago, transaction_giama_renting
     )
     
   } catch (error) {
@@ -2820,7 +2850,7 @@ export const postAlquiler_2 = async (req, res) => {
   if(id_forma_cobro_alquiler_3){
   try {
     await insertPago(id_cliente, fecha_recibo_alquiler, usuario, id_forma_cobro_alquiler_3,
-      importe_total_3_formateado, nro_recibo, observacion, NroAsiento, transaction_giama_renting
+      importe_total_3_formateado, nro_recibo, observacion, NroAsiento_pago, transaction_giama_renting
     )
     
   } catch (error) {
@@ -2835,55 +2865,56 @@ export const postAlquiler_2 = async (req, res) => {
   }
   }
 
+
   //movimientos contables por deuda alquiler
   try {
     await asientoContable(
       "c_movimientos", 
-      NroAsiento, 
-      "cuenta_nueva", 
+      NroAsiento_deuda, 
+      110308, //"cuenta_nueva", 
       "D", 
       debe_alquiler,
-      observacion,
+      concepto,
       transaction_pa7_giama_renting,
       null,
       getTodayDate(),
-      NroAsientoSecundario,
+      NroAsientoSecundario_deuda,
       null
     )
     await asientoContable(
       "c_movimientos", 
-      NroAsiento, 
+      NroAsiento_deuda, 
       cuentaALQU, 
       "H", 
-      importe_neto_deuda,
-      observacion,
+      debe_alquiler_neto,
+      concepto,
       transaction_pa7_giama_renting,
       null,
       getTodayDate(),
-      NroAsientoSecundario,
+      NroAsientoSecundario_deuda,
       null
     )
     await asientoContable(
       "c_movimientos", 
-      NroAsiento, 
+      NroAsiento_deuda, 
       cuentaIV21, 
       "H", 
-      importe_iva_deuda,
-      observacion,
+      debe_alquiler_iva,
+      concepto,
       transaction_pa7_giama_renting,
       null,
       getTodayDate(),
-      NroAsientoSecundario,
+      NroAsientoSecundario_deuda,
       null
     )
     //mov secundarios 
     await asientoContable(
       "c2_movimientos", 
-      NroAsientoSecundario, 
-      "cuenta_nueva", 
+      NroAsientoSecundario_deuda, 
+      110308, //cuenta_nueva_secundaria
       "D", 
       debe_alquiler,
-      observacion,
+      concepto,
       transaction_pa7_giama_renting,
       null,
       getTodayDate(),
@@ -2892,11 +2923,11 @@ export const postAlquiler_2 = async (req, res) => {
     )
     await asientoContable(
       "c2_movimientos", 
-      NroAsientoSecundario, 
+      NroAsientoSecundario_deuda, 
       cuentaALQU_2, 
       "H", 
-      importe_neto_deuda,
-      observacion,
+      debe_alquiler_neto,
+      concepto,
       transaction_pa7_giama_renting,
       null,
       getTodayDate(),
@@ -2905,11 +2936,11 @@ export const postAlquiler_2 = async (req, res) => {
     )
     await asientoContable(
       "c2_movimientos", 
-      NroAsientoSecundario, 
+      NroAsientoSecundario_deuda, 
       cuentaIV21_2, 
       "H", 
-      importe_iva_deuda,
-      observacion,
+      debe_alquiler_iva,
+      concepto,
       transaction_pa7_giama_renting,
       null,
       getTodayDate(),
@@ -2928,59 +2959,59 @@ export const postAlquiler_2 = async (req, res) => {
     if(cuenta_contable_forma_cobro_alquiler_1){
       await asientoContable(
         "c_movimientos",
-        NroAsiento,
+        NroAsiento_pago,
         cuenta_contable_forma_cobro_alquiler_1,
         "D",
         importe_total_1,
-        concepto,
+        observacion,
         transaction_pa7_giama_renting,
         nro_recibo,
         fecha_recibo_alquiler,
-        NroAsientoSecundario,
+        NroAsientoSecundario_pago,
         null
       );
     }
     if(cuenta_contable_forma_cobro_alquiler_2){
       await asientoContable(
         "c_movimientos",
-        NroAsiento,
+        NroAsiento_pago,
         cuenta_contable_forma_cobro_alquiler_2,
         "D",
         importe_total_2,
-        concepto,
+        observacion,
         transaction_pa7_giama_renting,
         nro_recibo,
         fecha_recibo_alquiler,
-        NroAsientoSecundario,
+        NroAsientoSecundario_pago,
         null
       );
     }
     if(cuenta_contable_forma_cobro_alquiler_3){
       await asientoContable(
         "c_movimientos",
-        NroAsiento,
+        NroAsiento_pago,
         cuenta_contable_forma_cobro_alquiler_3,
         "D",
         importe_total_3,
-        concepto,
+        observacion,
         transaction_pa7_giama_renting,
         nro_recibo,
         fecha_recibo_alquiler,
-        NroAsientoSecundario,
+        NroAsientoSecundario_pago,
         null
       );
     }
     await asientoContable(
       "c_movimientos",
-      NroAsiento,
-      "cuenta_nueva",
+      NroAsiento_pago,
+      110308,//"cuenta_nueva",
       "H",
       importe_total_pago,
-      concepto,
+      observacion,
       transaction_pa7_giama_renting,
       nro_recibo,
       fecha_recibo_alquiler,
-      NroAsientoSecundario,
+      NroAsientoSecundario_pago,
       null
     );
 
@@ -2989,11 +3020,11 @@ export const postAlquiler_2 = async (req, res) => {
     if(cuenta_secundaria_forma_cobro_alquiler_1){
       await asientoContable(
         "c2_movimientos",
-        NroAsientoSecundario,
+        NroAsientoSecundario_pago,
         cuenta_secundaria_forma_cobro_alquiler_1,
         "D",
         importe_total_1,
-        concepto,
+        observacion,
         transaction_pa7_giama_renting,
         nro_recibo,
         fecha_recibo_alquiler
@@ -3002,11 +3033,11 @@ export const postAlquiler_2 = async (req, res) => {
     if(cuenta_secundaria_forma_cobro_alquiler_2){
       await asientoContable(
         "c2_movimientos",
-        NroAsientoSecundario,
+        NroAsientoSecundario_pago,
         cuenta_secundaria_forma_cobro_alquiler_2,
         "D",
         importe_total_2,
-        concepto,
+        observacion,
         transaction_pa7_giama_renting,
         nro_recibo,
         fecha_recibo_alquiler
@@ -3015,11 +3046,11 @@ export const postAlquiler_2 = async (req, res) => {
     if(cuenta_secundaria_forma_cobro_alquiler_3){
       await asientoContable(
         "c2_movimientos",
-        NroAsientoSecundario,
+        NroAsientoSecundario_pago,
         cuenta_secundaria_forma_cobro_alquiler_3,
         "D",
         importe_total_3,
-        concepto,
+        observacion,
         transaction_pa7_giama_renting,
         nro_recibo,
         fecha_recibo_alquiler
@@ -3027,11 +3058,11 @@ export const postAlquiler_2 = async (req, res) => {
     }
     await asientoContable(
       "c2_movimientos",
-      NroAsientoSecundario,
-      "cuenta_nueva",
+      NroAsientoSecundario_pago,
+      110308, //cuenta_nueva_secundaria
       "H",
       importe_total_pago,
-      concepto,
+      observacion,
       transaction_pa7_giama_renting,
       nro_recibo,
       fecha_recibo_alquiler,
@@ -3045,8 +3076,8 @@ export const postAlquiler_2 = async (req, res) => {
     const { body } = handleError(error);
     return res.send(body);
   }
-  transaction_giama_renting.commit();
-  transaction_pa7_giama_renting.commit();
+  await transaction_giama_renting.commit();
+  await transaction_pa7_giama_renting.commit();
   return res.send({
     status: true,
     message: "Alquiler ingresado con éxito",
@@ -3061,6 +3092,8 @@ export const postContratoAlquiler_2 = async (req, res) => {
     apellido_cliente,
     //contrato
     debe_alquiler,
+    debe_alquiler_neto,
+    debe_alquiler_iva,
     debe_deposito,
     id_vehiculo,
     id_cliente,
@@ -3523,9 +3556,9 @@ export const postContratoAlquiler_2 = async (req, res) => {
     try {
         id_factura = await insertFactura(
         id_cliente,
-        importe_neto_pago_alquiler,
-        importe_iva_pago_alquiler,
-        importe_total_pago_alquiler,
+        debe_alquiler_neto,
+        debe_alquiler_iva,
+        debe_alquiler,
         usuario,
         NroAsiento_alquiler_pago,
         NroAsientoSecundario_alquiler_pago,
@@ -3596,8 +3629,8 @@ export const postContratoAlquiler_2 = async (req, res) => {
         id_cliente: id_cliente,
         fecha_desde_alquiler: fecha_desde_alquiler_parseada,
         fecha_hasta_alquiler: fecha_hasta_alquiler_parseada,
-        importe_neto: importe_neto_alquiler_deuda,
-        importe_iva: importe_iva_alquiler_deuda,
+        importe_neto: debe_alquiler_neto,
+        importe_iva: debe_alquiler_iva,
         importe_total: debe_alquiler,
         NroAsiento: NroAsiento_alquiler_deuda,
         observacion: observacion,
