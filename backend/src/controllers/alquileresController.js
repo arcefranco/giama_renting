@@ -460,26 +460,7 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(error, "Recibo de alquiler", acciones.post);
     return res.send(body);
   }
-/*   //inserto factura
-  try {
-    await insertFactura(
-      id_cliente,
-      importe_neto,
-      importe_iva,
-      importe_total,
-      usuario,
-      NroAsiento,
-      NroAsientoSecundario,
-      concepto,
-      transaction_giama_renting,
-      transaction_pa7_giama_renting
-    );
-  } catch (error) {
-    await transaction_giama_renting.rollback()
-    await transaction_pa7_giama_renting.rollback()
-    const { body } = handleError(error, "Factura", acciones.post);
-    return res.send(body);
-  } */
+
   //inserto alquiler
   try {
     await insertAlquiler({
