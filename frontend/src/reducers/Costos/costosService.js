@@ -25,18 +25,10 @@ const getConceptosCostos = async () => {
 const postCostos_Ingresos = async (form) => {
   return postFunction("costos/costos_ingresos", form);
 };
-
-const postCostos_Ingresos_2 = async (form) => {
-  return postFunction("costos/costos_ingresos_2", form);
-};
-
 const getCostosIngresosByIdVehiculo = async (id, header = {}) => {
   return postArrayFunction("costos/costos_ingresos_id_vehiculo", id);
 };
 
-const prorrateoIE = async (form) => {
-  return postFunction("costos/prorrateoIE", form);
-};
 
 const prorrateo = async (form) => {
   return postFunction("costos/prorrateo", form);
@@ -50,9 +42,7 @@ const costosService = {
   getConceptosCostosById,
   deleteConceptosCostos,
   postCostos_Ingresos,
-  postCostos_Ingresos_2,
   getCostosIngresosByIdVehiculo,
-  prorrateoIE,
   prorrateo
 };
 export default costosService;

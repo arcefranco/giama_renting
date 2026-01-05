@@ -1,0 +1,284 @@
+//insertar pago, obtener cta cte cliente en particular, obtener todos los saldos de clientes
+import { QueryTypes } from "sequelize";
+import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
+import {
+  getNumeroAsiento,
+  getNumeroAsientoSecundario,
+} from "../../helpers/getNumeroAsiento.js";
+import { insertRecibo } from "../../helpers/insertRecibo.js";
+import { insertPago } from "../../helpers/insertPago.js";
+import {
+  getNumeroAsiento,
+  getNumeroAsientoSecundario,
+} from "../../helpers/getNumeroAsiento.js";
+import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../../helpers/getCuentaContableFormaCobro.js";
+
+export const postPago = async (req, res) => {
+    const {
+    id_cliente,
+    fecha,  
+    usuario_alta_registro,
+    id_forma_cobro,
+    importe_cobro,
+    observacion,
+    //faltan
+    usuario,
+    id_vehiculo // falta en formulario
+    } = req.body
+    let nro_recibo;
+    let NroAsiento;
+    let NroAsientoSecundario;
+    let transaction_giama_renting = await giama_renting.transaction()
+    let transaction_pa7_giama_renting = await pa7_giama_renting.transaction()
+    let cuenta_contable_forma_cobro
+    let cuenta_secundaria_forma_cobro
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(error, "número de asiento");
+    return res.send(body);
+  }
+  //cuenta contable de la forma de cobro
+  try {
+  cuenta_contable_forma_cobro = await getCuentaContableFormaCobro(id_forma_cobro) 
+  cuenta_secundaria_forma_cobro = await getCuentaSecundariaFormaCobro(id_forma_cobro)
+  } catch (error) {
+  console.log(error);
+  const { body } = handleError(error, "parámetro");
+  return res.send(body);
+  }
+//inserto el recibo
+  try {
+    nro_recibo = await insertRecibo(
+        fecha,
+        observacion,
+        importe_cobro,
+        usuario,
+        id_cliente,
+        id_vehiculo ? id_vehiculo : null,
+        null,
+        null,
+        id_forma_cobro,
+        null,
+        null,
+        null,
+        transaction_giama_renting,
+        null,
+        null,
+        importe_cobro
+    )
+} catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    const { body } = handleError(error, "Recibo de alquiler", acciones.post);
+    return res.send(body);
+  }
+//inserto el pago
+  try {
+    await insertPago(    
+    id_cliente,
+    fecha,  
+    usuario_alta_registro,
+    id_forma_cobro,
+    importe_cobro,
+    nro_recibo,
+    observacion,
+    NroAsiento,
+    transaction_giama_renting)
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    const { body } = handleError(
+        error,
+        "pago",
+        acciones.post
+    );
+    return res.send(body);
+  }
+
+//asientos
+try {
+  await asientoContable(
+    "c_movimientos",
+    NroAsiento,
+    cuenta_contable_forma_cobro,
+    "D",
+    importe_cobro,
+    observacion,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha,
+    NroAsientoSecundario,
+    null
+  );
+  await asientoContable(
+    "c_movimientos",
+    NroAsiento,
+    110308,//"cuenta_nueva",
+    "H",
+    importe_cobro,
+    observacion,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha_recibo_alquiler,
+    NroAsientoSecundario_pago,
+    null
+  );
+  await asientoContable(
+    "c2_movimientos",
+    NroAsientoSecundario,
+    cuenta_secundaria_forma_cobro,
+    "D",
+    importe_cobro,
+    observacion,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha
+  );
+    
+  await asientoContable(
+    "c2_movimientos",
+    NroAsientoSecundario,
+    110308, //cuenta_nueva_secundaria
+    "H",
+    importe_cobro,
+    observacion,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha,
+    null,
+    null
+  );
+  
+} catch (error) {
+console.log(error);
+transaction_giama_renting.rollback();
+transaction_pa7_giama_renting.rollback();
+const { body } = handleError(error);
+return res.send(body);
+}
+
+return res.send({status: true, message: "Cobro ingresado correctamente"})
+
+
+
+}
+
+export const ctaCteCliente = async (req, res) => {
+  const {id_cliente} = req.body
+  try {
+    const resultado = await giama_renting.query(`SELECT
+    fecha,
+    concepto,
+    debe,
+    haber
+    FROM (
+
+    /* =======================
+       PAGOS DEL CLIENTE
+       ======================= */
+    SELECT
+        pc.fecha AS fecha,
+        CONCAT(fc.nombre, 
+               CASE 
+                   WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
+                   THEN CONCAT(' ', pc.observacion)
+                   ELSE ''
+               END
+        ) AS concepto,
+        NULL AS debe,
+        pc.importe_cobro AS haber
+    FROM pagos_clientes pc
+    INNER JOIN formas_cobro fc 
+        ON fc.id = pc.id_forma_cobro
+    WHERE pc.id_cliente = ?
+
+
+    UNION ALL
+
+
+    /* =======================
+       ALQUILERES (DEUDA)
+       ======================= */
+    SELECT
+        a.fecha_alquiler AS fecha,
+        CONCAT(
+            'Alquiler - ',
+            v.dominio,
+            ' - ',
+            DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
+            ' al ',
+            DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
+        ) AS concepto,
+        a.importe_total AS debe,
+        NULL AS haber
+    FROM alquileres a
+    INNER JOIN vehiculos v 
+        ON v.id = a.id_vehiculo
+    WHERE a.id_cliente = ?
+
+
+    UNION ALL
+
+
+    /* =======================
+       DEPOSITO DE GARANTÍA
+       ======================= */
+    SELECT
+        ca.fecha_contrato AS fecha,
+        CONCAT(
+            'Deposito gtia - ',
+            v.dominio
+        ) AS concepto,
+        ca.deposito_garantia AS debe,
+        NULL AS haber
+    FROM contratos_alquiler ca
+    INNER JOIN vehiculos v 
+        ON v.id = ca.id_vehiculo
+    WHERE ca.id_cliente = ?
+      AND ca.deposito_garantia IS NOT NULL
+      AND ca.deposito_garantia > 0
+
+
+    UNION ALL
+
+
+    /* =======================
+       COSTOS / INGRESOS
+       ======================= */
+    SELECT
+        ci.fecha AS fecha,
+        CONCAT(
+            cc.nombre,
+            CASE 
+                WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
+                THEN CONCAT(' ', ci.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        ci.importe_total AS debe,
+        NULL AS haber
+    FROM costos_ingresos ci
+    INNER JOIN conceptos_costos cc 
+        ON cc.id = ci.id_concepto
+    WHERE ci.id_cliente = ?
+
+) AS cuenta_corriente
+ORDER BY fecha ASC`, {
+      type: QueryTypes.SELECT,
+      replacements: [id_cliente, id_cliente, id_cliente, id_cliente]
+    });
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(error, "cuenta corriente del cliente", acciones.get);
+    return res.send(body);
+  }
+}
+
+
+
+
+
+

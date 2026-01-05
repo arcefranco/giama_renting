@@ -72,15 +72,6 @@ export const getConceptosCostosById = createAsyncThunk(
     )
 );
 
-/* export const postCostos_Ingresos = createAsyncThunk(
-  "postCostos_Ingresos",
-  async (data, { rejectWithValue }) =>
-    handleAsyncThunk(
-      () => costosService.postCostos_Ingresos(data),
-      responses.successObject,
-      rejectWithValue
-    )
-); */
 
 export const getCostosIngresosByIdVehiculo = createAsyncThunk(
   "getCostosIngresosByIdVehiculo",
@@ -92,15 +83,7 @@ export const getCostosIngresosByIdVehiculo = createAsyncThunk(
     )
 );
 
-export const prorrateoIE = createAsyncThunk(
-  "prorrateoIE",
-  async (data, { rejectWithValue }) =>
-    handleAsyncThunk(
-      () => costosService.prorrateoIE(data),
-      responses.successObject,
-      rejectWithValue
-    )
-);
+
 
 export const prorrateo = createAsyncThunk(
   "prorrateo",
@@ -223,22 +206,6 @@ export const costosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
-/*     builder.addCase(postCostos_Ingresos.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(postCostos_Ingresos.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.nro_recibo_ingreso = action.payload.nro_recibo_ingreso;
-      state.message = action.payload.message;
-    });
-    builder.addCase(postCostos_Ingresos.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    }); */
     builder.addCase(getCostosIngresosByIdVehiculo.pending, (state) => {
       state.isLoading = true;
     });
@@ -253,21 +220,6 @@ export const costosSlice = createSlice({
       }
     );
     builder.addCase(getCostosIngresosByIdVehiculo.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    });
-    builder.addCase(prorrateoIE.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(prorrateoIE.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.message = action.payload.message;
-    });
-    builder.addCase(prorrateoIE.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

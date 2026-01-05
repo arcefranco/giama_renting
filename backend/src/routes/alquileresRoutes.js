@@ -16,8 +16,8 @@ import {
   getContratosByIdCliente,
   cambioVehiculo,
   getContratosAVencer,
-  postContratoAlquiler_2,
-  postAlquiler_2
+
+
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
@@ -35,14 +35,7 @@ alquileresRouter.post(
   authorizeRoles("2"),
   postContratoAlquiler
 );
-alquileresRouter.post(
-  "/contrato_2",
-  auth,
-  authorizeRoles("2"),
-  postContratoAlquiler_2
-);
 alquileresRouter.post("/postAlquiler", auth, authorizeRoles("2"), postAlquiler);
-alquileresRouter.post("/postAlquiler_2", auth, authorizeRoles("2"), postAlquiler_2);
 alquileresRouter.post(
   "/formaDeCobro",
   auth,

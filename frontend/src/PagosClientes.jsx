@@ -94,7 +94,7 @@ const PagosClientes = () => {
                     gridTemplateColumns: "1fr 1fr 1fr",
                     justifyContent: "space-around"
                 }}>
-                    {/*          <div className={styles.container}> */}
+
 
 
                     <div className={styles.inputContainer}>

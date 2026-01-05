@@ -5,10 +5,10 @@ import {
   resetCostosVehiculo, reset_nro_recibo_ingreso
 } from '../../reducers/Costos/costosSlice.js';
 import { postCostos_Ingresos, reset } from "../../reducers/Costos/ingresosSlice.js"
-import { getVehiculos, getVehiculosById, resetVehiculo } from '../../reducers/Vehiculos/vehiculosSlice'
+import { getVehiculos, getVehiculosById, resetVehiculo } from '../../reducers/Vehiculos/vehiculosSlice.js'
 import { getContratosByIdVehiculo, getContratosByIdCliente } from '../../reducers/Alquileres/alquileresSlice.js'
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
-import { getModelos, getFormasDeCobro } from '../../reducers/Generales/generalesSlice'
+import { getModelos, getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
 import { useParams } from 'react-router-dom';
 import DataGrid, { Column, Scrolling, Summary, TotalItem } from "devextreme-react/data-grid"
 import { locale } from 'devextreme/localization';
@@ -16,7 +16,7 @@ import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css"
 import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
-import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
+import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo.jsx';
 import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { getReciboIngresoById, resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
@@ -31,7 +31,6 @@ const Ingresos = () => {
   const dispatch = useDispatch()
   const { costos_ingresos_vehiculo, conceptos, isLoading: isLoadingCostos } = useSelector((state) => state.costosReducer)
   const { isError, isSuccess, isLoading, message, nro_recibo_ingreso } = useSelector((state) => state.ingresosReducer)
-  const { contratosVehiculo, contratosCliente } = useSelector((state) => state.alquileresReducer);
   const { vehiculo, vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
   const { username } = useSelector((state) => state.loginReducer)
@@ -39,9 +38,15 @@ const Ingresos = () => {
   const { html_recibo_ingreso } = useSelector((state) => state.recibosReducer);
   const [total, setTotal] = useState(0)
   const [form, setForm] = useState({
+    debe_ingreso: '',
     id_vehiculo: id ? id : "",
     fecha: '',
-    id_forma_cobro: '',
+    id_forma_cobro_1: '',
+    id_forma_cobro_2: '',
+    id_forma_cobro_3: '',
+    total_cobro_1: '',
+    total_cobro_2: '',
+    total_cobro_3: '',
     id_cliente: '',
     ingreso_egreso: 'I',
     observacion: '',
@@ -167,59 +172,6 @@ const Ingresos = () => {
     dispatch(getContratosByIdCliente({ id: form.id_cliente }))
   }, [form.id_cliente])
 
-  /*   useEffect(() => { 
-      if (!contratosVehiculo?.length) return;
-  
-      const hoy = getToday()
-      // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
-      const contratoVigente = contratosVehiculo.find(c => {
-        const desde = new Date(c.fecha_desde);
-        const hasta = new Date(c.fecha_hasta);
-        console.log(hoy, desde, hasta)
-        return hoy >= desde && hoy <= hasta;
-      });
-      // Si hay contrato vigente, actualizar el form
-      if (contratoVigente) {
-        console.log("contratoVigente")
-        setForm(prev => ({
-          ...prev,
-          id_cliente: contratoVigente.id_cliente
-        }));
-      } else {
-        console.log("contratoNOVigente")
-        // Si no hay contrato vigente, dejar vacío
-        setForm(prev => ({
-          ...prev,
-          id_cliente: ""
-        }));
-      }
-    }, [contratosVehiculo, form.id_vehiculo, id]);
-  
-    useEffect(() => { 
-      if (!contratosCliente?.length) return;
-  
-      const hoy = getToday()
-      // Buscar contrato vigente (fecha_desde <= hoy <= fecha_hasta)
-      const contratoVigente = contratosCliente.find(c => {
-        const desde = new Date(c.fecha_desde);
-        const hasta = new Date(c.fecha_hasta);
-        return hoy >= desde && hoy <= hasta;
-      });
-  
-      // Si hay contrato vigente, actualizar el form
-      if (contratoVigente) {
-        setForm(prev => ({
-          ...prev,
-          id_vehiculo: contratoVigente.id_vehiculo
-        }));
-      } else {
-        // Si no hay contrato vigente, dejar vacío
-        setForm(prev => ({
-          ...prev,
-          id_vehiculo: ""
-        }));
-      }
-    }, [contratosCliente]); */
 
   useEffect(() => { /**FILTRADO DE CONCEPTOS */
     if (conceptos?.length) {
@@ -401,6 +353,13 @@ const Ingresos = () => {
     setTotal(total_1 + total_2 + total_3)
   }, [form.importe_total, form.importe_total_2, form.importe_total_3])
 
+  useEffect(() => {
+    setForm({
+        ...form,
+        debe_ingreso: total
+    })
+  }, [total])
+
   useToastFeedback({
     isError,
     isSuccess,
@@ -409,47 +368,61 @@ const Ingresos = () => {
     onSuccess: () => {
       if (id) {
         setForm({
-          id_vehiculo: id,
-          fecha: '',
-          usuario: username,
-          observacion: '',
-          ingreso_egreso: 'I',
-          id_cliente: '',
-          id_forma_cobro: '',
-          id_concepto: '',
-          importe_neto: '',
-          importe_iva: '',
-          importe_total: '',
-          id_concepto_2: '',
-          importe_neto_2: '',
-          importe_iva_2: '',
-          importe_total_2: '',
-          id_concepto_3: '',
-          importe_neto_3: '',
-          importe_iva_3: '',
-          importe_total_3: ''
+        debe_ingreso: '',
+        id_vehiculo: id,
+        fecha: '',
+        id_forma_cobro_1: '',
+        id_forma_cobro_2: '',
+        id_forma_cobro_3: '',
+        total_cobro_1: '',
+        total_cobro_2: '',
+        total_cobro_3: '',
+        usuario: username,
+        observacion: '',
+        ingreso_egreso: 'I',
+        id_cliente: '',
+        id_forma_cobro: '',
+        id_concepto: '',
+        importe_neto: '',
+        importe_iva: '',
+        importe_total: '',
+        id_concepto_2: '',
+        importe_neto_2: '',
+        importe_iva_2: '',
+        importe_total_2: '',
+        id_concepto_3: '',
+        importe_neto_3: '',
+        importe_iva_3: '',
+        importe_total_3: ''
         })
       } else if (!id) {
         setForm({
-          id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
-          fecha: '',
-          usuario: username,
-          observacion: '',
-          ingreso_egreso: 'I',
-          id_cliente: '',
-          id_forma_cobro: '',
-          id_concepto: '',
-          importe_neto: '',
-          importe_iva: '',
-          importe_total: '',
-          id_concepto_2: '',
-          importe_neto_2: '',
-          importe_iva_2: '',
-          importe_total_2: '',
-          id_concepto_3: '',
-          importe_neto_3: '',
-          importe_iva_3: '',
-          importe_total_3: ''
+        debe_ingreso: '',
+        id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
+        fecha: '',
+        id_forma_cobro_1: '',
+        id_forma_cobro_2: '',
+        id_forma_cobro_3: '',
+        total_cobro_1: '',
+        total_cobro_2: '',
+        total_cobro_3: '',
+        usuario: username,
+        observacion: '',
+        ingreso_egreso: 'I',
+        id_cliente: '',
+        id_forma_cobro: '',
+        id_concepto: '',
+        importe_neto: '',
+        importe_iva: '',
+        importe_total: '',
+        id_concepto_2: '',
+        importe_neto_2: '',
+        importe_iva_2: '',
+        importe_total_2: '',
+        id_concepto_3: '',
+        importe_neto_3: '',
+        importe_iva_3: '',
+        importe_total_3: ''
         })
       }
       setGeneraFactura(false)
@@ -470,56 +443,59 @@ const Ingresos = () => {
   }
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "importe_total") {
-      let total = value
+    if (name === "importe_neto") {
+      let neto = value
       if (IVAInhabilitado) {
         setForm({
           ...form,
-          importe_total: total,
-          importe_neto: total,
+          importe_total: neto,
+          importe_neto: neto,
           importe_iva: ""
         })
       } else {
         setForm({
           ...form,
-          importe_total: total,
-          importe_neto: parseFloat(toNumber(total) / 1.21).toFixed(2),
-          importe_iva: parseFloat(toNumber(total) - parseFloat(total / 1.21)).toFixed(2)
+          importe_neto: neto,
+          importe_iva: parseFloat(parseFloat(neto) * 0.21).toFixed(2),
+          importe_total: parseFloat(parseFloat(neto) + parseFloat(neto * 0.21)).toFixed(2),
         })
       }
     }
     //copias de comportamiento a importes 2 y 3
-    else if (name === "importe_total_2") {
+    else if (name === "importe_neto_2") {
+    let neto = value
       if (IVAInhabilitado2) {
         setForm({
           ...form,
-          importe_total_2: value,
-          importe_neto_2: value,
+          importe_total_2: neto,
+          importe_neto_2: neto,
           importe_iva_2: ""
         })
       } else {
         setForm({
           ...form,
-          importe_total_2: value,
-          importe_neto_2: parseFloat(toNumber(value) / 1.21).toFixed(2),
-          importe_iva_2: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
+          importe_neto_2: neto,
+          importe_iva_2: parseFloat(parseFloat(neto) * 0.21).toFixed(2),
+          importe_total_2: parseFloat(parseFloat(neto) + parseFloat(neto * 0.21)).toFixed(2),
         })
       }
     }
-    else if (name === "importe_total_3") {
+    else if (name === "importe_neto_3") {
+        let neto = value
       if (IVAInhabilitado3) {
+        let neto = value
         setForm({
           ...form,
-          importe_total_3: value,
-          importe_neto_3: value,
+          importe_total_3: neto,
+          importe_neto_3: neto,
           importe_iva_3: ""
         })
       } else {
         setForm({
           ...form,
-          importe_total_3: value,
-          importe_neto_3: parseFloat(toNumber(value) / 1.21).toFixed(2),
-          importe_iva_3: parseFloat(toNumber(value) - parseFloat(value / 1.21)).toFixed(2)
+          importe_neto_3: neto,
+          importe_iva_3: parseFloat(parseFloat(neto) * 0.21).toFixed(2),
+          importe_total_3: parseFloat(parseFloat(neto) + parseFloat(neto * 0.21)).toFixed(2),
         })
       }
     }
@@ -593,6 +569,19 @@ const Ingresos = () => {
         [name]: newValue,
       });
     }
+else if (
+        name === "total_cobro_1" ||
+        name === "total_cobro_2" ||
+        name === "total_cobro_3") {
+  const importe = value;
+    const decimalRegex = /^\d*([.]?\d*)?$/
+  if (!decimalRegex.test(importe)) return;
+
+  setForm({
+    ...form,
+    [name]: importe
+  });
+}
     else {
       setForm({
         ...form,
@@ -601,6 +590,8 @@ const Ingresos = () => {
 
     }
   };
+
+
 
   const handleSubmit = () => {
     if (conceptos.find(e => e.id == form.id_concepto).ingreso_egreso == "I" && !form.id_cliente) {
@@ -698,16 +689,6 @@ const Ingresos = () => {
           <div className={styles.selectWithIcon} style={{
             width: "20rem"
           }}>
-            {/*             <select name="id_cliente" value={form["id_cliente"]} onChange={handleChange}>
-              <option value={""} selected>{"Seleccione un cliente"}</option>
-              {
-                clientes?.length && clientes.map(e => (
-                  <option key={e.id} value={e.id}>
-                    {e.nro_documento} - {e.nombre} {e.apellido}
-                  </option>
-                ))
-              }
-            </select> */}
             <Select
               options={opcionesClientes}
               value={
@@ -787,6 +768,7 @@ const Ingresos = () => {
       </DataGrid>
       <h2>Alta de ingresos del vehículo</h2>
       <div className={styles.formContainer}>
+
         <form action="" enctype="multipart/form-data" className={styles.form}>
           <div className={styles.container3}>
             <div className={styles.inputContainer}>
@@ -796,16 +778,9 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
-              <span>Forma de cobro</span>
-              <select name="id_forma_cobro" value={form["id_forma_cobro"]}
-                onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione una opción"}</option>
-                {
-                  formasDeCobro?.length && formasDeCobro?.map(e => {
-                    return <option key={e.id} value={e.id}>{e.nombre}</option>
-                  })
-                }
-              </select>
+              <span>Importe total</span>
+              <input type="text" name='debe_ingreso' value={form["debe_ingreso"]} disabled
+                onChange={handleChange} />
             </div>
           </div>
           <div className={styles.container6}>
@@ -823,19 +798,21 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
-              <span>Total</span>
-              <input type="text" name='importe_total' value={form["importe_total"]}
-                onChange={handleChange} />
-            </div>
-            <div className={styles.inputContainer}>
               <span>Importe neto</span>
-              <input type="text" name='importe_neto' value={form["importe_neto"]} disabled />
+              <input type="text" name='importe_neto' value={form["importe_neto"]} 
+                onChange={handleChange}/>
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
               <input type="text" name='importe_iva' value={form["importe_iva"]}
                 disabled={IVAInhabilitado}
                 onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='importe_total' value={form["importe_total"]}
+              disabled
+               />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -876,19 +853,20 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
-              <span>Total</span>
-              <input type="text" name='importe_total_2' value={form["importe_total_2"]}
-                onChange={handleChange} />
-            </div>
-            <div className={styles.inputContainer}>
               <span>Importe neto</span>
-              <input type="text" name='importe_neto_2' value={form["importe_neto_2"]} disabled />
+              <input type="text" name='importe_neto_2' value={form["importe_neto_2"]}  
+               onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
               <input type="text" name='importe_iva_2' value={form["importe_iva_2"]}
                 disabled={IVAInhabilitado2}
                 onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='importe_total_2' value={form["importe_total_2"]} 
+                />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -929,19 +907,20 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
-              <span>Total</span>
-              <input type="text" name='importe_total_3' value={form["importe_total_3"]}
-                onChange={handleChange} />
-            </div>
-            <div className={styles.inputContainer}>
               <span>Importe neto</span>
-              <input type="text" name='importe_neto_3' value={form["importe_neto_3"]} disabled />
+              <input type="text" name='importe_neto_3' value={form["importe_neto_3"]}  
+              onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
               <input type="text" name='importe_iva_3' value={form["importe_iva_3"]}
                 disabled={IVAInhabilitado}
                 onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='importe_total_3' value={form["importe_total_3"]} disabled
+                />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -974,10 +953,67 @@ const Ingresos = () => {
             <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
           </div>
-          <div className={styles.divTotal}>
-            <span style={{ fontSize: "15px" }}>Total: </span>
-            <span>{total}</span>
-          </div>
+
+        </form>
+        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <h2>Pago</h2>
+        <div className={styles.container3}>
+            <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+              <select name="id_forma_cobro_1" value={form.id_forma_cobro_1}
+                onChange={handleChange} id="">
+                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                {
+                  formasDeCobro?.length && formasDeCobro?.map(e => {
+                    return <option key={e.id} value={e.id}>{e.nombre}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='total_cobro_1' value={form.total_cobro_1} 
+                onChange={handleChange}/>
+            </div>
+        </div>
+        <div className={styles.container3}>
+            <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+              <select name="id_forma_cobro_2" value={form.id_forma_cobro_2}
+                onChange={handleChange} id="">
+                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                {
+                  formasDeCobro?.length && formasDeCobro?.map(e => {
+                    return <option key={e.id} value={e.id}>{e.nombre}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='total_cobro_2' value={form.total_cobro_2} 
+                onChange={handleChange}/>
+            </div>
+        </div>
+        <div className={styles.container3}>
+            <div className={styles.inputContainer}>
+            <span>Forma de cobro</span>
+              <select name="id_forma_cobro_3" value={form.id_forma_cobro_3}
+                onChange={handleChange} id="">
+                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                {
+                  formasDeCobro?.length && formasDeCobro?.map(e => {
+                    return <option key={e.id} value={e.id}>{e.nombre}</option>
+                  })
+                }
+              </select>
+            </div>
+            <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='total_cobro_3' value={form.total_cobro_3} 
+                onChange={handleChange}/>
+            </div>
+        </div>
         </form>
         <button
           className={styles.sendBtn}

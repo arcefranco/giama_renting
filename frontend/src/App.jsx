@@ -15,10 +15,8 @@ import UpdateCliente from './components/Clientes/UpdateCliente';
 import AltaCostos from './components/Costos/AltaCostos';
 import UpdateConcepto from './components/Costos/UpdateConcepto';
 import Ingresos from "./components/Costos/Ingresos";
-import Ingresos_2 from "./components/Costos/Ingresos_2";
 import FormasDeCobro from './components/Alquileres/FormasDeCobro/FormasDeCobro';
 import AlquileresForm from './components/Alquileres/AlquileresForm/AlquileresForm';
-import ProrrateoIE from './components/Costos/ProrrateoIE';
 import FichaVehiculo from './components/Vehiculos/FichaVehiculo/FichaVehiculo';
 import ReporteFichasVehiculos from './components/Vehiculos/FichaVehiculo/ReporteFichasVehiculos';
 import ReporteAlquileres from './components/Alquileres/ReporteAlquileres/ReporteAlquileres';
@@ -43,9 +41,9 @@ import ReporteRecibos from "./components/Recibos/ReporteRecibos";
 import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContrato";
 import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
 import PagosClientes from "./PagosClientes";
-import ContratoAlquiler_2 from "./components/Alquileres/ContratoAlquiler/ContratoAlquiler_2";
+import ContratoAlquiler_2 from "./components/Alquileres/ContratoAlquiler/ContratoAlquiler";
 import Prorrateo from "./components/Costos/Prorrateo";
-import AlquileresForm_2 from "./components/Alquileres/AlquileresForm/AlquileresForm_2";
+import AlquileresForm_2 from "./components/Alquileres/AlquileresForm/AlquileresForm";
 function App() {
 
   return (
@@ -113,9 +111,6 @@ function App() {
             <Route path='/costos/ingresos' element={<Ingresos />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-            <Route path='/costos/ingresos_2' element={<Ingresos_2 />} />
-          </Route>
-          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/egresos' element={<Egresos />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
@@ -125,16 +120,10 @@ function App() {
             <Route path='/costos/egresos/:id' element={<Egresos />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-            <Route path='/costos/prorrateoIE' element={<ProrrateoIE />} />
-          </Route>
-          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/prorrateo' element={<Prorrateo />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/contrato' element={<ContratoAlquiler />} />
-          </Route>
-          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-            <Route path='/alquileres/contrato_2' element={<ContratoAlquiler_2 />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/contrato/actualizar/:id' element={<UpdateContrato />} />
@@ -144,9 +133,6 @@ function App() {
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/:idContrato' element={<AlquileresForm key={location.pathname} />} />
-          </Route>
-          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
-            <Route path='/alquileres_2/:idContrato' element={<AlquileresForm_2 key={location.pathname} />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/formasDeCobro' element={<FormasDeCobro />} />

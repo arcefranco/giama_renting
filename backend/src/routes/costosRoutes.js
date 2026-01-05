@@ -7,9 +7,7 @@ import {
   getCuentasContables,
   postConceptoCostos,
   postCostos_Ingresos,
-  prorrateoIE,
   updateConceptoCostos,
-  postCostos_Ingresos_2,
   prorrateo
 } from "../controllers/costosController.js";
 import { auth } from "../middlewares/auth.js";
@@ -57,17 +55,10 @@ costosRouter.post(
   postCostos_Ingresos
 );
 costosRouter.post(
-  "/costos_ingresos_2",
-  auth,
-  authorizeRoles("2"),
-  postCostos_Ingresos_2
-);
-costosRouter.post(
   "/costos_ingresos_id_vehiculo",
   auth,
   authorizeRoles("2"),
   getCostosIngresosByIdVehiculo
 );
-costosRouter.post("/prorrateoIE", auth, authorizeRoles("2"), prorrateoIE);
-costosRouter.post("/prorrateo", prorrateo);
+costosRouter.post("/prorrateo", auth, authorizeRoles("2"), prorrateo);
 export default costosRouter;

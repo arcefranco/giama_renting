@@ -27,7 +27,7 @@ import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../.
 
 
 
-const insertAlquiler = async (body) => {
+/* const insertAlquiler = async (body) => {
   const {
     id_vehiculo,
     id_cliente,
@@ -94,10 +94,10 @@ const insertAlquiler = async (body) => {
       }`
     );
   }
-};
+}; */
 
 
-const insertAlquiler_2 = async (body) => {
+const insertAlquiler = async (body) => {
   const {
     id_vehiculo,
     id_cliente,
@@ -109,7 +109,7 @@ const insertAlquiler_2 = async (body) => {
     NroAsiento,
     observacion,
     id_contrato,
-    transaction,
+    transaction
   } = body;
   try {
     await giama_renting.query(
@@ -123,7 +123,8 @@ const insertAlquiler_2 = async (body) => {
     importe_total,
     nro_asiento,
     observacion,
-    id_contrato) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    id_contrato,
+    fecha_alquiler) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -137,6 +138,7 @@ const insertAlquiler_2 = async (body) => {
           NroAsiento,
           observacion ? observacion : "",
           id_contrato,
+          getTodayDate()
         ],
         transaction: transaction,
       }
@@ -184,7 +186,7 @@ export const postFormaCobro = async (req, res) => {
   }
 };
 
-export const postAlquiler = async (req, res) => {
+/* export const postAlquiler = async (req, res) => {
   const {
     id_contrato,
     //datos del cliente para el concepto:
@@ -460,26 +462,7 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(error, "Recibo de alquiler", acciones.post);
     return res.send(body);
   }
-/*   //inserto factura
-  try {
-    await insertFactura(
-      id_cliente,
-      importe_neto,
-      importe_iva,
-      importe_total,
-      usuario,
-      NroAsiento,
-      NroAsientoSecundario,
-      concepto,
-      transaction_giama_renting,
-      transaction_pa7_giama_renting
-    );
-  } catch (error) {
-    await transaction_giama_renting.rollback()
-    await transaction_pa7_giama_renting.rollback()
-    const { body } = handleError(error, "Factura", acciones.post);
-    return res.send(body);
-  } */
+
   //inserto alquiler
   try {
     await insertAlquiler({
@@ -663,9 +646,9 @@ export const postAlquiler = async (req, res) => {
     message: "Alquiler ingresado con éxito",
     data: nro_recibo,
   });
-};
+}; */
 
-export const postContratoAlquiler = async (req, res) => {
+/* export const postContratoAlquiler = async (req, res) => {
   const {
     usuario,
     //datos del cliente para el concepto:
@@ -1476,7 +1459,7 @@ export const postContratoAlquiler = async (req, res) => {
     status: true,
     message: "Contrato y alquiler ingresados con éxito",
   });
-};
+}; */
 
 export const getAlquileresByIdVehiculo = async (req, res) => {
   const { id } = req.body;
@@ -2484,7 +2467,7 @@ export const getAnulaciones = async (req, res) => {
 };
 
 
-export const postAlquiler_2 = async (req, res) => {
+export const postAlquiler = async (req, res) => {
   const {
     debe_alquiler,
     debe_alquiler_neto,
@@ -2784,7 +2767,7 @@ export const postAlquiler_2 = async (req, res) => {
 
   //inserto alquiler
   try {
-    await insertAlquiler_2({
+    await insertAlquiler({
       id_vehiculo: id_vehiculo,
       id_cliente: id_cliente,
       fecha_desde_alquiler: fecha_desde_alquiler,
@@ -3085,7 +3068,7 @@ export const postAlquiler_2 = async (req, res) => {
   });
 };
 
-export const postContratoAlquiler_2 = async (req, res) => {
+export const postContratoAlquiler = async (req, res) => {
   const {
     usuario,
     //datos del cliente para el concepto:
@@ -3624,7 +3607,7 @@ export const postContratoAlquiler_2 = async (req, res) => {
   //inserto alquiler
   if (ingresa_alquiler == 1) {
     try {
-      await insertAlquiler_2({
+      await insertAlquiler({
         id_vehiculo: id_vehiculo,
         id_cliente: id_cliente,
         fecha_desde_alquiler: fecha_desde_alquiler_parseada,

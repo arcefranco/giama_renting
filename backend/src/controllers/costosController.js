@@ -584,7 +584,7 @@ const asientos_costos_ingresos = async (
   return NroAsiento;
 };
 
-const asientos_ingresos_2 = async (
+const asientos_ingresos = async (
   //FUNCION AUXILIAR
   debe_ingreso,
   Fecha,
@@ -1385,7 +1385,7 @@ async function registrarCostoIngresoIndividual({
   }
 }
 
-async function registrarIngresoIndividual({
+/* async function registrarIngresoIndividual({
   id_vehiculo,
   fecha,
   id_forma_cobro,
@@ -1521,8 +1521,8 @@ async function registrarIngresoIndividual({
     }
     } catch (error) {
       console.log(error);
-/*       await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback(); */
+
+      
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -1552,8 +1552,8 @@ async function registrarIngresoIndividual({
     }
     } catch (error) {
       console.log(error);
-/*       await transaction_asientos.rollback();
-      await transaction_costos_ingresos.rollback(); */
+
+
       throw new Error(
         `Error al buscar una cuenta contable ${
           error.message ? `${" :"}${error.message}` : ""
@@ -1706,8 +1706,6 @@ async function registrarIngresoIndividual({
       null
     );
   } catch (error) {
-/*     await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback(); */
     throw error;
   }
   //inserto en tabla costos_ingresos
@@ -1789,21 +1787,19 @@ async function registrarIngresoIndividual({
       );
     }
   }catch(error){
-/*     await transaction_costos_ingresos.rollback();
-    await transaction_asientos.rollback(); */
+
     throw new Error(error.message);
   }
-/*     await transaction_costos_ingresos.commit();
-    await transaction_asientos.commit(); */
+
     return {
       nro_recibo: nro_recibo ? nro_recibo : null,
       genera_factura: genera_factura_final,
     };
 
   
-}
+} */
 
-async function registrarIngresoIndividual_2({
+async function registrarIngresoIndividual({
   debe_ingreso,
   id_vehiculo,
   fecha,
@@ -2153,7 +2149,7 @@ async function registrarIngresoIndividual_2({
     }
       //realizo el asiento 
   try {
-    await asientos_ingresos_2(
+    await asientos_ingresos(
       debe_ingreso,
       fecha,
       cuenta_concepto,
@@ -2296,6 +2292,57 @@ async function registrarIngresoIndividual_2({
   
 }
 
+/* export const postCostos_Ingresos = async (req, res) => {
+  let message;
+  const { ingreso_egreso } = req.body;
+  const transaction_costos_ingresos = await giama_renting.transaction();
+  const transaction_asientos = await pa7_giama_renting.transaction();
+  let nro_recibo_ingreso; 
+  let genera_factura_ingreso;
+  try {
+    if (ingreso_egreso === "E") {
+      await registrarCostoIngresoIndividual({...req.body, 
+        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
+    } else if (ingreso_egreso === "I") {
+      let { nro_recibo, genera_factura } = await registrarIngresoIndividual({...req.body, 
+        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
+      nro_recibo_ingreso = nro_recibo;
+      genera_factura_ingreso = genera_factura;
+    }
+
+    if(ingreso_egreso === "I"){
+      if (nro_recibo_ingreso && genera_factura_ingreso == 0) {
+        message = "Ingresado correctamente. Se generó el recibo.";
+      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 1) {
+        message = "Ingresado correctamente. Se generó la factura.";
+      } else if (nro_recibo_ingreso && genera_factura_ingreso == 1) {
+        message = "Ingresado correctamente. Se generó la factura y el recibo.";
+      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
+        message = "Ingresado correctamente";
+      }
+    }else if(ingreso_egreso === "E"){
+      message = "Ingresado correctamente"
+    }
+    await transaction_costos_ingresos.commit()
+    await transaction_asientos.commit()
+    return res.send({
+      status: true,
+      message: message,
+      nro_recibo_ingreso: nro_recibo_ingreso ? nro_recibo_ingreso : null,
+    });
+  } catch (error) {
+    console.log(error);
+    transaction_asientos.rollback()
+    transaction_costos_ingresos.rollback()
+    const { body } = handleError(
+      error,
+      "Costo/ingreso del vehículo",
+      acciones.post
+    );
+    return res.send(body);
+  }
+}; */
+
 export const postCostos_Ingresos = async (req, res) => {
   let message;
   const { ingreso_egreso } = req.body;
@@ -2347,58 +2394,7 @@ export const postCostos_Ingresos = async (req, res) => {
   }
 };
 
-export const postCostos_Ingresos_2 = async (req, res) => {
-  let message;
-  const { ingreso_egreso } = req.body;
-  const transaction_costos_ingresos = await giama_renting.transaction();
-  const transaction_asientos = await pa7_giama_renting.transaction();
-  let nro_recibo_ingreso; 
-  let genera_factura_ingreso;
-  try {
-    if (ingreso_egreso === "E") {
-      await registrarCostoIngresoIndividual({...req.body, 
-        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
-    } else if (ingreso_egreso === "I") {
-      let { nro_recibo, genera_factura } = await registrarIngresoIndividual_2({...req.body, 
-        transaction_costos_ingresos: transaction_costos_ingresos, transaction_asientos: transaction_asientos});
-      nro_recibo_ingreso = nro_recibo;
-      genera_factura_ingreso = genera_factura;
-    }
-
-    if(ingreso_egreso === "I"){
-      if (nro_recibo_ingreso && genera_factura_ingreso == 0) {
-        message = "Ingresado correctamente. Se generó el recibo.";
-      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 1) {
-        message = "Ingresado correctamente. Se generó la factura.";
-      } else if (nro_recibo_ingreso && genera_factura_ingreso == 1) {
-        message = "Ingresado correctamente. Se generó la factura y el recibo.";
-      } else if (!nro_recibo_ingreso && genera_factura_ingreso == 0) {
-        message = "Ingresado correctamente";
-      }
-    }else if(ingreso_egreso === "E"){
-      message = "Ingresado correctamente"
-    }
-    await transaction_costos_ingresos.commit()
-    await transaction_asientos.commit()
-    return res.send({
-      status: true,
-      message: message,
-      nro_recibo_ingreso: nro_recibo_ingreso ? nro_recibo_ingreso : null,
-    });
-  } catch (error) {
-    console.log(error);
-    transaction_asientos.rollback()
-    transaction_costos_ingresos.rollback()
-    const { body } = handleError(
-      error,
-      "Costo/ingreso del vehículo",
-      acciones.post
-    );
-    return res.send(body);
-  }
-};
-
-export const prorrateoIE = async (req, res) => {
+/* export const prorrateoIE = async (req, res) => {
    const {
 
     arrayVehiculos,
@@ -2900,7 +2896,7 @@ export const prorrateoIE = async (req, res) => {
     status: true,
     message: "Se ingresaron los egresos correctamente",
   });
-};
+}; */
 
 export const prorrateo = async (req, res) => {
 

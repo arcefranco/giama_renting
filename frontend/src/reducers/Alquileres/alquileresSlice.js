@@ -41,15 +41,7 @@ export const postAlquiler = createAsyncThunk(
     )
 );
 
-export const postAlquiler_2 = createAsyncThunk(
-  "postAlquiler_2",
-  async (data, { rejectWithValue }) =>
-    handleAsyncThunk(
-      () => alquileresService.postAlquiler_2(data),
-      responses.successObject,
-      rejectWithValue
-    )
-);
+
 
 export const postContratoAlquiler = createAsyncThunk(
   "postContratoAlquiler",
@@ -61,15 +53,7 @@ export const postContratoAlquiler = createAsyncThunk(
     )
 );
 
-export const postContratoAlquiler_2 = createAsyncThunk(
-  "postContratoAlquiler_2",
-  async (data, { rejectWithValue }) =>
-    handleAsyncThunk(
-      () => alquileresService.postContratoAlquiler_2(data),
-      responses.successObject,
-      rejectWithValue
-    )
-);
+
 
 export const anulacionAlquiler = createAsyncThunk(
   "anulacionAlquiler",
@@ -226,22 +210,7 @@ export const alquileresSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
-    builder.addCase(postAlquiler_2.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(postAlquiler_2.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.nro_recibo_alquiler = action.payload.data;
-      state.message = action.payload.message;
-    });
-    builder.addCase(postAlquiler_2.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    });
+
     builder.addCase(postContratoAlquiler.pending, (state) => {
       state.isLoading = true;
     });
@@ -259,23 +228,7 @@ export const alquileresSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
-    builder.addCase(postContratoAlquiler_2.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(postContratoAlquiler_2.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.isSuccess = true;
-      state.isError = false;
-      state.nro_recibo_alquiler = action.payload.nro_recibo_alquiler;
-      state.nro_recibo_deposito = action.payload.nro_recibo_deposito;
-      state.message = action.payload.message;
-    });
-    builder.addCase(postContratoAlquiler_2.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.isSuccess = false;
-      state.message = action.payload.message;
-    });
+
     builder.addCase(anulacionAlquiler.pending, (state) => {
       state.isLoading = true;
     });

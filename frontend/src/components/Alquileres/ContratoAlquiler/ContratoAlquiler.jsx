@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
-import AlquileresForm from "../AlquileresForm/AlquileresForm.jsx";
+import AlquileresForm_2 from "../AlquileresForm/AlquileresForm.jsx";
 import {
   postContratoAlquiler, getContratosByIdVehiculo,
   getContratoById, anulacionContrato, reset, reset_nro_recibo
@@ -65,6 +65,7 @@ const ContratoAlquiler = () => {
   const { html_recibo_alquiler, html_recibo_deposito } = useSelector((state) => state.recibosReducer);
   const { username } = useSelector((state) => state.loginReducer)
   const [formContrato, setFormContrato] = useState({
+    debe_deposito: '',
     id_vehiculo: '',
     id_cliente: '',
     apellido_cliente: '',
@@ -91,6 +92,7 @@ const ContratoAlquiler = () => {
     resetAction: reset,
     onSuccess: () => {
       setFormContrato({
+        debe_deposito: '',
         id_vehiculo: '',
         id_cliente: '',
         apellido_cliente: '',
@@ -113,7 +115,6 @@ const ContratoAlquiler = () => {
 
   useEffect(() => {
     if (id && contratoById.length) { //si estoy modificando un contrato
-      console.log("entra acá 1")
       const fechaDesde = parseISO(contratoById[0]["fecha_desde"]);
       const fechaHasta = parseISO(contratoById[0]["fecha_hasta"]);
 
@@ -136,8 +137,8 @@ const ContratoAlquiler = () => {
       fechaHastaPickers.setHours(0, 0, 0, 0);
 
     } else {
-      console.log("entra acá 2")
       setFormContrato({
+        debe_deposito: '',
         id_vehiculo: '',
         id_cliente: '',
         ingresa_deposito: 1,
@@ -498,14 +499,26 @@ const ContratoAlquiler = () => {
           <h2>Depósito en garantía</h2>
 
           <form action="" className={`${styles.formDeposito} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
-            <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
               <div className={styles.inputContainer}>
                 <span>Fecha del recibo</span>
                 <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
                   onChange={handleChangeContrato} />
               </div>
+            <div className={styles.inputContainer}>
+                <span>Total depósito</span>
+                <input
+                  type="number"
+                  name="debe_deposito"
+                  value={formContrato.debe_deposito}
+                  onChange={handleChangeContrato}
+                />
 
             </div>
+
+            </div>
+            <hr style={{width: "30rem", placeSelf: "anchor-center", margin: "2rem"}}/>
+            <h3>Pago</h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
               <div className={styles.inputContainer}>
                 <span>Forma de cobro</span>
@@ -595,7 +608,7 @@ const ContratoAlquiler = () => {
       }
 
       {
-        !id && <AlquileresForm modoContrato={true} onSubmitFinal={handleFinalSubmit}
+        !id && <AlquileresForm_2 modoContrato={true} onSubmitFinal={handleFinalSubmit}
           idVehiculoSeleccionado={formContrato.id_vehiculo} minDateContrato={formContrato.fecha_desde_contrato}
           maxDateContrato={formContrato.fecha_hasta_contrato} vehiculo={formContrato.id_vehiculo} cliente={formContrato.id_cliente}
           fecha_recibo_deposito={formContrato.fecha_recibo_deposito}
