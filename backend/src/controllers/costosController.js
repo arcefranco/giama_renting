@@ -1856,6 +1856,7 @@ async function registrarIngresoIndividual({
   let genera_factura_final;
   let conceptos_recibo = [];
   let dominio;
+  let nombre_completo_cliente;
   let observacion_asientos;
   let importe_iva_formateado = importe_iva ? parseFloat(importe_iva) : 0
   let importe_iva_2_formateado = importe_iva_2 ? parseFloat(importe_iva_2) : 0 
@@ -1864,13 +1865,22 @@ async function registrarIngresoIndividual({
   //buscar CUIT del cliente
     try {
     const result = await giama_renting.query(
-      "SELECT nro_documento FROM clientes WHERE id = ?",
+      "SELECT nro_documento, nombre, apellido, razon_social FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
       }
     );
-    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+    if (result[0]["nro_documento"]){
+      CUIT = result[0]["nro_documento"]
+    } 
+    if(result[0]["nombre"] && result[0]["apellido"]){
+      nombre_completo_cliente = `${result[0]["nombre"]} ${result[0]["apellido"]}`
+    }else if(result[0]["razon_social"]){
+      nombre_completo_cliente = `${result[0]["razon_social"]}`
+    }else{
+      nombre_completo_cliente = "SIN NOMBRE"
+    }
     } catch (error) {
     const { body } = handleError(
       error,
@@ -1901,7 +1911,7 @@ async function registrarIngresoIndividual({
     );
     return res.send(body);
   }
-  observacion_asientos = `${observacion} (${dominio})`
+  observacion_asientos = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT}`
   try {
     const result = await giama_renting.query(
       `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
