@@ -348,6 +348,8 @@ export const insertVehiculo = async (req) => {
     ubicacion,
     numero_comprobante_1,
     numero_comprobante_2,
+    cuenta_contable,
+    cuenta_secundaria,
     usuario,
     proveedor_vehiculo,
     transaction_1,
@@ -546,7 +548,7 @@ export const insertVehiculo = async (req) => {
     await asientoContable(
       "c_movimientos",
       NroAsiento,
-      "210110" /* FCA - Deuda autos */,
+      cuenta_contable,
       "H",
       costo,
       concepto,
@@ -586,7 +588,7 @@ export const insertVehiculo = async (req) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
-      "210110" /**nueva cuenta */,
+      cuenta_secundaria,
       "H",
       costo,
       concepto,
