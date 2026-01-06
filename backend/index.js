@@ -10,6 +10,7 @@ import costosRouter from "./src/routes/costosRoutes.js";
 import alquileresRouter from "./src/routes/alquileresRoutes.js";
 import recibosRouter from "./src/routes/recibosRoutes.js";
 import parametrosRouter from "./src/routes/parametrosRoutes.js";
+import ctacteRouter from "./src/routes/ctacteRoutes.js";
 dotenv.config();
 const app = express();
 const allowedOrigins = [
@@ -45,3 +46,4 @@ app.use("/costos", costosRouter);
 app.use("/alquileres", alquileresRouter);
 app.use("/recibos", recibosRouter);
 app.use("/parametros", parametrosRouter);
+app.use("/ctacte", ctacteRouter);

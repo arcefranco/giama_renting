@@ -170,23 +170,22 @@ export const ctaCteCliente = async (req, res) => {
   const {id_cliente} = req.body
   try {
     const resultado = await giama_renting.query(`SELECT
-    fecha,
-    concepto,
-    debe,
-    haber
-    FROM (
+    m.fecha,
+    m.concepto,
+    m.debe,
+    m.haber,
+    @saldo := @saldo + IFNULL(m.haber, 0) - IFNULL(m.debe, 0) AS saldo
+FROM (
 
-    /* =======================
-       PAGOS DEL CLIENTE
-       ======================= */
     SELECT
         pc.fecha AS fecha,
-        CONCAT(fc.nombre, 
-               CASE 
-                   WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
-                   THEN CONCAT(' ', pc.observacion)
-                   ELSE ''
-               END
+        CONCAT(
+            fc.nombre,
+            CASE 
+                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
+                THEN CONCAT(' ', pc.observacion)
+                ELSE ''
+            END
         ) AS concepto,
         NULL AS debe,
         pc.importe_cobro AS haber
@@ -195,13 +194,8 @@ export const ctaCteCliente = async (req, res) => {
         ON fc.id = pc.id_forma_cobro
     WHERE pc.id_cliente = ?
 
-
     UNION ALL
 
-
-    /* =======================
-       ALQUILERES (DEUDA)
-       ======================= */
     SELECT
         a.fecha_alquiler AS fecha,
         CONCAT(
@@ -219,13 +213,8 @@ export const ctaCteCliente = async (req, res) => {
         ON v.id = a.id_vehiculo
     WHERE a.id_cliente = ?
 
-
     UNION ALL
 
-
-    /* =======================
-       DEPOSITO DE GARANTÍA
-       ======================= */
     SELECT
         ca.fecha_contrato AS fecha,
         CONCAT(
@@ -238,16 +227,10 @@ export const ctaCteCliente = async (req, res) => {
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
     WHERE ca.id_cliente = ?
-      AND ca.deposito_garantia IS NOT NULL
       AND ca.deposito_garantia > 0
-
 
     UNION ALL
 
-
-    /* =======================
-       COSTOS / INGRESOS
-       ======================= */
     SELECT
         ci.fecha AS fecha,
         CONCAT(
@@ -265,8 +248,9 @@ export const ctaCteCliente = async (req, res) => {
         ON cc.id = ci.id_concepto
     WHERE ci.id_cliente = ?
 
-) AS cuenta_corriente
-ORDER BY fecha ASC`, {
+) m
+CROSS JOIN (SELECT @saldo := 0) vars
+ORDER BY m.fecha;`, {
       type: QueryTypes.SELECT,
       replacements: [id_cliente, id_cliente, id_cliente, id_cliente]
     });
