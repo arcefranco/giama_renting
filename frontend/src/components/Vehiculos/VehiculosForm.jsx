@@ -55,7 +55,7 @@ const VehiculosForm = () => {
   const { modelos, sucursales, preciosModelos,
     AMRT, plan_cuentas, proveedores_vehiculo } = useSelector((state) => state.generalesReducer)
   const { isError, isSuccess, isLoading, message } = useSelector((state) => state.vehiculosReducer)
-  const [cuentaDeudaAuto, setCuentaDeudaAuto] = useState(null)
+  const [cuentasFiltradas, setCuentasFiltradas] = useState([])
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -99,14 +99,6 @@ const VehiculosForm = () => {
     }
   })
 
-  useEffect(() => {
-    if (proveedores_vehiculo) {
-      setFormData({
-        ...form,
-        proveedor_vehiculo: proveedores_vehiculo.find(e => e.Codigo == 11)?.Codigo
-      })
-    }
-  }, [proveedores_vehiculo])
 
   useEffect(() => {
     if (AMRT) {
@@ -119,18 +111,10 @@ const VehiculosForm = () => {
 
   useEffect(() => {
     if (plan_cuentas?.length) {
-      setCuentaDeudaAuto(plan_cuentas.find(e => e.Codigo == "210110")?.Codigo)
+      setCuentasFiltradas(plan_cuentas.filter(e => e.Codigo == "210110" || e.Codigo == "210119"))
     }
   }, [plan_cuentas])
 
-  useEffect(() => {
-    if (cuentaDeudaAuto) {
-      setFormData({
-        ...form,
-        cuenta_contable: cuentaDeudaAuto
-      })
-    }
-  }, [cuentaDeudaAuto])
 
   useEffect(() => {
     if (form.cuenta_contable) {
@@ -252,10 +236,10 @@ const VehiculosForm = () => {
         </div> */}
           <div className={styles.inputContainer}>
             <span>Cuenta contable</span>
-            <select name="cuenta_contable" value={form["cuenta_contable"]} disabled>
+            <select name="cuenta_contable" value={form["cuenta_contable"]} onChange={handleChange}>
               <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
               {
-                plan_cuentas?.length && plan_cuentas?.map(e => {
+                cuentasFiltradas?.length && cuentasFiltradas?.map(e => {
                   return <option value={e.Codigo}>{e.Nombre}</option>
                 })
               }
@@ -302,8 +286,8 @@ const VehiculosForm = () => {
           </div>
           <div className={styles.inputContainer}>
             <span>Proveedor</span>
-            <select name="proveedor_vehiculo" value={form.proveedor_vehiculo} disabled>
-              {proveedores_vehiculo.map((m) => (
+            <select name="proveedor_vehiculo" onChange={handleChange} value={form.proveedor_vehiculo}>
+              {proveedores_vehiculo?.map((m) => (
                 <option key={m.Codigo} value={m.Codigo}>{m.RazonSocial}</option>
               ))}
             </select>
