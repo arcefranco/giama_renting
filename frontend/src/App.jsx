@@ -40,7 +40,7 @@ import UpdateSucursal from "./components/Parametros/Sucursales/UpdateSucursal";
 import ReporteRecibos from "./components/Recibos/ReporteRecibos";
 import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContrato";
 import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
-import PagosClientes from "./PagosClientes";
+import PagosClientes from "./components/"
 import ContratoAlquiler_2 from "./components/Alquileres/ContratoAlquiler/ContratoAlquiler";
 import Prorrateo from "./components/Costos/Prorrateo";
 import AlquileresForm_2 from "./components/Alquileres/AlquileresForm/AlquileresForm";
