@@ -333,14 +333,18 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (value && name === "importe_total_1") {
-      let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
-      setForm({
-        ...form,
-        [name]: parseFloat(value),
-        "importe_iva_1": (parseFloat(value) - valor_sin_iva).toFixed(2),
-        "importe_neto_1": valor_sin_iva
-      });
-    }
+    const total = parseFloat(value);
+
+    const neto = +(total / 1.21).toFixed(2);
+    const iva = +(total - neto).toFixed(2);
+
+    setForm({
+    ...form,
+    [name]: total,
+    importe_neto_1: neto,
+    importe_iva_1: iva
+    });
+  }
     else if (value && name === "importe_total_2") {
       let valor_sin_iva = (parseFloat(value) / 1.21).toFixed(2)
       setForm({

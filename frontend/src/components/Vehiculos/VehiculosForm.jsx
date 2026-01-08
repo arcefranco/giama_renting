@@ -48,6 +48,7 @@ const VehiculosForm = () => {
     cuenta_secundaria: '',
     proveedor_vehiculo: '',
     observaciones: '',
+    fecha_factura: '',
     usuario: username
 
   })
@@ -93,6 +94,7 @@ const VehiculosForm = () => {
         cuenta_contable: '',
         cuenta_secundaria: '',
         proveedor_vehiculo: '',
+        fecha_factura: '',
         observaciones: ''
       })
       setImagenes([])
@@ -215,6 +217,11 @@ const VehiculosForm = () => {
           <div className={styles.inputContainer}>
             <span>Fecha medicion km</span>
             <input type="date" name='fecha_medicion_km' value={form["fecha_medicion_km"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Fecha factura</span>
+            <input type="date" name='fecha_factura' value={form["fecha_factura"]}
               onChange={handleChange} />
           </div>
           {/*     <div className={styles.inputContainer}>
