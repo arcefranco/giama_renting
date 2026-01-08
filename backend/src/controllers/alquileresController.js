@@ -246,8 +246,25 @@ export const postAlquiler = async (req, res) => {
   let importe_iva_2_formateado = importe_iva_2 ? parseFloat(importe_iva_2) : 0 
   let importe_iva_3_formateado = importe_iva_3 ? parseFloat(importe_iva_3) : 0
   const importe_total = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
-  const importe_neto =  (importe_neto_1_formateado + importe_neto_2_formateado + importe_neto_3_formateado).toFixed(2)
+  /* const importe_neto =  (importe_neto_1_formateado + importe_neto_2_formateado + importe_neto_3_formateado).toFixed(2)
   const importe_iva = (importe_iva_1_formateado + importe_iva_2_formateado + importe_iva_3_formateado).toFixed(2)
+   */
+
+  const importe_neto_viejo =  (importe_neto_1_formateado + importe_neto_2_formateado + importe_neto_3_formateado).toFixed(2)
+  const importe_iva_viejo = (importe_iva_1_formateado + importe_iva_2_formateado + importe_iva_3_formateado).toFixed(2)
+  
+  const importe_neto = (parseFloat(importe_total) / 1.21).toFixed(2)
+  const importe_iva = (parseFloat(importe_neto) * 0.21).toFixed(2)
+  console.log("total: ", importe_total)
+
+  console.log("iva viejo: ", importe_iva_viejo)
+  console.log("iva: ", importe_iva)
+  console.log("neto: ", importe_neto)
+  console.log("neto viejo: ", importe_neto_viejo)
+  console.log("suma iva+neto: ", parseFloat(importe_neto) + parseFloat(importe_iva))
+
+/* 
+    return res.send({status: false, message: "Prueba"}) */
 
   if(!id_forma_cobro_alquiler_1 && !id_forma_cobro_alquiler_2 && !id_forma_cobro_alquiler_3){
     return res.send({status: false, message: "Debe elegir al menos un medio de pago para ingresar un alquiler"})

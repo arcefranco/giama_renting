@@ -12,7 +12,6 @@ import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { insertFactura } from "../../helpers/insertFactura.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
 import {
-  movimientosProveedores,
   movimientosProveedoresEgresos,
 } from "../../helpers/movimientosProveedores.js";
 import { toNumber } from "../../helpers/toNumber.js";
@@ -992,6 +991,7 @@ async function registrarCostoIngresoIndividual({
   let cuenta_secundaria_percepcion_IVA;
   let total_conceptos = 0;
 
+  let nombre_proveedor;
   let dominio;
   let observacion_asientos;
   if(id_concepto) total_conceptos = total_conceptos + 1
@@ -1014,8 +1014,6 @@ async function registrarCostoIngresoIndividual({
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
   } catch (error) {
     console.log(error);
-/*     await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback(); */
     throw new Error(
       `Error al buscar una cuenta contable ${
         error.message ? `${" :"}${error.message}` : ""
@@ -1044,7 +1042,26 @@ async function registrarCostoIngresoIndividual({
     );
     return res.send(body);
   }
-  observacion_asientos = `${observacion} (${dominio})`
+  //si hay proveedor, busco el nombre para la observacion asientos
+   try {
+    const result = await giama_renting.query(
+      "SELECT RazonSocial FROM c_proveedores WHERE Codigo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
+
+    if (result[0]["RazonSocial"]) nombre_proveedor = result[0]["RazonSocial"];
+    else nombre_proveedor = "SIN NOMBRE PROVEEDOR";
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "nombre del proveedor",
+      acciones.get
+    );
+    return res.send(body);
+  }
 
 
   //obtengo cuentas_concepto 2 y 3 si hay
@@ -1179,10 +1196,14 @@ async function registrarCostoIngresoIndividual({
       numero_comprobante_2,
       8
     )}`;
+    
+    observacion_asientos = `${observacion} DOMINIO: ${dominio} PROVEEDOR: ${nombre_proveedor} FACTURA: ${comprobante}`
   } else {
     FA_FC = null;
     comprobante = null;
   }
+
+  
   //obtengo numero asiento
   try {
     NroAsiento = await getNumeroAsiento();
@@ -1227,8 +1248,6 @@ async function registrarCostoIngresoIndividual({
   } catch (error) {
     throw error;
   }
-  //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
-  //(solo asiento primario)
   const factor =  -1;
 
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
@@ -1431,17 +1450,27 @@ async function registrarIngresoIndividual({
   let conceptos_recibo = [];
   let dominio;
   let observacion_asientos;
+  let nombre_completo_cliente;
   //buscar CUIT del cliente
     try {
     const result = await giama_renting.query(
-      "SELECT nro_documento FROM clientes WHERE id = ?",
+      "SELECT nro_documento, nombre, apellido, razon_social FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
       }
     );
-    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
-  } catch (error) {
+    if (result[0]["nro_documento"]){
+      CUIT = result[0]["nro_documento"]
+    } 
+    if(result[0]["nombre"] && result[0]["apellido"]){
+      nombre_completo_cliente = `${result[0]["nombre"]} ${result[0]["apellido"]}`
+    }else if(result[0]["razon_social"]){
+      nombre_completo_cliente = `${result[0]["razon_social"]}`
+    }else{
+      nombre_completo_cliente = "SIN NOMBRE"
+    }
+    } catch (error) {
     const { body } = handleError(
       error,
       "documento del cliente",
@@ -1471,7 +1500,7 @@ async function registrarIngresoIndividual({
     );
     return res.send(body);
   }
-  observacion_asientos = `${observacion} (${dominio})`
+  observacion_asientos = `${observacion} DOMINIO: ${dominio} CUIT/CUIL: ${CUIT} Nombre: ${nombre_completo_cliente}`
   try {
     const result = await giama_renting.query(
       `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 

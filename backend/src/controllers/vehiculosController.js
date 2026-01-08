@@ -356,7 +356,8 @@ export const insertVehiculo = async (req) => {
     transaction_2,
     importacion_masiva,
     meses_amortizacion_masiva,
-    observaciones
+    observaciones,
+    fecha_factura
   } = req.body;
   let cuentaRODN;
   let cuentaRDN2;
@@ -373,7 +374,7 @@ export const insertVehiculo = async (req) => {
   } else {
     es_importacion_masiva = true;
   }
-
+  if(!fecha_factura) return {status: false, message: "Debe especificarse la fecha para la factura y los asientos."} 
   if (!transaction_1 || !transaction_2) {
     transaction_giama_renting = await giama_renting.transaction();
     transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
@@ -506,6 +507,7 @@ export const insertVehiculo = async (req) => {
       NroAsientoSecundario,
       usuario: usuario,
       transaction_asientos: transaction_pa7_giama_renting,
+      fecha_factura: fecha_factura
     });
   } catch (error) {
     transaction_giama_renting.rollback();
@@ -528,7 +530,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       NroAsientoSecundario,
       "FA"
     );
@@ -541,7 +543,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       NroAsientoSecundario,
       "FA"
     );
@@ -554,7 +556,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       NroAsientoSecundario,
       "FA"
     );
@@ -568,7 +570,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       null,
       "FA"
     );
@@ -581,7 +583,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       null,
       "FA"
     );
@@ -594,7 +596,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       null,
       "FA"
     );

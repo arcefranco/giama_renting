@@ -16,6 +16,7 @@ export const movimientosProveedores = async ({
   NroAsientoSecundario,
   usuario,
   transaction_asientos,
+  fecha_factura
 }) => {
   let FA_FC =
     tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
@@ -32,11 +33,11 @@ export const movimientosProveedores = async ({
       {
         type: QueryTypes.INSERT,
         replacements: [
-          getTodayDate(),
+          fecha_factura,
           cod_proveedor,
           FA_FC,
           NroComprobante,
-          getTodayDate(),
+          fecha_factura,
           tipo_comprobante == 3 ? importe_neto : null,
           tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
@@ -64,11 +65,11 @@ export const movimientosProveedores = async ({
       {
         type: QueryTypes.INSERT,
         replacements: [
-          getTodayDate(),
+          fecha_factura,
           cod_proveedor,
           FA_FC,
           NroComprobante,
-          getTodayDate(),
+          fecha_factura,
           tipo_comprobante == 3 ? importe_neto : null,
           tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
@@ -124,7 +125,7 @@ export const movimientosProveedores = async ({
           ConceptoComprobante,
           DenomComprobante,
           NroComprobante,
-          getTodayDate(),
+          fecha_factura,
           tipo_comprobante,
           insertMovProv,
           tipo_comprobante,
