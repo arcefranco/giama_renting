@@ -36,7 +36,6 @@ const VehiculosForm = () => {
     fecha_medicion_km: '',
     proveedor_gps: '',
     nro_serie_gps: '',
-    costo: '',
     dispositivo: '',
     meses_amortizacion: '',
     color: '',
@@ -48,14 +47,24 @@ const VehiculosForm = () => {
     cuenta_secundaria: '',
     proveedor_vehiculo: '',
     observaciones: '',
-    usuario: username
+    fecha_factura: '',
+    usuario: username,
+    importe_neto: '',
+    importe_iva: '',
+    tasa_IIBB_CABA: '',
+    tasa_IIBB: '',
+    tasa_IVA: '',
+    importe_tasa_IIBB_CABA: '',
+    importe_tasa_IIBB: '',
+    importe_tasa_IVA: '',
+    importe_total: '',
 
   })
 
   const { modelos, sucursales, preciosModelos,
     AMRT, plan_cuentas, proveedores_vehiculo } = useSelector((state) => state.generalesReducer)
   const { isError, isSuccess, isLoading, message } = useSelector((state) => state.vehiculosReducer)
-  const [cuentaDeudaAuto, setCuentaDeudaAuto] = useState(null)
+  const [cuentasFiltradas, setCuentasFiltradas] = useState([])
   const [imagenes, setImagenes] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -81,7 +90,6 @@ const VehiculosForm = () => {
         kilometros: '',
         fecha_medicion_km: '',
         proveedor_gps: '',
-        costo: '',
         nro_serie_gps: '',
         dispositivo: '',
         meses_amortizacion: '',
@@ -93,20 +101,22 @@ const VehiculosForm = () => {
         cuenta_contable: '',
         cuenta_secundaria: '',
         proveedor_vehiculo: '',
-        observaciones: ''
+        fecha_factura: '',
+        observaciones: '',
+        importe_neto: '',
+        importe_iva: '',
+        tasa_IIBB_CABA: '',
+        tasa_IIBB: '',
+        tasa_IVA: '',
+        importe_tasa_IIBB_CABA: '',
+        importe_tasa_IIBB: '',
+        importe_tasa_IVA: '',
+        importe_total: '',
       })
       setImagenes([])
     }
   })
 
-  useEffect(() => {
-    if (proveedores_vehiculo) {
-      setFormData({
-        ...form,
-        proveedor_vehiculo: proveedores_vehiculo.find(e => e.Codigo == 11)?.Codigo
-      })
-    }
-  }, [proveedores_vehiculo])
 
   useEffect(() => {
     if (AMRT) {
@@ -119,18 +129,10 @@ const VehiculosForm = () => {
 
   useEffect(() => {
     if (plan_cuentas?.length) {
-      setCuentaDeudaAuto(plan_cuentas.find(e => e.Codigo == "210110")?.Codigo)
+      setCuentasFiltradas(plan_cuentas.filter(e => e.Codigo == "210110" || e.Codigo == "210119"))
     }
   }, [plan_cuentas])
 
-  useEffect(() => {
-    if (cuentaDeudaAuto) {
-      setFormData({
-        ...form,
-        cuenta_contable: cuentaDeudaAuto
-      })
-    }
-  }, [cuentaDeudaAuto])
 
   useEffect(() => {
     if (form.cuenta_contable) {
@@ -140,23 +142,87 @@ const VehiculosForm = () => {
       })
     }
   }, [form.cuenta_contable, plan_cuentas])
+  const round2 = (value) =>
+    Math.round((Number(value) || 0) * 100) / 100;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "modelo") {
-      setFormData({
-        ...form,
-        [name]: value,
-        "costo": preciosModelos?.find(e => e.modelo == value)?.precio
-      })
-    } else {
-      setFormData({
-        ...form,
-        [name]: value,
-      });
 
+    let newForm = {
+      ...form,
+      [name]: value,
+    };
+
+    const neto = Number(newForm.importe_neto) || 0;
+    const iva = Number(newForm.importe_iva) || 0;
+
+    // 1️⃣ Modificación del importe neto
+    if (name === "importe_neto") {
+      const nuevoIVA = round2(neto * 0.21);
+
+      newForm = {
+        ...newForm,
+        importe_iva: nuevoIVA,
+        importe_total: round2(neto + nuevoIVA),
+
+        // Reset de tasas
+        tasa_IVA: "",
+        tasa_IIBB: "",
+        tasa_IIBB_CABA: "",
+        importe_tasa_IVA: "",
+        importe_tasa_IIBB: "",
+        importe_tasa_IIBB_CABA: "",
+      };
     }
+
+    // 2️⃣ Modificación del importe IVA
+    if (name === "importe_iva") {
+      newForm.importe_total = round2(neto + iva);
+    }
+
+    // 3️⃣ Modificación de tasas
+    const tasasMap = {
+      tasa_IVA: "importe_tasa_IVA",
+      tasa_IIBB: "importe_tasa_IIBB",
+      tasa_IIBB_CABA: "importe_tasa_IIBB_CABA",
+    };
+
+    if (tasasMap[name]) {
+      const tasaIVA = Number(
+        name === "tasa_IVA" ? value : newForm.tasa_IVA
+      ) || 0;
+
+      const tasaIIBB = Number(
+        name === "tasa_IIBB" ? value : newForm.tasa_IIBB
+      ) || 0;
+
+      const tasaIIBBCABA = Number(
+        name === "tasa_IIBB_CABA" ? value : newForm.tasa_IIBB_CABA
+      ) || 0;
+
+      const importeTasaIVA = round2(neto * (tasaIVA / 100));
+      const importeTasaIIBB = round2(neto * (tasaIIBB / 100));
+      const importeTasaIIBBCABA = round2(neto * (tasaIIBBCABA / 100));
+
+      newForm.importe_tasa_IVA = importeTasaIVA;
+      newForm.importe_tasa_IIBB = importeTasaIIBB;
+      newForm.importe_tasa_IIBB_CABA = importeTasaIIBBCABA;
+
+      const totalTasas =
+        importeTasaIVA + importeTasaIIBB + importeTasaIIBBCABA;
+      console.log("TOTALTASAS: ", totalTasas)
+
+      newForm.importe_total = round2(
+        neto +
+        (Number(newForm.importe_iva) || 0) +
+        totalTasas
+      );
+    }
+
+    setFormData(newForm);
   };
+
+
   const handleFileChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
     setImagenes((prev) => [...prev, ...nuevosArchivos]);
@@ -200,6 +266,7 @@ const VehiculosForm = () => {
           </div>
         )}
         <h2>Formulario de ingreso de vehiculos</h2>
+
         <form action="" enctype="multipart/form-data" className={styles.form}>
           <div className={styles.inputContainer}>
             <span>Modelo</span>
@@ -233,6 +300,7 @@ const VehiculosForm = () => {
             <input type="date" name='fecha_medicion_km' value={form["fecha_medicion_km"]}
               onChange={handleChange} />
           </div>
+
           {/*     <div className={styles.inputContainer}>
         <span>Proveedor GPS</span>
         <select name="proveedor_gps" value={form["proveedor_gps"]}
@@ -252,20 +320,16 @@ const VehiculosForm = () => {
         </div> */}
           <div className={styles.inputContainer}>
             <span>Cuenta contable</span>
-            <select name="cuenta_contable" value={form["cuenta_contable"]} disabled>
+            <select name="cuenta_contable" value={form["cuenta_contable"]} onChange={handleChange}>
               <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
               {
-                plan_cuentas?.length && plan_cuentas?.map(e => {
+                cuentasFiltradas?.length && cuentasFiltradas?.map(e => {
                   return <option value={e.Codigo}>{e.Nombre}</option>
                 })
               }
             </select>
           </div>
-          <div className={styles.inputContainer}>
-            <span>Costo total del vehículo</span>
-            <input type="number" name='costo' value={form["costo"]}
-              onChange={handleChange} />
-          </div>
+
           <div className={styles.inputContainer}>
             <span>Punto de venta</span>
             <input type="text" name='numero_comprobante_1' value={form["numero_comprobante_1"]}
@@ -302,8 +366,8 @@ const VehiculosForm = () => {
           </div>
           <div className={styles.inputContainer}>
             <span>Proveedor</span>
-            <select name="proveedor_vehiculo" value={form.proveedor_vehiculo} disabled>
-              {proveedores_vehiculo.map((m) => (
+            <select name="proveedor_vehiculo" onChange={handleChange} value={form.proveedor_vehiculo}>
+              {proveedores_vehiculo?.map((m) => (
                 <option key={m.Codigo} value={m.Codigo}>{m.RazonSocial}</option>
               ))}
             </select>
@@ -341,9 +405,71 @@ const VehiculosForm = () => {
               </div>
             ))}
           </div>
+
+        </form>
+
+      </div>
+      <div className={styles.container}>
+        <h2>Factura</h2>
+        <form className={styles.form}>
+          <div className={styles.inputContainer}>
+            <span>Fecha factura y asientos</span>
+            <input type="date" name='fecha_factura' value={form["fecha_factura"]}
+              onChange={handleChange} />
+          </div>
+          <div></div>
+          <div></div>
+
+          <div className={styles.inputContainer}>
+            <span>Importe neto</span>
+            <input type="text" name='importe_neto' value={form["importe_neto"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe IVA</span>
+            <input type="text" name='importe_iva' value={form["importe_iva"]}
+              onChange={handleChange} />
+          </div>
+          <div></div>
+          <div className={styles.inputContainer}>
+            <span>Tasa perc. IVA</span>
+            <input type="text" name='tasa_IVA' value={form["tasa_IVA"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Tasa perc. IIBB</span>
+            <input type="text" name='tasa_IIBB' value={form["tasa_IIBB"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Tasa perc. IIBB CABA</span>
+            <input type="text" name='tasa_IIBB_CABA' value={form["tasa_IIBB_CABA"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe tasa perc. IVA</span>
+            <input type="text" name='importe_tasa_IVA' value={form["importe_tasa_IVA"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe tasa IIBB</span>
+            <input type="text" name='importe_tasa_IIBB' value={form["importe_tasa_IIBB"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe tasa IIBB CABA</span>
+            <input type="text" name='importe_tasa_IIBB_CABA' value={form["importe_tasa_IIBB_CABA"]}
+              onChange={handleChange} />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Importe total</span>
+            <input type="text" name='importe_total' value={form["importe_total"]} disabled
+              onChange={handleChange} />
+          </div>
+
         </form>
         {
-          (!form.modelo || !form.cuenta_contable) ?
+          (!form.modelo || !form.cuenta_contable || !form.importe_neto || !form.importe_iva) ?
             <button
               className={styles.sendBtn}
               disabled
@@ -358,8 +484,8 @@ const VehiculosForm = () => {
               Enviar
             </button>
         }
-
       </div>
+
     </div>
   )
 }

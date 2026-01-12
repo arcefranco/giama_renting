@@ -3,7 +3,7 @@ import DataGrid, { Column, Scrolling, Summary, TotalItem } from "devextreme-reac
 import styles from "./PagosClientes.module.css"
 import Select from "react-select"
 
-const PagosClientes = () => {
+export const PagosClientes = () => {
     const customStyles = {
         container: (provided) => ({
             ...provided,
