@@ -16,6 +16,12 @@ export const movimientosProveedores = async ({
   NroAsientoSecundario,
   usuario,
   transaction_asientos,
+  tasa_IIBB_CABA,
+  tasa_IIBB,
+  tasa_IVA,
+  importe_tasa_IIBB_CABA,
+  importe_tasa_IIBB,
+  importe_tasa_IVA,
 }) => {
   let FA_FC =
     tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
@@ -28,7 +34,8 @@ export const movimientosProveedores = async ({
     const result = await pa7_giama_renting.query(
       `INSERT INTO c_movprov (Fecha, Proveedor, 
       TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1,
-      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      TasaIva1, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
+      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -42,6 +49,12 @@ export const movimientosProveedores = async ({
           importe_iva,
           21,
           importe_total,
+          tasa_IIBB ? tasa_IIBB : null,
+          importe_tasa_IIBB ? importe_tasa_IIBB : null,
+          tasa_IVA ? tasa_IVA : null,
+          importe_tasa_IVA ? importe_tasa_IVA : null,
+          tasa_IIBB_CABA ? tasa_IIBB_CABA : null,
+          importe_tasa_IIBB_CABA ? importe_tasa_IIBB_CABA : null 
         ],
         transaction: transaction_asientos,
       }
@@ -60,7 +73,8 @@ export const movimientosProveedores = async ({
     await pa7_giama_renting.query(
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
       TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1,
-      TasaIva1, Total) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      TasaIva1, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
+      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -74,6 +88,12 @@ export const movimientosProveedores = async ({
           importe_iva,
           21,
           importe_total,
+          tasa_IIBB ? tasa_IIBB : null,
+          importe_tasa_IIBB ? importe_tasa_IIBB : null,
+          tasa_IVA ? tasa_IVA : null,
+          importe_tasa_IVA ? importe_tasa_IVA : null,
+          tasa_IIBB_CABA ? tasa_IIBB_CABA : null,
+          importe_tasa_IIBB_CABA ? importe_tasa_IIBB_CABA : null 
         ],
         transaction: transaction_asientos,
       }

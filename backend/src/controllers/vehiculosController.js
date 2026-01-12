@@ -342,7 +342,6 @@ export const insertVehiculo = async (req) => {
     nro_motor,
     kilometros,
     fecha_medicion_km,
-    costo,
     color,
     sucursal,
     ubicacion,
@@ -354,7 +353,16 @@ export const insertVehiculo = async (req) => {
     transaction_2,
     importacion_masiva,
     meses_amortizacion_masiva,
-    observaciones
+    observaciones,
+    importe_neto,
+    importe_iva,
+    tasa_IIBB_CABA,
+    tasa_IIBB,
+    tasa_IVA,
+    importe_tasa_IIBB_CABA,
+    importe_tasa_IIBB,
+    importe_tasa_IVA,
+    importe_total,
   } = req.body;
   let cuentaRODN;
   let cuentaRDN2;
@@ -366,6 +374,12 @@ export const insertVehiculo = async (req) => {
   let transaction_pa7_giama_renting;
   let es_importacion_masiva;
   let meses_amortizacion_final;
+  let cuenta_percepcion_IIBB;
+  let cuenta_secundaria_percepcion_IIBB;
+  let cuenta_percepcion_IIBB_CABA;
+  let cuenta_secundaria_percepcion_IIBB_CABA;
+  let cuenta_percepcion_IVA;
+  let cuenta_secundaria_percepcion_IVA;
   if (!importacion_masiva) {
     es_importacion_masiva = false;
   } else {
@@ -395,8 +409,8 @@ export const insertVehiculo = async (req) => {
   if (mensajeError) {
     return { status: false, message: mensajeError };
   }
-  const importe_neto = costo / 1.21;
-  const importe_iva = costo - importe_neto;
+/*   const importe_neto = costo / 1.21;
+  const importe_iva = costo - importe_neto; */
   try {
     meses_amortizacion = await getParametro("AMRT");
     cuentaRODN = await getParametro("RODN");
@@ -406,6 +420,34 @@ export const insertVehiculo = async (req) => {
   } catch (error) {
     const { body } = handleError(error, "parámetro");
     return body;
+  }
+    //obtengo cuentas percepcion IIBB, IIBB CABA e IVA si hay importe
+
+  try {
+    const result = await giama_renting.query(
+      `SELECT valor_str
+        FROM parametros
+        WHERE codigo IN ('PIBB', 'PIB2', 'PIBC', 'PIC2', 'PIVA', 'PIV2');`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    if (!result.length)
+      throw new Error(
+        "No se encontraron los codigos de parametros de percepcion"
+      );
+    cuenta_percepcion_IIBB = result[0]["valor_str"];
+    cuenta_secundaria_percepcion_IIBB = result[1]["valor_str"];
+    cuenta_percepcion_IIBB_CABA = result[2]["valor_str"];
+    cuenta_secundaria_percepcion_IIBB_CABA = result[3]["valor_str"];
+    cuenta_percepcion_IVA = result[4]["valor_str"];
+    cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
+  } catch (error) {
+    throw new Error(
+      `Error al buscar parametros de percepcion ${
+        error.message ? `: ${error.message}` : ""
+      }`
+    );
   }
   if (es_importacion_masiva) {
     meses_amortizacion_final = meses_amortizacion_masiva;
@@ -498,12 +540,18 @@ export const insertVehiculo = async (req) => {
       numero_comprobante_2,
       importe_neto: importe_neto,
       importe_iva: importe_iva,
-      importe_total: costo,
+      importe_total: importe_total,
       cuenta_concepto: cuentaRODN,
       NroAsiento,
       NroAsientoSecundario,
       usuario: usuario,
       transaction_asientos: transaction_pa7_giama_renting,
+      importe_tasa_IIBB: importe_tasa_IIBB,
+      importe_tasa_IVA: importe_tasa_IVA,
+      importe_tasa_IIBB_CABA: importe_tasa_IIBB_CABA,
+      tasa_IIBB: tasa_IIBB,
+      tasa_IIBB_CABA: tasa_IIBB_CABA,
+      tasa_IVA: tasa_IVA
     });
   } catch (error) {
     transaction_giama_renting.rollback();
@@ -517,16 +565,16 @@ export const insertVehiculo = async (req) => {
   //asientos
   try {
     //asientos
-    await asientoContable(
+       await asientoContable(
       "c_movimientos",
       NroAsiento,
       cuentaRODN,
       "D",
-      importe_neto, //costo neto vehiculo
+      importe_neto, 
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       NroAsientoSecundario,
       "FA"
     );
@@ -539,20 +587,65 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       NroAsientoSecundario,
       "FA"
     );
+    if(importe_tasa_IVA > 0){
     await asientoContable(
       "c_movimientos",
       NroAsiento,
-      "210110" /* FCA - Deuda autos */,
-      "H",
-      costo,
+      cuenta_percepcion_IVA,
+      "D",
+      importe_tasa_IVA,
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
+      NroAsientoSecundario,
+      "FA"
+    );
+    }
+    if(importe_tasa_IIBB > 0){
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_percepcion_IIBB,
+      "D",
+      importe_tasa_IIBB,
+      concepto,
+      transaction_pa7_giama_renting,
+      numero_comprobante,
+      fecha_factura,
+      NroAsientoSecundario,
+      "FA"
+    );
+    }
+    if(importe_tasa_IIBB_CABA > 0){
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_percepcion_IIBB_CABA,
+      "D",
+      importe_tasa_IIBB_CABA,
+      concepto,
+      transaction_pa7_giama_renting,
+      numero_comprobante,
+      fecha_factura,
+      NroAsientoSecundario,
+      "FA"
+    );
+    }
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_contable,
+      "H",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting,
+      numero_comprobante,
+      fecha_factura,
       NroAsientoSecundario,
       "FA"
     );
@@ -566,7 +659,7 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       null,
       "FA"
     );
@@ -579,20 +672,65 @@ export const insertVehiculo = async (req) => {
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
       null,
       "FA"
     );
+    if(importe_tasa_IVA > 0){
     await asientoContable(
-      "c2_movimientos",
+      "c_movimientos",
       NroAsientoSecundario,
-      "210110" /**nueva cuenta */,
-      "H",
-      costo,
+      cuenta_secundaria_percepcion_IVA,
+      "D",
+      importe_tasa_IVA,
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
-      getTodayDate(),
+      fecha_factura,
+      null,
+      "FA"
+    );
+    }
+    if(importe_tasa_IIBB > 0){
+    await asientoContable(
+      "c_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_percepcion_IIBB,
+      "D",
+      importe_tasa_IIBB,
+      concepto,
+      transaction_pa7_giama_renting,
+      numero_comprobante,
+      fecha_factura,
+      null,
+      "FA"
+    );
+    }
+    if(importe_tasa_IIBB_CABA > 0){
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_percepcion_IIBB_CABA,
+      "D",
+      importe_tasa_IIBB_CABA,
+      concepto,
+      transaction_pa7_giama_renting,
+      numero_comprobante,
+      fecha_factura,
+      null,
+      "FA"
+    );
+    }
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria,
+      "H",
+      importe_total,
+      concepto,
+      transaction_pa7_giama_renting,
+      numero_comprobante,
+      fecha_factura,
       null,
       "FA"
     );

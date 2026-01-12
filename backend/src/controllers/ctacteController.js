@@ -1,10 +1,6 @@
 //insertar pago, obtener cta cte cliente en particular, obtener todos los saldos de clientes
 import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
-import {
-  getNumeroAsiento,
-  getNumeroAsientoSecundario,
-} from "../../helpers/getNumeroAsiento.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { insertPago } from "../../helpers/insertPago.js";
 import {
