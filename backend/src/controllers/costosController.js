@@ -1043,7 +1043,7 @@ async function registrarCostoIngresoIndividual({
   }
   //si hay proveedor, busco el nombre para la observacion asientos
    try {
-    const result = await giama_renting.query(
+    const result = await pa7_giama_renting.query(
       "SELECT RazonSocial FROM c_proveedores WHERE Codigo = ?",
       {
         type: QueryTypes.SELECT,
