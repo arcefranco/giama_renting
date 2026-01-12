@@ -1035,12 +1035,11 @@ async function registrarCostoIngresoIndividual({
       dominio = result[0]["dominio_provisorio"];
     else dominio = "SIN DOMINIO";
   } catch (error) {
-    const { body } = handleError(
-      error,
-      "dominio del vehiculo",
-      acciones.get
+    throw new Error(
+      `Error al buscar un dominio ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
     );
-    return res.send(body);
   }
   //si hay proveedor, busco el nombre para la observacion asientos
    try {
@@ -1048,19 +1047,18 @@ async function registrarCostoIngresoIndividual({
       "SELECT RazonSocial FROM c_proveedores WHERE Codigo = ?",
       {
         type: QueryTypes.SELECT,
-        replacements: [id_vehiculo],
+        replacements: [cod_proveedor],
       }
     );
 
     if (result[0]["RazonSocial"]) nombre_proveedor = result[0]["RazonSocial"];
     else nombre_proveedor = "SIN NOMBRE PROVEEDOR";
   } catch (error) {
-    const { body } = handleError(
-      error,
-      "nombre del proveedor",
-      acciones.get
+    throw new Error(
+      `Error al buscar razon social del proveedor:  ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
     );
-    return res.send(body);
   }
 
 
