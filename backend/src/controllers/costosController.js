@@ -992,6 +992,7 @@ async function registrarCostoIngresoIndividual({
   let cuenta_secundaria_percepcion_IVA;
   let total_conceptos = 0;
 
+  let nombre_proveedor;
   let dominio;
   let observacion_asientos;
   if(id_concepto) total_conceptos = total_conceptos + 1
@@ -1014,8 +1015,6 @@ async function registrarCostoIngresoIndividual({
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
   } catch (error) {
     console.log(error);
-/*     await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback(); */
     throw new Error(
       `Error al buscar una cuenta contable ${
         error.message ? `${" :"}${error.message}` : ""
@@ -1037,14 +1036,31 @@ async function registrarCostoIngresoIndividual({
       dominio = result[0]["dominio_provisorio"];
     else dominio = "SIN DOMINIO";
   } catch (error) {
-    const { body } = handleError(
-      error,
-      "dominio del vehiculo",
-      acciones.get
+    throw new Error(
+      `Error al buscar un dominio ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
     );
-    return res.send(body);
   }
-  observacion_asientos = `${observacion} (${dominio})`
+  //si hay proveedor, busco el nombre para la observacion asientos
+   try {
+    const result = await pa7_giama_renting.query(
+      "SELECT RazonSocial FROM c_proveedores WHERE Codigo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [cod_proveedor],
+      }
+    );
+
+    if (result[0]["RazonSocial"]) nombre_proveedor = result[0]["RazonSocial"];
+    else nombre_proveedor = "SIN NOMBRE PROVEEDOR";
+  } catch (error) {
+    throw new Error(
+      `Error al buscar razon social del proveedor:  ${
+        error.message ? `${" :"}${error.message}` : ""
+      }`
+    );
+  }
 
 
   //obtengo cuentas_concepto 2 y 3 si hay
@@ -1179,10 +1195,14 @@ async function registrarCostoIngresoIndividual({
       numero_comprobante_2,
       8
     )}`;
+    
+    observacion_asientos = `${observacion} DOMINIO: ${dominio} PROVEEDOR: ${nombre_proveedor} FACTURA: ${comprobante}`
   } else {
     FA_FC = null;
     comprobante = null;
   }
+
+  
   //obtengo numero asiento
   try {
     NroAsiento = await getNumeroAsiento();
@@ -1227,8 +1247,6 @@ async function registrarCostoIngresoIndividual({
   } catch (error) {
     throw error;
   }
-  //se puede llamar solo pero retorna nroasiento para poder impactarlo en costos_ingresos
-  //(solo asiento primario)
   const factor =  -1;
 
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
