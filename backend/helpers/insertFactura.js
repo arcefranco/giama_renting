@@ -48,6 +48,7 @@ export const insertFactura = async (
     throw new Error("El cliente debe aclarar su tipo responsable");
   if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA"; 
   else tipo_factura = "FB";
+
   //obtengo el nombre de la provincia del cliente
   try {
     const result = await giama_renting.query(
@@ -88,7 +89,6 @@ export const insertFactura = async (
       `Error al buscar el cliente ${error.message && error.message}`
     );
   }
-
   if (!existeClienteFacturacion) {
     let nombre;
     if (clienteObtenido.razon_social) {
@@ -119,6 +119,7 @@ export const insertFactura = async (
     );
     CodigoCliente = result[0];
   }
+
   //inserto la factura
   try {
     const result = await pa7_giama_renting.query(
