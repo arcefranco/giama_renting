@@ -1009,50 +1009,51 @@ export const updateVehiculo = async (req, res) => {
     //FINANZAS
 
 
-  if(vehiculoAnterior[0]["fecha_inicio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
+  if(fecha_inicio_amortizacion && vehiculoAnterior[0]["fecha_inicio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de la fecha inicio de amortización"})
   }
-  if(vehiculoAnterior[0]["meses_amortizacion"] !== meses_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
+  if(meses_amortizacion && vehiculoAnterior[0]["meses_amortizacion"] !== meses_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de los meses amortización"})
   }
 
     //ADMINISTRACION
 
-  if(vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(dispositivo && vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje"})
   }
 
-  if(vehiculoAnterior[0]["estado"] !== estado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(estado && vehiculoAnterior[0]["estado_actual"] !== estado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo"})
   }
 
-  if(vehiculoAnterior[0]["sucursal"] !== sucursal && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(sucursal && vehiculoAnterior[0]["sucursal"] !== sucursal && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de sucursal"})
   }
 
-  if(vehiculoAnterior[0]["proveedor_gps"] !== proveedor_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(proveedor_gps && vehiculoAnterior[0]["proveedor_gps"] !== proveedor_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio del proveedor GPS"})
   }
 
-  if(vehiculoAnterior[0]["nro_serie_gps"] !== nro_serie_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(nro_serie_gps && vehiculoAnterior[0]["nro_serie_gps"] !== nro_serie_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio del número serie GPS"})
   }
 
-  if(vehiculoAnterior[0]["calcomania"] !== calcomania && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(calcomania && vehiculoAnterior[0]["calcomania"] !== calcomania && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de calcomania"})
   }
 
-  if(vehiculoAnterior[0]["gnc"] !== gnc && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(gnc && vehiculoAnterior[0]["gnc"] !== gnc && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de GNC"})
   }
 
-  if(vehiculoAnterior[0]["polarizado"] !== polarizado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(polarizado && vehiculoAnterior[0]["polarizado"] !== polarizado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de polarizado"})
   }
 
-  if(vehiculoAnterior[0]["cubre_asiento"] !== cubre_asiento && (!userRoles.includes("4") && !userRoles.includes("1")) ){
+  if(cubre_asiento && vehiculoAnterior[0]["cubre_asiento"] !== cubre_asiento && (!userRoles.includes("4") && !userRoles.includes("1")) ){
     return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de cubre asiento"})
   }
+
 
  
   let preparadoAhora =
