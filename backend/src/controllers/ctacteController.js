@@ -3,17 +3,18 @@ import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { insertPago } from "../../helpers/insertPago.js";
+import {asientoContable} from "../../helpers/asientoContable.js"
 import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
 import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../../helpers/getCuentaContableFormaCobro.js";
+import { handleError, acciones } from "../../helpers/handleError.js";
 
 export const postPago = async (req, res) => {
     const {
     id_cliente,
     fecha,  
-    usuario_alta_registro,
     id_forma_cobro,
     importe_cobro,
     observacion,
@@ -53,7 +54,7 @@ export const postPago = async (req, res) => {
         importe_cobro,
         usuario,
         id_cliente,
-        id_vehiculo ? id_vehiculo : null,
+        null,
         null,
         null,
         id_forma_cobro,
@@ -76,7 +77,7 @@ export const postPago = async (req, res) => {
     await insertPago(    
     id_cliente,
     fecha,  
-    usuario_alta_registro,
+    usuario,
     id_forma_cobro,
     importe_cobro,
     nro_recibo,
@@ -118,8 +119,8 @@ try {
     observacion,
     transaction_pa7_giama_renting,
     nro_recibo,
-    fecha_recibo_alquiler,
-    NroAsientoSecundario_pago,
+    fecha,
+    NroAsientoSecundario,
     null
   );
   await asientoContable(
@@ -156,6 +157,8 @@ const { body } = handleError(error);
 return res.send(body);
 }
 
+await transaction_giama_renting.commit()
+await transaction_pa7_giama_renting.commit()
 return res.send({status: true, message: "Cobro ingresado correctamente"})
 
 
