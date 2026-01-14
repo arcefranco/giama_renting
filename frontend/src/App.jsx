@@ -41,7 +41,7 @@ import ReporteRecibos from "./components/Recibos/ReporteRecibos";
 import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContrato";
 import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
 import Prorrateo from "./components/Costos/Prorrateo";
-import PagosClientes from "./PagosClientes";
+import PagosClientes from "./components/PagosClientes/PagosClientes"
 function App() {
 
   return (
@@ -157,7 +157,7 @@ function App() {
           <Route path='/parametros/modelos/:id' element={<UpdateModelo />} />
           <Route path='/parametros/sucursales' element={<Sucursales />} />
           <Route path='/parametros/sucursales/:id' element={<UpdateSucursal />} />
-          <Route path="/pagosClientes" element={<PagosClientes />} />
+          <Route path="/pagosClientes/:id" element={<PagosClientes />} />
         </Route>
       </Route>
     </Routes>

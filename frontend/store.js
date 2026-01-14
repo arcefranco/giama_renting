@@ -13,6 +13,7 @@ import recibosReducer from "./src/reducers/Recibos/recibosSlice";
 import ingresosReducer from "./src/reducers/Costos/ingresosSlice";
 import egresosReducer from "./src/reducers/Costos/egresosSlice";
 import parametrosReducer from "./src/reducers/Parametros/parametrosSlice";
+import pagosClientesReducer from "./src/reducers/PagosClientes/pagosClientesSlice"
 const loginPersistConfig = {
   key: "login",
   storage,
@@ -36,6 +37,7 @@ const reducer = combineReducers({
   usuariosReducer,
   recibosReducer,
   parametrosReducer,
+  pagosClientesReducer
 });
 export const store = configureStore({
   reducer: reducer,
