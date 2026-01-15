@@ -357,17 +357,32 @@ const ContratoAlquiler = () => {
       searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
     };
   });
-  const clienteOptions = clientes.map(cliente => ({
-    value: cliente.id,
-    label: (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <img src={getIconFromResolucion(cliente.resolucion_datero)} alt="" style={{ width: 16, height: 16 }} />
-        {`${cliente.nro_documento} - ${cliente.nombre} ${cliente.apellido}`}
-      </div>
-    ),
-    isDisabled: cliente.resolucion_datero === 2 || cliente.resolucion_datero === 0,
-    searchKey: `${cliente.nombre} ${cliente.apellido}`.toLowerCase(),
-  }));
+  const getClienteDisplayName = (cliente) => {
+    if (cliente.razon_social) {
+      return cliente.razon_social;
+    }
+
+    return `${cliente.nombre ?? ''} ${cliente.apellido ?? ''}`.trim();
+  };
+  const clienteOptions = clientes.map(cliente => {
+    const displayName = getClienteDisplayName(cliente);
+
+    return {
+      value: cliente.id,
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img
+            src={getIconFromResolucion(cliente.resolucion_datero)}
+            alt=""
+            style={{ width: 16, height: 16 }}
+          />
+          {`${cliente.nro_documento} - ${displayName}`}
+        </div>
+      ),
+      isDisabled: cliente.resolucion_datero === 2 || cliente.resolucion_datero === 0,
+      searchKey: `${cliente.nro_documento} ${displayName}`.toLowerCase(),
+    };
+  });
 
 
   return (
@@ -505,7 +520,7 @@ const ContratoAlquiler = () => {
                 <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
                   onChange={handleChangeContrato} />
               </div>
-            <div className={styles.inputContainer}>
+              <div className={styles.inputContainer}>
                 <span>Total depósito</span>
                 <input
                   type="number"
@@ -514,10 +529,10 @@ const ContratoAlquiler = () => {
                   onChange={handleChangeContrato}
                 />
 
-            </div>
+              </div>
 
             </div>
-            <hr style={{width: "30rem", placeSelf: "anchor-center", margin: "2rem"}}/>
+            <hr style={{ width: "30rem", placeSelf: "anchor-center", margin: "2rem" }} />
             <h3>Pago</h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
               <div className={styles.inputContainer}>
