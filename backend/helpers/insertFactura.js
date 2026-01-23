@@ -13,7 +13,8 @@ export const insertFactura = async (
   NroAsientoSecundario,
   concepto,
   transaction_giama_renting,
-  transaction_pa7_giama_renting
+  transaction_pa7_giama_renting,
+  fecha
 ) => {
   let clienteObtenido;
   let existeClienteFacturacion;
@@ -139,7 +140,7 @@ export const insertFactura = async (
           tipo_factura,
           importe_neto,
           importe_total,
-          `${getTodayDate()} 00:00:00`,
+          fecha  ? fecha : `${getTodayDate()} 00:00:00`,
           CodigoCliente,
           "MANUALES",
           NroAsiento,

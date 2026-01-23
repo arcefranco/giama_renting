@@ -20,7 +20,6 @@ export const postPago = async (req, res) => {
     observacion,
     //faltan
     usuario,
-    id_vehiculo // falta en formulario
     } = req.body
     let nro_recibo;
     let NroAsiento;
@@ -94,7 +93,7 @@ export const postPago = async (req, res) => {
     );
     return res.send(body);
   }
-
+let observacion_asientos = `RECIBO: ${nro_recibo} Observación: ${observacion}`
 //asientos
 try {
   await asientoContable(
@@ -103,7 +102,7 @@ try {
     cuenta_contable_forma_cobro,
     "D",
     importe_cobro,
-    observacion,
+    observacion_asientos,
     transaction_pa7_giama_renting,
     nro_recibo,
     fecha,
@@ -116,7 +115,7 @@ try {
     110308,//"cuenta_nueva",
     "H",
     importe_cobro,
-    observacion,
+    observacion_asientos,
     transaction_pa7_giama_renting,
     nro_recibo,
     fecha,
@@ -129,7 +128,7 @@ try {
     cuenta_secundaria_forma_cobro,
     "D",
     importe_cobro,
-    observacion,
+    observacion_asientos,
     transaction_pa7_giama_renting,
     nro_recibo,
     fecha
@@ -141,7 +140,7 @@ try {
     110308, //cuenta_nueva_secundaria
     "H",
     importe_cobro,
-    observacion,
+    observacion_asientos,
     transaction_pa7_giama_renting,
     nro_recibo,
     fecha,
@@ -179,7 +178,6 @@ FROM (
     SELECT
         pc.fecha AS fecha,
         CONCAT(
-            fc.nombre,
             CASE 
                 WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
                 THEN CONCAT(' ', pc.observacion)
@@ -258,6 +256,113 @@ ORDER BY m.fecha;`, {
     const { body } = handleError(error, "cuenta corriente del cliente", acciones.get);
     return res.send(body);
   }
+}
+
+export const fichaCtaCte = async (req, res) => {
+const query = `SELECT
+    m.id_cliente,
+    CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente,
+    m.fecha,
+    m.concepto,
+    m.debe,
+    m.haber
+FROM (
+
+    SELECT
+        pc.id_cliente,
+        pc.fecha,
+        CONCAT(
+            CASE 
+                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
+                THEN CONCAT(' ', pc.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        NULL AS debe,
+        pc.importe_cobro AS haber
+    FROM pagos_clientes pc
+
+    UNION ALL
+
+    SELECT
+        a.id_cliente,
+        a.fecha_alquiler,
+        CONCAT(
+            'Alquiler - ',
+            v.dominio,
+            ' - ',
+            DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
+            ' al ',
+            DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
+        ),
+        a.importe_total,
+        NULL
+    FROM alquileres a
+    INNER JOIN vehiculos v ON v.id = a.id_vehiculo
+
+    UNION ALL
+
+    SELECT
+        ca.id_cliente,
+        ca.fecha_contrato,
+        CONCAT('Deposito gtia - ', v.dominio),
+        ca.deposito_garantia,
+        NULL
+    FROM contratos_alquiler ca
+    INNER JOIN vehiculos v ON v.id = ca.id_vehiculo
+    WHERE ca.deposito_garantia > 0
+
+    UNION ALL
+
+    SELECT
+        ci.id_cliente,
+        ci.fecha,
+        CONCAT(
+            cc.nombre,
+            CASE 
+                WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
+                THEN CONCAT(' ', ci.observacion)
+                ELSE ''
+            END
+        ),
+        ci.importe_total,
+        NULL
+    FROM costos_ingresos ci
+    INNER JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+
+) m
+INNER JOIN clientes c ON c.id = m.id_cliente
+ORDER BY m.id_cliente, m.fecha;
+
+`
+try {
+  const rows = await giama_renting.query(query, {
+    type: QueryTypes.SELECT
+  });
+  
+const cuentas = {};
+
+rows.forEach(r => {
+  const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
+
+  if (!cuentas[nombre]) {
+    cuentas[nombre] = {
+      id_cliente: r.id_cliente,
+      nombre_cliente: nombre,
+      saldo: 0,
+      detalle: []
+    };
+  }
+
+  cuentas[nombre].detalle.push(r);
+  cuentas[nombre].saldo += (Number(r.haber) || 0) - (Number(r.debe) || 0);
+});
+  return res.send(cuentas)
+} catch (error) {
+  const { body } = handleError(error, "ficha", acciones.get);
+  return res.send(body);
+}
+
 }
 
 
