@@ -7,8 +7,8 @@ import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
 import Select from "react-select"
 import { getClientes, getClientesById } from '../../reducers/Clientes/clientesSlice'
-import { ctacteCliente as getCtaCteCliente, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice'
-import { useToastFeedback } from '../../customHooks/useToastFeedback'
+import { ctacteCliente as getCtaCteCliente, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice';
+import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
 
 
@@ -25,6 +25,7 @@ export const PagosClientes = () => {
         importe_cobro: '',
         observacion: '',
     })
+    const [saldoActual, setSaldoActual] = useState(0)
     const dispatch = useDispatch()
     useEffect(() => {
         Promise.all([
@@ -68,6 +69,19 @@ export const PagosClientes = () => {
             }))
         }
     }, [clientes])
+    useEffect(() => {
+        if (ctacteCliente?.length) {
+            const total = ctacteCliente.reduce((acc, mov) => {
+                const debe = Number(mov.debe) || 0;
+                const haber = Number(mov.haber) || 0;
+                return acc + haber - debe;
+            }, 0);
+
+            setSaldoActual(total);
+        } else {
+            setSaldoActual(0);
+        }
+    }, [ctacteCliente]);
 
     useToastFeedback({
         isError,
@@ -207,7 +221,11 @@ export const PagosClientes = () => {
                 <Column dataField="debe" alignment="right" caption="Debe" />
                 <Column dataField="haber" alignment="right" caption="Haber" />
                 <Column dataField="saldo" alignment="right" caption="Saldo" />
+
             </DataGrid>
+            <div className={styles.saldoBox}>
+                Saldo actual: {saldoActual}
+            </div>
             <h2>Alta pagos clientes</h2>
             <div className={styles.formContainer} >
                 <form action="" enctype="multipart/form-data" className={styles.form} style={{

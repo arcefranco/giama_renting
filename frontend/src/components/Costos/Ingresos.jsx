@@ -40,7 +40,8 @@ const Ingresos = () => {
   const [form, setForm] = useState({
     debe_ingreso: '',
     id_vehiculo: id ? id : "",
-    fecha: '',
+    fecha_deuda: '',
+    fecha_pago: '',
     id_forma_cobro_1: '',
     id_forma_cobro_2: '',
     id_forma_cobro_3: '',
@@ -355,8 +356,8 @@ const Ingresos = () => {
 
   useEffect(() => {
     setForm({
-        ...form,
-        debe_ingreso: total
+      ...form,
+      debe_ingreso: total
     })
   }, [total])
 
@@ -368,61 +369,63 @@ const Ingresos = () => {
     onSuccess: () => {
       if (id) {
         setForm({
-        debe_ingreso: '',
-        id_vehiculo: id,
-        fecha: '',
-        id_forma_cobro_1: '',
-        id_forma_cobro_2: '',
-        id_forma_cobro_3: '',
-        total_cobro_1: '',
-        total_cobro_2: '',
-        total_cobro_3: '',
-        usuario: username,
-        observacion: '',
-        ingreso_egreso: 'I',
-        id_cliente: '',
-        id_forma_cobro: '',
-        id_concepto: '',
-        importe_neto: '',
-        importe_iva: '',
-        importe_total: '',
-        id_concepto_2: '',
-        importe_neto_2: '',
-        importe_iva_2: '',
-        importe_total_2: '',
-        id_concepto_3: '',
-        importe_neto_3: '',
-        importe_iva_3: '',
-        importe_total_3: ''
+          debe_ingreso: '',
+          id_vehiculo: id,
+          fecha_deuda: '',
+          fecha_pago: '',
+          id_forma_cobro_1: '',
+          id_forma_cobro_2: '',
+          id_forma_cobro_3: '',
+          total_cobro_1: '',
+          total_cobro_2: '',
+          total_cobro_3: '',
+          usuario: username,
+          observacion: '',
+          ingreso_egreso: 'I',
+          id_cliente: '',
+          id_forma_cobro: '',
+          id_concepto: '',
+          importe_neto: '',
+          importe_iva: '',
+          importe_total: '',
+          id_concepto_2: '',
+          importe_neto_2: '',
+          importe_iva_2: '',
+          importe_total_2: '',
+          id_concepto_3: '',
+          importe_neto_3: '',
+          importe_iva_3: '',
+          importe_total_3: ''
         })
       } else if (!id) {
         setForm({
-        debe_ingreso: '',
-        id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
-        fecha: '',
-        id_forma_cobro_1: '',
-        id_forma_cobro_2: '',
-        id_forma_cobro_3: '',
-        total_cobro_1: '',
-        total_cobro_2: '',
-        total_cobro_3: '',
-        usuario: username,
-        observacion: '',
-        ingreso_egreso: 'I',
-        id_cliente: '',
-        id_forma_cobro: '',
-        id_concepto: '',
-        importe_neto: '',
-        importe_iva: '',
-        importe_total: '',
-        id_concepto_2: '',
-        importe_neto_2: '',
-        importe_iva_2: '',
-        importe_total_2: '',
-        id_concepto_3: '',
-        importe_neto_3: '',
-        importe_iva_3: '',
-        importe_total_3: ''
+          debe_ingreso: '',
+          id_vehiculo: form.id_vehiculo ? form.id_vehiculo : "",
+          fecha_deuda: '',
+          fecha_pago: '',
+          id_forma_cobro_1: '',
+          id_forma_cobro_2: '',
+          id_forma_cobro_3: '',
+          total_cobro_1: '',
+          total_cobro_2: '',
+          total_cobro_3: '',
+          usuario: username,
+          observacion: '',
+          ingreso_egreso: 'I',
+          id_cliente: '',
+          id_forma_cobro: '',
+          id_concepto: '',
+          importe_neto: '',
+          importe_iva: '',
+          importe_total: '',
+          id_concepto_2: '',
+          importe_neto_2: '',
+          importe_iva_2: '',
+          importe_total_2: '',
+          id_concepto_3: '',
+          importe_neto_3: '',
+          importe_iva_3: '',
+          importe_total_3: ''
         })
       }
       setGeneraFactura(false)
@@ -463,7 +466,7 @@ const Ingresos = () => {
     }
     //copias de comportamiento a importes 2 y 3
     else if (name === "importe_neto_2") {
-    let neto = value
+      let neto = value
       if (IVAInhabilitado2) {
         setForm({
           ...form,
@@ -481,7 +484,7 @@ const Ingresos = () => {
       }
     }
     else if (name === "importe_neto_3") {
-        let neto = value
+      let neto = value
       if (IVAInhabilitado3) {
         let neto = value
         setForm({
@@ -569,19 +572,19 @@ const Ingresos = () => {
         [name]: newValue,
       });
     }
-else if (
-        name === "total_cobro_1" ||
-        name === "total_cobro_2" ||
-        name === "total_cobro_3") {
-  const importe = value;
-    const decimalRegex = /^\d*([.]?\d*)?$/
-  if (!decimalRegex.test(importe)) return;
+    else if (
+      name === "total_cobro_1" ||
+      name === "total_cobro_2" ||
+      name === "total_cobro_3") {
+      const importe = value;
+      const decimalRegex = /^\d*([.]?\d*)?$/
+      if (!decimalRegex.test(importe)) return;
 
-  setForm({
-    ...form,
-    [name]: importe
-  });
-}
+      setForm({
+        ...form,
+        [name]: importe
+      });
+    }
     else {
       setForm({
         ...form,
@@ -772,8 +775,8 @@ else if (
         <form action="" enctype="multipart/form-data" className={styles.form}>
           <div className={styles.container3}>
             <div className={styles.inputContainer}>
-              <span>Fecha</span>
-              <input type="date" name='fecha' value={form["fecha"]}
+              <span>Fecha factura</span> <span style={{ fontSize: "9px" }}>(y asientos x deuda)</span>
+              <input type="date" name='fecha_deuda' value={form.fecha_deuda}
                 onChange={handleChange} />
             </div>
 
@@ -799,8 +802,8 @@ else if (
 
             <div className={styles.inputContainer}>
               <span>Importe neto</span>
-              <input type="text" name='importe_neto' value={form["importe_neto"]} 
-                onChange={handleChange}/>
+              <input type="text" name='importe_neto' value={form["importe_neto"]}
+                onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
@@ -811,8 +814,8 @@ else if (
             <div className={styles.inputContainer}>
               <span>Total</span>
               <input type="text" name='importe_total' value={form["importe_total"]}
-              disabled
-               />
+                disabled
+              />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -854,8 +857,8 @@ else if (
 
             <div className={styles.inputContainer}>
               <span>Importe neto</span>
-              <input type="text" name='importe_neto_2' value={form["importe_neto_2"]}  
-               onChange={handleChange} />
+              <input type="text" name='importe_neto_2' value={form["importe_neto_2"]}
+                onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
@@ -865,8 +868,8 @@ else if (
             </div>
             <div className={styles.inputContainer}>
               <span>Total</span>
-              <input type="text" name='importe_total_2' value={form["importe_total_2"]} 
-                />
+              <input type="text" name='importe_total_2' value={form["importe_total_2"]}
+              />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -908,8 +911,8 @@ else if (
 
             <div className={styles.inputContainer}>
               <span>Importe neto</span>
-              <input type="text" name='importe_neto_3' value={form["importe_neto_3"]}  
-              onChange={handleChange} />
+              <input type="text" name='importe_neto_3' value={form["importe_neto_3"]}
+                onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
@@ -920,7 +923,7 @@ else if (
             <div className={styles.inputContainer}>
               <span>Total</span>
               <input type="text" name='importe_total_3' value={form["importe_total_3"]} disabled
-                />
+              />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -956,10 +959,17 @@ else if (
 
         </form>
         <form action="" enctype="multipart/form-data" className={styles.form}>
-        <h2>Pago</h2>
-        <div className={styles.container3}>
+          <h2>Pago</h2>
+          <div className={styles.container3}>
             <div className={styles.inputContainer}>
-            <span>Forma de cobro</span>
+              <span>Fecha recibo</span> <span style={{ fontSize: "9px" }}>(y asientos x pago)</span>
+              <input type="date" name='fecha_pago' value={form.fecha_pago}
+                onChange={handleChange} />
+            </div>
+          </div>
+          <div className={styles.container3}>
+            <div className={styles.inputContainer}>
+              <span>Forma de cobro</span>
               <select name="id_forma_cobro_1" value={form.id_forma_cobro_1}
                 onChange={handleChange} id="">
                 <option value={""} disabled selected>{"Seleccione una opción"}</option>
@@ -972,13 +982,13 @@ else if (
             </div>
             <div className={styles.inputContainer}>
               <span>Total</span>
-              <input type="text" name='total_cobro_1' value={form.total_cobro_1} 
-                onChange={handleChange}/>
+              <input type="text" name='total_cobro_1' value={form.total_cobro_1}
+                onChange={handleChange} />
             </div>
-        </div>
-        <div className={styles.container3}>
+          </div>
+          <div className={styles.container3}>
             <div className={styles.inputContainer}>
-            <span>Forma de cobro</span>
+              <span>Forma de cobro</span>
               <select name="id_forma_cobro_2" value={form.id_forma_cobro_2}
                 onChange={handleChange} id="">
                 <option value={""} disabled selected>{"Seleccione una opción"}</option>
@@ -991,13 +1001,13 @@ else if (
             </div>
             <div className={styles.inputContainer}>
               <span>Total</span>
-              <input type="text" name='total_cobro_2' value={form.total_cobro_2} 
-                onChange={handleChange}/>
+              <input type="text" name='total_cobro_2' value={form.total_cobro_2}
+                onChange={handleChange} />
             </div>
-        </div>
-        <div className={styles.container3}>
+          </div>
+          <div className={styles.container3}>
             <div className={styles.inputContainer}>
-            <span>Forma de cobro</span>
+              <span>Forma de cobro</span>
               <select name="id_forma_cobro_3" value={form.id_forma_cobro_3}
                 onChange={handleChange} id="">
                 <option value={""} disabled selected>{"Seleccione una opción"}</option>
@@ -1010,15 +1020,15 @@ else if (
             </div>
             <div className={styles.inputContainer}>
               <span>Total</span>
-              <input type="text" name='total_cobro_3' value={form.total_cobro_3} 
-                onChange={handleChange}/>
+              <input type="text" name='total_cobro_3' value={form.total_cobro_3}
+                onChange={handleChange} />
             </div>
-        </div>
+          </div>
         </form>
         <button
           className={styles.sendBtn}
           onClick={handleSubmit}
-          disabled={!form["fecha"] || !form["id_concepto"] || !form["id_vehiculo"]}
+          disabled={!form["fecha_deuda"] || !form["id_concepto"] || !form["id_vehiculo"]}
         >
           Enviar
         </button>

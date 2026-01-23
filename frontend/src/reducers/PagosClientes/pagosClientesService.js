@@ -1,6 +1,7 @@
 import {
   postFunction,
   postArrayFunction,
+  getObjectFunction,
 } from "../axios/axiosFunctions";
 
 const postPago = async (data) => {
@@ -11,9 +12,14 @@ const ctacteCliente = async (data) => {
   return postArrayFunction("ctacte/ctacteCliente", data);
 };
 
+const fichaCtaCte = async () => {
+  return getObjectFunction("ctacte/fichaCtaCte")
+}
+
 const pagosClientesService = {
     postPago,
-    ctacteCliente
+    ctacteCliente,
+    fichaCtaCte
 }
 
 export default pagosClientesService;

@@ -74,6 +74,7 @@ const ContratoAlquiler = () => {
     deposito_2: '',
     deposito_3: '',
     fecha_recibo_deposito: '',
+    fecha_deuda_deposito: '',
     id_forma_cobro_contrato: '',
     id_forma_cobro_contrato_2: '',
     id_forma_cobro_contrato_3: '',
@@ -108,6 +109,7 @@ const ContratoAlquiler = () => {
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
         fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
         fecha_recibo_deposito: '',
+        fecha_deuda_deposito: '',
       })
       dispatch(reset())
     }
@@ -515,11 +517,7 @@ const ContratoAlquiler = () => {
 
           <form action="" className={`${styles.formDeposito} ${formContrato.ingresa_deposito === 0 ? styles.disabledForm : ''}`}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-              <div className={styles.inputContainer}>
-                <span>Fecha del recibo</span>
-                <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
-                  onChange={handleChangeContrato} />
-              </div>
+
               <div className={styles.inputContainer}>
                 <span>Total depósito</span>
                 <input
@@ -531,9 +529,21 @@ const ContratoAlquiler = () => {
 
               </div>
 
+              <div className={styles.inputContainer}>
+                <span>Fecha</span> <span style={{ fontSize: "9px" }}>(asientos x deuda)</span>
+                <input type="date" name='fecha_deuda_deposito' value={formContrato["fecha_deuda_deposito"]}
+                  onChange={handleChangeContrato} />
+
+              </div>
+
             </div>
             <hr style={{ width: "30rem", placeSelf: "anchor-center", margin: "2rem" }} />
             <h3>Pago</h3>
+            <div className={styles.inputContainer}>
+              <span>Fecha del recibo</span>
+              <input type="date" name='fecha_recibo_deposito' value={formContrato["fecha_recibo_deposito"]}
+                onChange={handleChangeContrato} />
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
               <div className={styles.inputContainer}>
                 <span>Forma de cobro</span>

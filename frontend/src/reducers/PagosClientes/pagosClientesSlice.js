@@ -5,6 +5,7 @@ import { handleAsyncThunk, responses } from "../../helpers/handleAsyncThunk.js";
 
 const initialState = {
   ctacteCliente: [],
+  ficha: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -26,6 +27,16 @@ export const ctacteCliente = createAsyncThunk(
     handleAsyncThunk(
       () => pagosClientesService.ctacteCliente(data),
       responses.array,
+      rejectWithValue
+    )
+);
+
+export const fichaCtaCte = createAsyncThunk(
+  "fichaCtaCte",
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.fichaCtaCte(),
+      responses.object,
       rejectWithValue
     )
 );
@@ -70,6 +81,22 @@ export const pagosClientesSlice = createSlice({
         state.ctacteCliente = action.payload;
     });
     builder.addCase(ctacteCliente.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.isSuccess = false;
+        state.message = action.payload.message;
+    });
+    builder.addCase(fichaCtaCte.pending, (state) => {
+        state.isLoading = true;
+    });
+    builder.addCase(fichaCtaCte.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        state.message = "";
+        state.ficha = action.payload;
+    });
+    builder.addCase(fichaCtaCte.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.isSuccess = false;

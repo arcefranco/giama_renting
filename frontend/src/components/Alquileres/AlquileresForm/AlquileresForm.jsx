@@ -90,6 +90,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     fecha_desde_alquiler: fechaDesdePorDefecto,
     fecha_hasta_alquiler: fechaHastaPorDefecto,
     fecha_recibo_alquiler: '',
+    fecha_factura_alquiler: '',
     importe_total_1: '',
     id_forma_cobro_alquiler_1: '',
     importe_total_2: '',
@@ -123,6 +124,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
           ingresa_alquiler: 1,
           importe_iva: '',
           fecha_recibo_alquiler: '',
+          fecha_factura_alquiler: '',
           usuario: username,
           importe_total_1: '',
           id_forma_cobro_alquiler_1: '',
@@ -281,7 +283,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
     }
 
   },
-    [form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler, 
+    [form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler,
     form.fecha_hasta_alquiler,
     form.importe_total_1, form.id_forma_cobro_alquiler_1,
     form.importe_total_2, form.id_forma_cobro_alquiler_2,
@@ -289,11 +291,11 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       modoContrato
     ])
 
-const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
+  const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
     alquileres?.filter(e => e.anulado === 0)?.map(a => ({
-        start: new Date(a.fecha_desde),
-        end: addDays(new Date(a.fecha_hasta), 1),
-}));
+      start: new Date(a.fecha_desde),
+      end: addDays(new Date(a.fecha_hasta), 1),
+    }));
 
   const opcionesVehiculos = vehiculos.filter(v => { return !v.fecha_venta }).map(e => {
     return {
@@ -486,10 +488,11 @@ const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el date
             />
           </div>
           <div className={styles.inputContainer}>
-            <span>Fecha del recibo</span>
-            <input type="date" name='fecha_recibo_alquiler' value={form["fecha_recibo_alquiler"]}
+            <span>Fecha de la factura</span><span style={{ fontSize: "9px" }}>(y asientos x deuda)</span>
+            <input type="date" name='fecha_factura_alquiler' value={form.fecha_factura_alquiler}
               onChange={handleChange} />
           </div>
+
           <div className={styles.inputContainer}>
             <span>Observación</span>
             <textarea type="text" name='observacion' value={form["observacion"]}
@@ -497,8 +500,17 @@ const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el date
           </div>
 
         </div>
-        <hr style={{width: "30rem"}}/>
+        <hr style={{ width: "30rem" }} />
         <h3>Pago</h3>
+
+        <div className={styles.form4fr}>
+          <div className={styles.inputContainer}>
+            <span>Fecha del recibo</span> <span style={{ fontSize: "9px" }}>(y asientos x pago)</span>
+            <input type="date" name='fecha_recibo_alquiler' value={form["fecha_recibo_alquiler"]}
+              onChange={handleChange} />
+          </div>
+
+        </div>
         <div className={styles.form4fr}>
           <div className={styles.inputContainer}>
             <span>Forma de cobro</span>
@@ -559,11 +571,11 @@ const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el date
           </div>
         </div>
         {
-            !modoContrato ? 
-        <div className={styles.divTotal}>
-          <span style={{ fontSize: "15px" }}>{"Total (cobrado)"}: </span>
-          <span>{total}</span>
-        </div> : <div></div>
+          !modoContrato ?
+            <div className={styles.divTotal}>
+              <span style={{ fontSize: "15px" }}>{"Total (cobrado)"}: </span>
+              <span>{total}</span>
+            </div> : <div></div>
         }
 
       </form>

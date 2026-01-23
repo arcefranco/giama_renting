@@ -42,6 +42,7 @@ import UpdateContrato from "./components/Alquileres/ContratoAlquiler/UpdateContr
 import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
 import Prorrateo from "./components/Costos/Prorrateo";
 import PagosClientes from "./components/PagosClientes/PagosClientes"
+import FichaCtaCte from "./components/PagosClientes/FichaCtaCte";
 function App() {
 
   return (
@@ -99,6 +100,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/alta/ingresos' element={<AltaCostos />} />
           </Route>
+          <Route path="/pagosClientes/:id" element={<PagosClientes />} />
+          <Route path="/pagosClientes" element={<PagosClientes />} />
+          <Route path="/fichaCtaCte" element={<FichaCtaCte />} />
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/alta/egresos' element={<AltaCostos />} />
           </Route>
@@ -157,7 +161,7 @@ function App() {
           <Route path='/parametros/modelos/:id' element={<UpdateModelo />} />
           <Route path='/parametros/sucursales' element={<Sucursales />} />
           <Route path='/parametros/sucursales/:id' element={<UpdateSucursal />} />
-          <Route path="/pagosClientes/:id" element={<PagosClientes />} />
+
         </Route>
       </Route>
     </Routes>
