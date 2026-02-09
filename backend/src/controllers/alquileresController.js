@@ -1843,8 +1843,7 @@ export const postContratoAlquiler = async (req, res) => {
   const deposito_total_pago = deposito_formateado + deposito_2_formateado + deposito_3_formateado;
   const importe_neto_alquiler_deuda =  (parseFloat(debe_alquiler) / 1.21).toFixed(2)
   const importe_iva_alquiler_deuda =  (debe_alquiler - importe_neto_alquiler_deuda).toFixed(2)
-  const importe_neto_deposito_deuda =  (parseFloat(debe_deposito) / 1.21).toFixed(2)
-  const importe_iva_deposito_deuda =  (debe_deposito - importe_neto_deposito_deuda).toFixed(2)
+
   //verificar campos obligatorios
   const camposObligatorios = ["fecha_desde_contrato", "fecha_hasta_contrato"];
   const campoFaltante = verificarCamposObligatorios(
@@ -2620,22 +2619,9 @@ export const postContratoAlquiler = async (req, res) => {
     await asientoContable(
       "c_movimientos", 
       NroAsiento_deposito_deuda, 
-      cuentaALQU, 
+      cuentaDEPO, 
       "H", 
-      importe_neto_deposito_deuda,
-      concepto_deuda_deposito,
-      transaction_pa7_giama_renting,
-      null,
-      fecha_deuda_deposito,
-      NroAsientoSecundario_deposito_deuda,
-      null
-    )
-    await asientoContable(
-      "c_movimientos", 
-      NroAsiento_deposito_deuda, 
-      cuentaIV21, 
-      "H", 
-      importe_iva_deposito_deuda,
+      debe_deposito,
       concepto_deuda_deposito,
       transaction_pa7_giama_renting,
       null,
@@ -2649,7 +2635,7 @@ export const postContratoAlquiler = async (req, res) => {
       NroAsientoSecundario_deposito_deuda, 
       110308,//"cuenta_nueva_secundaria", 
       "D", 
-      debe_alquiler,
+      debe_deposito,
       concepto_deuda_deposito,
       transaction_pa7_giama_renting,
       null,
@@ -2660,22 +2646,9 @@ export const postContratoAlquiler = async (req, res) => {
     await asientoContable(
       "c2_movimientos", 
       NroAsientoSecundario_deposito_deuda, 
-      cuentaALQU_2, 
+      cuentaDEP2, 
       "H", 
-      importe_neto_deposito_deuda,
-      concepto_deuda_deposito,
-      transaction_pa7_giama_renting,
-      null,
-      fecha_deuda_deposito,
-      null,
-      null
-    )
-    await asientoContable(
-      "c2_movimientos", 
-      NroAsientoSecundario_deposito_deuda, 
-      cuentaIV21_2, 
-      "H", 
-      importe_iva_deposito_deuda,
+      debe_deposito,
       concepto_deuda_deposito,
       transaction_pa7_giama_renting,
       null,
@@ -2755,7 +2728,7 @@ export const postContratoAlquiler = async (req, res) => {
             NroAsientoSecundario_deposito_pago,
             cuenta_secundaria_forma_cobro_contrato,
             "D",
-            deposito,
+            deposito_formateado,
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
@@ -2768,7 +2741,7 @@ export const postContratoAlquiler = async (req, res) => {
             NroAsientoSecundario_deposito_pago,
             cuenta_secundaria_forma_cobro_contrato_2,
             "D",
-            deposito_2,
+            deposito_2_formateado,
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
@@ -2781,7 +2754,7 @@ export const postContratoAlquiler = async (req, res) => {
             NroAsientoSecundario_deposito_pago,
             cuenta_secundaria_forma_cobro_contrato_3,
             "D",
-            deposito_3,
+            deposito_3_formateado,
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
