@@ -260,9 +260,8 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       form.fecha_desde_alquiler,
       form.fecha_hasta_alquiler,
     ].every(Boolean);
-    let formas_cobro_boolean = !form.id_forma_cobro_alquiler_1 && !form.id_forma_cobro_alquiler_2 && !form.id_forma_cobro_alquiler_3 ? true : false
-    let importes_total_boolean = !form.importe_total_1 && !form.importe_total_2 && !form.importe_total_3 ? true : false
-    if (form.ingresa_alquiler == 1 && !modoContrato && (!camposCompletos || (formas_cobro_boolean || importes_total_boolean)) /* (!form.id_vehiculo || !form.id_cliente || !form.fecha_desde_alquiler
+
+    if (form.ingresa_alquiler == 1 && !modoContrato && (!camposCompletos) /* (!form.id_vehiculo || !form.id_cliente || !form.fecha_desde_alquiler
       || !form.fecha_hasta_alquiler || !form.importe_neto || !form.importe_iva || !form.importe_total || !form.id_forma_cobro_alquiler)*/) {
       console.log("entra (bloque 1)");
       setSendBtnDisabled(true)
@@ -273,7 +272,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       setSendBtnDisabled(true)
     }
     else if (form.ingresa_alquiler == 1 && modoContrato && (!vehiculo || !cliente || !form.fecha_desde_alquiler
-      || !form.fecha_hasta_alquiler || formas_cobro_boolean || importes_total_boolean
+      || !form.fecha_hasta_alquiler
     )) {
       console.log("entra (bloque 3)");
       setSendBtnDisabled(true)
@@ -285,9 +284,6 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   },
     [form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler,
     form.fecha_hasta_alquiler,
-    form.importe_total_1, form.id_forma_cobro_alquiler_1,
-    form.importe_total_2, form.id_forma_cobro_alquiler_2,
-    form.importe_total_3, form.id_forma_cobro_alquiler_3,
       modoContrato
     ])
 
