@@ -1759,7 +1759,6 @@ async function registrarIngresoIndividual({
           id_forma_cobro_1,
           id_forma_cobro_2,
           id_forma_cobro_3,
-          nro_factura,
           transaction_costos_ingresos,
           total_cobro_2,
           total_cobro_3,

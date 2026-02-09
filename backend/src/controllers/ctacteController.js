@@ -59,7 +59,6 @@ export const postPago = async (req, res) => {
         id_forma_cobro,
         null,
         null,
-        null,
         transaction_giama_renting,
         null,
         null,

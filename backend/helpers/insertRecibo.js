@@ -12,7 +12,6 @@ export const insertRecibo = async (
   id_forma_cobro_1,
   id_forma_cobro_2,
   id_forma_cobro_3,
-  nro_factura,
   transaction,
   importe_total_2,
   importe_total_3,
@@ -22,9 +21,9 @@ export const insertRecibo = async (
     const [result] = await giama_renting.query(
       `INSERT INTO recibos 
       (fecha, detalle, importe_total, id_cliente,
-      id_vehiculo, id_contrato, id_alquiler, id_forma_cobro, id_forma_cobro_2, id_forma_cobro_3, id_factura_pa6, usuario_alta,
+      id_vehiculo, id_contrato, id_alquiler, id_forma_cobro, id_forma_cobro_2, id_forma_cobro_3, usuario_alta,
       importe_total_2, importe_total_3, importe_total_1) 
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -38,7 +37,6 @@ export const insertRecibo = async (
           id_forma_cobro_1 ? id_forma_cobro_1 : null,
           id_forma_cobro_2 ? id_forma_cobro_2 : null,
           id_forma_cobro_3 ? id_forma_cobro_3 : null,
-          nro_factura ? nro_factura : null,
           usuario,
           importe_total_2,
           importe_total_3,

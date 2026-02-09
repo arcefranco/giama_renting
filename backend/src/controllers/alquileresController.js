@@ -56,8 +56,7 @@ const insertAlquiler = async (body) => {
     nro_asiento,
     observacion,
     id_contrato,
-    fecha_alquiler,
-    id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    fecha_alquiler) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -71,8 +70,7 @@ const insertAlquiler = async (body) => {
           NroAsiento,
           observacion ? observacion : "",
           id_contrato,
-          getTodayDate(),
-          id_factura_pa6
+          getTodayDate()
         ],
         transaction: transaction,
       }
@@ -1412,7 +1410,6 @@ export const postAlquiler = async (req, res) => {
       id_forma_cobro_alquiler_1 ? id_forma_cobro_alquiler_1 : null,
       id_forma_cobro_alquiler_2 ? id_forma_cobro_alquiler_2 : null,
       id_forma_cobro_alquiler_3 ? id_forma_cobro_alquiler_3 : null,
-      nro_factura,
       transaction_giama_renting,
       importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
       importe_total_3_formateado > 0 ? importe_total_3_formateado : null,
@@ -2233,7 +2230,6 @@ export const postContratoAlquiler = async (req, res) => {
         id_forma_cobro_alquiler_1 ? id_forma_cobro_alquiler_1 : null,
         id_forma_cobro_alquiler_2 ? id_forma_cobro_alquiler_2 : null,
         id_forma_cobro_alquiler_3 ? id_forma_cobro_alquiler_3 : null,
-        id_factura,
         transaction_giama_renting,
         importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
         importe_total_3_formateado > 0 ? importe_total_3_formateado : null,
