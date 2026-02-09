@@ -2696,7 +2696,7 @@ export const postContratoAlquiler = async (req, res) => {
           );
         }
         if(cuenta_contable_forma_cobro_contrato_3){
-          await asientoContable(
+          await asientoContable( 
             "c_movimientos",
             NroAsiento_deposito_pago,
             cuenta_contable_forma_cobro_contrato_3,
