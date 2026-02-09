@@ -2003,14 +2003,7 @@ export const postContratoAlquiler = async (req, res) => {
     );
     return res.send(body);
   }
-  //chequear que se explicite el no ingreso del deposito/alquiler
-  if (ingresa_deposito == 1 && (!deposito && !deposito_2 && !deposito_3)) {
-    return res.send({
-      status: false,
-      message:
-        "Debe especificar que no ingresa depósito en garantía. Faltan datos para el ingreso del mismo.",
-    });
-  }
+
   if (
     ingresa_alquiler == 1 &&
     (!fecha_desde_alquiler || !fecha_hasta_alquiler)
