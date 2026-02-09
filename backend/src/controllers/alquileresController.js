@@ -56,7 +56,8 @@ const insertAlquiler = async (body) => {
     nro_asiento,
     observacion,
     id_contrato,
-    fecha_alquiler) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    fecha_alquiler,
+    id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -70,7 +71,8 @@ const insertAlquiler = async (body) => {
           NroAsiento,
           observacion ? observacion : "",
           id_contrato,
-          getTodayDate()
+          getTodayDate(),
+          id_factura_pa6
         ],
         transaction: transaction,
       }
