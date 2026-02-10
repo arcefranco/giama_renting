@@ -157,10 +157,7 @@ return res.send(body);
 
 await transaction_giama_renting.commit()
 await transaction_pa7_giama_renting.commit()
-return res.send({status: true, message: "Cobro ingresado correctamente"})
-
-
-
+return res.send({status: true, message: "Cobro ingresado correctamente", data: nro_recibo})
 }
 
 export const ctaCteCliente = async (req, res) => {

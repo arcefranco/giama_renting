@@ -192,7 +192,7 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
            <div>
           </div>
            <div>
-            <p><b>Sucursal: </b> ${recibo.nombre_sucursal}</p>
+          <p><b>Sucursal: </b> ${recibo.nombre_sucursal ? recibo.nombre_sucursal : ""}</p>
           </div>
           <div>
           </div>
