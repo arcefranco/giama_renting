@@ -10,7 +10,8 @@ import { getClientes, getClientesById } from '../../reducers/Clientes/clientesSl
 import { ctacteCliente as getCtaCteCliente, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
-
+import { getReciboByIdSlice, reset as resetRecibos } from '../../reducers/Recibos/recibosSlice.js'
+import Swal from 'sweetalert2';
 
 export const PagosClientes = () => {
     const { id } = useParams();
@@ -32,6 +33,10 @@ export const PagosClientes = () => {
             dispatch(getClientes()),
             dispatch(getFormasDeCobro()),
         ])
+        return () => {
+            dispatch(reset())
+            dispatch(resetRecibos())
+        }
     }, [])
     useEffect(() => {
         dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
@@ -43,8 +48,10 @@ export const PagosClientes = () => {
         }
     }, [id])
 
+
     const { clientes, cliente } = useSelector((state) => state.clientesReducer)
-    const { isError, isSuccess, isLoading, message, ctacteCliente } = useSelector((state) => state.pagosClientesReducer)
+    const { isError, isSuccess, isLoading, message, ctacteCliente, nro_recibo } = useSelector((state) => state.pagosClientesReducer)
+    const { html_recibo } = useSelector((state) => state.recibosReducer);
     useEffect(() => { /**OPCIONES DE CLIENTES PARA EL SELECT */
         if (clientes?.length) {
             setOpcionesClientes(clientes?.map(e => {
@@ -82,7 +89,44 @@ export const PagosClientes = () => {
             setSaldoActual(0);
         }
     }, [ctacteCliente]);
+    useEffect(() => {
+        if (nro_recibo) {
+            dispatch(getReciboByIdSlice({ id: nro_recibo }));
+        }
+    }, [nro_recibo]);
+    useEffect(() => {
+        if (html_recibo) {
+            Swal.fire({
+                title: '¿Desea imprimir el recibo?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí',
+                cancelButtonText: 'Cancelar',
+                icon: 'warning',
+                didOpen: () => {
+                    document.body.classList.remove('swal2-height-auto');
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const win = window.open('', '_blank');
+                    win.document.write(html_recibo);
+                    win.document.close();
 
+                    // Esperamos un poco para que cargue todo el HTML (incluida la imagen)
+                    setTimeout(() => {
+                        win.focus();
+                        win.print();
+
+                        // Opcional: cerrar automáticamente después de imprimir
+                        win.onafterprint = () => {
+                            win.close();
+                        };
+                    }, 500); // Ajustá el delay si fuera necesario
+                }
+            }).finally(() => {
+                dispatch(resetRecibos())
+            });
+        }
+    }, [html_recibo]);
     useToastFeedback({
         isError,
         isSuccess,

@@ -5,6 +5,7 @@ import { handleAsyncThunk, responses } from "../../helpers/handleAsyncThunk.js";
 
 const initialState = {
   ctacteCliente: [],
+  nro_recibo: null,
   ficha: null,
   isError: false,
   isSuccess: false,
@@ -50,7 +51,8 @@ export const pagosClientesSlice = createSlice({
         isSuccess: false,
         isLoading: false,
         message: "",
-        ctacteCliente: state.ctacteCliente
+        ctacteCliente: state.ctacteCliente,
+        nro_recibo: null
      }),
 
   },
@@ -63,6 +65,7 @@ export const pagosClientesSlice = createSlice({
       state.isSuccess = true;
       state.isError = false;
       state.message = action.payload.message;
+      state.nro_recibo = action.payload.data;
     });
     builder.addCase(postPago.rejected, (state, action) => {
       state.isLoading = false;
