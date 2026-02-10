@@ -1461,7 +1461,6 @@ async function registrarIngresoIndividual({
   let cuenta_secundaria_concepto_3;
   let nro_recibo;
   let nro_factura;
-  let genera_recibo_final;
   let genera_factura_final;
   let conceptos_recibo = [];
   let dominio;
@@ -1607,11 +1606,7 @@ async function registrarIngresoIndividual({
       );
     }
   }
-  if (genera_recibo === 1 || genera_recibo_2 === 1 || genera_recibo_3 === 1) {
-    genera_recibo_final = true;
-  } else {
-    genera_recibo_final = false;
-  }
+
   //para el string que se devuelve al usuario, chequeamos tambien si se generó factura o no
   if (genera_factura === 1 || genera_factura_2 === 1 || genera_factura_3 === 1) {
     genera_factura_final = true;
@@ -1744,7 +1739,7 @@ async function registrarIngresoIndividual({
       }
     }
     //recibo
-    if (genera_recibo_final && importe_total_recibo > 0) {
+    if (importe_total_recibo > 0) {
       try {
         //inserto recibo
         nro_recibo = await insertRecibo(
@@ -1834,7 +1829,7 @@ async function registrarIngresoIndividual({
     await giama_renting.query(
       `INSERT INTO costos_ingresos 
       (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
-      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo, id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -1851,6 +1846,7 @@ async function registrarIngresoIndividual({
           null,
           id_cliente ? id_cliente : null,
           null,
+          nro_factura
         ],
         transaction: transaction_costos_ingresos,
       }
@@ -1859,7 +1855,7 @@ async function registrarIngresoIndividual({
       await giama_renting.query(
         `INSERT INTO costos_ingresos 
         (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
-        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo, id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         {
           type: QueryTypes.INSERT,
           replacements: [
@@ -1876,6 +1872,7 @@ async function registrarIngresoIndividual({
             null,
             id_cliente ? id_cliente : null,
             null,
+            nro_factura
           ],
           transaction: transaction_costos_ingresos,
         }
@@ -1885,7 +1882,7 @@ async function registrarIngresoIndividual({
       await giama_renting.query(
         `INSERT INTO costos_ingresos 
         (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
-        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo, id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         {
           type: QueryTypes.INSERT,
           replacements: [
@@ -1902,6 +1899,7 @@ async function registrarIngresoIndividual({
             null,
             id_cliente ? id_cliente : null,
             null,
+            nro_factura
           ],
           transaction: transaction_costos_ingresos,
         }

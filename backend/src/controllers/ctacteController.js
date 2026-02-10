@@ -169,11 +169,13 @@ export const ctaCteCliente = async (req, res) => {
     const resultado = await giama_renting.query(`SELECT
     m.fecha,
     m.concepto,
+    m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + IFNULL(m.haber, 0) - IFNULL(m.debe, 0) AS saldo
+    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo
 FROM (
 
+    /* PAGOS */
     SELECT
         pc.fecha AS fecha,
         CONCAT(
@@ -183,6 +185,7 @@ FROM (
                 ELSE ''
             END
         ) AS concepto,
+        pc.nro_recibo AS nro_comprobante,
         NULL AS debe,
         pc.importe_cobro AS haber
     FROM pagos_clientes pc
@@ -190,8 +193,11 @@ FROM (
         ON fc.id = pc.id_forma_cobro
     WHERE pc.id_cliente = ?
 
+
     UNION ALL
 
+
+    /* ALQUILERES */
     SELECT
         a.fecha_alquiler AS fecha,
         CONCAT(
@@ -202,21 +208,28 @@ FROM (
             ' al ',
             DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
         ) AS concepto,
+        f.numerofacturaemitida AS nro_comprobante,
         a.importe_total AS debe,
         NULL AS haber
     FROM alquileres a
     INNER JOIN vehiculos v 
         ON v.id = a.id_vehiculo
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = a.id_factura_pa6
     WHERE a.id_cliente = ?
+
 
     UNION ALL
 
+
+    /* DEPOSITO */
     SELECT
         ca.fecha_contrato AS fecha,
         CONCAT(
             'Deposito gtia - ',
             v.dominio
         ) AS concepto,
+        NULL AS nro_comprobante,
         ca.deposito_garantia AS debe,
         NULL AS haber
     FROM contratos_alquiler ca
@@ -225,8 +238,11 @@ FROM (
     WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
 
+
     UNION ALL
 
+
+    /* COSTOS / INGRESOS */
     SELECT
         ci.fecha AS fecha,
         CONCAT(
@@ -237,11 +253,14 @@ FROM (
                 ELSE ''
             END
         ) AS concepto,
+        f.numerofacturaemitida AS nro_comprobante,
         ci.importe_total AS debe,
         NULL AS haber
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc 
         ON cc.id = ci.id_concepto
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = ci.id_factura_pa6
     WHERE ci.id_cliente = ?
 
 ) m
@@ -263,10 +282,12 @@ const query = `SELECT
     CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente,
     m.fecha,
     m.concepto,
+    m.nro_comprobante,
     m.debe,
     m.haber
 FROM (
 
+    /* PAGOS */
     SELECT
         pc.id_cliente,
         pc.fecha,
@@ -277,12 +298,16 @@ FROM (
                 ELSE ''
             END
         ) AS concepto,
+        pc.nro_recibo AS nro_comprobante,
         NULL AS debe,
         pc.importe_cobro AS haber
     FROM pagos_clientes pc
 
+
     UNION ALL
 
+
+    /* ALQUILERES */
     SELECT
         a.id_cliente,
         a.fecha_alquiler,
@@ -294,25 +319,35 @@ FROM (
             ' al ',
             DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
         ),
+        f.numerofacturaemitida,
         a.importe_total,
         NULL
     FROM alquileres a
     INNER JOIN vehiculos v ON v.id = a.id_vehiculo
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = a.id_factura_pa6
+
 
     UNION ALL
 
+
+    /* DEPOSITO */
     SELECT
         ca.id_cliente,
         ca.fecha_contrato,
         CONCAT('Deposito gtia - ', v.dominio),
+        NULL,
         ca.deposito_garantia,
         NULL
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v ON v.id = ca.id_vehiculo
     WHERE ca.deposito_garantia > 0
 
+
     UNION ALL
 
+
+    /* COSTOS / INGRESOS */
     SELECT
         ci.id_cliente,
         ci.fecha,
@@ -324,10 +359,13 @@ FROM (
                 ELSE ''
             END
         ),
+        f.numerofacturaemitida,
         ci.importe_total,
         NULL
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = ci.id_factura_pa6
 
 ) m
 INNER JOIN clientes c ON c.id = m.id_cliente
@@ -354,7 +392,7 @@ rows.forEach(r => {
   }
 
   cuentas[nombre].detalle.push(r);
-  cuentas[nombre].saldo += (Number(r.haber) || 0) - (Number(r.debe) || 0);
+  cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
 });
   return res.send(cuentas)
 } catch (error) {
