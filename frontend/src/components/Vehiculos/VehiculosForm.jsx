@@ -129,7 +129,7 @@ const VehiculosForm = () => {
 
   useEffect(() => {
     if (plan_cuentas?.length) {
-      setCuentasFiltradas(plan_cuentas.filter(e => e.Codigo == "210110" || e.Codigo == "210119"))
+      setCuentasFiltradas(plan_cuentas.filter(e => e.Codigo == "210110" || e.Codigo == "210119" || e.Codigo == "210122"))
     }
   }, [plan_cuentas])
 
