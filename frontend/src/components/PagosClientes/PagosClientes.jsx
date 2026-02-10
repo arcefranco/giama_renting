@@ -74,7 +74,7 @@ export const PagosClientes = () => {
             const total = ctacteCliente.reduce((acc, mov) => {
                 const debe = Number(mov.debe) || 0;
                 const haber = Number(mov.haber) || 0;
-                return acc + haber - debe;
+                return acc + debe - haber;
             }, 0);
 
             setSaldoActual(total);
@@ -89,19 +89,23 @@ export const PagosClientes = () => {
         message,
         resetAction: reset,
         onSuccess: () => {
-            setForm({
-                id_cliente: id ? id : '',
-                fecha: '',
-                usuario_alta_registro: '',
-                id_forma_cobro: '',
-                importe_cobro: '',
-                observacion: '',
-                //faltan
-                usuario: '',
-                id_vehiculo: ''
+            setForm((prev) => {
+                return {
+                    id_cliente: id ? id : prev.id_cliente ? prev.id_cliente : "",
+                    fecha: '',
+                    usuario_alta_registro: '',
+                    id_forma_cobro: '',
+                    importe_cobro: '',
+                    observacion: '',
+                    usuario: '',
+                    id_vehiculo: ''
+                }
             })
             if (id) {
                 dispatch(getCtaCteCliente({ id_cliente: id }))
+            }
+            if (form.id_cliente) {
+                dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
             }
         }
     });
@@ -153,7 +157,7 @@ export const PagosClientes = () => {
                     <span className={styles.loadingText}>Cargando...</span>
                 </div>
             )}
-            <h2>Pagos clientes</h2>
+            <h2>Cobros clientes</h2>
             <div style={{
                 display: "flex",
                 columnGap: "15rem"
@@ -218,15 +222,18 @@ export const PagosClientes = () => {
                 <Scrolling mode="standard" />
                 <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={120} />
                 <Column dataField="concepto" caption="Concepto" />
-                <Column dataField="debe" alignment="right" caption="Debe" />
-                <Column dataField="haber" alignment="right" caption="Haber" />
-                <Column dataField="saldo" alignment="right" caption="Saldo" />
+                <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
+                <Column dataField="debe" alignment="right" caption="Debe" cellRender={(data) => { return Math.trunc(data.value) > 0 ? Math.trunc(data.value).toLocaleString("es-AR") : "" }} />
+                <Column dataField="haber" alignment="right" caption="Haber" cellRender={(data) => { return Math.trunc(data.value) > 0 ? Math.trunc(data.value).toLocaleString("es-AR") : "" }} />
+                <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={(data) => { return Math.trunc(data.value).toLocaleString("es-AR") }} />
 
             </DataGrid>
             <div className={styles.saldoBox}>
-                Saldo actual: {saldoActual}
+                Saldo actual: <p style={{ color: saldoActual < 0 ? "red" : "black" }}> {saldoActual < 0
+                    ? `(${Math.abs(Math.trunc(saldoActual)).toLocaleString("es-AR")})`
+                    : Math.trunc(saldoActual).toLocaleString("es-AR")}</p>
             </div>
-            <h2>Alta pagos clientes</h2>
+            <h2>Alta cobro</h2>
             <div className={styles.formContainer} >
                 <form action="" enctype="multipart/form-data" className={styles.form} style={{
                     display: "grid",

@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styles from "./PagosClientes.module.css"
 import { ClipLoader } from "react-spinners";
-import { ToastContainer, toast } from 'react-toastify';
 import { fichaCtaCte as getFichaCtaCte, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice';
-import { useToastFeedback } from '../../customHooks/useToastFeedback';
 
 const FichaCtaCte = () => {
     const dispatch = useDispatch();
@@ -36,6 +34,16 @@ const FichaCtaCte = () => {
         }
     }, [ficha]);
 
+    const [saldoTotal, setSaldoTotal] = useState(0);
+
+    useEffect(() => {
+        const total = clientesBase.reduce(
+            (acc, c) => acc + (Number(c.saldo) || 0),
+            0
+        );
+        setSaldoTotal(Math.abs(total).toLocaleString("es-AR"));
+    }, [clientesBase]);
+
     useEffect(() => {
         setClientes(
             clientesBase.filter(c =>
@@ -56,7 +64,9 @@ const FichaCtaCte = () => {
                     setFiltro(e.target.value)
                 }} />
             </div>
-
+            <div>
+                <p>Saldo total: {saldoTotal}</p>
+            </div>
             {isLoading && <ClipLoader />}
             <div className={styles.containerFicha}>
                 {!isLoading && clientes.map(c => (
@@ -73,8 +83,11 @@ const FichaCtaCte = () => {
                                     c.saldo < 0 ? styles.saldoNegativo : styles.saldoPositivo
                                 }
                             >
-                                {c.saldo < 0 ? "Debe" : "A favor"}:{" "}
-                                {Math.abs(c.saldo).toLocaleString("es-AR")}
+                                {/*           {c.saldo < 0 ? "Debe" : "A favor"}:{" "} */}
+                                {c.saldo < 0
+                                    ? `(${Math.abs(Math.trunc(c.saldo)).toLocaleString("es-AR")})`
+                                    : Math.trunc(c.saldo).toLocaleString("es-AR")
+                                }
                             </span>
                         </div>
 
@@ -87,6 +100,7 @@ const FichaCtaCte = () => {
                                 }}>
                                     <td>Fecha</td>
                                     <td>Detalle</td>
+                                    <td>Nro recibo/factura</td>
                                     <td>Debe</td>
                                     <td>Haber</td>
                                 </tr>
@@ -94,8 +108,9 @@ const FichaCtaCte = () => {
                                     <tr key={i} className={styles.detalleRow}>
                                         <td>{m.fecha}</td>
                                         <td className={styles.concepto}>{m.concepto}</td>
-                                        <td>{m.debe || "-"}</td>
-                                        <td>{m.haber || "-"}</td>
+                                        <td className={styles.concepto}>{m.nro_comprobante}</td>
+                                        <td>{Math.abs(m.debe) != 0 ? Math.trunc(m.debe).toLocaleString("es-AR") : ""}</td>
+                                        <td>{Math.abs(m.haber) != 0 ? Math.trunc(m.haber).toLocaleString("es-AR") : ""}</td>
                                     </tr>
                                 ))}
                             </div>

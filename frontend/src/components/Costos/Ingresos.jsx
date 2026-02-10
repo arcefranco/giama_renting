@@ -68,11 +68,8 @@ const Ingresos = () => {
   const [opcionesVehiculos, setOpcionesVehiculos] = useState([])
   const [opcionesClientes, setOpcionesClientes] = useState([])
   const [conceptosFiltrados, setConceptosFiltrados] = useState([])
-  const [generaRecibo, setGeneraRecibo] = useState(false)
   const [generaFactura, setGeneraFactura] = useState(false)
-  const [generaRecibo2, setGeneraRecibo2] = useState(false)
   const [generaFactura2, setGeneraFactura2] = useState(false)
-  const [generaRecibo3, setGeneraRecibo3] = useState(false)
   const [generaFactura3, setGeneraFactura3] = useState(false)
   const [IVAInhabilitado, setIVAInhabilitado] = useState(false)
   const [IVAInhabilitado2, setIVAInhabilitado2] = useState(false)
@@ -191,11 +188,6 @@ const Ingresos = () => {
   useEffect(() => { /*SET GENERA RECIBO/FACTURA */
     if (form.id_concepto) {
       let concepto = conceptos.find(e => e.id == form.id_concepto)
-      if (concepto.genera_recibo == 1) {
-        setGeneraRecibo(true)
-      } else {
-        setGeneraRecibo(false)
-      }
 
       if (concepto.genera_factura == 1) {
         setGeneraFactura(true)
@@ -208,12 +200,6 @@ const Ingresos = () => {
   useEffect(() => {
     if (form.id_concepto_2) {
       let concepto = conceptos.find(e => e.id == form.id_concepto_2)
-      if (concepto.genera_recibo == 1) {
-        setGeneraRecibo2(true)
-      } else {
-        setGeneraRecibo2(false)
-      }
-
       if (concepto.genera_factura == 1) {
         setGeneraFactura2(true)
       } else {
@@ -224,11 +210,7 @@ const Ingresos = () => {
   useEffect(() => {
     if (form.id_concepto_3) {
       let concepto = conceptos.find(e => e.id == form.id_concepto_3)
-      if (concepto.genera_recibo == 1) {
-        setGeneraRecibo3(true)
-      } else {
-        setGeneraRecibo3(false)
-      }
+
 
       if (concepto.genera_factura == 1) {
         setGeneraFactura3(true)
@@ -429,11 +411,8 @@ const Ingresos = () => {
         })
       }
       setGeneraFactura(false)
-      setGeneraRecibo(false)
       setGeneraFactura2(false)
-      setGeneraRecibo2(false)
       setGeneraFactura3(false)
-      setGeneraRecibo3(false)
     }
   });
 
@@ -786,7 +765,7 @@ const Ingresos = () => {
                 onChange={handleChange} />
             </div>
           </div>
-          <div className={styles.container6}>
+          <div className={styles.container5}>
             <div className={styles.inputContainer}>
               <span>Concepto</span>
               <select name="id_concepto" style={{ width: "130%" }} value={form["id_concepto"]}
@@ -818,17 +797,7 @@ const Ingresos = () => {
               />
             </div>
 
-            <div className={styles.inputContainer} style={{
-              flexDirection: "row", width: "9rem",
-              height: "3rem", alignItems: "center"
-            }}>
-              <label style={{ fontSize: "15px" }}>Genera recibo</label>
-              <input
-                type="checkbox"
-                checked={generaRecibo}
-              />
 
-            </div>
             <div className={styles.inputContainer} style={{
               flexDirection: "row", width: "9rem",
               height: "3rem", alignItems: "center"
@@ -841,7 +810,7 @@ const Ingresos = () => {
 
             </div>
           </div>
-          <div className={styles.container6}>
+          <div className={styles.container5}>
             <div className={styles.inputContainer}>
               <span>Concepto</span>
               <select name="id_concepto_2" style={{ width: "130%" }} value={form["id_concepto_2"]}
@@ -876,17 +845,6 @@ const Ingresos = () => {
               flexDirection: "row", width: "9rem",
               height: "3rem", alignItems: "center"
             }}>
-              <label style={{ fontSize: "15px" }}>Genera recibo</label>
-              <input
-                type="checkbox"
-                checked={generaRecibo2}
-              />
-
-            </div>
-            <div className={styles.inputContainer} style={{
-              flexDirection: "row", width: "9rem",
-              height: "3rem", alignItems: "center"
-            }}>
               <label style={{ fontSize: "15px" }}>Genera factura</label>
               <input
                 type="checkbox"
@@ -895,7 +853,7 @@ const Ingresos = () => {
 
             </div>
           </div>
-          <div className={styles.container6}>
+          <div className={styles.container5}>
             <div className={styles.inputContainer}>
               <span>Concepto</span>
               <select name="id_concepto_3" style={{ width: "130%" }} value={form["id_concepto_3"]}
@@ -926,17 +884,7 @@ const Ingresos = () => {
               />
             </div>
 
-            <div className={styles.inputContainer} style={{
-              flexDirection: "row", width: "9rem",
-              height: "3rem", alignItems: "center"
-            }}>
-              <label style={{ fontSize: "15px" }}>Genera recibo</label>
-              <input
-                type="checkbox"
-                checked={generaRecibo3}
-              />
 
-            </div>
             <div className={styles.inputContainer} style={{
               flexDirection: "row", width: "9rem",
               height: "3rem", alignItems: "center"
