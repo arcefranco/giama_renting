@@ -72,7 +72,7 @@ export const postPago = async (req, res) => {
     nro_recibo = await insertRecibo(
         fecha,
         observacion,
-        importe_cobro,
+        importe_total_cobro,
         usuario,
         id_cliente,
         null,
@@ -104,6 +104,30 @@ export const postPago = async (req, res) => {
     observacion,
     NroAsiento,
     transaction_giama_renting)
+    if(id_forma_cobro_2){
+    await insertPago(    
+    id_cliente,
+    fecha,  
+    usuario,
+    id_forma_cobro_2,
+    importe_cobro_2,
+    nro_recibo,
+    observacion,
+    NroAsiento,
+    transaction_giama_renting)
+    }
+    if(id_forma_cobro_3){
+    await insertPago(    
+    id_cliente,
+    fecha,  
+    usuario,
+    id_forma_cobro_3,
+    importe_cobro_3,
+    nro_recibo,
+    observacion,
+    NroAsiento,
+    transaction_giama_renting)
+    }
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
