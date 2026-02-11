@@ -23,7 +23,11 @@ export const PagosClientes = () => {
         fecha: '',
         usuario: username,
         id_forma_cobro: '',
+        id_forma_cobro_2: '',
+        id_forma_cobro_3: '',
         importe_cobro: '',
+        importe_cobro_2: '',
+        importe_cobro_3: '',
         observacion: '',
     })
     const [saldoActual, setSaldoActual] = useState(0)
@@ -139,7 +143,11 @@ export const PagosClientes = () => {
                     fecha: '',
                     usuario_alta_registro: '',
                     id_forma_cobro: '',
+                    id_forma_cobro_2: '',
+                    id_forma_cobro_3: '',
                     importe_cobro: '',
+                    importe_cobro_2: '',
+                    importe_cobro_3: '',
                     observacion: '',
                     usuario: '',
                     id_vehiculo: ''
@@ -281,37 +289,85 @@ export const PagosClientes = () => {
             <div className={styles.formContainer} >
                 <form action="" enctype="multipart/form-data" className={styles.form} style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gridTemplateColumns: "1fr",
                     justifyContent: "space-around"
                 }}>
-
-
-
-                    <div className={styles.inputContainer}>
-                        <span>Forma de cobro</span>
-                        <select name="id_forma_cobro"
-                            onChange={handleChange}
-                            value={form.id_forma_cobro}
-                            id="">
-                            <option value={""} disabled selected>{"Seleccione una opción"}</option>
-                            {
-                                formasDeCobro?.length && formasDeCobro?.map(e => {
-                                    return <option key={e.id} value={e.id}>{e.nombre}</option>
-                                })
-                            }
-                        </select>
-                    </div>
                     <div className={styles.inputContainer}>
                         <div style={{ display: "flex", flexDirection: "row", placeItems: "center", justifyContent: "space-between" }}>
                             <span>Fecha</span> <span style={{ fontSize: "9px" }}>(asientos y recibo)</span>
                         </div>
                         <input type="date" value={form.fecha} onChange={handleChange} name='fecha' />
                     </div>
+                    <div></div>
+                    <div style={{ display: "flex" }}>
+                        <div className={styles.inputContainer}>
+                            <span>Forma de cobro</span>
+                            <select name="id_forma_cobro"
+                                onChange={handleChange}
+                                value={form.id_forma_cobro}
+                                id="">
+                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                {
+                                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                                        return <option key={e.id} value={e.id}>{e.nombre}</option>
+                                    })
+                                }
+                            </select>
+                        </div>
 
-                    <div className={styles.inputContainer}>
-                        <span>Importe</span>
-                        <input type="number" value={form.importe_cobro} name='importe_cobro' onChange={handleChange} />
+
+                        <div className={styles.inputContainer}>
+                            <span>Importe</span>
+                            <input type="number" value={form.importe_cobro} name='importe_cobro' onChange={handleChange} />
+                        </div>
                     </div>
+                    <div></div>
+                    <div style={{ display: "flex" }}>
+                        <div className={styles.inputContainer}>
+                            <span>Forma de cobro</span>
+                            <select name="id_forma_cobro_2"
+                                onChange={handleChange}
+                                value={form.id_forma_cobro_2}
+                                id="">
+                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                {
+                                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                                        return <option key={e.id} value={e.id}>{e.nombre}</option>
+                                    })
+                                }
+                            </select>
+                        </div>
+
+
+                        <div className={styles.inputContainer}>
+                            <span>Importe</span>
+                            <input type="number" value={form.importe_cobro_2} name='importe_cobro_2' onChange={handleChange} />
+                        </div>
+                    </div>
+                    <div></div>
+                    <div style={{ display: "flex" }}>
+                        <div className={styles.inputContainer}>
+                            <span>Forma de cobro</span>
+                            <select name="id_forma_cobro_3"
+                                onChange={handleChange}
+                                value={form.id_forma_cobro_3}
+                                id="">
+                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                {
+                                    formasDeCobro?.length && formasDeCobro?.map(e => {
+                                        return <option key={e.id} value={e.id}>{e.nombre}</option>
+                                    })
+                                }
+                            </select>
+                        </div>
+
+
+                        <div className={styles.inputContainer}>
+                            <span>Importe</span>
+                            <input type="number" value={form.importe_cobro_3} name='importe_cobro_3' onChange={handleChange} />
+                        </div>
+                    </div>
+                    <div></div>
 
 
                     <div className={styles.inputContainer}>
