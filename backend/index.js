@@ -11,6 +11,8 @@ import alquileresRouter from "./src/routes/alquileresRoutes.js";
 import recibosRouter from "./src/routes/recibosRoutes.js";
 import parametrosRouter from "./src/routes/parametrosRoutes.js";
 import ctacteRouter from "./src/routes/ctacteRoutes.js";
+import { auth } from "./src/middlewares/auth.js";
+import { authorizeAdmin } from "./src/middlewares/roles.js";
 dotenv.config();
 const app = express();
 const allowedOrigins = [
@@ -37,8 +39,10 @@ app.listen(process.env.PORT, (error) => {
 app.get("/", (req, res) => {
   return res.send("API giama_renting");
 });
-app.use("/public", express.static("public"));
 app.use("/login", loginRouter);
+app.use("/public", express.static("public"));
+app.use(auth);
+app.use(authorizeAdmin());
 app.use("/generales", generalesRouter);
 app.use("/vehiculos", vehiculosRouter);
 app.use("/clientes", clientesRouter);

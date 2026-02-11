@@ -16,7 +16,11 @@ export const postPago = async (req, res) => {
     id_cliente,
     fecha,  
     id_forma_cobro,
+    id_forma_cobro_2,
+    id_forma_cobro_3,
     importe_cobro,
+    importe_cobro_2,
+    importe_cobro_3,
     observacion,
     //faltan
     usuario,
@@ -26,8 +30,18 @@ export const postPago = async (req, res) => {
     let NroAsientoSecundario;
     let transaction_giama_renting = await giama_renting.transaction()
     let transaction_pa7_giama_renting = await pa7_giama_renting.transaction()
-    let cuenta_contable_forma_cobro
-    let cuenta_secundaria_forma_cobro
+    let cuenta_contable_forma_cobro;
+    let cuenta_secundaria_forma_cobro;
+    let cuenta_contable_forma_cobro_2;
+    let cuenta_secundaria_forma_cobro_2;
+    let cuenta_contable_forma_cobro_3;
+    let cuenta_secundaria_forma_cobro_3;
+  let importe_total_1_formateado = importe_cobro ? parseFloat(importe_cobro) : 0
+  let importe_total_2_formateado = importe_cobro_2 ? parseFloat(importe_cobro_2) : 0 
+  let importe_total_3_formateado = importe_cobro_3 ? parseFloat(importe_cobro_3) : 0
+
+  const importe_total_cobro = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
+
   try {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
@@ -40,6 +54,14 @@ export const postPago = async (req, res) => {
   try {
   cuenta_contable_forma_cobro = await getCuentaContableFormaCobro(id_forma_cobro) 
   cuenta_secundaria_forma_cobro = await getCuentaSecundariaFormaCobro(id_forma_cobro)
+  if(id_forma_cobro_2){
+  cuenta_contable_forma_cobro_2 = await getCuentaContableFormaCobro(id_forma_cobro_2) 
+  cuenta_secundaria_forma_cobro_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_2)
+  }
+  if(id_forma_cobro_3){
+  cuenta_contable_forma_cobro_3 = await getCuentaContableFormaCobro(id_forma_cobro_3) 
+  cuenta_secundaria_forma_cobro_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_3)
+  }
   } catch (error) {
   console.log(error);
   const { body } = handleError(error, "parámetro");
@@ -57,11 +79,11 @@ export const postPago = async (req, res) => {
         null,
         null,
         id_forma_cobro,
-        null,
-        null,
+        id_forma_cobro_2,
+        id_forma_cobro_3,
         transaction_giama_renting,
-        null,
-        null,
+        importe_cobro_2,
+        importe_cobro_3,
         importe_cobro
     )
 } catch (error) {
@@ -108,12 +130,42 @@ try {
     NroAsientoSecundario,
     null
   );
+  if(importe_cobro_2){
   await asientoContable(
     "c_movimientos",
     NroAsiento,
-    110308,//"cuenta_nueva",
+    cuenta_contable_forma_cobro_2,
+    "D",
+    importe_cobro_2,
+    observacion_asientos,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha,
+    NroAsientoSecundario,
+    null
+  );
+  }
+  if(importe_cobro_3){
+  await asientoContable(
+    "c_movimientos",
+    NroAsiento,
+    cuenta_contable_forma_cobro_3,
+    "D",
+    importe_cobro_3,
+    observacion_asientos,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha,
+    NroAsientoSecundario,
+    null
+  );
+  }
+  await asientoContable(
+    "c_movimientos",
+    NroAsiento,
+    110310,//"cuenta_nueva",
     "H",
-    importe_cobro,
+    importe_total_cobro,
     observacion_asientos,
     transaction_pa7_giama_renting,
     nro_recibo,
@@ -132,13 +184,40 @@ try {
     nro_recibo,
     fecha
   );
+  if(importe_cobro_2){
+    await asientoContable(
+    "c2_movimientos",
+    NroAsientoSecundario,
+    cuenta_secundaria_forma_cobro_2,
+    "D",
+    importe_cobro_2,
+    observacion_asientos,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha
+  );
+  }
+  if(importe_cobro_3){
+    await asientoContable(
+    "c2_movimientos",
+    NroAsientoSecundario,
+    cuenta_secundaria_forma_cobro_3,
+    "D",
+    importe_cobro_3,
+    observacion_asientos,
+    transaction_pa7_giama_renting,
+    nro_recibo,
+    fecha
+  );
+  }
+
     
   await asientoContable(
     "c2_movimientos",
     NroAsientoSecundario,
-    110308, //cuenta_nueva_secundaria
+    110310, //cuenta_nueva_secundaria
     "H",
-    importe_cobro,
+    importe_total_cobro,
     observacion_asientos,
     transaction_pa7_giama_renting,
     nro_recibo,
@@ -154,6 +233,7 @@ transaction_pa7_giama_renting.rollback();
 const { body } = handleError(error);
 return res.send(body);
 }
+
 
 await transaction_giama_renting.commit()
 await transaction_pa7_giama_renting.commit()

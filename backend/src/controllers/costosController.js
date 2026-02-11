@@ -660,7 +660,7 @@ const asientos_ingresos = async (
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
-      110308,//cuenta_nueva,
+      110310,//cuenta_nueva,
       "D",
       debe_ingreso,
       observacion_asientos_deuda,
@@ -730,7 +730,7 @@ const asientos_ingresos = async (
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_deuda,
-      110308,//"cuenta_nueva_secundaria",
+      110310,//"cuenta_nueva_secundaria",
       "D",
       debe_ingreso,
       observacion_asientos_deuda,
@@ -845,7 +845,7 @@ const asientos_ingresos = async (
     await asientoContable(
       "c_movimientos",
       NroAsiento_pago,
-      110308,//"cuenta_nueva",
+      110310,//"cuenta_nueva",
       "H",
       importe_total_cobro,
       observacion_asientos_pago,
@@ -903,7 +903,7 @@ const asientos_ingresos = async (
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_pago,
-      110308,//"cuenta_nueva_secundaria",
+      110310,//"cuenta_nueva_secundaria",
       "H",
       importe_total_cobro,
       observacion_asientos_pago,
@@ -2265,7 +2265,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       NroAsientoSecundario,
       FA_FC
     );
@@ -2278,7 +2278,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       null,
       FA_FC
     );
@@ -2292,7 +2292,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       NroAsientoSecundario,
       FA_FC
     );
@@ -2305,7 +2305,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       null,
       FA_FC
     );
@@ -2320,7 +2320,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       NroAsientoSecundario,
       FA_FC
     );
@@ -2333,7 +2333,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       null,
       FA_FC
     );
@@ -2348,7 +2348,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       NroAsientoSecundario,
       FA_FC
     );
@@ -2361,7 +2361,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       null,
       FA_FC
     );
@@ -2375,7 +2375,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       NroAsientoSecundario,
       FA_FC
     );
@@ -2388,7 +2388,7 @@ export const prorrateo = async (req, res) => {
       observacion,
       transaction_asientos,
       numero_comprobante,
-      getTodayDate(),
+      fecha,
       null,
       FA_FC
     );

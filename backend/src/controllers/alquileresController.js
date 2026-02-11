@@ -1522,7 +1522,7 @@ export const postAlquiler = async (req, res) => {
     await asientoContable(
       "c_movimientos", 
       NroAsiento_deuda, 
-      110308, //"cuenta_nueva", 
+      110310, //"cuenta_nueva", 
       "D", 
       debe_alquiler,
       concepto_deuda,
@@ -1562,7 +1562,7 @@ export const postAlquiler = async (req, res) => {
     await asientoContable(
       "c2_movimientos", 
       NroAsientoSecundario_deuda, 
-      110308, //cuenta_nueva_secundaria
+      110310, //cuenta_nueva_secundaria
       "D", 
       debe_alquiler,
       concepto_deuda,
@@ -1655,7 +1655,7 @@ export const postAlquiler = async (req, res) => {
     await asientoContable(
       "c_movimientos",
       NroAsiento_pago,
-      110308,//"cuenta_nueva",
+      110310,//"cuenta_nueva",
       "H",
       importe_total_pago,
       concepto_pago,
@@ -1710,7 +1710,7 @@ export const postAlquiler = async (req, res) => {
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_pago,
-      110308, //cuenta_nueva_secundaria
+      110310, //cuenta_nueva_secundaria
       "H",
       importe_total_pago,
       concepto_pago,
@@ -2386,7 +2386,7 @@ export const postContratoAlquiler = async (req, res) => {
     await asientoContable(
       "c_movimientos", 
       NroAsiento_alquiler_deuda, 
-      110308,//"cuenta_nueva", 
+      110310,//"cuenta_nueva", 
       "D", 
       debe_alquiler,
       concepto_deuda_alquiler,
@@ -2426,7 +2426,7 @@ export const postContratoAlquiler = async (req, res) => {
     await asientoContable(
       "c2_movimientos", 
       NroAsientoSecundario_alquiler_deuda, 
-      110308,//"cuenta_nueva_secundaria", 
+      110310,//"cuenta_nueva_secundaria", 
       "D", 
       debe_alquiler,
       concepto_deuda_alquiler,
@@ -2525,7 +2525,7 @@ export const postContratoAlquiler = async (req, res) => {
       await asientoContable(
           "c_movimientos",
           NroAsiento_alquiler_pago,
-          110308,//"cuenta_nueva",
+          110310,//"cuenta_nueva",
           "H",
           importe_total_pago_alquiler,
           concepto_pago_alquiler,
@@ -2582,7 +2582,7 @@ export const postContratoAlquiler = async (req, res) => {
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_alquiler_pago,
-        110308,//"cuenta_nueva_secundaria",
+        110310,//"cuenta_nueva_secundaria",
         "H",
         importe_total_pago_alquiler,
         concepto_pago_alquiler,
@@ -2606,7 +2606,7 @@ export const postContratoAlquiler = async (req, res) => {
     await asientoContable(
       "c_movimientos", 
       NroAsiento_deposito_deuda, 
-      110308,//"cuenta_nueva", 
+      110310,//"cuenta_nueva", 
       "D", 
       debe_deposito,
       concepto_deuda_deposito,
@@ -2633,7 +2633,7 @@ export const postContratoAlquiler = async (req, res) => {
     await asientoContable(
       "c2_movimientos", 
       NroAsientoSecundario_deposito_deuda, 
-      110308,//"cuenta_nueva_secundaria", 
+      110310,//"cuenta_nueva_secundaria", 
       "D", 
       debe_deposito,
       concepto_deuda_deposito,
@@ -2712,7 +2712,7 @@ export const postContratoAlquiler = async (req, res) => {
         await asientoContable(
           "c_movimientos",
           NroAsiento_deposito_pago,
-          110308,//"cuenta_nueva",
+          110310,//"cuenta_nueva",
           "H",
           deposito_total_pago,
           concepto_pago_deposito,
@@ -2765,7 +2765,7 @@ export const postContratoAlquiler = async (req, res) => {
           await asientoContable(
             "c2_movimientos",
             NroAsientoSecundario_deposito_pago,
-            110308,//"cuenta_nueva_secundaria",
+            110310,//"cuenta_nueva_secundaria",
             "H",
             deposito_total_pago,
             concepto_pago_deposito,
