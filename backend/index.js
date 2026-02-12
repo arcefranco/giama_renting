@@ -41,8 +41,8 @@ app.get("/", (req, res) => {
 });
 app.use("/login", loginRouter);
 app.use("/public", express.static("public"));
-app.use(auth);
-app.use(authorizeAdmin());
+/*SOLO ADMIN app.use(auth);
+app.use(authorizeAdmin()); */
 app.use("/generales", generalesRouter);
 app.use("/vehiculos", vehiculosRouter);
 app.use("/clientes", clientesRouter);
