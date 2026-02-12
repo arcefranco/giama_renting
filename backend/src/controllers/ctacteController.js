@@ -273,7 +273,8 @@ export const ctaCteCliente = async (req, res) => {
     m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo
+    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
+    m.tipo
 FROM (
 
     /* PAGOS */
@@ -288,11 +289,12 @@ FROM (
         ) AS concepto,
         pc.nro_recibo AS nro_comprobante,
         NULL AS debe,
-        pc.importe_cobro AS haber
+        pc.importe_cobro AS haber,
+        4 AS tipo
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
-    WHERE pc.id_cliente = ?
+    WHERE pc.id_cliente = 185
 
 
     UNION ALL
@@ -311,14 +313,15 @@ FROM (
         ) AS concepto,
         f.numerofacturaemitida AS nro_comprobante,
         a.importe_total AS debe,
-        NULL AS haber
+        NULL AS haber,
+        1 AS tipo
     FROM alquileres a
     INNER JOIN vehiculos v 
         ON v.id = a.id_vehiculo
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+    WHERE a.id_cliente = 185 AND IFNULL(recibos.anulado,0) = 0
 
     UNION ALL
 
@@ -332,11 +335,12 @@ FROM (
         ) AS concepto,
         NULL AS nro_comprobante,
         ca.deposito_garantia AS debe,
-        NULL AS haber
+        NULL AS haber,
+        2 AS tipo
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
-    WHERE ca.id_cliente = ?
+    WHERE ca.id_cliente = 185
       AND ca.deposito_garantia > 0
 
 
@@ -356,17 +360,18 @@ FROM (
         ) AS concepto,
         f.numerofacturaemitida AS nro_comprobante,
         ci.importe_total AS debe,
-        NULL AS haber
+        NULL AS haber,
+        3 AS tipo
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc 
         ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
-    WHERE ci.id_cliente = ?
+    WHERE ci.id_cliente = 185
 
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
-ORDER BY m.fecha;`, {
+ORDER BY m.fecha, m.tipo;`, {
       type: QueryTypes.SELECT,
       replacements: [id_cliente, id_cliente, id_cliente, id_cliente]
     });
