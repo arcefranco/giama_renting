@@ -294,7 +294,7 @@ FROM (
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
-    WHERE pc.id_cliente = 185
+    WHERE pc.id_cliente = ?
 
 
     UNION ALL
@@ -321,7 +321,7 @@ FROM (
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE a.id_cliente = 185 AND IFNULL(recibos.anulado,0) = 0
+    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
 
     UNION ALL
 
@@ -340,7 +340,7 @@ FROM (
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
-    WHERE ca.id_cliente = 185
+    WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
 
 
@@ -367,7 +367,7 @@ FROM (
         ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
-    WHERE ci.id_cliente = 185
+    WHERE ci.id_cliente = ?
 
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
