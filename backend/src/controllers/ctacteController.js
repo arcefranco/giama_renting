@@ -427,7 +427,8 @@ FROM (
     INNER JOIN vehiculos v ON v.id = a.id_vehiculo
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
-
+    LEFT JOIN recibos ON a.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
 
     UNION ALL
 
