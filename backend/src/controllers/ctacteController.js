@@ -388,7 +388,8 @@ const query = `SELECT
     m.concepto,
     m.nro_comprobante,
     m.debe,
-    m.haber
+    m.haber,
+    m.tipo
 FROM (
 
     /* PAGOS */
@@ -404,7 +405,8 @@ FROM (
         ) AS concepto,
         pc.nro_recibo AS nro_comprobante,
         NULL AS debe,
-        pc.importe_cobro AS haber
+        pc.importe_cobro AS haber,
+        4 AS tipo
     FROM pagos_clientes pc
 
 
@@ -425,7 +427,8 @@ FROM (
         ),
         f.numerofacturaemitida,
         a.importe_total,
-        NULL
+        NULL,
+        1 AS tipo
     FROM alquileres a
     INNER JOIN vehiculos v ON v.id = a.id_vehiculo
     LEFT JOIN pa7_giama_renting.facturas f 
@@ -443,7 +446,8 @@ FROM (
         CONCAT('Deposito gtia - ', v.dominio),
         NULL,
         ca.deposito_garantia,
-        NULL
+        NULL,
+        2 AS tipo
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v ON v.id = ca.id_vehiculo
     WHERE ca.deposito_garantia > 0
@@ -466,7 +470,8 @@ FROM (
         ),
         f.numerofacturaemitida,
         ci.importe_total,
-        NULL
+        NULL,
+        3 AS tipo
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
@@ -474,8 +479,7 @@ FROM (
 
 ) m
 INNER JOIN clientes c ON c.id = m.id_cliente
-ORDER BY m.id_cliente, m.fecha;
-
+ORDER BY m.id_cliente, m.fecha, m.tipo;
 `
 try {
   const rows = await giama_renting.query(query, {
