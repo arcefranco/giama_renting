@@ -713,19 +713,21 @@ const asientos_ingresos = async (
       null
     )
     }
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento_deuda,
-      cuentaIVA,
-      "H",
-      iva_total_deuda,
-      observacion_asientos_deuda,
-      transaction,
-      comprobante,
-      fecha_deuda,
-      NroAsientoSecundario_deuda,
-      null
-    )
+    if(iva_total_deuda > 0){
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento_deuda,
+        cuentaIVA,
+        "H",
+        iva_total_deuda,
+        observacion_asientos_deuda,
+        transaction,
+        comprobante,
+        fecha_deuda,
+        NroAsientoSecundario_deuda,
+        null
+      )
+    }
     //DEUDA (secundarios)
     await asientoContable(
       "c2_movimientos",
@@ -783,19 +785,21 @@ const asientos_ingresos = async (
       null
     )
     }
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario_deuda,
-      cuentaSecundariaIVA,
-      "H",
-      iva_total_deuda,
-      observacion_asientos_deuda,
-      transaction,
-      comprobante,
-      fecha_deuda,
-      null,
-      null
-    )
+    if(iva_total_deuda > 0){
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario_deuda,
+        cuentaSecundariaIVA,
+        "H",
+        iva_total_deuda,
+        observacion_asientos_deuda,
+        transaction,
+        comprobante,
+        fecha_deuda,
+        null,
+        null
+      )
+    }
 
 
     //PAGO
