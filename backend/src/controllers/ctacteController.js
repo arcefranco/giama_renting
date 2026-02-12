@@ -39,8 +39,37 @@ export const postPago = async (req, res) => {
   let importe_total_1_formateado = importe_cobro ? parseFloat(importe_cobro) : 0
   let importe_total_2_formateado = importe_cobro_2 ? parseFloat(importe_cobro_2) : 0 
   let importe_total_3_formateado = importe_cobro_3 ? parseFloat(importe_cobro_3) : 0
-
+  let CUIT;
+  let nombre_completo_cliente;
   const importe_total_cobro = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
+
+    //buscar CUIT del cliente
+    try {
+    const result = await giama_renting.query(
+      "SELECT nro_documento, nombre, apellido, razon_social FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    if (result[0]["nro_documento"]){
+      CUIT = result[0]["nro_documento"]
+    } 
+    if(result[0]["nombre"] && result[0]["apellido"]){
+      nombre_completo_cliente = `${result[0]["nombre"]} ${result[0]["apellido"]}`
+    }else if(result[0]["razon_social"]){
+      nombre_completo_cliente = `${result[0]["razon_social"]}`
+    }else{
+      nombre_completo_cliente = "SIN NOMBRE"
+    }
+    } catch (error) {
+    const { body } = handleError(
+      error,
+      "documento del cliente",
+      acciones.get
+    );
+    return res.send(body);
+  }
 
   try {
     NroAsiento = await getNumeroAsiento();
@@ -50,6 +79,7 @@ export const postPago = async (req, res) => {
     const { body } = handleError(error, "número de asiento");
     return res.send(body);
   }
+
   //cuenta contable de la forma de cobro
   try {
   cuenta_contable_forma_cobro = await getCuentaContableFormaCobro(id_forma_cobro) 
@@ -138,7 +168,7 @@ export const postPago = async (req, res) => {
     );
     return res.send(body);
   }
-let observacion_asientos = `RECIBO: ${nro_recibo} Observación: ${observacion}`
+let observacion_asientos = `RECIBO: ${nro_recibo} Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} Observación: ${observacion}`
 //asientos
 try {
   await asientoContable(

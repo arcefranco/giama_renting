@@ -714,6 +714,7 @@ const asientos_ingresos = async (
     )
     }
     if(iva_total_deuda > 0){
+      console.log("entro al if")
       await asientoContable(
         "c_movimientos",
         NroAsiento_deuda,
