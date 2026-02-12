@@ -1846,7 +1846,7 @@ async function registrarIngresoIndividual({
           null,
           id_cliente ? id_cliente : null,
           null,
-          nro_factura
+          nro_factura ? nro_factura : null
         ],
         transaction: transaction_costos_ingresos,
       }
@@ -1872,7 +1872,7 @@ async function registrarIngresoIndividual({
             null,
             id_cliente ? id_cliente : null,
             null,
-            nro_factura
+            nro_factura ? nro_factura : null
           ],
           transaction: transaction_costos_ingresos,
         }
@@ -1899,7 +1899,7 @@ async function registrarIngresoIndividual({
             null,
             id_cliente ? id_cliente : null,
             null,
-            nro_factura
+            nro_factura ? nro_factura : null
           ],
           transaction: transaction_costos_ingresos,
         }
