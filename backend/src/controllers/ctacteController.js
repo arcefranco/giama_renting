@@ -318,7 +318,8 @@ FROM (
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     WHERE a.id_cliente = ?
-
+    LEFT JOIN recibos ON a.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
 
     UNION ALL
 
@@ -380,7 +381,10 @@ ORDER BY m.fecha;`, {
 export const fichaCtaCte = async (req, res) => {
 const query = `SELECT
     m.id_cliente,
-    CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente,
+        COALESCE(
+        NULLIF(CONCAT(c.nombre, ' ', c.apellido), ' '),
+        c.razon_social
+    ) AS nombre_cliente,
     m.fecha,
     m.concepto,
     m.nro_comprobante,
