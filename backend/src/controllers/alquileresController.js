@@ -2233,7 +2233,6 @@ export const postContratoAlquiler = async (req, res) => {
           id_forma_cobro_contrato ? id_forma_cobro_contrato : null,
           id_forma_cobro_contrato_2 ? id_forma_cobro_contrato_2 : null,
           id_forma_cobro_contrato_3 ? id_forma_cobro_contrato_3 : null,
-          null,
           transaction_giama_renting,
           deposito_2_formateado > 0 ? deposito_2_formateado : null,
           deposito_3_formateado > 0 ? deposito_3_formateado : null,
