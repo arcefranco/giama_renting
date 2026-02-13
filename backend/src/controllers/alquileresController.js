@@ -1853,6 +1853,8 @@ export const postContratoAlquiler = async (req, res) => {
   );
   let dominio;
   if (campoFaltante) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     return res.send({
       status: false,
       message: `Falta completar el campo obligatorio: ${campoFaltante}`,
@@ -1861,10 +1863,16 @@ export const postContratoAlquiler = async (req, res) => {
 
   //si adeuda deposito/alquiler debe aclarar e importe
   if(ingresa_alquiler && !debe_alquiler){
+    
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     return res.send({status: false, message: "Debe aclarar el importe que se adeuda de alquiler"})
   }
 
-  if(ingresa_deposito && !debe_deposito){
+  if(ingresa_deposito  && !debe_deposito){
+    
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     return res.send({status: false, message: "Debe aclarar el importe que se adeuda de depósito"})
   }
   //buscar el estado del cliente
@@ -1873,6 +1881,8 @@ export const postContratoAlquiler = async (req, res) => {
     if (estadoCliente?.length)
       return res.send({ status: false, message: estadoCliente });
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     const { body } = handleError(error, "Estado del cliente", acciones.get);
     return res.send(body);
   }
@@ -1887,6 +1897,8 @@ export const postContratoAlquiler = async (req, res) => {
     );
     if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     const { body } = handleError(
       error,
       "documento del cliente",
@@ -1900,6 +1912,8 @@ export const postContratoAlquiler = async (req, res) => {
     if (estadoVehiculo?.length)
       return res.send({ status: false, message: estadoVehiculo });
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     const { body } = handleError(error, "Estado del vehículo", acciones.get);
     return res.send(body);
   }
@@ -1929,6 +1943,8 @@ export const postContratoAlquiler = async (req, res) => {
       });
     }
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     const { body } = handleError(error, "Contratos del cliente", acciones.get);
     return res.send(body);
   }
@@ -1952,6 +1968,8 @@ export const postContratoAlquiler = async (req, res) => {
       dominio = result[0]["dominio_provisorio"];
     else dominio = "SIN DOMINIO";
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     console.log(error);
     const { body } = handleError(
       error,
@@ -1986,6 +2004,8 @@ export const postContratoAlquiler = async (req, res) => {
     );
 
     if (hayConflicto) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
       return res.send({
         status: false,
         message:
@@ -1993,6 +2013,8 @@ export const postContratoAlquiler = async (req, res) => {
       });
     }
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     console.log(error);
     const { body } = handleError(
       error,
@@ -2006,6 +2028,8 @@ export const postContratoAlquiler = async (req, res) => {
     ingresa_alquiler == 1 &&
     (!fecha_desde_alquiler || !fecha_hasta_alquiler)
   ) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     return res.send({
       status: false,
       message:
@@ -2044,6 +2068,8 @@ export const postContratoAlquiler = async (req, res) => {
     cuenta_secundaria_forma_cobro_alquiler_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3)
   }
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     console.log(error);
     const { body } = handleError(error, "parámetro");
     return res.send(body);
@@ -2057,6 +2083,8 @@ export const postContratoAlquiler = async (req, res) => {
     cuentaDEPO = await getParametro("DEPO");
     cuentaDEP2 = await getParametro("DEP2");
   } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     console.log(error);
     const { body } = handleError(error, "parámetro");
     return res.send(body);
@@ -2100,6 +2128,8 @@ export const postContratoAlquiler = async (req, res) => {
         });
       }
     } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
       console.log(error);
       const { body } = handleError(
         error,
@@ -2117,6 +2147,8 @@ export const postContratoAlquiler = async (req, res) => {
       NroAsiento_alquiler_pago = await getNumeroAsiento();
       NroAsientoSecundario_alquiler_pago = await getNumeroAsiento();
     } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
       console.log(error);
       const { body } = handleError(error, "número de asiento");
       return res.send(body);
@@ -2267,6 +2299,8 @@ export const postContratoAlquiler = async (req, res) => {
         deposito_formateado > 0 ? deposito_formateado : null
       );
     } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
       console.log(error);
       const { body } = handleError(error, "Recibo de alquiler", acciones.post);
       return res.send(body);
@@ -2290,6 +2324,8 @@ export const postContratoAlquiler = async (req, res) => {
         id_factura_pa6: id_factura ? id_factura : null
       });
     } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
       console.log(error);
       const { body } = handleError(
         error,
@@ -2330,7 +2366,8 @@ export const postContratoAlquiler = async (req, res) => {
     
   } catch (error) {
     console.log(error);
-    transaction_giama_renting.rollback();
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     const { body } = handleError(
       error,
       "pago",
@@ -2367,7 +2404,8 @@ export const postContratoAlquiler = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    transaction_giama_renting.rollback();
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
     const { body } = handleError(
       error,
       "pago",
@@ -2592,6 +2630,8 @@ export const postContratoAlquiler = async (req, res) => {
       );
     }
     } catch (error) {
+    await transaction_pa7_giama_renting.rollback();
+    await transaction_giama_renting.rollback();
       console.log(error);
 
       const { body } = handleError(error);
