@@ -1769,7 +1769,12 @@ async function registrarIngresoIndividual({
         throw error;
       }
     }
-    observacion_asientos_deuda = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} FACTURA: ${nro_factura}`
+    if(nro_factura){
+      observacion_asientos_deuda = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} FACTURA: ${nro_factura}`
+    }else{
+      observacion_asientos_deuda = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT}`
+    }
+    
     observacion_asientos_pago = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} RECIBO: ${nro_recibo}`
       //realizo el asiento 
   try {
