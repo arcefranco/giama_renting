@@ -479,6 +479,18 @@ await giama_renting.query(
   }
 }
 
+const eliminarPago = async (nro_recibo) => {
+  try {
+    await giama_renting.query("DELETE FROM pagos_clientes WHERE nro_recibo = ?", {
+      type: QueryTypes.DELETE,
+      replacements: [nro_recibo]
+    })
+  } catch (error) {
+    console.log(error)
+    throw new Error ("Hubo un error al eliminar el pago")
+  }
+}
+
 export const anulacionRecibo = async (req, res) => {
   const { id } = req.body;
   let id_factura;
@@ -540,7 +552,8 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_pa7_giama_renting
       });
 
-      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting)
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting);
+      await eliminarPago(id);
       await giama_renting.query(`DELETE FROM costos_ingresos 
       WHERE nro_recibo = ?`, {
         type: QueryTypes.DELETE,
@@ -619,7 +632,8 @@ export const anulacionRecibo = async (req, res) => {
           transaction: transaction_pa7_giama_renting
         }
       );
-      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting)
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting);
+      await eliminarPago(id);
       await giama_renting.query(`DELETE FROM costos_ingresos 
       WHERE nro_recibo = ?`, {
         type: QueryTypes.DELETE,
@@ -643,7 +657,8 @@ export const anulacionRecibo = async (req, res) => {
   }
   else{
     try {
-      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting)
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting);
+      await eliminarPago(id);
       await giama_renting.query(`DELETE FROM costos_ingresos 
       WHERE nro_recibo = ?`, {
         type: QueryTypes.DELETE,
