@@ -1658,6 +1658,7 @@ export const postAlquiler = async (req, res) => {
         null
       );
     }
+    if(cuenta_contable_forma_cobro_alquiler_1 || cuenta_contable_forma_cobro_alquiler_2 || cuenta_contable_forma_cobro_alquiler_3){
     await asientoContable(
       "c_movimientos",
       NroAsiento_pago,
@@ -1671,6 +1672,8 @@ export const postAlquiler = async (req, res) => {
       NroAsientoSecundario_pago,
       null
     );
+    }
+    
 
 
     //asientos secundarios
@@ -1713,19 +1716,21 @@ export const postAlquiler = async (req, res) => {
         fecha_recibo_alquiler
       );
     }
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario_pago,
-      110310, //cuenta_nueva_secundaria
-      "H",
-      importe_total_pago,
-      concepto_pago,
-      transaction_pa7_giama_renting,
-      nro_recibo,
-      fecha_recibo_alquiler,
-      null,
-      null
-    );
+    if(cuenta_secundaria_forma_cobro_alquiler_1 || cuenta_secundaria_forma_cobro_alquiler_2 || cuenta_secundaria_forma_cobro_alquiler_3){
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario_pago,
+        110310, //cuenta_nueva_secundaria
+        "H",
+        importe_total_pago,
+        concepto_pago,
+        transaction_pa7_giama_renting,
+        nro_recibo,
+        fecha_recibo_alquiler,
+        null,
+        null
+      );
+    }
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
