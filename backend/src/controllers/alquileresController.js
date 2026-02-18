@@ -1191,6 +1191,10 @@ export const postAlquiler = async (req, res) => {
 
   const importe_total_pago = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
 
+  if(!(debe_alquiler > 0)){
+    return res.send({status: false, message: "Debe aclarar el importe total del alquiler"})
+  }
+
 
   //buscar el estado del cliente
   try {
@@ -1378,27 +1382,29 @@ export const postAlquiler = async (req, res) => {
   let concepto_recibo = `(PAGO) Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
   hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`
   //inserto factura
-  try {
-    nro_factura = await insertFactura(
-      id_cliente,
-      debe_alquiler_neto,
-      debe_alquiler_iva,
-      debe_alquiler,
-      usuario,
-      NroAsiento_deuda,
-      NroAsientoSecundario_deuda,
-      concepto_factura,
-      transaction_giama_renting,
-      transaction_pa7_giama_renting,
-      fecha_factura_alquiler
-    );
-  } catch (error) {
-    const { body } = handleError(error, "Factura", acciones.post);
-    return res.send(body);
+  if(debe_alquiler > 0){
+    try {
+      nro_factura = await insertFactura(
+        id_cliente,
+        debe_alquiler_neto,
+        debe_alquiler_iva,
+        debe_alquiler,
+        usuario,
+        NroAsiento_deuda,
+        NroAsientoSecundario_deuda,
+        concepto_factura,
+        transaction_giama_renting,
+        transaction_pa7_giama_renting,
+        fecha_factura_alquiler
+      );
+    } catch (error) {
+      const { body } = handleError(error, "Factura", acciones.post);
+      return res.send(body);
+    }
   }
 
   //inserto recibo si hay alguna forma de cobro
-  if(id_forma_cobro_alquiler_1 || id_forma_cobro_alquiler_2 || id_forma_cobro_alquiler_3){
+  if((id_forma_cobro_alquiler_1 || id_forma_cobro_alquiler_2 || id_forma_cobro_alquiler_3) && debe_alquiler > 0){
   try {
     nro_recibo = await insertRecibo(
       fecha_recibo_alquiler,
@@ -2060,7 +2066,7 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(error, "parámetro");
     return res.send(body);
   }
-  if (ingresa_alquiler == 1) { //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
+  if (ingresa_alquiler == 1 && debe_alquiler > 0) { //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
     try {
       const result = await giama_renting.query(
              `SELECT 
@@ -2109,7 +2115,7 @@ export const postContratoAlquiler = async (req, res) => {
     }
   }
 
-  if (ingresa_alquiler == 1) { //creo numeros de asiento alquiler
+  if (ingresa_alquiler == 1 && debe_alquiler > 0) { //creo numeros de asiento alquiler
     try {
       NroAsiento_alquiler_deuda = await getNumeroAsiento();
       NroAsientoSecundario_alquiler_deuda = await getNumeroAsiento();
@@ -2122,7 +2128,7 @@ export const postContratoAlquiler = async (req, res) => {
     }
   }
 
-  if(ingresa_deposito == 1 ){ //creo numeros de asiento deposito
+  if(ingresa_deposito == 1){ //creo numeros de asiento deposito
     try {
       NroAsiento_deposito_deuda = await getNumeroAsiento();
       NroAsientoSecundario_deposito_deuda = await getNumeroAsiento();
@@ -2179,7 +2185,7 @@ export const postContratoAlquiler = async (req, res) => {
     let concepto_pago_deposito = `(PAGO) Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT} - 
     ASIENTO: ${NroAsiento_deposito_pago}`;
     //inserto factura
-    if(ingresa_alquiler === 1){
+    if(ingresa_alquiler === 1 && debe_alquiler > 0){
           id_factura = await insertFactura(
           id_cliente,
           debe_alquiler_neto,
@@ -2198,7 +2204,7 @@ export const postContratoAlquiler = async (req, res) => {
   
     //inserto recibo alquiler
   
-    if (ingresa_alquiler == 1 && importe_total_pago_alquiler > 0) {
+    if (ingresa_alquiler == 1 && importe_total_pago_alquiler > 0 ) {
         nro_recibo_alquiler = await insertRecibo(
           fecha_recibo_alquiler,
           concepto_pago_alquiler,
@@ -2240,7 +2246,7 @@ export const postContratoAlquiler = async (req, res) => {
         );
     }
     //inserto alquiler
-    if (ingresa_alquiler == 1) {
+    if (ingresa_alquiler == 1 && debe_alquiler > 0) {
         await insertAlquiler({
           id_vehiculo: id_vehiculo,
           id_cliente: id_cliente,
@@ -2311,7 +2317,7 @@ export const postContratoAlquiler = async (req, res) => {
       }
   
     //movimientos contables
-    if (ingresa_alquiler == 1) {
+    if (ingresa_alquiler == 1 && debe_alquiler > 0) {
   
     //por la deuda
       await asientoContable(
