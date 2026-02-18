@@ -370,8 +370,10 @@ FROM (
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
+    LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
+      AND IFNULL(recibos.anulado,0) = 0
 
 
     UNION ALL
@@ -397,7 +399,8 @@ FROM (
         ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
-    WHERE ci.id_cliente = ?
+    LEFT JOIN recibos ON ci.nro_recibo = recibos.id
+    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
 
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
@@ -485,7 +488,9 @@ FROM (
         2 AS tipo
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v ON v.id = ca.id_vehiculo
+    LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.deposito_garantia > 0
+    AND IFNULL(recibos.anulado,0) = 0
 
 
     UNION ALL
@@ -511,6 +516,8 @@ FROM (
     INNER JOIN conceptos_costos cc ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
+    LEFT JOIN recibos ON ci.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
 
 ) m
 INNER JOIN clientes c ON c.id = m.id_cliente
