@@ -615,7 +615,7 @@ const Ingresos = () => {
         <div className={styles.spinnerOverlay}>
           <ClipLoader
             size={60}
-            color="#800021" // bordó
+            color="#800020" // bordó
             loading={true}
           />
           <span className={styles.loadingText}>Cargando...</span>
