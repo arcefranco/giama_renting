@@ -1441,11 +1441,8 @@ async function registrarIngresoIndividual({
   transaction_costos_ingresos,
   transaction_asientos
 }) {
-  let genera_recibo;
   let genera_factura;
-  let genera_recibo_2;
   let genera_factura_2;
-  let genera_recibo_3;
   let genera_factura_3;
   let NroAsiento_pago;
   let NroAsientoSecundario_pago;
@@ -1528,7 +1525,7 @@ async function registrarIngresoIndividual({
 
   try {
     const result = await giama_renting.query(
-      `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura 
+      `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_factura 
       FROM conceptos_costos WHERE id = :id_concepto`,
       {
         type: QueryTypes.SELECT,
@@ -1539,11 +1536,8 @@ async function registrarIngresoIndividual({
       throw new Error("No se encontró el concepto especificado");
     cuenta_concepto = result[0]["cuenta_contable"];
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
-    genera_recibo = result[0]["genera_recibo"];
     genera_factura = result[0]["genera_factura"];
-    if (result[0]["genera_recibo"] === 1) {
     conceptos_recibo.push(result[0]["nombre"]);
-    }
   } catch (error) {
     console.log(error);
     throw new Error(
@@ -1557,7 +1551,7 @@ async function registrarIngresoIndividual({
   if (id_concepto_2) {
     try {
       const result = await giama_renting.query(
-        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_factura
       FROM conceptos_costos WHERE id = :id_concepto_2`,
         {
           type: QueryTypes.SELECT,
@@ -1568,11 +1562,7 @@ async function registrarIngresoIndividual({
         throw new Error("No se encontró el concepto especificado");
       cuenta_concepto_2 = result[0]["cuenta_contable"];
       cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
-      genera_recibo_2 = result[0]["genera_recibo"];
       genera_factura_2 = result[0]["genera_factura"];
-      if (result[0]["genera_recibo"] === 1) {
-      conceptos_recibo.push(result[0]["nombre"]);
-    }
     } catch (error) {
       console.log(error);
       throw new Error(
@@ -1586,7 +1576,7 @@ async function registrarIngresoIndividual({
   if (id_concepto_3) {
     try {
       const result = await giama_renting.query(
-        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_recibo, genera_factura
+        `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_factura
       FROM conceptos_costos WHERE id = :id_concepto_3`,
         {
           type: QueryTypes.SELECT,
@@ -1597,11 +1587,8 @@ async function registrarIngresoIndividual({
         throw new Error("No se encontró el concepto especificado");
       cuenta_concepto_3 = result[0]["cuenta_contable"];
       cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
-      genera_recibo_3 = result[0]["genera_recibo"];
       genera_factura_3 = result[0]["genera_factura"];
-      if (result[0]["genera_recibo"] === 1) {
       conceptos_recibo.push(result[0]["nombre"]);
-    }
     } catch (error) {
       console.log(error);
       throw new Error(
@@ -1630,9 +1617,9 @@ async function registrarIngresoIndividual({
 
   //suma de importes_totales que generan recibo
   const importe_total_recibo = 
-  (genera_recibo   ? toNumber(total_cobro_1)   : 0) +
-  (genera_recibo_2 ? toNumber(total_cobro_2) : 0) +
-  (genera_recibo_3 ? toNumber(total_cobro_3) : 0);
+  (toNumber(total_cobro_1)) +
+  (toNumber(total_cobro_2)) +
+  (toNumber(total_cobro_3));
 
   //suma de importes para facturas
   const importe_neto_factura = 
