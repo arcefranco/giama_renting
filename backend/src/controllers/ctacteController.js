@@ -447,7 +447,8 @@ FROM (
         pc.importe_cobro AS haber,
         4 AS tipo
     FROM pagos_clientes pc
-
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
 
     UNION ALL
 
