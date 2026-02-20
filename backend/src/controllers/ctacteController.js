@@ -324,7 +324,8 @@ FROM (
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
-    WHERE pc.id_cliente = ?
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
 
 
     UNION ALL
