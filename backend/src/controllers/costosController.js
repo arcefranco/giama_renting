@@ -1608,7 +1608,7 @@ async function registrarIngresoIndividual({
     //obtengo numeros de asiento
   try {
     NroAsiento_pago = await getNumeroAsiento();
-    NroAsientoSecundario_pago = await getNumeroAsiento();
+    NroAsientoSecundario_pago = await getNumeroAsientoSecundario();
     NroAsiento_deuda = await getNumeroAsiento();
     NroAsientoSecundario_deuda = await getNumeroAsientoSecundario();
   } catch (error) {
