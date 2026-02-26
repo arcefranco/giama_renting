@@ -654,6 +654,7 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
     } catch (error) {
+      console.log(error)
     const { body } = handleError(error, "Factura", acciones.get);
     return res.send(body);
     }
@@ -680,6 +681,7 @@ export const anulacionRecibo = async (req, res) => {
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
     } catch (error) {
+      console.log(error)
     const { body } = handleError(error, "Recibo", acciones.delete);
     return res.send(body);
     }
