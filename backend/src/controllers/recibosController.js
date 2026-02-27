@@ -593,7 +593,7 @@ export const anulacionRecibo = async (req, res) => {
       const result = await pa7_giama_renting.query(
         `INSERT INTO facturas 
          (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${Object.keys(otrosCampos).join(", ")})
-         VALUES (?,?,?,?,?,?,?,? ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
+         VALUES (?,?,?,?,?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
           replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, NroAsiento, NroAsientoSecundario, ...Object.values(otrosCampos)],
