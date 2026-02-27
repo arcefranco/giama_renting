@@ -294,14 +294,23 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
         replacements: [id]
       }
     )
-    if(!result_alquiler.length && !result_costo.length){
-      throw new Error ("No existe alquiler/ingreso con ese número de recibo asociado")
+    const result_pago = await giama_renting.query("SELECT * FROM pagos_clientes WHERE nro_recibo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id]
+      }
+    )
+    if(!result_alquiler.length && !result_costo.length && !result_pago.length){
+      throw new Error ("No existe alquiler/ingreso/cobro con ese número de recibo asociado")
     }
     else if(result_costo.length){
       nro_asiento_original = result_costo[0]["nro_asiento"]
     }
     else if(result_alquiler.length){
       nro_asiento_original = result_alquiler[0]["nro_asiento"]
+    }
+    else if (result_pago.length){
+      nro_asiento_original = result_pago[0]["nro_asiento"]
     }
   } catch (error) {
     console.log(error)
@@ -490,11 +499,11 @@ export const anulacionRecibo = async (req, res) => {
   let NumeroFacturaEmitida;
   let NroAsiento;
   let NroAsientoSecundario;
-
-  let CAE;
-  let VtoCAE;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let CAE;
+  let VtoCAE;
+
   let tipo_NC;
 
   try {
@@ -654,7 +663,9 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
     } catch (error) {
-      console.log(error)
+    console.log(error)
+    await transaction_giama_renting.rollback();
+    await transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Factura", acciones.get);
     return res.send(body);
     }
@@ -682,6 +693,8 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: true, message: "Recibo anulado correctamente" });
     } catch (error) {
       console.log(error)
+    await transaction_giama_renting.rollback();
+    await transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Recibo", acciones.delete);
     return res.send(body);
     }
