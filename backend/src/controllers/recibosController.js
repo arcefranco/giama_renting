@@ -592,7 +592,7 @@ export const anulacionRecibo = async (req, res) => {
       let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
       const result = await pa7_giama_renting.query(
         `INSERT INTO facturas 
-         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE,NroAsiento, NroAsiento2 ${Object.keys(otrosCampos).join(", ")})
+         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${Object.keys(otrosCampos).join(", ")})
          VALUES (?,?,?,?,?,?,?,? ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
