@@ -41,6 +41,7 @@ export const postPago = async (req, res) => {
   let importe_total_3_formateado = importe_cobro_3 ? parseFloat(importe_cobro_3) : 0
   let CUIT;
   let nombre_completo_cliente;
+  console.log(usuario);
   const importe_total_cobro = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
 
     //buscar CUIT del cliente

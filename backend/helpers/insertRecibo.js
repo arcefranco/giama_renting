@@ -17,6 +17,9 @@ export const insertRecibo = async (
   importe_total_3,
   importe_total_1,
 ) => {
+  if(!usuario){
+    throw new Error("Error al encontrar el usuario al momento del alta del recibo")
+  }
   try {
     const [result] = await giama_renting.query(
       `INSERT INTO recibos 
