@@ -41,6 +41,7 @@ export const postPago = async (req, res) => {
   let importe_total_3_formateado = importe_cobro_3 ? parseFloat(importe_cobro_3) : 0
   let CUIT;
   let nombre_completo_cliente;
+  console.log(usuario);
   const importe_total_cobro = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
 
     //buscar CUIT del cliente
@@ -324,7 +325,8 @@ FROM (
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
-    WHERE pc.id_cliente = ?
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
 
 
     UNION ALL
@@ -446,7 +448,8 @@ FROM (
         pc.importe_cobro AS haber,
         4 AS tipo
     FROM pagos_clientes pc
-
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
 
     UNION ALL
 

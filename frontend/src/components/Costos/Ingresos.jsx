@@ -425,59 +425,61 @@ const Ingresos = () => {
   }
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "importe_neto") {
-      let neto = value
+    if (name === "importe_total") {
+      let total = value
+      let neto = parseFloat(parseFloat(total) / 1.21).toFixed(2)
       if (IVAInhabilitado) {
         setForm({
           ...form,
-          importe_total: neto,
-          importe_neto: neto,
+          importe_total: total,
+          importe_neto: total,
           importe_iva: ""
         })
       } else {
         setForm({
           ...form,
           importe_neto: neto,
-          importe_iva: parseFloat(parseFloat(neto) * 0.21).toFixed(2),
-          importe_total: parseFloat(parseFloat(neto) + parseFloat(neto * 0.21)).toFixed(2),
+          importe_iva: (total - neto).toFixed(2),
+          importe_total: total,
         })
       }
     }
     //copias de comportamiento a importes 2 y 3
-    else if (name === "importe_neto_2") {
-      let neto = value
+    else if (name === "importe_total_2") {
+      let total = value
+      let neto = parseFloat(parseFloat(total) / 1.21).toFixed(2)
       if (IVAInhabilitado2) {
         setForm({
           ...form,
-          importe_total_2: neto,
-          importe_neto_2: neto,
+          importe_total_2: total,
+          importe_neto_2: total,
           importe_iva_2: ""
         })
       } else {
         setForm({
           ...form,
           importe_neto_2: neto,
-          importe_iva_2: parseFloat(parseFloat(neto) * 0.21).toFixed(2),
-          importe_total_2: parseFloat(parseFloat(neto) + parseFloat(neto * 0.21)).toFixed(2),
+          importe_iva_2: (total - neto).toFixed(2),
+          importe_total_2: total,
         })
       }
     }
-    else if (name === "importe_neto_3") {
-      let neto = value
+    else if (name === "importe_total_3") {
+      let total = value
+      let neto = parseFloat(parseFloat(total) / 1.21).toFixed(2)
       if (IVAInhabilitado3) {
-        let neto = value
         setForm({
           ...form,
-          importe_total_3: neto,
-          importe_neto_3: neto,
+          importe_total_3: total,
+          importe_neto_3: total,
           importe_iva_3: ""
         })
       } else {
         setForm({
           ...form,
           importe_neto_3: neto,
-          importe_iva_3: parseFloat(parseFloat(neto) * 0.21).toFixed(2),
-          importe_total_3: parseFloat(parseFloat(neto) + parseFloat(neto * 0.21)).toFixed(2),
+          importe_iva_3: (total - neto).toFixed(2),
+          importe_total_3: total,
         })
       }
     }
@@ -780,9 +782,16 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='importe_total' value={form["importe_total"]}
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.inputContainer}>
               <span>Importe neto</span>
               <input type="text" name='importe_neto' value={form["importe_neto"]}
-                onChange={handleChange} />
+                disabled
+              />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
@@ -790,13 +799,6 @@ const Ingresos = () => {
                 disabled={IVAInhabilitado}
                 onChange={handleChange} />
             </div>
-            <div className={styles.inputContainer}>
-              <span>Total</span>
-              <input type="text" name='importe_total' value={form["importe_total"]}
-                disabled
-              />
-            </div>
-
 
             <div className={styles.inputContainer} style={{
               flexDirection: "row", width: "9rem",
@@ -825,20 +827,21 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='importe_total_2' value={form["importe_total_2"]}
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.inputContainer}>
               <span>Importe neto</span>
               <input type="text" name='importe_neto_2' value={form["importe_neto_2"]}
-                onChange={handleChange} />
+                disabled />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
               <input type="text" name='importe_iva_2' value={form["importe_iva_2"]}
                 disabled={IVAInhabilitado2}
                 onChange={handleChange} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Total</span>
-              <input type="text" name='importe_total_2' value={form["importe_total_2"]}
-              />
             </div>
 
             <div className={styles.inputContainer} style={{
@@ -868,9 +871,15 @@ const Ingresos = () => {
             </div>
 
             <div className={styles.inputContainer}>
+              <span>Total</span>
+              <input type="text" name='importe_total_3' value={form["importe_total_3"]}
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.inputContainer}>
               <span>Importe neto</span>
               <input type="text" name='importe_neto_3' value={form["importe_neto_3"]}
-                onChange={handleChange} />
+                disabled />
             </div>
             <div className={styles.inputContainer}>
               <span>IVA</span>
@@ -878,12 +887,6 @@ const Ingresos = () => {
                 disabled={IVAInhabilitado}
                 onChange={handleChange} />
             </div>
-            <div className={styles.inputContainer}>
-              <span>Total</span>
-              <input type="text" name='importe_total_3' value={form["importe_total_3"]} disabled
-              />
-            </div>
-
 
             <div className={styles.inputContainer} style={{
               flexDirection: "row", width: "9rem",

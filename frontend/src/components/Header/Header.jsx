@@ -41,7 +41,6 @@ const menuItems = [
     items: [
       { label: "Ingreso de clientes", to: "/clientes", roles: ["3"] },
       { label: "Listado de clientes", to: "/clientesReporte", roles: ["5"] },
-      { label: "Listado de clientes", to: "/clientesReporte", roles: ["5"] },
       { label: "Cta cte clientes", to: "/pagosClientes", roles: ["5"] },
       { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["5"] },
     ]

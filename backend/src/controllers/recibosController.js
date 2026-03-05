@@ -294,14 +294,23 @@ const contra_asiento_recibo = async (id, transaction_giama_renting, transaction_
         replacements: [id]
       }
     )
-    if(!result_alquiler.length && !result_costo.length){
-      throw new Error ("No existe alquiler/ingreso con ese número de recibo asociado")
+    const result_pago = await giama_renting.query("SELECT * FROM pagos_clientes WHERE nro_recibo = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id]
+      }
+    )
+    if(!result_alquiler.length && !result_costo.length && !result_pago.length){
+      throw new Error ("No existe alquiler/ingreso/cobro con ese número de recibo asociado")
     }
     else if(result_costo.length){
       nro_asiento_original = result_costo[0]["nro_asiento"]
     }
     else if(result_alquiler.length){
       nro_asiento_original = result_alquiler[0]["nro_asiento"]
+    }
+    else if (result_pago.length){
+      nro_asiento_original = result_pago[0]["nro_asiento"]
     }
   } catch (error) {
     console.log(error)
@@ -488,13 +497,13 @@ export const anulacionRecibo = async (req, res) => {
   const { id } = req.body;
   let id_factura;
   let NumeroFacturaEmitida;
-  let NroAsiento;
-  let NroAsientoSecundario;
-
-  let CAE;
-  let VtoCAE;
+  let NroAsiento_nuevo;
+  let NroAsientoSecundario_nuevo;
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+  let CAE;
+  let VtoCAE;
+
   let tipo_NC;
 
   try {
@@ -512,8 +521,8 @@ export const anulacionRecibo = async (req, res) => {
   }
   //busco numeros de asiento
   try {
-    NroAsiento = await getNumeroAsiento();
-    NroAsientoSecundario = await getNumeroAsientoSecundario();
+    NroAsiento_nuevo = await getNumeroAsiento();
+    NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
   } catch (error) {
       throw error;
   }
@@ -555,7 +564,7 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_pa7_giama_renting
       });
 
-      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario);
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
       await eliminarPago(id);
       await giama_renting.query(`DELETE FROM costos_ingresos 
       WHERE nro_recibo = ?`, {
@@ -584,7 +593,7 @@ export const anulacionRecibo = async (req, res) => {
     } else {
 
       // se genera nota de credito, se borran costos_ingresos asociados, se actualiza el recibo
-      const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, ...otrosCampos } = factura; 
+      const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ...otrosCampos } = factura; 
       if (!tipo_NC) {
         return res.send({status: false, message: "No está aclarado el tipo de nota de crédito"})
       }
@@ -592,11 +601,11 @@ export const anulacionRecibo = async (req, res) => {
       let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
       const result = await pa7_giama_renting.query(
         `INSERT INTO facturas 
-         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE,NroAsiento, NroAsiento2 ${Object.keys(otrosCampos).join(", ")})
-         VALUES (?,?,?,?,?,?,?,? ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
+         (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${Object.keys(otrosCampos).join(", ")})
+         VALUES (?,?,?,?,?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
         {
           type: QueryTypes.INSERT,
-          replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, NroAsiento, NroAsientoSecundario, ...Object.values(otrosCampos)],
+          replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, NroAsiento_nuevo, NroAsientoSecundario_nuevo, ...Object.values(otrosCampos)],
           transaction: transaction_pa7_giama_renting
         }
       );
@@ -635,7 +644,7 @@ export const anulacionRecibo = async (req, res) => {
           transaction: transaction_pa7_giama_renting
         }
       );
-      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario);
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
       await eliminarPago(id);
       await giama_renting.query(`DELETE FROM costos_ingresos 
       WHERE nro_recibo = ?`, {
@@ -654,13 +663,16 @@ export const anulacionRecibo = async (req, res) => {
       return res.send({ status: true, message: "Recibo anulado correctamente. Nota de crédito generada" });
     }
     } catch (error) {
+    console.log(error)
+    await transaction_giama_renting.rollback();
+    await transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Factura", acciones.get);
     return res.send(body);
     }
   }
   else{
     try {
-      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario);
+      await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
       await eliminarPago(id);
       await giama_renting.query(`DELETE FROM costos_ingresos 
       WHERE nro_recibo = ?`, {
@@ -680,6 +692,9 @@ export const anulacionRecibo = async (req, res) => {
 
       return res.send({ status: true, message: "Recibo anulado correctamente" });
     } catch (error) {
+      console.log(error)
+    await transaction_giama_renting.rollback();
+    await transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Recibo", acciones.delete);
     return res.send(body);
     }
