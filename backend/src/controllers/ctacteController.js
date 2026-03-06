@@ -556,6 +556,71 @@ rows.forEach(r => {
 
 }
 
+export const getEstadoDeuda = async (req, res) => {
+    const { id, tipo } = req.body;
+  let id_factura;
+  let NumeroFacturaEmitida;
+  let tabla;
+  let tipo_factura;
+  let CodigoCliente;
+  //tipo 1: alquiler; tipo 2: ingreso; tipo 3: depósito
+  //codigo 1: no hay factura; codigo 2: hay factura no emitida; codigo 3: hay factura emitida
+  if(tipo == 1){
+    tabla = "alquileres"
+  }else if(tipo == 2){
+    tabla = "costos_ingresos"
+  }else if(tipo == 3){
+    tabla = "contratos_alquiler"
+  }else{
+    return res.send({status: false, message: "Error al determinar el tipo de deuda."})
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT id_factura_pa6 FROM ${tabla} WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id],
+      }
+    );
+    id_factura = result[0]?.id_factura_pa6;
+    
+  } catch (error) {
+    const { body } = handleError(error, tabla, acciones.get);
+    return res.send(body);
+  }
+
+  if(!id_factura){
+    return res.send({status: true, codigo: 1, message: "El registro de alquiler no tiene factura asociada. Consultar con sistemas."})
+  }else{
+  try {
+   const result = await pa7_giama_renting.query(
+      "SELECT * FROM facturas WHERE Id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_factura],
+      }
+    );
+    if (!result || result.length === 0) {
+      return res.send({ status: false, message: "Factura no encontrada" });
+    }
+    const factura = result[0];
+    NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
+    tipo_factura = factura.Tipo;
+    CodigoCliente = factura.CodigoCliente;
+    if(NumeroFacturaEmitida){
+      return res.send({status: true, codigo: 2, message: "Si se anula esta factura se deberá generar una nota de crédito. ¿Desea continuar?", tipo: tipo_factura, cliente: CodigoCliente})
+    }else{
+      return res.send({status: true, codigo: 3, message: "Si se anula esta factura se eliminará su registro. ¿Desea continuar?", tipo: tipo_factura, cliente: CodigoCliente})
+    }
+    } catch (error) {
+    console.log(error)
+    const { body } = handleError(error, "Factura", acciones.get);
+    return res.send(body);
+    }
+
+
+}
+}
 
 
 
