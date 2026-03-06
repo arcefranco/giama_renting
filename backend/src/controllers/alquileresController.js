@@ -529,10 +529,9 @@ if (conflictoContratoCliente) {
   try {
     const alquileres = await giama_renting.query(
       `
-      SELECT a.id, a.fecha_desde, a.fecha_hasta, r.anulado
+      SELECT a.id, a.fecha_desde, a.fecha_hasta
       FROM alquileres a
-      LEFT JOIN recibos r ON a.nro_recibo = r.id
-      WHERE a.id_contrato = ? AND r.anulado = 0
+      WHERE a.id_contrato = ?
       ORDER BY a.fecha_desde ASC;
       `,
       {
