@@ -7,6 +7,9 @@ const initialState = {
   ctacteCliente: [],
   nro_recibo: null,
   ficha: null,
+  codigo: null,
+  tipo_factura: null,
+  cliente_factura: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -42,6 +45,16 @@ export const fichaCtaCte = createAsyncThunk(
     )
 );
 
+export const getEstadoDeuda = createAsyncThunk(
+  "getEstadoDeuda",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.getEstadoDeuda(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const pagosClientesSlice = createSlice({
   name: "pagosClientes",
   initialState,
@@ -52,7 +65,10 @@ export const pagosClientesSlice = createSlice({
         isLoading: false,
         message: "",
         ctacteCliente: state.ctacteCliente,
-        nro_recibo: null
+        nro_recibo: null,
+        tipo_factura: null,
+        cliente_factura: null,
+        codigo: null
      }),
 
   },
@@ -100,6 +116,24 @@ export const pagosClientesSlice = createSlice({
         state.ficha = action.payload;
     });
     builder.addCase(fichaCtaCte.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.isSuccess = false;
+        state.message = action.payload.message;
+    });
+    builder.addCase(getEstadoDeuda.pending, (state) => {
+        state.isLoading = true;
+    });
+    builder.addCase(getEstadoDeuda.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        state.codigo = action.payload.codigo;
+        state.message = action.payload.message;
+        state.cliente_factura = action.payload.cliente;
+        state.tipo_factura = action.payload.tipo;
+    });
+    builder.addCase(getEstadoDeuda.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.isSuccess = false;

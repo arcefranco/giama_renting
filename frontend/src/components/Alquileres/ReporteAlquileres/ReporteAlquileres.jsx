@@ -17,7 +17,9 @@ import { useToastFeedback } from '../../../customHooks/useToastFeedback.jsx'
 import { Workbook } from 'devextreme-exceljs-fork';
 import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
-import { getVehiculoExportValue, getClienteExportValue, getFechaExportValue } from '../../../helpers/exportValueDataGrid.js'
+import { getVehiculoExportValue, getClienteExportValue, getFechaExportValue } from '../../../helpers/exportValueDataGrid.js';
+import { getEstadoDeuda, reset as resetCtaCte } from "../../../reducers/PagosClientes/pagosClientesSlice.js"
+import Swal from 'sweetalert2'
 const ReporteAlquileres = () => {
   const dispatch = useDispatch()
 
@@ -44,6 +46,8 @@ const ReporteAlquileres = () => {
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { modelos } = useSelector((state) => state.generalesReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
+  const { isError: isErrorCtaCte, isSuccess: isSuccessCtaCte, message: messageCtaCte, isLoading: isLoadingCtaCte,
+    codigo, tipo_factura, cliente_factura } = useSelector((state) => state.pagosClientesReducer)
   const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
@@ -78,6 +82,27 @@ const ReporteAlquileres = () => {
 
     setAlquileresConDatos(mapeado);
   }, [alquileres, vehiculos, clientes, modelos]);
+  useEffect(() => {
+    if (codigo) {
+      Swal.fire({
+        title: messageCtaCte,
+        showCancelButton: true,
+        confirmButtonText: 'Sí',
+        cancelButtonText: 'Cancelar',
+        icon: 'warning',
+        didOpen: () => {
+          document.body.classList.remove('swal2-height-auto');
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          console.log("Aca va la funcion para disparar la NC/anulacion")
+        }
+      }).finally(() => {
+        dispatch(resetCtaCte())
+      });
+    }
+
+  }, [isErrorCtaCte, isSuccessCtaCte, codigo])
   const handleActualizar = () => {
     dispatch(getAlquileres({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"] }))
   }
@@ -94,27 +119,6 @@ const ReporteAlquileres = () => {
       return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
     }
   }
-  /*   const renderVehiculo = (data) => {
-      if (data.value) {
-        const vehiculo = vehiculos?.find(e => e.id == data.value)
-        return <div style={{ display: "flex", justifyContent: "space-evenly" }}>
-          <span>{vehiculo?.dominio ? vehiculo?.dominio : vehiculo?.dominio_provisorio ?
-            vehiculo?.dominio_provisorio : "SIN DOMINIO"}</span>
-          <span>{" "}</span>
-          <span>{modelos?.find(e => e.id == vehiculo?.modelo)?.nombre}</span>
-        </div>
-      }
-    }
-  
-    const renderCliente = (data) => {
-      if (data.value) {
-        const cliente = clientes?.find(e => e.id == data.value)
-        return <div>
-          <span>{cliente?.nombre}</span>
-          <span>{cliente?.apellido}</span>
-        </div>
-      }
-    } */
   const handleSubmit = () => {
     dispatch(getAlquileres(form))
   }
@@ -155,7 +159,6 @@ const ReporteAlquileres = () => {
     });
   };
   const handleCustomSummary = (e) => {
-    console.log("summaryProcess", e.summaryProcess);
     if (e.name === "countVehiculos") {
       if (e.summaryProcess === "start") {
         e.totalValue = 0;
@@ -177,10 +180,28 @@ const ReporteAlquileres = () => {
       }
     }
   };
+  const handleEstadoDeuda = (id) => {
+    dispatch(getEstadoDeuda({ id: id, tipo: 1 }))
+  }
+  const renderAnular = (data) => {
+    const row = data.data
+    return (
+      <button
+        onClick={() => handleEstadoDeuda(row.id)}
+        style={{
+          color: '#1976d2', fontSize: "11px",
+          textDecoration: 'underline', background: 'none', border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        Anular
+      </button>
+    );
+  }
   return (
     <div className={styles.container}>
       <ToastContainer />
-      {isLoading && (
+      {(isLoading || isLoadingCtaCte) && (
         <div className={styles.spinnerOverlay}>
           <ClipLoader
             size={60}
@@ -232,6 +253,7 @@ const ReporteAlquileres = () => {
         <Column dataField="fecha_desde" allowSearch={false} allowHeaderFiltering={false} caption="Desde" cellRender={renderFecha} alignment="center" />
         <Column dataField="fecha_hasta" allowSearch={false} allowHeaderFiltering={false} caption="Hasta" cellRender={renderFecha} alignment="center" />
         <Column dataField="importe_neto" allowSearch={false} allowHeaderFiltering={false} alignment="right" caption="Importe neto" customizeText={(e) => Math.trunc(e.value).toLocaleString()} />
+        <Column caption="" cellRender={renderAnular} alignment="center" />
         <Column dataField="anulado" width={100} caption="Está anulado" cellRender={(data) => data.value === 1 ? "Sí" : "No"} />
         <Summary calculateCustomSummary={handleCustomSummary}>
           <TotalItem
