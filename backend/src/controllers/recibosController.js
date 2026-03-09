@@ -524,7 +524,8 @@ export const anulacionRecibo = async (req, res) => {
     NroAsiento_nuevo = await getNumeroAsiento();
     NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
   } catch (error) {
-      throw error;
+    console.log(error)
+    return res.send({status: false, message: "Error al obtener número de asiento"})
   }
   if(id_factura){
   try {
