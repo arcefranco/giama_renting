@@ -42,11 +42,26 @@ const getEstadoDeuda = async (form, header = {}) => {
   }
 }
 
+const anulacionFactura = async (data) => {
+  return postFunction("ctacte/anulacionFactura", data);
+};
+
+const anulacionRecibo = async (data) => {
+  return postFunction("ctacte/anulacionRecibo", data);
+};
+
+const anulacionDeuda = async (data) => {
+  return postFunction("ctacte/anulacionDeuda", data);
+};
+
 const pagosClientesService = {
     postPago,
     ctacteCliente,
     fichaCtaCte,
-    getEstadoDeuda
+    getEstadoDeuda,
+    anulacionFactura,
+    anulacionRecibo,
+    anulacionDeuda
 }
 
 export default pagosClientesService;

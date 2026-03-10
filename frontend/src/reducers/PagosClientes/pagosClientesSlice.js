@@ -10,6 +10,9 @@ const initialState = {
   codigo: null,
   tipo_factura: null,
   cliente_factura: null,
+  id_registro: null,
+  id_factura: null,
+  tipo_deuda: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -55,6 +58,36 @@ export const getEstadoDeuda = createAsyncThunk(
     )
 );
 
+export const anulacionFactura = createAsyncThunk(
+  "anulacionFactura",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.anulacionFactura(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const anulacionRecibo = createAsyncThunk(
+  "anulacionRecibo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.anulacionRecibo(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const anulacionDeuda = createAsyncThunk(
+  "anulacionDeuda",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.anulacionDeuda(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const pagosClientesSlice = createSlice({
   name: "pagosClientes",
   initialState,
@@ -68,7 +101,10 @@ export const pagosClientesSlice = createSlice({
         nro_recibo: null,
         tipo_factura: null,
         cliente_factura: null,
-        codigo: null
+        codigo: null,
+        id_registro: null,
+        id_factura: null,
+        tipo_deuda: null,
      }),
 
   },
@@ -132,12 +168,63 @@ export const pagosClientesSlice = createSlice({
         state.message = action.payload.message;
         state.cliente_factura = action.payload.cliente;
         state.tipo_factura = action.payload.tipo;
+        state.id_registro = action.payload.id_registro;
+        state.id_factura = action.payload.id_factura;
+        state.tipo_deuda = action.payload.tipo_deuda
     });
     builder.addCase(getEstadoDeuda.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.isSuccess = false;
         state.message = action.payload.message;
+    });
+    builder.addCase(anulacionFactura.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anulacionFactura.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+      state.nro_recibo = action.payload.data;
+    });
+    builder.addCase(anulacionFactura.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(anulacionRecibo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anulacionRecibo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+      state.nro_recibo = action.payload.data;
+    });
+    builder.addCase(anulacionRecibo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(anulacionDeuda.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anulacionDeuda.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+      state.nro_recibo = action.payload.data;
+    });
+    builder.addCase(anulacionDeuda.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
   },
 });

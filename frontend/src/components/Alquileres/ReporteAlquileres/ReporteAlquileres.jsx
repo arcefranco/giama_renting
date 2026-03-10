@@ -18,7 +18,7 @@ import { Workbook } from 'devextreme-exceljs-fork';
 import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
 import { getVehiculoExportValue, getClienteExportValue, getFechaExportValue } from '../../../helpers/exportValueDataGrid.js';
-import { getEstadoDeuda, reset as resetCtaCte } from "../../../reducers/PagosClientes/pagosClientesSlice.js"
+import { anulacionFactura, getEstadoDeuda, reset as resetCtaCte } from "../../../reducers/PagosClientes/pagosClientesSlice.js"
 import Swal from 'sweetalert2'
 const ReporteAlquileres = () => {
   const dispatch = useDispatch()
@@ -47,7 +47,7 @@ const ReporteAlquileres = () => {
   const { modelos } = useSelector((state) => state.generalesReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
   const { isError: isErrorCtaCte, isSuccess: isSuccessCtaCte, message: messageCtaCte, isLoading: isLoadingCtaCte,
-    codigo, tipo_factura, cliente_factura } = useSelector((state) => state.pagosClientesReducer)
+    codigo, tipo_factura, cliente_factura, id_registro, id_factura } = useSelector((state) => state.pagosClientesReducer)
   const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
@@ -59,6 +59,35 @@ const ReporteAlquileres = () => {
     message,
     resetAction: reset,
   })
+  useEffect(() => {
+    if (!codigo) {
+      if (isErrorCtaCte && messageCtaCte) {
+        toast.error(messageCtaCte, {
+          position: "bottom-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+        });
+        dispatch(resetCtaCte());
+      }
+
+      if (isSuccessCtaCte && messageCtaCte) {
+        toast.success(messageCtaCte, {
+          position: "bottom-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+        });
+        dispatch(resetCtaCte());
+      }
+    }
+  }, [isErrorCtaCte, isSuccessCtaCte, messageCtaCte, dispatch, resetCtaCte, codigo]);
   useEffect(() => {
     if (!alquileres || !vehiculos || !clientes || !modelos) return;
 
@@ -95,11 +124,17 @@ const ReporteAlquileres = () => {
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          console.log("Aca va la funcion para disparar la NC/anulacion")
+          dispatch(resetCtaCte())
+          dispatch(anulacionFactura({
+            id_registro: id_registro, id_factura: id_factura,
+            tipo_factura: tipo_factura, cliente: cliente_factura, tipo: 1
+          }))
         }
-      }).finally(() => {
-        dispatch(resetCtaCte())
-      });
+
+        else if (result.isDismissed) {
+          dispatch(resetCtaCte())
+        }
+      })
     }
 
   }, [isErrorCtaCte, isSuccessCtaCte, codigo])
@@ -185,18 +220,37 @@ const ReporteAlquileres = () => {
   }
   const renderAnular = (data) => {
     const row = data.data
-    return (
-      <button
-        onClick={() => handleEstadoDeuda(row.id)}
-        style={{
-          color: '#1976d2', fontSize: "11px",
-          textDecoration: 'underline', background: 'none', border: 'none',
-          cursor: 'pointer'
-        }}
-      >
-        Anular
-      </button>
-    );
+    if (row.anulado == 0) {
+      return (
+        <button
+          onClick={() => handleEstadoDeuda(row.id)}
+          style={{
+            color: '#1976d2', fontSize: "11px",
+            textDecoration: 'underline', background: 'none', border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Anular
+        </button>
+      );
+
+    }
+    if (row.anulado == 1) {
+      return (
+        <button
+          onClick={() => handleEstadoDeuda(row.id)}
+          disabled
+          style={{
+            color: '#787f86', fontSize: "11px",
+            textDecoration: 'underline', background: 'none', border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Anular
+        </button>
+      );
+
+    }
   }
   return (
     <div className={styles.container}>
