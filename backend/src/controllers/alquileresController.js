@@ -269,11 +269,8 @@ export const getAlquileres = async (req, res) => {
   const { fecha_desde, fecha_hasta } = req.body;
   if (!fecha_desde || !fecha_hasta) {
     try {
-      const result = await giama_renting.query(`SELECT 
-      a.*, 
-      r.anulado
-    FROM alquileres a
-    LEFT JOIN recibos r ON a.nro_recibo = r.id;
+      const result = await giama_renting.query(`SELECT *
+    FROM alquileres
 `, {
         type: QueryTypes.SELECT,
       });
@@ -287,10 +284,8 @@ export const getAlquileres = async (req, res) => {
     try {
       const result = await giama_renting.query(
       `SELECT 
-      a.*, 
-      r.anulado
-      FROM alquileres a
-      LEFT JOIN recibos r ON a.nro_recibo = r.id
+      *
+      FROM alquileres 
       WHERE fecha_desde >= ?
       AND fecha_hasta <= ?`,
         {
