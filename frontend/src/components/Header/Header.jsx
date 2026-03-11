@@ -143,7 +143,7 @@ const Header = () => {
 
       <div className={styles.userSection}>
         {
-          (roles.includes("1") || roles.includes("2")) &&
+          (roles.includes("1") || roles.includes("2") || roles.includes("3") || roles.includes("4")) &&
           <div className={styles.notifItem}>
             <img style={{ width: "32px" }} src={notification} alt="" />
             <div className={styles.dropdownNotif}>
