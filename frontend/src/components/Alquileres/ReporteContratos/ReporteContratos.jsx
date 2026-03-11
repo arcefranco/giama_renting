@@ -91,11 +91,11 @@ const ReporteContratos = () => {
   const renderCliente = (data) => {
     if (data.value) {
       const cliente = clientes?.find(e => e.id == data.value)
+      let nombre_final = cliente.nombre ? `${cliente.nombre} ${cliente.apellido}` : `${cliente.razon_social}`
       return <div>
-        <span>{cliente?.nombre}</span>
-        <span> </span>
-        <span>{cliente?.apellido}</span>
+        <span>{nombre_final}</span>
       </div>
+
     }
   }
 
@@ -112,7 +112,8 @@ const ReporteContratos = () => {
       ...c,
       // Campos nuevos que usará el lookup para buscar
       nombreNorm: normalizar(c.nombre),
-      apellidoNorm: normalizar(c.apellido)
+      apellidoNorm: normalizar(c.apellido),
+      razonsocialNorm: normalizar(c.razon_social)
     }));
   }, [clientes]);
 
@@ -128,52 +129,52 @@ const ReporteContratos = () => {
 
   const renderModificar = (data) => {
     const row = data.data
-      return (
-        <button
-          onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
-          style={{
-            color: '#1976d2', fontSize: "11px",
-            textDecoration: 'underline', background: 'none', border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          Modificar
-        </button>
-      );
+    return (
+      <button
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
+        style={{
+          color: '#1976d2', fontSize: "11px",
+          textDecoration: 'underline', background: 'none', border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        Modificar
+      </button>
+    );
   }
 
   const renderModificarVehiculo = (data) => {
     const row = data.data
-      return (
-        <button
-          style={{
-            color: "grey", fontSize: "11px",
-            textDecoration: 'underline', background: 'none', border: 'none',
-            cursor: "none"
-          }}
-          disabled
-        >
-          Modificar vehículo
-        </button>
-      )
+    return (
+      <button
+        style={{
+          color: "grey", fontSize: "11px",
+          textDecoration: 'underline', background: 'none', border: 'none',
+          cursor: "none"
+        }}
+        disabled
+      >
+        Modificar vehículo
+      </button>
+    )
   }
 
   const renderRenovarAlquiler = (data) => {
     const row = data.data
 
-      return (
-        <button
-          onClick={() => window.open(`${import.meta.env.VITE_BASENAME}alquileres/${data.data.id}`, '_blank')}
-          style={{
-            color: '#1976d2', fontSize: "11px",
-            textDecoration: 'underline', background: 'none', border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          Renovar alquiler
-        </button>
-      );
-    
+    return (
+      <button
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}alquileres/${data.data.id}`, '_blank')}
+        style={{
+          color: '#1976d2', fontSize: "11px",
+          textDecoration: 'underline', background: 'none', border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        Renovar alquiler
+      </button>
+    );
+
   }
 
 
@@ -311,8 +312,8 @@ const ReporteContratos = () => {
           <Lookup
             dataSource={clientesParaGrid}
             valueExpr="id"
-            displayExpr={(item) => item ? `${item.nombre} ${item.apellido}` : ""}
-            searchExpr={["nombreNorm", "apellidoNorm"]}
+            displayExpr={(item) => item && item.nombre ? `${item.nombre} ${item.apellido}` : item && item.razon_social ? `${item.razon_social}` : ""}
+            searchExpr={["nombreNorm", "apellidoNorm", "razonsocialNorm"]}
           />
         </Column>
         <Column dataField="fecha_desde" caption="Desde" allowHeaderFiltering={false} allowFiltering={false} cellRender={renderFecha} alignment="center" />
