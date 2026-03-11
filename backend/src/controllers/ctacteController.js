@@ -782,19 +782,25 @@ export const getEstadoDeuda = async (req, res) => {
     return res.send({status: false, message: "Error al determinar el tipo de deuda."})
   }
   if(tipo == 3){
-    const result_concepto = await giama_renting.query("SELECT id_concepto FROM costos_ingresos WHERE id = ?",{
-      type: QueryTypes.SELECT,
-      replacements: [id]
-    })
-    id_concepto = result_concepto[0]["id_concepto"]
-    const result_genera_factura = await giama_renting.query("SELECT genera_factura FROM costos_ingresos WHERE id = ?", {
-      type: QueryTypes.SELECT,
-      replacements: [id_concepto]
-    })
-    genera_factura = result_genera_factura[0]["genera_factura"]
-
-    if(genera_factura == 0){
-      return res.send({status: true, codigo: 4, message: "El registro no generó factura. Se realizará una reversión del asiento. ¿Desea continuar?", id_registro: id, tipo_deuda: tipo})
+    try {
+      const result_concepto = await giama_renting.query("SELECT id_concepto FROM costos_ingresos WHERE id = ?",{
+        type: QueryTypes.SELECT,
+        replacements: [id]
+      })
+      id_concepto = result_concepto[0]["id_concepto"]
+      const result_genera_factura = await giama_renting.query("SELECT genera_factura FROM conceptos_costos WHERE id = ?", {
+        type: QueryTypes.SELECT,
+        replacements: [id_concepto]
+      })
+      genera_factura = result_genera_factura[0]["genera_factura"]
+  
+      if(genera_factura == 0){
+        return res.send({status: true, codigo: 4, message: "El registro no generó factura. Se realizará una reversión del asiento. ¿Desea continuar?", id_registro: id, tipo_deuda: tipo})
+      }
+      
+    } catch (error) {
+      console.log(error)
+      return res.send({status: false, message: "Error al reconocer el concepto del ingreso"})
     }
   }
   try {
