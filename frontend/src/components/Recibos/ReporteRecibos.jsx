@@ -8,7 +8,8 @@ import 'devextreme/dist/css/dx.carmine.css';
 import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
-import { getRecibos, reset, getReciboByIdSlice, anulacionRecibo } from '../../reducers/Recibos/recibosSlice.js'
+import { getRecibos, reset, getReciboByIdSlice } from '../../reducers/Recibos/recibosSlice.js'
+import { anulacionRecibo } from '../../reducers/PagosClientes/pagosClientesSlice.js';
 import { getClientes } from '../../reducers/Clientes/clientesSlice';
 import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js';
@@ -251,7 +252,7 @@ const ReporteRecibos = () => {
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                dispatch(anulacionRecibo({ id: id }))
+                dispatch(anulacionRecibo({ nro_recibo: id }))
             }
         })
     }

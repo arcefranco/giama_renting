@@ -7,7 +7,11 @@ import { ClipLoader } from "react-spinners";
 import { ToastContainer, toast } from 'react-toastify';
 import Select from "react-select"
 import { getClientes, getClientesById } from '../../reducers/Clientes/clientesSlice'
-import { ctacteCliente as getCtaCteCliente, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice';
+import {
+    ctacteCliente as getCtaCteCliente, reset, postPago, anulacionFactura,
+    anulacionRecibo, getEstadoDeuda,
+    anulacionDeuda
+} from '../../reducers/PagosClientes/pagosClientesSlice';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
 import { getReciboByIdSlice, reset as resetRecibos } from '../../reducers/Recibos/recibosSlice.js'
@@ -54,7 +58,9 @@ export const PagosClientes = () => {
 
 
     const { clientes, cliente } = useSelector((state) => state.clientesReducer)
-    const { isError, isSuccess, isLoading, message, ctacteCliente, nro_recibo } = useSelector((state) => state.pagosClientesReducer)
+    const { isError, isSuccess, isLoading, message, ctacteCliente, nro_recibo,
+        codigo, tipo_factura, cliente_factura, id_registro, id_factura, tipo_deuda
+    } = useSelector((state) => state.pagosClientesReducer)
     const { html_recibo } = useSelector((state) => state.recibosReducer);
     useEffect(() => { /**OPCIONES DE CLIENTES PARA EL SELECT */
         if (clientes?.length) {
@@ -131,36 +137,111 @@ export const PagosClientes = () => {
             });
         }
     }, [html_recibo]);
-    useToastFeedback({
-        isError,
-        isSuccess,
-        message,
-        resetAction: reset,
-        onSuccess: () => {
-            setForm((prev) => {
-                return {
-                    id_cliente: id ? id : prev.id_cliente ? prev.id_cliente : "",
-                    fecha: '',
-                    usuario_alta_registro: '',
-                    id_forma_cobro: '',
-                    id_forma_cobro_2: '',
-                    id_forma_cobro_3: '',
-                    importe_cobro: '',
-                    importe_cobro_2: '',
-                    importe_cobro_3: '',
-                    observacion: '',
-                    usuario: '',
-                    id_vehiculo: ''
+    useEffect(() => {
+        if (codigo && codigo !== 4) {
+            Swal.fire({
+                title: message,
+                showCancelButton: true,
+                confirmButtonText: 'Sí',
+                cancelButtonText: 'Cancelar',
+                icon: 'warning',
+                didOpen: () => {
+                    document.body.classList.remove('swal2-height-auto');
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    dispatch(reset())
+                    dispatch(anulacionFactura({
+                        id_registro: id_registro, id_factura: id_factura,
+                        tipo_factura: tipo_factura, cliente: cliente_factura, tipo: tipo_deuda
+                    }))
+                }
+
+                else if (result.isDismissed) {
+                    dispatch(reset())
                 }
             })
-            if (id) {
-                dispatch(getCtaCteCliente({ id_cliente: id }))
-            }
-            if (form.id_cliente) {
-                dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
-            }
         }
-    });
+        if (codigo == 4) {
+            Swal.fire({
+                title: message,
+                showCancelButton: true,
+                confirmButtonText: 'Sí',
+                cancelButtonText: 'Cancelar',
+                icon: 'warning',
+                didOpen: () => {
+                    document.body.classList.remove('swal2-height-auto');
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    dispatch(reset())
+                    dispatch(anulacionDeuda({
+                        id_registro: id_registro, tipo: tipo_deuda
+                    }))
+                }
+
+                else if (result.isDismissed) {
+                    dispatch(reset())
+                }
+            })
+        }
+
+    }, [isError, isSuccess, codigo])
+    const onSuccess = () => {
+        setForm((prev) => {
+            return {
+                id_cliente: id ? id : prev.id_cliente ? prev.id_cliente : "",
+                fecha: '',
+                usuario_alta_registro: '',
+                id_forma_cobro: '',
+                id_forma_cobro_2: '',
+                id_forma_cobro_3: '',
+                importe_cobro: '',
+                importe_cobro_2: '',
+                importe_cobro_3: '',
+                observacion: '',
+                usuario: '',
+                id_vehiculo: ''
+            }
+        })
+        if (id) {
+            dispatch(getCtaCteCliente({ id_cliente: id }))
+        }
+        if (form.id_cliente) {
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+        }
+    }
+    useEffect(() => {
+        if (!codigo) {
+            if (isError && message) {
+                toast.error(message, {
+                    position: "bottom-center",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    theme: "colored",
+                });
+                dispatch(reset());
+            }
+
+            if (isSuccess && message) {
+                toast.success(message, {
+                    position: "bottom-center",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    theme: "colored",
+                });
+                dispatch(reset());
+                if (onSuccess) onSuccess();
+            }
+
+        }
+    }, [isError, isSuccess, message, dispatch, reset, onSuccess]);
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm({
@@ -184,12 +265,69 @@ export const PagosClientes = () => {
             })
         }
     }
+    const handleEstadoDeuda = (id, tipo) => {
+        dispatch(getEstadoDeuda({ id: id, tipo: tipo }))
+    }
+    const handleAnulacionRecibo = (nro_comprobante) => {
+        Swal.fire({
+            title: '¿Desea anular el recibo?',
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar',
+            icon: 'warning',
+            didOpen: () => {
+                document.body.classList.remove('swal2-height-auto');
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                dispatch(reset())
+                dispatch(anulacionRecibo({
+                    nro_recibo: nro_comprobante
+                }))
+            }
+
+            else if (result.isDismissed) {
+                dispatch(reset())
+            }
+        })
+    }
     const renderFecha = (data) => {
         if (data.value) {
             let fechaSplit = data.value.split("-")
             return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
         }
 
+    }
+    const renderAnulacion = (data) => {
+        const row = data.data
+        if (row.tipo == 4) {
+            return (
+                <button
+                    onClick={() => handleAnulacionRecibo(row.nro_comprobante)}
+                    style={{
+                        color: '#1976d2', fontSize: "11px",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Anular
+                </button>
+            );
+        }
+        else {
+            return (
+                <button
+                    onClick={() => handleEstadoDeuda(row.id_registro, row.tipo)}
+                    style={{
+                        color: '#1976d2', fontSize: "11px",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Anular
+                </button>
+            );
+        }
     }
     const customStyles = {
         container: (provided) => ({
@@ -281,6 +419,7 @@ export const PagosClientes = () => {
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={(data) => { return Math.trunc(data.value) > 0 ? Math.trunc(data.value).toLocaleString("es-AR") : "" }} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={(data) => { return Math.trunc(data.value) > 0 ? Math.trunc(data.value).toLocaleString("es-AR") : "" }} />
                 <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={(data) => { return Math.trunc(data.value).toLocaleString("es-AR") }} />
+                <Column caption="" cellRender={renderAnulacion} />
 
             </DataGrid>
             <div className={styles.saldoBox}>
