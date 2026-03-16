@@ -282,7 +282,7 @@ export const PagosClientes = () => {
             if (result.isConfirmed) {
                 dispatch(reset())
                 dispatch(anulacionRecibo({
-                    id_registro: id_registro, nro_recibo: nro_comprobante
+                    nro_recibo: nro_comprobante
                 }))
             }
 

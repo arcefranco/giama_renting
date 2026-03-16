@@ -1016,7 +1016,7 @@ export const anulacionFactura = async (req, res) => {
 }
 
 export const anulacionRecibo = async (req, res) => {
-  const { nro_recibo, id_registro } = req.body;
+  const { nro_recibo } = req.body;
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -1034,7 +1034,7 @@ export const anulacionRecibo = async (req, res) => {
       await eliminarPago(nro_recibo);
       await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
         type: QueryTypes.UPDATE,
-        replacements: [1, getTodayDate(), id_registro],
+        replacements: [1, getTodayDate(), nro_recibo],
         transaction: transaction_giama_renting
       })
 

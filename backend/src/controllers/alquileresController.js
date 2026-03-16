@@ -1285,7 +1285,7 @@ export const postAlquiler = async (req, res) => {
       `SELECT fecha_desde, 
       fecha_hasta
       FROM alquileres 
-      WHERE id_vehiculo = ?`,
+      WHERE id_vehiculo = ? AND anulado = 0`,
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
