@@ -41,7 +41,8 @@ const insertAlquiler = async (body) => {
     observacion,
     id_contrato,
     transaction,
-    id_factura_pa6
+    id_factura_pa6,
+    fecha_alquiler
   } = body;
   try {
     await giama_renting.query(
@@ -71,7 +72,7 @@ const insertAlquiler = async (body) => {
           NroAsiento,
           observacion ? observacion : "",
           id_contrato,
-          getTodayDate(),
+          fecha_alquiler,
           id_factura_pa6
         ],
         transaction: transaction,
@@ -1436,7 +1437,8 @@ export const postAlquiler = async (req, res) => {
       observacion: observacion,
       id_contrato: id_contrato,
       transaction: transaction_giama_renting,
-      id_factura_pa6: nro_factura
+      id_factura_pa6: nro_factura,
+      fecha_alquiler: fecha_factura_alquiler
     });
   } catch (error) {
     console.log(error);
@@ -2250,7 +2252,8 @@ export const postContratoAlquiler = async (req, res) => {
           observacion: observacion,
           id_contrato: idContrato,
           transaction: transaction_giama_renting,
-          id_factura_pa6: id_factura ? id_factura : null
+          id_factura_pa6: id_factura ? id_factura : null,
+          fecha_alquiler: fecha_factura_alquiler
         });
     }
   

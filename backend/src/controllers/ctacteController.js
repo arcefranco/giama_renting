@@ -15,7 +15,7 @@ import { padWithZeros } from "../../helpers/padWithZeros.js";
 
 const contra_asiento_factura = async (id_factura, nro_asiento_original, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario) => {
 
-  const fecha = getTodayDate()
+const fecha = getTodayDate()
 
   //realizo los asientos
   try {
