@@ -336,6 +336,15 @@ export const PagosClientes = () => {
             fontSize: "10px"
         })
     };
+
+    const handleActualizar = () => {
+        if (form.id_cliente) {
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+        }
+        if (id) {
+            dispatch(getCtaCteCliente({ id_cliente: id }))
+        }
+    }
     return (
 
         <div className={styles.container}>
@@ -398,7 +407,7 @@ export const PagosClientes = () => {
 
             </div>
 
-            <button className={styles.refreshButton}>
+            <button className={styles.refreshButton} onClick={handleActualizar}>
                 🔄 Actualizar
             </button>
             <DataGrid
