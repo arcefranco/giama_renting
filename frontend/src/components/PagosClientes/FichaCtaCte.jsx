@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import styles from "./PagosClientes.module.css"
 import { ClipLoader } from "react-spinners";
 import { fichaCtaCte as getFichaCtaCte, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice';
-
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver-es"
 const FichaCtaCte = () => {
     const dispatch = useDispatch();
     const { ficha, isLoading } = useSelector(
@@ -54,6 +55,105 @@ const FichaCtaCte = () => {
         );
     }, [filtro, clientesBase]);
 
+    const exportToExcel = async () => {
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet("Cuentas Corrientes");
+
+        let rowIndex = 1;
+
+        clientesBase.forEach((cliente) => {
+            const saldo = Math.trunc(cliente.saldo).toLocaleString("es-AR");
+
+            // =========================
+            // TITULO CLIENTE
+            // =========================
+            const titleRow = ws.getRow(rowIndex);
+            const text = `${cliente.nombre_cliente} - Saldo: ${saldo}`;
+
+            titleRow.getCell(1).value = text;
+
+            // merge A-C
+            ws.mergeCells(rowIndex, 1, rowIndex, 3);
+
+            // estilo SOLO en A, B y C
+            [1, 2, 3].forEach((col) => {
+                const cell = titleRow.getCell(col);
+
+                cell.font = { bold: true };
+                cell.fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFF4B084" }, // canela oscuro
+                };
+            });
+
+            rowIndex++;
+
+            // =========================
+            // ENCABEZADOS
+            // =========================
+            const headerRow = ws.getRow(rowIndex);
+            const headers = ["Concepto", "Debe", "Haber"];
+
+            headers.forEach((h, i) => {
+                const cell = headerRow.getCell(i + 1);
+
+                cell.value = h;
+                cell.font = { bold: true };
+                cell.fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFF8CBAD" }, // canela claro
+                };
+            });
+
+            rowIndex++;
+
+            // =========================
+            // DETALLE (AGRUPADO)
+            // =========================
+            cliente.detalle.forEach((mov) => {
+                const row = ws.getRow(rowIndex);
+
+                row.getCell(1).value = mov.concepto || "";
+                row.getCell(2).value = mov.debe ? Math.trunc(mov.debe) : "";
+                row.getCell(3).value = mov.haber ? Math.trunc(mov.haber) : "";
+
+                row.outlineLevel = 1; // 👈 hace plegable
+
+                rowIndex++;
+            });
+
+            // espacio entre clientes
+            rowIndex += 2;
+        });
+
+        // =========================
+        // CONFIGURACIONES
+        // =========================
+
+        ws.columns = [
+            { width: 50 },
+            { width: 15 },
+            { width: 15 },
+        ];
+
+        // comportamiento del grouping
+        ws.properties.outlineProperties = {
+            summaryBelow: false,
+        };
+
+        // =========================
+        // EXPORT
+        // =========================
+        const buffer = await wb.xlsx.writeBuffer();
+
+        saveAs(
+            new Blob([buffer]),
+            "Ficha_Cta_Cte.xlsx"
+        );
+    };
+
     return (
         <div className={styles.container}>
             <h2>Ficha cuentas corrientes</h2>
@@ -64,6 +164,9 @@ const FichaCtaCte = () => {
                     setFiltro(e.target.value)
                 }} />
             </div>
+            <button className={styles.sendBtn} onClick={exportToExcel}>
+                Exportar
+            </button>
             <div>
                 <p>Saldo total: {saldoTotal}</p>
             </div>

@@ -192,7 +192,7 @@ export const PagosClientes = () => {
             return {
                 id_cliente: id ? id : prev.id_cliente ? prev.id_cliente : "",
                 fecha: '',
-                usuario_alta_registro: '',
+                usuario: username,
                 id_forma_cobro: '',
                 id_forma_cobro_2: '',
                 id_forma_cobro_3: '',
@@ -200,8 +200,6 @@ export const PagosClientes = () => {
                 importe_cobro_2: '',
                 importe_cobro_3: '',
                 observacion: '',
-                usuario: '',
-                id_vehiculo: ''
             }
         })
         if (id) {
@@ -336,6 +334,15 @@ export const PagosClientes = () => {
             fontSize: "10px"
         })
     };
+
+    const handleActualizar = () => {
+        if (form.id_cliente) {
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+        }
+        if (id) {
+            dispatch(getCtaCteCliente({ id_cliente: id }))
+        }
+    }
     return (
 
         <div className={styles.container}>
@@ -398,7 +405,7 @@ export const PagosClientes = () => {
 
             </div>
 
-            <button className={styles.refreshButton}>
+            <button className={styles.refreshButton} onClick={handleActualizar}>
                 🔄 Actualizar
             </button>
             <DataGrid
