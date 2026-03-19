@@ -17,6 +17,7 @@
     "devextreme": "^22.2.5",
     "devextreme-exceljs-fork": "^4.4.3",
     "devextreme-react": "^22.2.5",
+    "exceljs": "^4.4.0",
     "file-saver-es": "^2.0.5",
     "globalize": "^1.7.0",
     "pg-hstore": "^2.3.4",
@@ -29,7 +30,9 @@
     "react-spinners": "^0.16.1",
     "react-toastify": "^11.0.5",
     "redux-persist": "^6.0.0",
-    "sweetalert2": "^11.22.2"
+    "sweetalert2": "^11.22.2",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
