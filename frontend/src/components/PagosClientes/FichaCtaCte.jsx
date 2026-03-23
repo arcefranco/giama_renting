@@ -12,9 +12,9 @@ const FichaCtaCte = () => {
     );
 
     const [open, setOpen] = useState({}); // id_cliente => true/false
-
+    const [fecha, setFecha] = useState("")
     useEffect(() => {
-        dispatch(getFichaCtaCte());
+        dispatch(getFichaCtaCte({ fecha: "" }));
     }, []);
 
     const toggle = (id) => {
@@ -54,6 +54,10 @@ const FichaCtaCte = () => {
             )
         );
     }, [filtro, clientesBase]);
+
+    useEffect(() => {
+        dispatch(getFichaCtaCte({ fecha: fecha }))
+    }, [fecha])
 
     const exportToExcel = async () => {
         const wb = new ExcelJS.Workbook();
@@ -165,6 +169,13 @@ const FichaCtaCte = () => {
                 <input type="text" name='filtro' value={filtro} onChange={(e) => {
                     console.log(e)
                     setFiltro(e.target.value)
+                }} />
+            </div>
+            <div className={styles.inputContainer}>
+                <span>Fecha</span>
+                <input type="date" name='fecha' value={fecha} onChange={(e) => {
+                    console.log(e)
+                    setFecha(e.target.value)
                 }} />
             </div>
             <button className={styles.sendBtn} onClick={exportToExcel}>

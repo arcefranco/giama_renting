@@ -13,9 +13,9 @@ ctacteRouter.use((req, res, next) => {
 
 ctacteRouter.post("/pago", auth, authorizeRoles("2"), postPago);
 ctacteRouter.post("/ctacteCliente", auth, ctaCteCliente);
-ctacteRouter.get("/fichaCtaCte", fichaCtaCte);
+ctacteRouter.post("/fichaCtaCte", fichaCtaCte);
 ctacteRouter.post("/getEstadoDeuda", getEstadoDeuda);
-ctacteRouter.post("/anulacionFactura", anulacionFactura);
-ctacteRouter.post("/anulacionRecibo", anulacionRecibo);
-ctacteRouter.post("/anulacionDeuda", anulacionDeuda);
+ctacteRouter.post("/anulacionFactura", auth, authorizeRoles("2"), anulacionFactura);
+ctacteRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo);
+ctacteRouter.post("/anulacionDeuda", auth, authorizeRoles("2"), anulacionDeuda);
 export default ctacteRouter;

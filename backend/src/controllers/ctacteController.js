@@ -621,6 +621,7 @@ ORDER BY m.fecha, m.tipo;`, {
 }
 
 export const fichaCtaCte = async (req, res) => {
+const {fecha} = req.body
 const query = `SELECT
     m.id_cliente,
         COALESCE(
@@ -729,32 +730,172 @@ FROM (
 INNER JOIN clientes c ON c.id = m.id_cliente
 ORDER BY m.id_cliente, m.fecha, m.tipo;
 `
+const query_fecha = `SELECT
+    m.id_cliente,
+    COALESCE(
+        NULLIF(CONCAT(c.nombre, ' ', c.apellido), ' '),
+        c.razon_social
+    ) AS nombre_cliente,
+    m.fecha,
+    m.concepto,
+    m.nro_comprobante,
+    m.debe,
+    m.haber,
+    m.tipo
+FROM (
+
+    /* PAGOS */
+    SELECT
+        pc.id_cliente,
+        pc.fecha,
+        CONCAT(
+            CASE 
+                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
+                THEN CONCAT(' ', pc.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        pc.nro_recibo AS nro_comprobante,
+        NULL AS debe,
+        pc.importe_cobro AS haber,
+        4 AS tipo
+    FROM pagos_clientes pc
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
+      AND pc.fecha <= :fecha
+
+    UNION ALL
+
+    /* ALQUILERES */
+    SELECT
+        a.id_cliente,
+        a.fecha_alquiler,
+        CONCAT(
+            'Alquiler - ',
+            v.dominio,
+            ' - ',
+            DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
+            ' al ',
+            DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
+        ),
+        f.numerofacturaemitida,
+        a.importe_total,
+        NULL,
+        1 AS tipo
+    FROM alquileres a
+    INNER JOIN vehiculos v ON v.id = a.id_vehiculo
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = a.id_factura_pa6
+    LEFT JOIN recibos ON a.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
+      AND a.fecha_desde <= :fecha
+
+    UNION ALL
+
+    /* DEPOSITO */
+    SELECT
+        ca.id_cliente,
+        ca.fecha_contrato,
+        CONCAT('Deposito gtia - ', v.dominio),
+        NULL,
+        ca.deposito_garantia,
+        NULL,
+        2 AS tipo
+    FROM contratos_alquiler ca
+    INNER JOIN vehiculos v ON v.id = ca.id_vehiculo
+    LEFT JOIN recibos ON ca.nro_recibo = recibos.id
+    WHERE ca.deposito_garantia > 0
+      AND IFNULL(recibos.anulado,0) = 0
+      AND ca.fecha_desde <= :fecha
+
+    UNION ALL
+
+    /* COSTOS / INGRESOS */
+    SELECT
+        ci.id_cliente,
+        ci.fecha,
+        CONCAT(
+            cc.nombre,
+            CASE 
+                WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
+                THEN CONCAT(' ', ci.observacion)
+                ELSE ''
+            END
+        ),
+        f.numerofacturaemitida,
+        ci.importe_total,
+        NULL,
+        3 AS tipo
+    FROM costos_ingresos ci
+    INNER JOIN conceptos_costos cc ON cc.id = ci.id_concepto
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = ci.id_factura_pa6
+    LEFT JOIN recibos ON ci.nro_recibo = recibos.id
+    WHERE IFNULL(recibos.anulado,0) = 0
+      AND ci.fecha <= :fecha
+
+) m
+INNER JOIN clientes c ON c.id = m.id_cliente
+ORDER BY m.id_cliente, m.fecha, m.tipo;
+`;
+if(fecha){
 try {
-  const rows = await giama_renting.query(query, {
-    type: QueryTypes.SELECT
-  });
+    const rows = await giama_renting.query(query_fecha, {
+      type: QueryTypes.SELECT,
+      replacements: {fecha: fecha}
+    });
+    
+  const cuentas = {};
   
-const cuentas = {};
-
-rows.forEach(r => {
-  const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
-
-  if (!cuentas[nombre]) {
-    cuentas[nombre] = {
-      id_cliente: r.id_cliente,
-      nombre_cliente: nombre,
-      saldo: 0,
-      detalle: []
-    };
+  rows.forEach(r => {
+    const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
+  
+    if (!cuentas[nombre]) {
+      cuentas[nombre] = {
+        id_cliente: r.id_cliente,
+        nombre_cliente: nombre,
+        saldo: 0,
+        detalle: []
+      };
+    }
+  
+    cuentas[nombre].detalle.push(r);
+    cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
+  });
+    return res.send(cuentas)
+  } catch (error) {
+    const { body } = handleError(error, "ficha", acciones.get);
+    return res.send(body);
+  }
+}else{
+  try {
+    const rows = await giama_renting.query(query, {
+      type: QueryTypes.SELECT
+    });
+    
+  const cuentas = {};
+  
+  rows.forEach(r => {
+    const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
+  
+    if (!cuentas[nombre]) {
+      cuentas[nombre] = {
+        id_cliente: r.id_cliente,
+        nombre_cliente: nombre,
+        saldo: 0,
+        detalle: []
+      };
+    }
+  
+    cuentas[nombre].detalle.push(r);
+    cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
+  });
+    return res.send(cuentas)
+  } catch (error) {
+    const { body } = handleError(error, "ficha", acciones.get);
+    return res.send(body);
   }
 
-  cuentas[nombre].detalle.push(r);
-  cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
-});
-  return res.send(cuentas)
-} catch (error) {
-  const { body } = handleError(error, "ficha", acciones.get);
-  return res.send(body);
 }
 
 }
