@@ -40,9 +40,9 @@ export const ctacteCliente = createAsyncThunk(
 
 export const fichaCtaCte = createAsyncThunk(
   "fichaCtaCte",
-  async (_, { rejectWithValue }) =>
+  async (data, { rejectWithValue }) =>
     handleAsyncThunk(
-      () => pagosClientesService.fichaCtaCte(),
+      () => pagosClientesService.fichaCtaCte(data),
       responses.object,
       rejectWithValue
     )

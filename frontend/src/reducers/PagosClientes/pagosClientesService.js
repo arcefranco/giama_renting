@@ -1,7 +1,7 @@
 import {
   postFunction,
   postArrayFunction,
-  getObjectFunction,
+  postObjectFunction
 } from "../axios/axiosFunctions";
 import axios from "axios";
 import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
@@ -14,8 +14,8 @@ const ctacteCliente = async (data) => {
   return postArrayFunction("ctacte/ctacteCliente", data);
 };
 
-const fichaCtaCte = async () => {
-  return getObjectFunction("ctacte/fichaCtaCte")
+const fichaCtaCte = async (data) => {
+  return postObjectFunction("ctacte/fichaCtaCte", data)
 }
 
 const getEstadoDeuda = async (form, header = {}) => {
