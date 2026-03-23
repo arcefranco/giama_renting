@@ -68,14 +68,13 @@ const FichaCtaCte = () => {
             // TITULO CLIENTE
             // =========================
             const titleRow = ws.getRow(rowIndex);
-            const text = `${cliente.nombre_cliente} - Saldo: ${saldo}`;
 
-            titleRow.getCell(1).value = text;
+            // Valores separados
+            titleRow.getCell(1).value = cliente.nombre_cliente;
+            titleRow.getCell(2).value = "Saldo";
+            titleRow.getCell(3).value = Math.trunc(cliente.saldo);
 
-            // merge A-C
-            ws.mergeCells(rowIndex, 1, rowIndex, 3);
-
-            // estilo SOLO en A, B y C
+            // Estilos
             [1, 2, 3].forEach((col) => {
                 const cell = titleRow.getCell(col);
 
@@ -86,6 +85,10 @@ const FichaCtaCte = () => {
                     fgColor: { argb: "FFF4B084" }, // canela oscuro
                 };
             });
+
+            // (opcional pero MUY recomendable)
+            titleRow.getCell(3).numFmt = '#,##0'; // formato número
+            titleRow.getCell(3).alignment = { horizontal: "right" };
 
             rowIndex++;
 
