@@ -1425,6 +1425,7 @@ async function registrarIngresoIndividual({
   total_cobro_3,
   id_cliente,
   observacion,
+  observacion_pago,
   usuario,
   id_concepto,
   importe_neto, //(21)
@@ -1762,7 +1763,7 @@ async function registrarIngresoIndividual({
       observacion_asientos_deuda = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT}`
     }
     
-    observacion_asientos_pago = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} RECIBO: ${nro_recibo}`
+    observacion_asientos_pago = `${observacion_pago} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} RECIBO: ${nro_recibo}`
       //realizo el asiento 
   try {
     await asientos_ingresos(
