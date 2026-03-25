@@ -51,6 +51,7 @@ const Ingresos = () => {
     id_cliente: '',
     ingreso_egreso: 'I',
     observacion: '',
+    observacion_pago: '',
     usuario: username,
     id_concepto: '',
     importe_neto: '',
@@ -363,6 +364,7 @@ const Ingresos = () => {
           total_cobro_3: '',
           usuario: username,
           observacion: '',
+          observacion_pago: '',
           ingreso_egreso: 'I',
           id_cliente: '',
           id_forma_cobro: '',
@@ -393,6 +395,7 @@ const Ingresos = () => {
           total_cobro_3: '',
           usuario: username,
           observacion: '',
+          observacion_pago: '',
           ingreso_egreso: 'I',
           id_cliente: '',
           id_forma_cobro: '',
@@ -578,8 +581,8 @@ const Ingresos = () => {
 
 
   const handleSubmit = () => {
-    if (conceptos.find(e => e.id == form.id_concepto).ingreso_egreso == "I" && !form.id_cliente) {
-      toast.error("Si elige un ingreso debe seleccionar un cliente", {
+    if (!form.id_cliente) {
+      toast.error("Debe seleccionar un cliente", {
         position: "bottom-center",
         autoClose: 3000,
         hideProgressBar: false,
@@ -903,7 +906,7 @@ const Ingresos = () => {
 
 
           <div className={styles.inputContainer}>
-            <span>Observacion</span>
+            <span>Observación</span>
             <textarea type="text" name='observacion' value={form["observacion"]}
               onChange={handleChange} />
           </div>
@@ -972,6 +975,12 @@ const Ingresos = () => {
             <div className={styles.inputContainer}>
               <span>Total</span>
               <input type="text" name='total_cobro_3' value={form.total_cobro_3}
+                onChange={handleChange} />
+            </div>
+            <div></div>
+            <div className={styles.inputContainer}>
+              <span>Observación</span>
+              <textarea type="text" name='observacion_pago' value={form["observacion_pago"]}
                 onChange={handleChange} />
             </div>
           </div>
