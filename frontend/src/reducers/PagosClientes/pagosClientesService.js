@@ -54,6 +54,7 @@ const anulacionDeuda = async (data) => {
   return postFunction("ctacte/anulacionDeuda", data);
 };
 
+
 const pagosClientesService = {
     postPago,
     ctacteCliente,

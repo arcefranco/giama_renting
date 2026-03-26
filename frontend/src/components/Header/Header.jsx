@@ -69,10 +69,10 @@ const menuItems = [
     title: "Costos/Ingresos",
     items: [
       { label: "Carga de ingresos", to: "/costos/ingresos", roles: ["2"] },
+      { label: "Ingresos x seguros", to: "/costos/ingresos_seguros", roles: ["2"] },
       { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateo", roles: ["2"] },
       { label: "Listado de recibos", to: "/recibos/reporte" },
-      /*       { label: "Recibos por forma de cobro", to: "/recibos_formas_cobro" }, */
     ]
   },
   ,

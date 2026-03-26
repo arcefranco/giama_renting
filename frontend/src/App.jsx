@@ -43,6 +43,7 @@ import RecibosFormaCobro from "./components/Recibos/RecibosFormaCobro";
 import Prorrateo from "./components/Costos/Prorrateo";
 import PagosClientes from "./components/PagosClientes/PagosClientes"
 import FichaCtaCte from "./components/PagosClientes/FichaCtaCte";
+import IngresosSeguros from "./components/Costos/IngresosSeguros";
 function App() {
 
   return (
@@ -123,6 +124,9 @@ function App() {
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/prorrateo' element={<Prorrateo />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/costos/ingresos_seguros' element={<IngresosSeguros />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/contrato' element={<ContratoAlquiler />} />

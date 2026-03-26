@@ -95,6 +95,18 @@ export const prorrateo = createAsyncThunk(
     )
 );
 
+export const ingresos_seguros = createAsyncThunk(
+  "ingresos_seguros",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.ingresos_seguros(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+
+
 export const costosSlice = createSlice({
   name: "costos",
   initialState,
@@ -235,6 +247,23 @@ export const costosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(prorrateo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(ingresos_seguros.pending, (state) => {
+      state.isLoading = true;
+      state.isSuccess = false;
+      state.isError = false;
+    });
+    builder.addCase(ingresos_seguros.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(ingresos_seguros.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

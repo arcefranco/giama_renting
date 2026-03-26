@@ -48,6 +48,7 @@ const ClientesForm = () => {
     resolucion_datero: 0,
     usuario: username,
     usuario_resolucion_datero: username,
+    no_es_chofer: 0,
     //datero
     composicion_familiar: "",
     tiene_o_tuvo_vehiculo: "",
@@ -136,6 +137,7 @@ const ClientesForm = () => {
         ciudad: '',
         mail: '',
         notas: '',
+        no_es_chofer: 0,
         composicion_familiar: "",
         tiene_o_tuvo_vehiculo: "",
         tipo_servicio: "",
@@ -295,6 +297,11 @@ const ClientesForm = () => {
               <span>Razón Social</span>
               <input type="text" name='razon_social' value={form["razon_social"]}
                 onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer} style={{ alignItems: "start" }}>
+              <span>No es chofer</span>
+              <input type="checkbox" name='no_es_chofer' value={form["no_es_chofer"]}
+                onChange={handleCheckChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>Fecha de nacimiento</span>
