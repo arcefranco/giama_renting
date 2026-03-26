@@ -1477,7 +1477,7 @@ async function registrarIngresoIndividual({
   //buscar CUIT del cliente
     try {
     const result = await giama_renting.query(
-      "SELECT nro_documento, nombre, apellido, razon_social FROM clientes WHERE id = ?",
+      "SELECT nro_documento, nombre, apellido, razon_social, no_es_chofer FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
@@ -1707,6 +1707,8 @@ async function registrarIngresoIndividual({
   //armo el detalle del recibo segun nombres de concepto que generen recibo.
   const detalle_recibo = conceptos_recibo.join(" + ").concat(` CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_pago}`);
   const detalle_factura = conceptos_recibo.join(" + ").concat(` CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_deuda}`);
+
+
  
   //factura
   if (genera_factura_final) {
@@ -1966,7 +1968,248 @@ export const postCostos_Ingresos = async (req, res) => {
   }
 };
 
+export const ingresos_seguros = async (req, res) => {
+  const {
+  id_vehiculo,
+  fecha,
+  id_cliente,
+  observacion,
+  importe_total,
+  usuario,
+  id_concepto,
+  id_forma_cobro,
+} = req.body
+  let CUIT;
+  let nombre_completo_cliente;
+  let cuenta_concepto;
+  let nombre_concepto;
+  let cuenta_secundaria_concepto;
+  let dominio;
+  let cuenta_forma_cobro;
+  let cuenta_secundaria_forma_cobro;
+  let NroAsiento;
+  let NroAsientoSecundario;
+  let nro_recibo;
+  const transaction_costos_ingresos = await giama_renting.transaction();
+  const transaction_asientos = await pa7_giama_renting.transaction();
+  //info cliente
+  try {
+    const result = await giama_renting.query(
+      "SELECT nro_documento, nombre, apellido, razon_social, no_es_chofer FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+      }
+    );
+    if (result[0]["nro_documento"]){
+      CUIT = result[0]["nro_documento"]
+    } 
+    if(result[0]["nombre"] && result[0]["apellido"]){
+      nombre_completo_cliente = `${result[0]["nombre"]} ${result[0]["apellido"]}`
+    }else if(result[0]["razon_social"]){
+      nombre_completo_cliente = `${result[0]["razon_social"]}`
+    }else{
+      nombre_completo_cliente = "SIN NOMBRE"
+    }
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(
+      error,
+      "documento del cliente",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  //info vehiculo
+  try {
+    const result = await giama_renting.query(
+      "SELECT  dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_vehiculo],
+      }
+    );
 
+    if (result[0]["dominio"]) dominio = result[0]["dominio"];
+    else if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
+      dominio = result[0]["dominio_provisorio"];
+    else dominio = "SIN DOMINIO";
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(
+      error,
+      "dominio del vehiculo",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  //cuenta concepto
+  try {
+    const result = await giama_renting.query(
+      `SELECT nombre, cuenta_contable, cuenta_secundaria, genera_factura 
+      FROM conceptos_costos WHERE id = :id_concepto`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: { id_concepto },
+      }
+    );
+    if (!result.length)
+      throw new Error("No se encontró el concepto especificado");
+    cuenta_concepto = result[0]["cuenta_contable"];
+    cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
+    nombre_concepto = result[0]["nombre"]
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(
+      error,
+      "cuenta concepto",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  // cuentas contables de la forma de cobro
+  try {
+    const result = await giama_renting.query(
+      "SELECT cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_forma_cobro],
+      }
+    );
+    if (!result.length)
+      throw new Error("No se encontró la forma de cobro especificada");
+    cuenta_forma_cobro = result[0]["cuenta_contable"];
+    cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
+  } catch (error) {
+    console.log(error)
+    const { body } = handleError(
+      error,
+      "cuentas contables de la forma de cobro",
+      acciones.get
+    );
+    return res.send(body);
+  }
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    throw error;
+  }
+  const observacion_asientos = `${observacion} (${dominio}) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT}`;
+  const detalle_recibo = `${nombre_concepto} CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento}`
+  try {
+        nro_recibo = await insertRecibo(
+          fecha,
+          detalle_recibo,
+          importe_total,
+          usuario,
+          id_cliente,
+          id_vehiculo,
+          null,
+          null,
+          id_forma_cobro,
+          null,
+          null,
+          transaction_costos_ingresos,
+          null,
+          null,
+          importe_total
+        );
+    await giama_renting.query(
+      `INSERT INTO costos_ingresos 
+      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+      importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo, id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      {
+        type: QueryTypes.INSERT,
+        replacements: [
+          id_vehiculo,
+          fecha,
+          id_concepto,
+          null,
+          importe_total,
+          null,
+          null,
+          importe_total,
+          observacion,
+          NroAsiento,
+          null,
+          id_cliente ? id_cliente : null,
+          nro_recibo,
+          null
+        ],
+        transaction: transaction_costos_ingresos,
+      }
+    );
+
+    insertPago(id_cliente, fecha, usuario, id_forma_cobro, importe_total, nro_recibo, observacion, NroAsiento, 
+      transaction_costos_ingresos)
+    
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_forma_cobro,
+      "D",
+      importe_total,
+      observacion_asientos,
+      transaction_asientos,
+      nro_recibo,
+      fecha,
+      NroAsientoSecundario,
+      null
+    )
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_concepto,
+      "H",
+      importe_total,
+      observacion_asientos,
+      transaction_asientos,
+      nro_recibo,
+      fecha,
+      NroAsientoSecundario,
+      null
+    )
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_forma_cobro,
+      "D",
+      importe_total,
+      observacion_asientos,
+      transaction_asientos,
+      nro_recibo,
+      fecha,
+      null,
+      null
+    )
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_concepto,
+      "H",
+      importe_total,
+      observacion_asientos,
+      transaction_asientos,
+      nro_recibo,
+      fecha,
+      null,
+      null
+    )
+
+  }catch(error){
+    console.log(error)
+    const { body } = handleError(
+      error,
+      "asiento contable",
+      acciones.post
+    );
+    return res.send(body);
+  }
+  await transaction_asientos.commit()
+  await transaction_costos_ingresos.commit();
+  return res.send({status: true, message: "Ingresado correctamente"})
+}
 
 export const prorrateo = async (req, res) => {
 

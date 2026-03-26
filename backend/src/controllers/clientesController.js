@@ -42,6 +42,7 @@ export const postCliente = async (req, res) => {
     telefono_alternativo,
     mail,
     notas,
+    no_es_chofer,
     resolucion_datero,
     usuario_resolucion_datero,
     //datero_cliente
@@ -104,11 +105,11 @@ const result = await giama_renting.query(
     `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
       tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
       nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, telefono_alternativo, mail, notas, resolucion_datero, fecha_resolucion_datero,
-      usuario_resolucion_datero, usuario_alta)
+      usuario_resolucion_datero, usuario_alta, no_es_chofer)
       VALUES (:nombre, :apellido, :razon_social, :fecha_nacimiento, :nacionalidad, :tipo_contribuyente,
       :tipo_documento, :nro_documento, :doc_expedido_por, :licencia, :lic_expedida_por, :fecha_vencimiento_licencia, :direccion,
       :nro_direccion, :piso, :depto, :codigo_postal, :provincia, :ciudad, :celular, :telefono_alternativo, :mail, :notas, :resolucion_datero, :fecha_resolucion_datero,
-      :usuario_resolucion_datero, :usuario_alta)`,
+      :usuario_resolucion_datero, :usuario_alta, :no_es_chofer)`,
     {
         type: QueryTypes.INSERT,
         // 2. Transforma el array 'replacements' en un objeto
@@ -135,11 +136,12 @@ const result = await giama_renting.query(
             celular: celular,
             telefono_alternativo: telefono_alternativo,
             mail: mail,
-            notas: notas  ? notas : null, // Utiliza la variable 'notas'
+            notas: notas  ? notas : null,
             resolucion_datero: resolucion_datero,
-            fecha_resolucion_datero: hoy, // Mapea la variable 'hoy'
+            fecha_resolucion_datero: hoy, 
             usuario_resolucion_datero: usuario_resolucion_datero,
-            usuario_alta: usuario, // Mapea la variable 'usuario'
+            usuario_alta: usuario, 
+            no_es_chofer: no_es_chofer
         },
         transaction: transaction,
     }
@@ -258,6 +260,7 @@ export const updateCliente = async (req, res) => {
     telefono_alternativo,
     mail,
     notas,
+    no_es_chofer,
     resolucion_datero,
     usuario_resolucion_datero,
     //datero cliente
@@ -358,7 +361,7 @@ export const updateCliente = async (req, res) => {
         direccion = ?,
         nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, 
         celular = ?, telefono_alternativo = ?, mail = ?, notas = ?, 
-        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?
+        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?, no_es_chofer = ?
         WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
@@ -389,6 +392,7 @@ export const updateCliente = async (req, res) => {
           resolucion_datero_final,
           fecha_resolucion_datero_final,
           usuario_resolucion_datero_final,
+          no_es_chofer,
           id,
         ],
         transaction: transaction,
