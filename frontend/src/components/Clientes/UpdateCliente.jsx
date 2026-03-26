@@ -45,6 +45,7 @@ const UpdateCliente = () => {
     notas: '',
     resolucion_datero: 0,
     usuario_resolucion_datero: username ? username : "",
+    no_es_chofer: 0,
     //datero
     composicion_familiar: "",
     tiene_o_tuvo_vehiculo: "",
@@ -115,6 +116,7 @@ const UpdateCliente = () => {
         mail: cliente[0]?.mail || '',
         notas: cliente[0]?.notas || '',
         resolucion_datero: cliente[0]?.resolucion_datero || '',
+        no_es_chofer: cliente[0]?.no_es_chofer || 0,
         usuario_resolucion_datero: username ? username : "",
         composicion_familiar: datero[0]?.composicion_familiar || '',
         tiene_o_tuvo_vehiculo: datero[0]?.tiene_o_tuvo_vehiculo || '',
@@ -133,7 +135,7 @@ const UpdateCliente = () => {
         antiguedad_cabify: datero[0]?.antiguedad_cabify || '',
         antiguedad_didi: datero[0]?.antiguedad_didi || '',
         trabajos_anteriores: datero[0]?.trabajos_anteriores || '',
-        observacion_perfil: datero[0]?.observacion_perfil || ''
+        observacion_perfil: datero[0]?.observacion_perfil || '',
       });
     }
   }, [cliente, datero]);
@@ -145,8 +147,7 @@ const UpdateCliente = () => {
     resetAction: reset
   })
   useEffect(() => {
-    const isButtonEnabled = ((form["nombre"] !== '' && form["apellido"] !== '') ||
-      (form["razon_social"] !== '' && (form["nombre"] === '' && form["apellido"] === '')));
+
     const camposObligatoriosCompletos =
       form["tipo_documento"] !== '' &&
       form["nro_documento"] !== '' &&
@@ -156,7 +157,7 @@ const UpdateCliente = () => {
       form["celular"] !== '' &&
       form["mail"] !== ''
 
-    setFormValido(isButtonEnabled && camposObligatoriosCompletos);
+    setFormValido(camposObligatoriosCompletos);
   }, [form]);
 
   const imprimirFormulario = () => {
@@ -372,6 +373,11 @@ const UpdateCliente = () => {
               <span>Razón Social</span>
               <input type="text" name='razon_social' value={form["razon_social"]}
                 onChange={handleChange} />
+            </div>
+            <div className={styles.inputContainer} style={{ alignItems: "start" }}>
+              <span>No es chofer</span>
+              <input type="checkbox" name='no_es_chofer' value={form["no_es_chofer"]}
+                onChange={handleCheckChange} checked={form.no_es_chofer === 1} />
             </div>
             <div className={styles.inputContainer}>
               <span>Fecha de nacimiento</span>

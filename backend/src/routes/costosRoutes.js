@@ -8,7 +8,8 @@ import {
   postConceptoCostos,
   postCostos_Ingresos,
   updateConceptoCostos,
-  prorrateo
+  prorrateo,
+  ingresos_seguros
 } from "../controllers/costosController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
@@ -53,6 +54,12 @@ costosRouter.post(
   auth,
   authorizeRoles("2"),
   postCostos_Ingresos
+);
+costosRouter.post(
+  "/ingresos_seguros",
+  auth,
+  authorizeRoles("2"),
+  ingresos_seguros
 );
 costosRouter.post(
   "/costos_ingresos_id_vehiculo",
