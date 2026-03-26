@@ -100,7 +100,7 @@ const FichaCtaCte = () => {
             // ENCABEZADOS
             // =========================
             const headerRow = ws.getRow(rowIndex);
-            const headers = ["Concepto", "Debe", "Haber"];
+            const headers = ["Fecha", "Concepto", "Debe", "Haber"];
 
             headers.forEach((h, i) => {
                 const cell = headerRow.getCell(i + 1);
@@ -121,10 +121,19 @@ const FichaCtaCte = () => {
             // =========================
             cliente.detalle.forEach((mov) => {
                 const row = ws.getRow(rowIndex);
+                if (mov.fecha) {
+                    const date = new Date(mov.fecha);
 
-                row.getCell(1).value = mov.concepto || "";
-                row.getCell(2).value = mov.debe ? Math.trunc(mov.debe) : "";
-                row.getCell(3).value = mov.haber ? Math.trunc(mov.haber) : "";
+                    const cell = row.getCell(1);
+                    cell.value = date;
+
+                    cell.numFmt = "dd-mm-yyyy"; // 👈 formato Excel
+                } else {
+                    row.getCell(1).value = "";
+                }
+                row.getCell(2).value = mov.concepto || "";
+                row.getCell(3).value = mov.debe ? Math.trunc(mov.debe) : "";
+                row.getCell(4).value = mov.haber ? Math.trunc(mov.haber) : "";
 
                 row.outlineLevel = 1; // 👈 hace plegable
 
@@ -140,6 +149,7 @@ const FichaCtaCte = () => {
         // =========================
 
         ws.columns = [
+            { width: 15 },
             { width: 50 },
             { width: 15 },
             { width: 15 },
