@@ -2933,3 +2933,143 @@ export const prorrateo = async (req, res) => {
     message: "Prorrateo realizado correctamente",
   });
 };
+
+
+const insertIngreso = async (data) => {
+const {
+  cuenta_contable,
+  cuenta_secundaria,
+  genera_factura,
+  debe_ingreso,
+  dominio, //en vez de id vehiculo
+  fecha_deuda,
+  CUIT, //en vez de id cliente
+  observacion,
+  usuario,
+  id_concepto,
+  importe_neto,
+  importe_iva,
+  importe_total,
+  transaction_costos_ingresos,
+  transaction_asientos
+} = data
+let id_vehiculo;
+let id_cliente;
+let nombre_completo_cliente;
+let NroAsiento;
+let NroAsientoSecundario;
+  //buscar id del cliente
+  try {
+    const result = await giama_renting.query(
+      "SELECT id, nro_documento, nombre, apellido, razon_social, no_es_chofer FROM clientes WHERE CUIT = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [CUIT],
+      }
+    );
+    if (result[0]["id"]){
+      id_cliente = result[0]["id"]
+    } 
+    if(result[0]["nombre"] && result[0]["apellido"]){
+      nombre_completo_cliente = `${result[0]["nombre"]} ${result[0]["apellido"]}`
+    }else if(result[0]["razon_social"]){
+      nombre_completo_cliente = `${result[0]["razon_social"]}`
+    }else{
+      nombre_completo_cliente = "SIN NOMBRE"
+    }
+  } catch (error) {
+    console.log(error)
+    throw new Error (`Error al buscar id del cliente (CUIT: ${CUIT})`)
+  }
+  //busco el id del vehiculo 
+  try {
+    const result = await giama_renting.query(
+      "SELECT  id FROM vehiculos WHERE dominio = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [dominio],
+      }
+    );
+
+    if (result[0]["id"]){
+      id_vehiculo = result[0]["id"];
+    } 
+  } catch (error) {
+    console.log(error)
+    throw new Error (`Error al buscar id del vehiculo (dominio: ${dominio})`)
+  }
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    console.log(error)
+    throw new Error ("Error al generar número de asiento");
+  }
+} 
+
+export const postIngresosMasivos = async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.send({
+          status: false,
+          message: "Debe subir un archivo Excel",
+        });
+      }
+      const usuario = req.body.usuario; // viene del formData del front
+  
+      // leer excel
+      const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+      const sheetName = workbook.SheetNames[0];
+      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {
+        raw: false, // fuerza conversión automática de fechas
+        dateNF: "yyyy-mm-dd", // formato de salida
+      });
+      function normalizeDate(dmy) {
+        const [dia, mes, anio] = dmy.split("/");
+        return `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+      }
+      const transaction_1 = await giama_renting.transaction();
+      const transaction_2 = await pa7_giama_renting.transaction();
+      // recorrer filas y llamar a insertVehiculo
+      for (let row of data) {
+        const vehiculo = {
+          modelo: row.modelo,
+          nro_chasis: row.nro_chasis,
+          fecha_ingreso: normalizeDate(row.fecha_ingreso),
+          nro_motor: row.nro_motor,
+          kilometros: row.km_iniciales,
+          costo: row.precio_inicial,
+          color: row.color,
+          sucursal: row.sucursal,
+          numero_comprobante_1: row.punto_de_venta,
+          numero_comprobante_2: row.nro_comprobante,
+          proveedor_vehiculo: row.proveedor_vehiculo,
+          meses_amortizacion_masiva: row.meses_amortizacion,
+          transaction_1: transaction_1,
+          transaction_2: transaction_2,
+          importacion_masiva: true,
+          usuario,
+        };
+        const result = await insertVehiculo({ body: vehiculo });
+  
+        if (!result.status) {
+          return res.send({
+            status: false,
+            message: `Error al insertar vehículo: ${result.message}`,
+          });
+        }
+      }
+      transaction_1.commit();
+      transaction_2.commit();
+      return res.send({
+        status: true,
+        message: `${data.length} vehículos cargados correctamente`,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({
+        status: false,
+        message: "Error al procesar archivo",
+      });
+    }
+}
