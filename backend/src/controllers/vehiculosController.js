@@ -764,9 +764,8 @@ FROM vehiculos
 LEFT JOIN (
   SELECT a.id_vehiculo
   FROM alquileres a
-  LEFT JOIN recibos r ON a.nro_recibo = r.id
   WHERE ? BETWEEN a.fecha_desde AND a.fecha_hasta
-    AND (r.anulado = 0 OR r.anulado IS NULL)
+    AND (a.anulado = 0 OR a.anulado IS NULL)
   GROUP BY a.id_vehiculo
 ) AS alq ON vehiculos.id = alq.id_vehiculo
 
