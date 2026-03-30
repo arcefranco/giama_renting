@@ -653,7 +653,7 @@ FROM (
         4 AS tipo
     FROM pagos_clientes pc
     LEFT JOIN recibos ON pc.nro_recibo = recibos.id
-    WHERE IFNULL(recibos.anulado,0) = 0
+    WHERE IFNULL(recibos.anulado,0) = 0 and pc.anulado = 0
 
     UNION ALL
 
@@ -679,7 +679,7 @@ FROM (
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE IFNULL(recibos.anulado,0) = 0
+    WHERE IFNULL(recibos.anulado,0) = 0 and a.anulado = 0
 
     UNION ALL
 
@@ -697,7 +697,7 @@ FROM (
     INNER JOIN vehiculos v ON v.id = ca.id_vehiculo
     LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.deposito_garantia > 0
-    AND IFNULL(recibos.anulado,0) = 0
+    AND IFNULL(recibos.anulado,0) = 0 and ca.anulado_deposito = 0
 
 
     UNION ALL
@@ -724,7 +724,7 @@ FROM (
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
-    WHERE IFNULL(recibos.anulado,0) = 0
+    WHERE IFNULL(recibos.anulado,0) = 0 and ci.anulado = 0
 
 ) m
 INNER JOIN clientes c ON c.id = m.id_cliente
@@ -763,7 +763,7 @@ FROM (
     FROM pagos_clientes pc
     LEFT JOIN recibos ON pc.nro_recibo = recibos.id
     WHERE IFNULL(recibos.anulado,0) = 0
-      AND pc.fecha <= :fecha
+      AND pc.fecha <= :fecha and pc.anulado = 0
 
     UNION ALL
 
@@ -789,7 +789,7 @@ FROM (
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
     WHERE IFNULL(recibos.anulado,0) = 0
-      AND a.fecha_desde <= :fecha
+      AND a.fecha_desde <= :fecha and a.anulado = 0
 
     UNION ALL
 
@@ -807,7 +807,7 @@ FROM (
     LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.deposito_garantia > 0
       AND IFNULL(recibos.anulado,0) = 0
-      AND ca.fecha_desde <= :fecha
+      AND ca.fecha_desde <= :fecha and ca.anulado_deposito = 0
 
     UNION ALL
 
@@ -833,8 +833,7 @@ FROM (
         ON f.id = ci.id_factura_pa6
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
     WHERE IFNULL(recibos.anulado,0) = 0
-      AND ci.fecha <= :fecha
-
+      AND ci.fecha <= :fecha and ci.anulado = 0
 ) m
 INNER JOIN clientes c ON c.id = m.id_cliente
 WHERE c.es_cia_seguros = 0
