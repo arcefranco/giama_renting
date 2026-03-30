@@ -2066,10 +2066,10 @@ export const postContratoAlquiler = async (req, res) => {
   if (ingresa_alquiler == 1 && debe_alquiler > 0) { //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
     try {
       const result = await giama_renting.query(
-             `SELECT fecha_desde, 
+      `SELECT fecha_desde, 
       fecha_hasta
       FROM alquileres 
-      WHERE id_vehiculo = ?`,
+      WHERE id_vehiculo = ? AND anulado = 0`,
         {
           type: QueryTypes.SELECT,
           replacements: [id_vehiculo],
