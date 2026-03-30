@@ -728,7 +728,7 @@ FROM (
 
 ) m
 INNER JOIN clientes c ON c.id = m.id_cliente
-WHERE c.no_es_chofer = 0
+WHERE c.es_cia_seguros = 0
 ORDER BY m.id_cliente, m.fecha, m.tipo;
 `
 const query_fecha = `SELECT
