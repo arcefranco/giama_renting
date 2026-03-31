@@ -1140,6 +1140,7 @@ export const getCostosPeriodo = async (req, res) => {
         LEFT JOIN conceptos_costos ON costos_ingresos.id_concepto = conceptos_costos.id
         WHERE costos_ingresos.id_vehiculo = ?
         AND conceptos_costos.activable = 0
+        AND costos_ingresos.anulado = 0
         ORDER BY 
 	      (costos_ingresos.importe_neto < 0),
 	      costos_ingresos.importe_neto DESC`,
@@ -1176,6 +1177,7 @@ export const getCostosPeriodo = async (req, res) => {
         WHERE costos_ingresos.id_vehiculo = ?
         AND YEAR(costos_ingresos.fecha) = ? AND MONTH(costos_ingresos.fecha) = ?
         AND conceptos_costos.activable = 0
+        AND costos_ingresos.anulado = 0
         ORDER BY 
 	      (costos_ingresos.importe_neto < 0),
 	      costos_ingresos.importe_neto DESC`,
