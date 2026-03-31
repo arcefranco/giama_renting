@@ -185,7 +185,8 @@ export const getCostosIngresosByIdVehiculo = async (req, res) => {
         FROM costos_ingresos ci
         JOIN conceptos_costos cc 
         ON ci.id_concepto = cc.id
-        WHERE ci.id_vehiculo = ?`,
+        WHERE ci.id_vehiculo = ?
+        AND ci.anulado = 0`,
       {
         type: QueryTypes.SELECT,
         replacements: [id],
