@@ -1189,6 +1189,9 @@ export const postAlquiler = async (req, res) => {
   if(!(debe_alquiler > 0)){
     return res.send({status: false, message: "Debe aclarar el importe total del alquiler"})
   }
+  if(!fecha_factura_alquiler){
+    return res.send({status: false, message: "Debe aclarar la fecha de factura"})
+  }
 
 
   //buscar el estado del cliente
