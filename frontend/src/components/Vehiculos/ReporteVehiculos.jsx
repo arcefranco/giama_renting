@@ -201,9 +201,15 @@ const ReporteVehiculos = () => {
           cellRender={({ data }) => renderEstadoVehiculo(data)}
         />
         <Column dataField="chofer_actual" caption="Chofer actual" />
+        <Column dataField="razon_social" caption="Razon social" />
         <Column dataField="id" caption="ID" width={50} />
         <Column dataField="modelo" width={75} caption="Modelo"
-          cellRender={({ data }) => getNombreModelo(data.modelo)} />
+          cellRender={({ data }) => getNombreModelo(data.modelo)}
+          lookup={{
+            dataSource: modelos,
+            valueExpr: "id",
+            displayExpr: "nombre",
+          }} />
         <Column dataField="fecha_ingreso" width={85} caption="Ingreso" dataType="date" alignment="center" />
         <Column dataField="precio_inicial" caption="Precio Inicial" alignment="right" width={100} format="currency" />
         <Column

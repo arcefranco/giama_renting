@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styles from "./PagosClientes.module.css"
 import { ClipLoader } from "react-spinners";
-import { fichaCtaCte as getFichaCtaCte, reset, postPago } from '../../reducers/PagosClientes/pagosClientesSlice';
+import { fichaCtaCte as getFichaCtaCte } from '../../reducers/PagosClientes/pagosClientesSlice';
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver-es"
 const FichaCtaCte = () => {
