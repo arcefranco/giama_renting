@@ -1,4 +1,4 @@
-import { transporter, transporterTrap } from "./transporter.js";
+import { transporter } from "./transporter.js";
 import dotenv from "dotenv";
 
 dotenv.config();

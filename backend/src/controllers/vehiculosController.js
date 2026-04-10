@@ -759,7 +759,8 @@ export const getVehiculos = async (req, res) => {
   vehiculos.*, 
   (IFNULL(alq.id_vehiculo, 0) <> 0) AS vehiculo_alquilado,
   (IFNULL(con.id_vehiculo, 0) <> 0) AS vehiculo_reservado,
-  CONCAT(cli.nombre, ' ', cli.apellido) AS chofer_actual
+  CONCAT(cli.nombre, ' ', cli.apellido) AS chofer_actual,
+  cli.razon_social
 FROM vehiculos
 LEFT JOIN (
   SELECT a.id_vehiculo
