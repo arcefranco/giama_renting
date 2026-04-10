@@ -11,8 +11,7 @@ import alquileresRouter from "./src/routes/alquileresRoutes.js";
 import recibosRouter from "./src/routes/recibosRoutes.js";
 import parametrosRouter from "./src/routes/parametrosRoutes.js";
 import ctacteRouter from "./src/routes/ctacteRoutes.js";
-import { auth } from "./src/middlewares/auth.js";
-import { authorizeAdmin } from "./src/middlewares/roles.js";
+
 dotenv.config();
 const app = express();
 const allowedOrigins = [
