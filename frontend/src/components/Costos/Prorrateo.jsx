@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux';
-import { getConceptosCostos,
+import {
+  getConceptosCostos,
   resetCostosVehiculo, reset_nro_recibo_ingreso
 } from '../../reducers/Costos/costosSlice.js';
-import {prorrateo, reset} from "../../reducers/Costos/costosSlice.js"
+import { prorrateo, reset } from "../../reducers/Costos/costosSlice.js"
 import { getVehiculos, resetVehiculo } from '../../reducers/Vehiculos/vehiculosSlice'
 import { getClientes } from '../../reducers/Clientes/clientesSlice.js';
 import { getModelos, getProveedores, getFormasDeCobro } from '../../reducers/Generales/generalesSlice'
@@ -20,7 +21,7 @@ import { resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
 const Prorrateo = () => {
 
   const dispatch = useDispatch()
-  const { conceptos, isError, isSuccess, isLoading, message  } = useSelector((state) => state.costosReducer)
+  const { conceptos, isError, isSuccess, isLoading, message } = useSelector((state) => state.costosReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { username } = useSelector((state) => state.loginReducer)
   const { modelos, proveedores, formasDeCobro } = useSelector((state) => state.generalesReducer)
@@ -147,66 +148,66 @@ const Prorrateo = () => {
     })
   }, [totalNeto, totalIVA, totalPerc])
 
-useToastFeedback({
+  useToastFeedback({
     isError,
     isSuccess,
     message,
     resetAction: reset,
     onSuccess: () => {
 
-        setForm({
-          arrayVehiculos: [],
-          id_forma_cobro: '',
-          fecha: '',
-          id_concepto: '',
-          neto_no_gravado: 0,
-          neto_21: 0,
-          neto_10: 0,
-          neto_27: 0,
-          id_concepto_2: '',
-          neto_no_gravado_2: 0,
-          neto_21_2: 0,
-          neto_10_2: 0,
-          neto_27_2: 0,
-          id_concepto_3: '',
-          neto_no_gravado_3: 0,
-          neto_21_3: 0,
-          neto_10_3: 0,
-          neto_27_3: 0,
-          importe_iva_21: 0,
-          importe_iva_10: 0,
-          importe_iva_27: 0,
-          tasa_IIBB_CABA: 0,
-          tasa_IIBB: 0,
-          tasa_IVA: 0,
-          importe_tasa_IIBB_CABA: 0,
-          importe_tasa_IIBB: 0,
-          importe_tasa_IVA: 0,
-          importe_total: 0,
-          importe_neto: 0,
-          importe_iva: 0,
-          importe_otros_impuestos: 0,
-          importe_neto_total_1: null,
-          importe_neto_total_2: null,
-          importe_neto_total_3: null,
-          importe_iva_total_1: null,
-          importe_iva_total_2: null,
-          importe_iva_total_3: null,
-          
-          observacion: '',
-          cuenta: '',
-          cuenta_secundaria: '',
-          ingreso_egreso: 'E',
-          cta_cte_proveedores: 1,
-          cod_proveedor: '',
-          tipo_comprobante: '',
-          numero_comprobante_1: '',
-          numero_comprobante_2: '',
-          usuario: username
-        })
-      
+      setForm({
+        arrayVehiculos: [],
+        id_forma_cobro: '',
+        fecha: '',
+        id_concepto: '',
+        neto_no_gravado: 0,
+        neto_21: 0,
+        neto_10: 0,
+        neto_27: 0,
+        id_concepto_2: '',
+        neto_no_gravado_2: 0,
+        neto_21_2: 0,
+        neto_10_2: 0,
+        neto_27_2: 0,
+        id_concepto_3: '',
+        neto_no_gravado_3: 0,
+        neto_21_3: 0,
+        neto_10_3: 0,
+        neto_27_3: 0,
+        importe_iva_21: 0,
+        importe_iva_10: 0,
+        importe_iva_27: 0,
+        tasa_IIBB_CABA: 0,
+        tasa_IIBB: 0,
+        tasa_IVA: 0,
+        importe_tasa_IIBB_CABA: 0,
+        importe_tasa_IIBB: 0,
+        importe_tasa_IVA: 0,
+        importe_total: 0,
+        importe_neto: 0,
+        importe_iva: 0,
+        importe_otros_impuestos: 0,
+        importe_neto_total_1: null,
+        importe_neto_total_2: null,
+        importe_neto_total_3: null,
+        importe_iva_total_1: null,
+        importe_iva_total_2: null,
+        importe_iva_total_3: null,
+
+        observacion: '',
+        cuenta: '',
+        cuenta_secundaria: '',
+        ingreso_egreso: 'E',
+        cta_cte_proveedores: 1,
+        cod_proveedor: '',
+        tipo_comprobante: '',
+        numero_comprobante_1: '',
+        numero_comprobante_2: '',
+        usuario: username
+      })
+
     }
-});
+  });
   const [seleccionados, setSeleccionados] = useState([]); // IDs
   useEffect(() => {
     setForm({
@@ -224,7 +225,7 @@ useToastFeedback({
       /*   v["id"]?.toString().includes(busquedaGeneral) || DOMINIO PROVISORIO PROX */
       modelos.find(e => e.id === v["modelo"])?.nombre.toLowerCase().includes(busquedaGeneral.toLowerCase())
     );
-    const restantes = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 0 && !vehiculos.fecha_venta);
+    const restantes = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 0 && !v.fecha_venta);
     const alquilados = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 1);
     const vendidos = vehiculosFiltrados.filter(v => v.fecha_venta);
     return { restantes, alquilados, vendidos };
@@ -506,8 +507,8 @@ useToastFeedback({
 
   const handleSubmit = () => {
 
-      dispatch(prorrateo(form))
-    
+    dispatch(prorrateo(form))
+
   }
 
   const customStylesProveedores = {

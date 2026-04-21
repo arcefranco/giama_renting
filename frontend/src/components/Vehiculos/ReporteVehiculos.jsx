@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import DataGrid, { Column, Scrolling, Export, SearchPanel, FilterRow, HeaderFilter, Paging } from "devextreme-react/data-grid"
+import DataGrid, {
+  Column, Scrolling, Export, SearchPanel,
+  FilterRow, HeaderFilter, Paging
+} from "devextreme-react/data-grid"
 import { getVehiculos, reset } from '../../reducers/Vehiculos/vehiculosSlice';
 import { getModelos, getProveedoresGPS, getSucursales, getEstados } from '../../reducers/Generales/generalesSlice';
 import styles from "./ReporteVehiculos.module.css"
