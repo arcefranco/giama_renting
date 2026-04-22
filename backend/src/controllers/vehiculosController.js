@@ -380,6 +380,20 @@ export const insertVehiculo = async (req) => {
   let cuenta_secundaria_percepcion_IIBB_CABA;
   let cuenta_percepcion_IVA;
   let cuenta_secundaria_percepcion_IVA;
+
+  let costo_vehiculo_by_modelo;
+  try {
+    const result = await giama_renting.query("SELECT precio FROM precios_modelos WHERE modelo = ?", {
+      type: QueryTypes.SELECT,
+      replacements: [modelo]
+    })
+    console.log(result[0]["precio"])
+  } catch (error) {
+    const { body } = handleError(error, "costo del vehículo", acciones.get);
+    return body;
+  }
+  return {status: false, message: "prueba"}
+
   if (!importacion_masiva) {
     es_importacion_masiva = false;
   } else {
@@ -399,7 +413,7 @@ export const insertVehiculo = async (req) => {
     numero_comprobante_1,
     5
   )}${padWithZeros(numero_comprobante_2, 8)}`;
-  const camposObligatorios = ["modelo", "costo", "sucursal"];
+  const camposObligatorios = ["modelo", "sucursal"];
   const mensajeError = validarCamposObligatorios(
     req.body,
     camposObligatorios,
@@ -462,6 +476,9 @@ export const insertVehiculo = async (req) => {
     const { body } = handleError(error, "número de asiento");
     return body;
   }
+
+  
+
   try {
     const result = await giama_renting.query(
       `INSERT INTO vehiculos (modelo, fecha_ingreso, 
