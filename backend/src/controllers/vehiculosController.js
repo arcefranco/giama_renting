@@ -337,6 +337,9 @@ import * as xlsx from "xlsx";
 export const insertVehiculo = async (req) => {
   const {
     modelo,
+    fecha_factura,
+    cuenta_contable,
+    cuenta_secundaria,
     fecha_ingreso,
     nro_chasis,
     nro_motor,
@@ -550,6 +553,7 @@ export const insertVehiculo = async (req) => {
   //movimiento proveedores
   try {
     await movimientosProveedores({
+      fecha_factura: fecha_factura,
       cod_proveedor: proveedor_vehiculo,
       tipo_comprobante: 1,
       numero_comprobante_1,
