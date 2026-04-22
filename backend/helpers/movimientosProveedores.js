@@ -4,6 +4,7 @@ import { getTodayDate } from "./getTodayDate.js";
 import { padWithZeros } from "./padWithZeros.js";
 
 export const movimientosProveedores = async ({
+  fecha_factura,
   cod_proveedor,
   tipo_comprobante,
   numero_comprobante_1,
@@ -39,11 +40,11 @@ export const movimientosProveedores = async ({
       {
         type: QueryTypes.INSERT,
         replacements: [
-          getTodayDate(),
+          fecha_factura,
           cod_proveedor,
           FA_FC,
           NroComprobante,
-          getTodayDate(),
+          fecha_factura,
           tipo_comprobante == 3 ? importe_neto : null,
           tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
@@ -78,11 +79,11 @@ export const movimientosProveedores = async ({
       {
         type: QueryTypes.INSERT,
         replacements: [
-          getTodayDate(),
+          fecha_factura,
           cod_proveedor,
           FA_FC,
           NroComprobante,
-          getTodayDate(),
+          fecha_factura,
           tipo_comprobante == 3 ? importe_neto : null,
           tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
@@ -144,7 +145,7 @@ export const movimientosProveedores = async ({
           ConceptoComprobante,
           DenomComprobante,
           NroComprobante,
-          getTodayDate(),
+          fecha_factura,
           tipo_comprobante,
           insertMovProv,
           tipo_comprobante,
