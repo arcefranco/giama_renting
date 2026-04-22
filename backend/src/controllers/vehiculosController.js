@@ -387,12 +387,11 @@ export const insertVehiculo = async (req) => {
       type: QueryTypes.SELECT,
       replacements: [modelo]
     })
-    console.log(result[0]["precio"])
+    costo_vehiculo_by_modelo = result[0]["precio"]
   } catch (error) {
     const { body } = handleError(error, "costo del vehículo", acciones.get);
     return body;
   }
-  return {status: false, message: "prueba"}
 
   if (!importacion_masiva) {
     es_importacion_masiva = false;
@@ -491,7 +490,7 @@ export const insertVehiculo = async (req) => {
         replacements: [
           modelo,
           fecha_ingreso ? fecha_ingreso : getTodayDate(),
-          costo,
+          costo_vehiculo_by_modelo,
           nro_chasis,
           nro_motor,
           kilometros,
