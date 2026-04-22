@@ -367,6 +367,7 @@ const VehiculosForm = () => {
           <div className={styles.inputContainer}>
             <span>Proveedor</span>
             <select name="proveedor_vehiculo" onChange={handleChange} value={form.proveedor_vehiculo}>
+              <option value={""}>Seleccione un proveedor</option>
               {proveedores_vehiculo?.map((m) => (
                 <option key={m.Codigo} value={m.Codigo}>{m.RazonSocial}</option>
               ))}
