@@ -327,6 +327,19 @@ export const PagosClientes = () => {
             );
         }
     }
+    const renderImportes = (data) => {
+        const value = Number(data.value) || 0;
+
+        return value > 0
+            ? value.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : "";
+    }
+    const renderSaldo = (data) => {
+        const value = Number(data.value) || 0;
+
+        return value.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    }
     const customStyles = {
         container: (provided) => ({
             ...provided,
@@ -423,16 +436,26 @@ export const PagosClientes = () => {
                 <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={120} />
                 <Column dataField="concepto" caption="Concepto" />
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
-                <Column dataField="debe" alignment="right" caption="Debe" cellRender={(data) => { return Math.trunc(data.value) > 0 ? Math.trunc(data.value).toLocaleString("es-AR") : "" }} />
-                <Column dataField="haber" alignment="right" caption="Haber" cellRender={(data) => { return Math.trunc(data.value) > 0 ? Math.trunc(data.value).toLocaleString("es-AR") : "" }} />
-                <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={(data) => { return Math.trunc(data.value).toLocaleString("es-AR") }} />
+                <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
+                <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
+                <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={renderSaldo} />
                 <Column caption="" cellRender={renderAnulacion} />
 
             </DataGrid>
             <div className={styles.saldoBox}>
-                Saldo actual: <p style={{ color: saldoActual < 0 ? "red" : "black" }}> {saldoActual < 0
-                    ? `(${Math.abs(Math.trunc(saldoActual)).toLocaleString("es-AR")})`
-                    : Math.trunc(saldoActual).toLocaleString("es-AR")}</p>
+                Saldo actual:
+                <p style={{ color: saldoActual < 0 ? "red" : "black" }}>
+                    {saldoActual < 0
+                        ? `(${Math.abs(saldoActual).toLocaleString("es-AR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })})`
+                        : saldoActual.toLocaleString("es-AR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })
+                    }
+                </p>
             </div>
             <h2>Alta cobro</h2>
             <div className={styles.formContainer} >
