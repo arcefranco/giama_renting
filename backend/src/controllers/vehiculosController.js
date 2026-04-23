@@ -1423,6 +1423,7 @@ LEFT JOIN (
   FROM alquileres a
   LEFT JOIN recibos r ON a.nro_recibo = r.id
   WHERE :hoy BETWEEN a.fecha_desde AND a.fecha_hasta
+   AND (a.anulado = 0 OR a.anulado IS NULL)
     AND (r.anulado = 0 OR r.anulado IS NULL)
   GROUP BY a.id_vehiculo
 ) alq ON alq.id_vehiculo = v.id
