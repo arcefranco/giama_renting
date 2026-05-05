@@ -287,7 +287,7 @@ const VehiculosForm = () => {
           </div>
           <div className={styles.inputContainer}>
             <span>Nro. Motor</span>
-            <input type="number" name='nro_motor' value={form["nro_motor"]}
+            <input type="text" name='nro_motor' value={form["nro_motor"]}
               onChange={handleChange} />
           </div>
           <div className={styles.inputContainer}>
