@@ -359,6 +359,7 @@ export const insertVehiculo = async (req) => {
     observaciones,
     importe_neto,
     importe_iva,
+    importe_iva_10_5,
     tasa_IIBB_CABA,
     tasa_IIBB,
     tasa_IVA,
@@ -371,6 +372,8 @@ export const insertVehiculo = async (req) => {
   let cuentaRDN2;
   let cuentaIC21;
   let cuentaIC22;
+  let cuentaIC10;
+  let cuentaIS10;
   let NroAsiento;
   let NroAsientoSecundario;
   let transaction_giama_renting;
@@ -443,6 +446,8 @@ export const insertVehiculo = async (req) => {
     cuentaIC21 = await getParametro("IC21");
     cuentaIC22 = await getParametro("IC22");
     cuentaRDN2 = await getParametro("RDN2");
+    cuentaIC10 = await getParametro("IC10");
+    cuentaIS10 = await getParametro("IS10");
   } catch (error) {
     const { body } = handleError(error, "parámetro");
     return body;
@@ -570,6 +575,7 @@ export const insertVehiculo = async (req) => {
       numero_comprobante_2,
       importe_neto: importe_neto,
       importe_iva: importe_iva,
+      importe_iva_10_5: importe_iva_10_5,
       importe_total: importe_total,
       cuenta_concepto: cuentaRODN,
       NroAsiento,
@@ -608,19 +614,36 @@ export const insertVehiculo = async (req) => {
       NroAsientoSecundario,
       "FA"
     );
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuentaIC21,
-      "D",
-      importe_iva,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      NroAsientoSecundario,
-      "FA"
-    );
+    if(importe_iva > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIC21,
+        "D",
+        importe_iva,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        NroAsientoSecundario,
+        "FA"
+      );
+    }
+    if(importe_iva_10_5 > 0){
+        await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIC10,
+        "D",
+        importe_iva_10_5,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        NroAsientoSecundario,
+        "FA"
+      );
+    }
     if(importe_tasa_IVA > 0){
     await asientoContable(
       "c_movimientos",
@@ -693,19 +716,36 @@ export const insertVehiculo = async (req) => {
       null,
       "FA"
     );
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario,
-      cuentaIC22,
-      "D",
-      importe_iva,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      null,
-      "FA"
-    );
+    if (importe_iva > 0){
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuentaIC22,
+        "D",
+        importe_iva,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        null,
+        "FA"
+      );
+    }
+    if (importe_iva_10_5 > 0){
+        await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuentaIS10,
+        "D",
+        importe_iva,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        null,
+        "FA"
+      );
+    }
     if(importe_tasa_IVA > 0){
     await asientoContable(
       "c_movimientos",
