@@ -11,6 +11,7 @@ export const movimientosProveedores = async ({
   numero_comprobante_2,
   importe_neto,
   importe_iva,
+  importe_iva_10_5,
   importe_total,
   cuenta_concepto,
   NroAsiento,
@@ -34,8 +35,8 @@ export const movimientosProveedores = async ({
   try {
     const result = await pa7_giama_renting.query(
       `INSERT INTO c_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1,
-      TasaIva1, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
+      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1, Iva3,
+      TasaIva1, TasaIva3, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
       PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
@@ -48,7 +49,9 @@ export const movimientosProveedores = async ({
           tipo_comprobante == 3 ? importe_neto : null,
           tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
+          importe_iva_10_5,
           21,
+          10.5,
           importe_total,
           tasa_IIBB ? tasa_IIBB : null,
           importe_tasa_IIBB ? importe_tasa_IIBB : null,
@@ -73,8 +76,8 @@ export const movimientosProveedores = async ({
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1,
-      TasaIva1, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
+      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1, Iva3,
+      TasaIva1, TasaIva3, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
       PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
@@ -87,7 +90,9 @@ export const movimientosProveedores = async ({
           tipo_comprobante == 3 ? importe_neto : null,
           tipo_comprobante == 1 ? importe_neto : null,
           importe_iva,
+          importe_iva_10_5,
           21,
+          10.5,
           importe_total,
           tasa_IIBB ? tasa_IIBB : null,
           importe_tasa_IIBB ? importe_tasa_IIBB : null,

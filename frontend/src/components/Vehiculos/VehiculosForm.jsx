@@ -24,7 +24,17 @@ const VehiculosForm = () => {
   }, [])
 
   const { username } = useSelector((state) => state.loginReducer)
-
+  const tasas = [
+    {
+      concepto: "21",
+      codigo: 1
+    },
+    {
+      concepto: "10.5",
+      codigo: 2
+    }
+  ]
+  const [tasa, setTasa] = useState(null)
   const [form, setFormData] = useState({
     modelo: '',
     dominio: '',
@@ -51,6 +61,7 @@ const VehiculosForm = () => {
     usuario: username,
     importe_neto: '',
     importe_iva: '',
+    importe_iva_10_5: '',
     tasa_IIBB_CABA: '',
     tasa_IIBB: '',
     tasa_IVA: '',
@@ -105,6 +116,7 @@ const VehiculosForm = () => {
         observaciones: '',
         importe_neto: '',
         importe_iva: '',
+        importe_iva_10_5: '',
         tasa_IIBB_CABA: '',
         tasa_IIBB: '',
         tasa_IVA: '',
@@ -142,6 +154,26 @@ const VehiculosForm = () => {
       })
     }
   }, [form.cuenta_contable, plan_cuentas])
+
+  useEffect(() => {
+    if (tasa) {
+      setFormData({
+        fecha_factura: '',
+        importe_neto: '',
+        importe_iva: '',
+        importe_iva_10_5: '',
+        tasa_IIBB_CABA: '',
+        tasa_IIBB: '',
+        tasa_IVA: '',
+        importe_tasa_IIBB_CABA: '',
+        importe_tasa_IIBB: '',
+        importe_tasa_IVA: '',
+        importe_total: '',
+      })
+    }
+  }, [tasa])
+
+
   const round2 = (value) =>
     Math.round((Number(value) || 0) * 100) / 100;
 
@@ -158,27 +190,48 @@ const VehiculosForm = () => {
 
     // 1️⃣ Modificación del importe neto
     if (name === "importe_neto") {
-      const nuevoIVA = round2(neto * 0.21);
 
-      newForm = {
-        ...newForm,
-        importe_iva: nuevoIVA,
-        importe_total: round2(neto + nuevoIVA),
+      if (tasa == "1") {
+        const nuevoIVA = round2(neto * 0.21)
+        newForm = {
+          ...newForm,
+          importe_iva: nuevoIVA,
+          importe_total: round2(neto + nuevoIVA),
 
-        // Reset de tasas
-        tasa_IVA: "",
-        tasa_IIBB: "",
-        tasa_IIBB_CABA: "",
-        importe_tasa_IVA: "",
-        importe_tasa_IIBB: "",
-        importe_tasa_IIBB_CABA: "",
-      };
+          // Reset de tasas
+          tasa_IVA: "",
+          tasa_IIBB: "",
+          tasa_IIBB_CABA: "",
+          importe_tasa_IVA: "",
+          importe_tasa_IIBB: "",
+          importe_tasa_IIBB_CABA: "",
+        };
+      }
+      if (tasa == "2") {
+        const nuevoIVA = round2(neto * 0.105)
+        newForm = {
+          ...newForm,
+          importe_iva_10_5: nuevoIVA,
+          importe_total: round2(neto + nuevoIVA),
+
+          // Reset de tasas
+          tasa_IVA: "",
+          tasa_IIBB: "",
+          tasa_IIBB_CABA: "",
+          importe_tasa_IVA: "",
+          importe_tasa_IIBB: "",
+          importe_tasa_IIBB_CABA: "",
+        };
+      }
+
     }
 
     // 2️⃣ Modificación del importe IVA
-    if (name === "importe_iva") {
+    if (name === "importe_iva" || name === "importe_iva_10_5") {
       newForm.importe_total = round2(neto + iva);
     }
+
+
 
     // 3️⃣ Modificación de tasas
     const tasasMap = {
@@ -420,18 +473,40 @@ const VehiculosForm = () => {
           </div>
           <div></div>
           <div></div>
-
+          <div className={styles.inputContainer}>
+            <span>Tasa</span>
+            <select name="tasa" value={tasa}
+              onChange={(e) => setTasa(e.target.value)} id="">
+              <option value={""} disabled selected>{"Seleccione una tasa"}</option>
+              {
+                tasas?.length && tasas?.map(e => {
+                  return <option value={e.codigo}>{e.concepto}</option>
+                })
+              }
+            </select>
+          </div>
           <div className={styles.inputContainer}>
             <span>Importe neto</span>
             <input type="text" name='importe_neto' value={form["importe_neto"]}
               onChange={handleChange} />
           </div>
-          <div className={styles.inputContainer}>
-            <span>Importe IVA</span>
-            <input type="text" name='importe_iva' value={form["importe_iva"]}
-              onChange={handleChange} />
-          </div>
-          <div></div>
+          {
+            tasa == "1" &&
+            <div className={styles.inputContainer}>
+              <span>Importe IVA</span>
+              <input type="text" name='importe_iva' value={form["importe_iva"]}
+                onChange={handleChange} />
+            </div>
+          }
+          {
+            tasa == "2" &&
+            <div className={styles.inputContainer}>
+              <span>{"Importe IVA (10.5)"}</span>
+              <input type="text" name='importe_iva_10_5' value={form["importe_iva_10_5"]}
+                onChange={handleChange} />
+            </div>
+          }
+
           <div className={styles.inputContainer}>
             <span>Tasa perc. IVA</span>
             <input type="text" name='tasa_IVA' value={form["tasa_IVA"]}
