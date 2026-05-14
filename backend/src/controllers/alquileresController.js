@@ -1810,6 +1810,7 @@ export const postContratoAlquiler = async (req, res) => {
   let cuentaDEP2;
   let idContrato;
   let CUIT;
+  let no_es_chofer;
   let id_factura;
   let cuenta_contable_forma_cobro_contrato;
   let cuenta_secundaria_forma_cobro_contrato;
@@ -1884,13 +1885,14 @@ export const postContratoAlquiler = async (req, res) => {
   //buscar CUIT del cliente
     try {
     const result = await giama_renting.query(
-      "SELECT nro_documento FROM clientes WHERE id = ?",
+      "SELECT nro_documento, no_es_chofer FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
       }
     );
     if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+    if (result[0]["no_es_chofer"]) no_es_chofer = result[0]["no_es_chofer"]
   } catch (error) {
     const { body } = handleError(
       error,
@@ -1909,33 +1911,36 @@ export const postContratoAlquiler = async (req, res) => {
     return res.send(body);
   }
   //buscar si el cliente tiene un contrato vigente en fechas seleccionadas
-  try {
-    const result = await giama_renting.query(
-      `
-  SELECT fecha_desde, fecha_hasta 
-  FROM contratos_alquiler 
-  WHERE id_cliente = ?
-    AND fecha_desde <= ? 
-    AND fecha_hasta >= ? 
-  `,
-      {
-        type: QueryTypes.SELECT,
-        replacements: [
-          id_cliente,
-          fecha_hasta_contrato_parseada,
-          fecha_desde_contrato_parseada,
-        ],
+  if(no_es_chofer == 0){
+    try {
+      const result = await giama_renting.query(
+        `
+    SELECT fecha_desde, fecha_hasta 
+    FROM contratos_alquiler 
+    WHERE id_cliente = ?
+      AND fecha_desde <= ? 
+      AND fecha_hasta >= ? 
+    `,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [
+            id_cliente,
+            fecha_hasta_contrato_parseada,
+            fecha_desde_contrato_parseada,
+          ],
+        }
+      );
+      if (result.length > 0) {
+        return res.send({
+          status: false,
+          message: "El cliente ya tiene un contrato en las fechas seleccionadas",
+        });
       }
-    );
-    if (result.length > 0) {
-      return res.send({
-        status: false,
-        message: "El cliente ya tiene un contrato en las fechas seleccionadas",
-      });
+    } catch (error) {
+      const { body } = handleError(error, "Contratos del cliente", acciones.get);
+      return res.send(body);
     }
-  } catch (error) {
-    const { body } = handleError(error, "Contratos del cliente", acciones.get);
-    return res.send(body);
+
   }
   //buscar si el vehiculo está vendido // dominio del vehiculo
   try {
