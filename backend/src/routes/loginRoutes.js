@@ -6,6 +6,7 @@ import {
   validarToken,
   logOut,
   recoveryPass,
+  postAlerta,
 } from "../controllers/loginController.js";
 const loginRouter = Router();
 import { auth } from "../middlewares/auth.js";
@@ -24,6 +25,7 @@ loginRouter.post("/createUsuario", auth, authorizeAdmin(), createUsuario);
 loginRouter.post("/recovery", recoveryPass);
 loginRouter.post("/login", logIn);
 loginRouter.get("/validar-token", validarToken);
+loginRouter.post("/postAlerta", auth, postAlerta);
 loginRouter.post("/logout", logOut);
 
 export default loginRouter;

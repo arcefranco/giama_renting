@@ -155,6 +155,26 @@ export const getEstados = async (req, res) => {
   }
 };
 
+export const getUsuarios = async (req, res) => {
+  try {
+    const resultado = await giama_renting.query(
+      "SELECT id, nombre FROM usuarios",
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    console.log(resultado)
+    return res.send(resultado);
+  } catch (error) {
+    const { body } = handleError(
+      error,
+      "usuarios",
+      acciones.get
+    );
+    return res.send(body);
+  }
+};
+
 export const getPlanCuentas = async (req, res) => {
   try {
     const resultado = await pa7_giama_renting.query(
