@@ -23,7 +23,7 @@ export const renderEstadoVehiculo = (vehiculo) => {
   }
 
   if (vehiculo?.vehiculo_reservado === 1) {
-    return <span style={{ ...baseStyle, background: "#bda6ff" }}>Reservado</span>;
+    return <span style={{ ...baseStyle, background: "#bda6ff" }}>Reservado alquiler</span>;
   }
 
   const estadoId = vehiculo?.estado_actual;

@@ -79,14 +79,15 @@ const menuItems = [
   {
     title: "Usuarios",
     items: [
-      { label: "Crear usuario", to: "/usuarios/alta", roles: ["1"] }
+      { label: "Crear usuario", to: "/usuarios/alta", roles: ["1"] },
+      { label: "Alta de alertas", to: "/usuarios/alertas" }
     ]
   }
 ];
 
 
 const Header = () => {
-  const { roles, nombre, username } = useSelector((state) => state.loginReducer)
+  const { roles, nombre, username, alertas } = useSelector((state) => state.loginReducer)
   const { contratosAVencer } = useSelector((state) => state.alquileresReducer)
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -154,14 +155,20 @@ const Header = () => {
                   `No hay contratos a una semana (o menos) de vencer`
               }
               {
-                contratosAVencer.length &&
-                <div className={styles.containerBtnNotif} style={{
-                  display: "flex",
-                  justifyContent: "space-around"
-                }}>
-                  <button onClick={() => navigate("/alquileres/contrato/reporte/a-vencer")}>Ir</button>
-                  <button onClick={() => dispatch(getContratosAVencer())}>Actualizar</button>
-                </div>
+                contratosAVencer?.length ?
+                  <div className={styles.containerBtnNotif} style={{
+                    display: "flex",
+                    justifyContent: "space-around"
+                  }}>
+                    <button onClick={() => navigate("/alquileres/contrato/reporte/a-vencer")}>Ir</button>
+                    <button onClick={() => dispatch(getContratosAVencer())}>Actualizar</button>
+                  </div> : ""
+              }
+              {
+                alertas?.length ?
+                  alertas.map(e => {
+                    return <span>{e.alerta}</span>
+                  }) : ""
               }
             </div>
           </div>

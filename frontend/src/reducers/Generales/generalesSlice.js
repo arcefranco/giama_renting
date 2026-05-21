@@ -17,6 +17,7 @@ const initialState = {
   proveedores_vehiculo: [],
   roles: [],
   formasDeCobro: [],
+  usuarios: [],
   AMRT: null,
 };
 
@@ -72,6 +73,14 @@ export const getSucursales = createAsyncThunk(
   "getSucursales",
   async (_, { rejectWithValue }) => {
     const result = await generalesService.getSucursales();
+    return result.status ? result.data : rejectWithValue(result);
+  }
+);
+
+export const getUsuarios = createAsyncThunk(
+  "getUsuarios",
+  async (_, { rejectWithValue }) => {
+    const result = await generalesService.getUsuarios();
     return result.status ? result.data : rejectWithValue(result);
   }
 );
@@ -382,6 +391,22 @@ export const generalesSlice = createSlice({
       state.formasDeCobro = action.payload;
     });
     builder.addCase(getFormasDeCobro.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(getUsuarios.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getUsuarios.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.usuarios = action.payload;
+    });
+    builder.addCase(getUsuarios.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

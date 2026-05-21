@@ -53,6 +53,10 @@ const getRoles = async () => {
   return getFunction("generales/roles");
 };
 
+const getUsuarios = async () => {
+  return getFunction("generales/usuarios");
+};
+
 const getFormasCobro = async () => {
   return getFunction("generales/formas_cobro");
 };
@@ -93,5 +97,6 @@ const generalesService = {
   getEstados,
   getRoles,
   getFormasCobro,
+  getUsuarios
 };
 export default generalesService;

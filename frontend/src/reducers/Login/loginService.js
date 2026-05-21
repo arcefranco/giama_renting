@@ -1,4 +1,5 @@
 import { ServiceErrorHandler } from "../../helpers/ServiceErrorHandler";
+import { postFunction } from "../axios/axiosFunctions";
 import axios from "axios";
 
 const logIn = async (data) => {
@@ -18,8 +19,13 @@ const logIn = async (data) => {
   }
 };
 
+const postAlerta = async (data) => {
+  return postFunction("login/postAlerta", data)
+}
+
 const loginService = {
   logIn,
+  postAlerta
 };
 
 export default loginService;

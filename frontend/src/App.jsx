@@ -44,6 +44,7 @@ import Prorrateo from "./components/Costos/Prorrateo";
 import PagosClientes from "./components/PagosClientes/PagosClientes"
 import FichaCtaCte from "./components/PagosClientes/FichaCtaCte";
 import IngresosSeguros from "./components/Costos/IngresosSeguros";
+import Alertas from "./components/Usuarios/Alertas/Alertas";
 function App() {
 
   return (
@@ -60,6 +61,9 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route element={<AdminRoute />}>
             <Route path='/usuarios/alta' element={<AltaUsuario />} />
+          </Route>
+          <Route>
+            <Route path='/usuarios/alertas' element={<Alertas />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path="/vehiculos" element={<VehiculosForm />} />
