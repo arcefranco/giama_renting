@@ -80,7 +80,7 @@ export const loginSlice = createSlice({
       state.roles = action.payload.roles;
       state.nombre = action.payload.nombre;
       state.username = action.payload.username;
-      state.alertas = action.payload.alertas
+      state.alertas = action.payload.alertas;
     });
     builder.addCase(logIn.rejected, (state, action) => {
       state.isLoading = false;
