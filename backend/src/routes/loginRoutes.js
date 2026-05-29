@@ -25,7 +25,7 @@ loginRouter.post("/createUsuario", auth, authorizeAdmin(), createUsuario);
 loginRouter.post("/recovery", recoveryPass);
 loginRouter.post("/login", logIn);
 loginRouter.get("/validar-token", validarToken);
-loginRouter.post("/postAlerta", auth, postAlerta);
+loginRouter.post("/postAlerta", auth, authorizeAdmin(), postAlerta);
 loginRouter.post("/logout", logOut);
 
 export default loginRouter;
