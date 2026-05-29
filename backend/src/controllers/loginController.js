@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../../helpers/sendEmail.js";
 import { handleError, acciones } from "../../helpers/handleError.js";
+import {getTodayDate} from "../../helpers/getTodayDate.js"
 
 dotenv.config();
 const { sign, verify } = pkg;
@@ -128,8 +129,9 @@ export const recoveryPass = async (req, res) => {
 
 export const logIn = async (req, res) => {
   const { email, password } = req.body;
-  /*   let roles; */
+  const hoy = getTodayDate()
   let user;
+  let alertas;
   try {
     user = await giama_renting.query("SELECT * FROM usuarios WHERE email = ?", {
       replacements: [email],
@@ -165,12 +167,17 @@ export const logIn = async (req, res) => {
         sameSite: "strict",
         maxAge: 32400000, // 9 horas en milisegundos
       });
-
+      const resultAlertas = await giama_renting.query("SELECT * FROM alertas WHERE usuario = ? AND fecha = ?", {
+        type: QueryTypes.SELECT,
+        replacements: [user[0].id, hoy]
+      })
+      alertas = resultAlertas
       return res.send({
         status: true,
         username: user[0].email,
         nombre: user[0].nombre,
         roles: user[0].roles,
+        alertas: alertas
       });
     } else {
       throw "Email o contraseña incorrecta";
@@ -201,6 +208,25 @@ export const validarToken = (req, res) => {
       .json({ status: false, message: "Token inválido o expirado" });
   }
 };
+
+export const postAlerta = async (req, res) => {
+const {
+    alerta,
+    fecha,
+    usuario,
+} = req.body
+const usuario_alta = req.user.id;
+try {
+    await giama_renting.query("INSERT INTO alertas (alerta, fecha, usuario, usuario_alta) VALUES (?,?,?,?)", {
+        type: QueryTypes.INSERT,
+        replacements: [alerta, fecha, usuario, usuario_alta]
+    })
+    return res.send({status: true, message: "Alerta creada correctamente"})
+} catch (error) {
+    const { body } = handleError(error, "alerta", acciones.post);
+    return res.send(body);
+}
+}
 
 export const logOut = (req, res) => {
   res.clearCookie("authToken");

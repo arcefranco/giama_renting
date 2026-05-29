@@ -2,12 +2,13 @@ import { createSlice } from "@reduxjs/toolkit";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import loginService from "./loginService";
 import axios from "axios";
-
+import { handleAsyncThunk, responses } from "../../helpers/handleAsyncThunk.js";
 const initialState = {
   status: {},
   username: "",
   nombre: "",
   roles: "",
+  alertas: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -44,7 +45,17 @@ export const logOut = createAsyncThunk(
     }
   }
 );
+export const postAlerta = createAsyncThunk(
+  "postAlerta",
+  async (data, { rejectWithValue }) => 
 
+     await handleAsyncThunk(
+      () => loginService.postAlerta(data),
+      responses.successObject,
+      rejectWithValue
+    )
+  
+);
 export const loginSlice = createSlice({
   name: "login",
   initialState,
@@ -69,6 +80,7 @@ export const loginSlice = createSlice({
       state.roles = action.payload.roles;
       state.nombre = action.payload.nombre;
       state.username = action.payload.username;
+      state.alertas = action.payload.alertas;
     });
     builder.addCase(logIn.rejected, (state, action) => {
       state.isLoading = false;
@@ -86,6 +98,22 @@ export const loginSlice = createSlice({
       state.isSuccess = false;
       state.isLoading = false;
       state.message = "";
+    });
+    builder.addCase(postAlerta.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postAlerta.fulfilled, (state, action) => {
+      console.log("ESTO ES PAYLOAD: ", action.payload)
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postAlerta.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
   },
 });

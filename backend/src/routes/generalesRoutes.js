@@ -15,6 +15,7 @@ import {
   getProveedoresVehiculo,
   getRoles,
   getFormasCobro,
+  getUsuarios,
 } from "../controllers/generalesController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
@@ -41,6 +42,7 @@ generalesRouter.get("/estados", auth, getEstados);
 generalesRouter.get("/plan_cuentas", auth, getPlanCuentas);
 generalesRouter.get("/proveedores", auth, getProveedores);
 generalesRouter.get("/AMRT", auth, getParametroAMRT);
+generalesRouter.get("/usuarios", auth, getUsuarios);
 generalesRouter.get("/proveedores_vehiculo", auth, getProveedoresVehiculo);
 generalesRouter.get("/roles", auth, authorizeAdmin(), getRoles);
 generalesRouter.get(

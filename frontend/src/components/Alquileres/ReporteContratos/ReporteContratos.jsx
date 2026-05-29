@@ -91,7 +91,7 @@ const ReporteContratos = () => {
   const renderCliente = (data) => {
     if (data.value) {
       const cliente = clientes?.find(e => e.id == data.value)
-      let nombre_final = cliente.nombre ? `${cliente.nombre} ${cliente.apellido}` : `${cliente.razon_social}`
+      let nombre_final = cliente?.nombre ? `${cliente.nombre} ${cliente.apellido}` : `${cliente.razon_social}`
       return <div>
         <span>{nombre_final}</span>
       </div>
@@ -324,6 +324,7 @@ const ReporteContratos = () => {
         {
           hasAdminAccess(roles) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
         }
+        <Column dataField="nro_asiento" caption="Asiento depósito" alignment="center" />
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />
         <Summary calculateCustomSummary={handleCustomSummary}>
           <TotalItem

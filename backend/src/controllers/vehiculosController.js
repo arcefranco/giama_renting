@@ -519,7 +519,7 @@ export const insertVehiculo = async (req) => {
           sucursal,
           ubicacion,
           numero_comprobante,
-          1,
+          6,
           usuario,
           observaciones
         ],

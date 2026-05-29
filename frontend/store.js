@@ -17,7 +17,7 @@ import pagosClientesReducer from "./src/reducers/PagosClientes/pagosClientesSlic
 const loginPersistConfig = {
   key: "login",
   storage,
-  whitelist: ["username", "roles", "nombre"],
+  whitelist: ["username", "roles", "nombre", "alertas"],
 };
 
 const alquileresPersistConfig = {
@@ -37,7 +37,7 @@ const reducer = combineReducers({
   usuariosReducer,
   recibosReducer,
   parametrosReducer,
-  pagosClientesReducer
+  pagosClientesReducer,
 });
 export const store = configureStore({
   reducer: reducer,
