@@ -62,7 +62,7 @@ function App() {
           <Route element={<AdminRoute />}>
             <Route path='/usuarios/alta' element={<AltaUsuario />} />
           </Route>
-          <Route>
+          <Route element={<AdminRoute />}>
             <Route path='/usuarios/alertas' element={<Alertas />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
