@@ -185,7 +185,7 @@ export const logIn = async (req, res) => {
   } catch (error) {
     return res.send({
       status: false,
-      message: error,
+      message: error.message,
     });
   }
 };
