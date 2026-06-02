@@ -1372,7 +1372,7 @@ export const postAlquiler = async (req, res) => {
 
 
   let concepto_factura = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
-  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT} Observación: ${observacion}`
   let concepto_recibo = `(PAGO) Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
   hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`
   //inserto factura
@@ -2177,6 +2177,14 @@ export const postContratoAlquiler = async (req, res) => {
       fecha_desde_alquiler
     )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)} CUIT/CUIL: ${CUIT}- 
     ASIENTO: ${NroAsiento_alquiler_deuda}`;
+
+    let concepto_deuda_alquiler_FACTURA = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
+      fecha_desde_alquiler
+    )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)} CUIT/CUIL: ${CUIT} DOMINIO: ${dominio} 
+    Observación: ${observacion}`;
+
+
+
     let concepto_pago_alquiler = `(PAGO) Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
       fecha_desde_alquiler
     )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)} CUIT/CUIL: ${CUIT}- 
@@ -2195,7 +2203,7 @@ export const postContratoAlquiler = async (req, res) => {
           usuario,
           NroAsiento_alquiler_deuda,
           NroAsientoSecundario_alquiler_deuda,
-          concepto_deuda_alquiler,
+          concepto_deuda_alquiler_FACTURA,
           transaction_giama_renting,
           transaction_pa7_giama_renting,
           fecha_factura_alquiler
