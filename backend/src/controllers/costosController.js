@@ -2274,10 +2274,13 @@ export const prorrateo = async (req, res) => {
   let cuentaSecundariaIVA;
   let cuenta_concepto;
   let cuenta_secundaria_concepto;
+  let nombre_concepto;
   let cuenta_concepto_2;
   let cuenta_secundaria_concepto_2;
+  let nombre_concepto_2;
   let cuenta_concepto_3;
   let cuenta_secundaria_concepto_3;
+  let nombre_concepto_3;
   let cuenta_forma_cobro;
   let cuenta_secundaria_forma_cobro;
   let transaction_costos_ingresos = await giama_renting.transaction();
@@ -2348,7 +2351,7 @@ export const prorrateo = async (req, res) => {
   //obtengo cuentas contables de los tres conceptos
   try {
     const result = await giama_renting.query(
-      `SELECT cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto`,
+      `SELECT nombre, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto`,
       {
         type: QueryTypes.SELECT,
         replacements: { id_concepto },
@@ -2359,6 +2362,7 @@ export const prorrateo = async (req, res) => {
         status: false,
         message: "No se encontró el concepto especificado",
       });
+    nombre_concepto = result[0]["nombre"];
     cuenta_concepto = result[0]["cuenta_contable"];
     cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
   } catch (error) {
@@ -2370,7 +2374,7 @@ export const prorrateo = async (req, res) => {
   if(id_concepto_2){
     try {
       const result = await giama_renting.query(
-        `SELECT cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto_2`,
+        `SELECT nombre, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto_2`,
         {
           type: QueryTypes.SELECT,
           replacements: { id_concepto_2 },
@@ -2381,6 +2385,7 @@ export const prorrateo = async (req, res) => {
           status: false,
           message: "No se encontró el concepto especificado",
         });
+      nombre_concepto_2 = result[0]["nombre"];
       cuenta_concepto_2 = result[0]["cuenta_contable"];
       cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
     } catch (error) {
@@ -2393,7 +2398,7 @@ export const prorrateo = async (req, res) => {
   if(id_concepto_3){
     try {
       const result = await giama_renting.query(
-        `SELECT cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto_3`,
+        `SELECT nombre cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto_3`,
         {
           type: QueryTypes.SELECT,
           replacements: { id_concepto_3 },
@@ -2404,6 +2409,7 @@ export const prorrateo = async (req, res) => {
           status: false,
           message: "No se encontró el concepto especificado",
         });
+      nombre_concepto_3 = result[0]["nombre"];
       cuenta_concepto_3 = result[0]["cuenta_contable"];
       cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
     } catch (error) {
@@ -2498,32 +2504,37 @@ export const prorrateo = async (req, res) => {
 
   //insert movimientos fijos (TOTAL e IVA)
   try {
-    asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuentaIVA,
-      "D",
-      importe_iva,
-      observacion,
-      transaction_asientos,
-      numero_comprobante,
-      fecha,
-      NroAsientoSecundario,
-      FA_FC
-    );
-    asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario,
-      cuentaSecundariaIVA,
-      "D",
-      importe_iva,
-      observacion,
-      transaction_asientos,
-      numero_comprobante,
-      fecha,
-      null,
-      FA_FC
-    );
+    if(importe_iva){ //puede ser solo neto no gravado
+      asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuentaIVA,
+        "D",
+        importe_iva,
+        observacion,
+        transaction_asientos,
+        numero_comprobante,
+        fecha,
+        NroAsientoSecundario,
+        FA_FC
+      );
+    }
+    if(importe_iva){
+      asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuentaSecundariaIVA,
+        "D",
+        importe_iva,
+        observacion,
+        transaction_asientos,
+        numero_comprobante,
+        fecha,
+        null,
+        FA_FC
+      );
+
+    }
     if(importe_tasa_IIBB_CABA){
     asientoContable(
       "c_movimientos",
@@ -2751,7 +2762,7 @@ export const prorrateo = async (req, res) => {
         cuenta_concepto,
         "D",
         importeAUsar_1,
-        observacion + ` (${dominio})`,
+        observacion + `${nombre_concepto} (${dominio})`,
         transaction_asientos,
         numero_comprobante,
         fecha,
@@ -2764,7 +2775,7 @@ export const prorrateo = async (req, res) => {
         cuenta_secundaria_concepto,
         "D",
         importeAUsar_1,
-        observacion + ` (${dominio})`,
+        observacion + `${nombre_concepto} (${dominio})`,
         transaction_asientos,
         numero_comprobante,
         fecha,
@@ -2778,7 +2789,7 @@ export const prorrateo = async (req, res) => {
         cuenta_concepto_2,
         "D",
         importeAUsar_2,
-        observacion + ` (${dominio})`,
+        observacion + `${nombre_concepto_2} (${dominio})`,
         transaction_asientos,
         numero_comprobante,
         fecha,
@@ -2791,7 +2802,7 @@ export const prorrateo = async (req, res) => {
         cuenta_secundaria_concepto_2,
         "D",
         importeAUsar_2,
-        observacion + ` (${dominio})`,
+        observacion + `${nombre_concepto_2}  (${dominio})`,
         transaction_asientos,
         numero_comprobante,
         fecha,
@@ -2806,7 +2817,7 @@ export const prorrateo = async (req, res) => {
         cuenta_concepto_3,
         "D",
         importeAUsar_3,
-        observacion + ` (${dominio})`,
+        observacion + `${nombre_concepto_3}  (${dominio})`,
         transaction_asientos,
         numero_comprobante,
         fecha,
@@ -2819,7 +2830,7 @@ export const prorrateo = async (req, res) => {
         cuenta_secundaria_concepto_3,
         "D",
         importeAUsar_3,
-        observacion + ` (${dominio})`,
+        observacion + `${nombre_concepto_3}  (${dominio})`,
         transaction_asientos,
         numero_comprobante,
         fecha,
