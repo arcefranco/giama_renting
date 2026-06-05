@@ -208,7 +208,7 @@ export const getProveedores = async (req, res) => {
 export const getProveedoresVehiculo = async (req, res) => {
   try {
     const resultado = await pa7_giama_renting.query(
-      "SELECT Codigo, RazonSocial, TipoResponsable FROM c_proveedores WHERE Codigo IN(11, 177, 180, 190)",
+      "SELECT Codigo, RazonSocial, TipoResponsable FROM c_proveedores WHERE Codigo IN(11, 177, 180, 190, 214)",
       {
         type: QueryTypes.SELECT,
       }
