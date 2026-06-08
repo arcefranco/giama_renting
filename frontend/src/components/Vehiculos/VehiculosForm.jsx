@@ -158,6 +158,7 @@ const VehiculosForm = () => {
   useEffect(() => {
     if (tasa) {
       setFormData({
+        ...form,
         fecha_factura: '',
         importe_neto: '',
         importe_iva: '',
@@ -197,7 +198,7 @@ const VehiculosForm = () => {
           ...newForm,
           importe_iva: nuevoIVA,
           importe_total: round2(neto + nuevoIVA),
-
+          importe_neto: neto,
           // Reset de tasas
           tasa_IVA: "",
           tasa_IIBB: "",
@@ -213,7 +214,7 @@ const VehiculosForm = () => {
           ...newForm,
           importe_iva_10_5: nuevoIVA,
           importe_total: round2(neto + nuevoIVA),
-
+          importe_neto: neto,
           // Reset de tasas
           tasa_IVA: "",
           tasa_IIBB: "",
@@ -545,7 +546,7 @@ const VehiculosForm = () => {
 
         </form>
         {
-          (!form.modelo || !form.cuenta_contable || !form.importe_neto || !form.importe_iva) ?
+          (!form.modelo || !form.cuenta_contable || !form.importe_neto || (!form.importe_iva || form.importe_iva_10_5)) ?
             <button
               className={styles.sendBtn}
               disabled
