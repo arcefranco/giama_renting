@@ -37,7 +37,7 @@ export const movimientosProveedores = async ({
       `INSERT INTO c_movprov (Fecha, Proveedor, 
       TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1, Iva3,
       TasaIva1, TasaIva3, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
-      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -78,7 +78,7 @@ export const movimientosProveedores = async ({
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
       TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1, Iva3,
       TasaIva1, TasaIva3, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
-      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
