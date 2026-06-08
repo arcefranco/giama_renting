@@ -546,7 +546,7 @@ const VehiculosForm = () => {
 
         </form>
         {
-          (!form.modelo || !form.cuenta_contable || !form.importe_neto || (!form.importe_iva || form.importe_iva_10_5)) ?
+          (!form.modelo || !form.cuenta_contable || !form.importe_neto || (!form.importe_iva && !form.importe_iva_10_5)) ?
             <button
               className={styles.sendBtn}
               disabled
