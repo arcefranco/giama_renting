@@ -154,6 +154,8 @@ const ContratoAlquiler = () => {
         sucursal_vehiculo: '',
         fecha_desde_contrato: fechaDesdePorDefecto,
         fecha_hasta_contrato: fechaHastaPorDefecto,
+        fecha_recibo_deposito: '',
+        fecha_deuda_deposito: '',
       })
     }
   }, [contratoById, id]);
@@ -550,7 +552,7 @@ const ContratoAlquiler = () => {
                 <select name="id_forma_cobro_contrato" disabled={id ? true : false}
                   value={formContrato["id_forma_cobro_contrato"]}
                   onChange={handleChangeContrato} id="">
-                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  <option value={""} disabled>{"Seleccione una opción"}</option>
                   {
                     formasDeCobro?.length && formasDeCobro?.map(e => {
                       return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -578,7 +580,7 @@ const ContratoAlquiler = () => {
                 <select name="id_forma_cobro_contrato_2" disabled={id ? true : false}
                   value={formContrato["id_forma_cobro_contrato_2"]}
                   onChange={handleChangeContrato} id="">
-                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  <option value={""} disabled>{"Seleccione una opción"}</option>
                   {
                     formasDeCobro?.length && formasDeCobro?.map(e => {
                       return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -606,7 +608,7 @@ const ContratoAlquiler = () => {
                 <select name="id_forma_cobro_contrato_3" disabled={id ? true : false}
                   value={formContrato["id_forma_cobro_contrato_3"]}
                   onChange={handleChangeContrato} id="">
-                  <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                  <option value={""} disabled>{"Seleccione una opción"}</option>
                   {
                     formasDeCobro?.length && formasDeCobro?.map(e => {
                       return <option key={e.id} value={e.id}>{e.nombre}</option>

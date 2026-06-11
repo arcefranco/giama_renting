@@ -428,7 +428,7 @@ export const PagosClientes = () => {
                 style={{ fontFamily: "IBM" }}
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
-                scrolling={true}
+                
                 height={300}
 
                 columnAutoWidth={true}>
@@ -459,7 +459,7 @@ export const PagosClientes = () => {
             </div>
             <h2>Alta cobro</h2>
             <div className={styles.formContainer} >
-                <form action="" enctype="multipart/form-data" className={styles.form} style={{
+                <form action="" encType="multipart/form-data" className={styles.form} style={{
                     display: "grid",
                     gridTemplateColumns: "1fr",
                     justifyContent: "space-around"
@@ -478,7 +478,7 @@ export const PagosClientes = () => {
                                 onChange={handleChange}
                                 value={form.id_forma_cobro}
                                 id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                <option value={""} disabled >{"Seleccione una opción"}</option>
                                 {
                                     formasDeCobro?.length && formasDeCobro?.map(e => {
                                         return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -501,7 +501,7 @@ export const PagosClientes = () => {
                                 onChange={handleChange}
                                 value={form.id_forma_cobro_2}
                                 id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                <option value={""} disabled >{"Seleccione una opción"}</option>
                                 {
                                     formasDeCobro?.length && formasDeCobro?.map(e => {
                                         return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -524,7 +524,7 @@ export const PagosClientes = () => {
                                 onChange={handleChange}
                                 value={form.id_forma_cobro_3}
                                 id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                <option value={""} disabled >{"Seleccione una opción"}</option>
                                 {
                                     formasDeCobro?.length && formasDeCobro?.map(e => {
                                         return <option key={e.id} value={e.id}>{e.nombre}</option>

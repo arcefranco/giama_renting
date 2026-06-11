@@ -164,7 +164,7 @@ const ReporteFichasVehiculos = () => {
           dataSource={fichasProcesadas}
           columnAutoWidth={true}
           rowAlternationEnabled={true}
-          scrolling={false}
+          
           showBorders
           className={styles.dataGrid}
           onCellPrepared={(e) => {
