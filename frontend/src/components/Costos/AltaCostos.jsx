@@ -232,11 +232,11 @@ const AltaCostos = () => {
               return data.data.genera_factura == 1 ? "Sí" : "No"
             }} />
           }
-          <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
-          <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
+          <Column dataField="id" name="btn1" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
+          <Column dataField="id" name="btn2" width={100} caption="" alignment="center" cellRender={renderEliminarCell} />
         </DataGrid>
         <h2>Alta de conceptos de {isEgresos ? "egresos" : isIngresos ? "ingresos" : ""}</h2>
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <div className={styles.inputContainer}>
             <span>Concepto</span>
             <input type="text" name='nombre' value={form["nombre"]}

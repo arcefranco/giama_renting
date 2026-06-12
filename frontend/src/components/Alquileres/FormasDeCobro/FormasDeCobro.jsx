@@ -106,7 +106,7 @@ const FormasDeCobro = () => {
           <Column dataField="cuenta_secundaria" caption="Cuenta secundaria" />
         </DataGrid>
         <h2>Alta de formas de cobro</h2>
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <div className={styles.inputContainer}>
             <span>Nombre</span>
             <input type="text" name='nombre' value={form["nombre"]}

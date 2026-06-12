@@ -424,7 +424,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
                 width: "20rem"
               }}>
                 <select name="id_cliente" value={form["id_cliente"]} disabled>
-                  <option value={""} disabled selected>{"Seleccione un cliente"}</option>
+                  <option value={""} disabled >{"Seleccione un cliente"}</option>
                   {
                     clientes?.length && clientes.map(e => (
                       <option key={e.id} value={e.id}>
@@ -512,7 +512,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
             <span>Forma de cobro</span>
             <select name="id_forma_cobro_alquiler_1" value={form["id_forma_cobro_alquiler_1"]}
               onChange={handleChange} id="">
-              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              <option value={""} disabled >{"Seleccione una opción"}</option>
               {
                 formasDeCobro?.length && formasDeCobro?.map(e => {
                   return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -532,7 +532,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
             <span>Forma de cobro</span>
             <select name="id_forma_cobro_alquiler_2" value={form["id_forma_cobro_alquiler_2"]}
               onChange={handleChange} id="">
-              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              <option value={""} disabled >{"Seleccione una opción"}</option>
               {
                 formasDeCobro?.length && formasDeCobro?.map(e => {
                   return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -552,7 +552,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
             <span>Forma de cobro</span>
             <select name="id_forma_cobro_alquiler_3" value={form["id_forma_cobro_alquiler_3"]}
               onChange={handleChange} id="">
-              <option value={""} disabled selected>{"Seleccione una opción"}</option>
+              <option value={""} disabled >{"Seleccione una opción"}</option>
               {
                 formasDeCobro?.length && formasDeCobro?.map(e => {
                   return <option key={e.id} value={e.id}>{e.nombre}</option>

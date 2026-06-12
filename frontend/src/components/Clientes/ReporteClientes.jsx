@@ -38,6 +38,7 @@ const ReporteClientes = () => {
     message,
     resetAction: reset
   })
+  
   const {
     provincias,
     tipos_responsable,
@@ -55,7 +56,6 @@ const ReporteClientes = () => {
 
   const getTipoResponsableCell = (id) => {
     const tipoRes = tipos_responsable.find((m) => m.id == id);
-    console.log(tipos_responsable, id)
     return tipoRes ? tipoRes.nombre : id;
   }
 
@@ -153,13 +153,13 @@ const ReporteClientes = () => {
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={400}>
+        height={700}> 
         <SearchPanel visible={true} highlightCaseSensitive={true} />
         <FilterRow visible={true} />
         <HeaderFilter visible={true} />
         <Export enabled={true} allowExportSelectedData={true} />
         <Scrolling mode="standard" />
-        <Paging defaultPageSize={10} />
+        <Paging defaultPageSize={15} />
         <Column dataField="id" caption="ID" width={60} />
         <Column dataField="nombre" caption="Nombre" width={110} />
         <Column dataField="apellido" caption="Apellido" width={85} />
@@ -196,11 +196,12 @@ const ReporteClientes = () => {
         <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="resolucion_datero" caption="Res. datero" width={200} cellRender={renderResolucion} />
         <Column dataField="usuario_alta" caption="Usuario alta" width={200} />
-        <Column dataField="id" caption="" width={100} alignment="center" cellRender={renderCtaCteCell} />
-        <Column dataField="id" caption="" width={100} alignment="center" cellRender={renderImagenesCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
+        <Column dataField="id" caption="" name="btn1" width={100} alignment="center" cellRender={renderCtaCteCell} />
+        <Column dataField="id" caption="" name="btn2" width={100} alignment="center" cellRender={renderImagenesCell} />
+        <Column dataField="id" width={100} name="btn3" caption="" alignment="center" cellRender={renderModificarCell} />
         <Column
           dataField="id"
+          name="btn4"
           caption="Imprimir"
           width={100}
           alignment="center"

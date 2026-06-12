@@ -31,41 +31,41 @@ const Prorrateo = () => {
     id_forma_cobro: '',
     /**PARA MOSTRAR EN FORM (NETOS PARA CALCULAR TAMBIEN TOTAL C/NETO A MOVPROV)*/
     id_concepto: '',
-    neto_no_gravado: null,
-    neto_21: null,
-    neto_10: null,
-    neto_27: null,
+    neto_no_gravado: "",
+    neto_21: "",
+    neto_10: "",
+    neto_27: "",
     id_concepto_2: '',
-    neto_no_gravado_2: null,
-    neto_21_2: null,
-    neto_10_2: null,
-    neto_27_2: null,
+    neto_no_gravado_2: "",
+    neto_21_2: "",
+    neto_10_2: "",
+    neto_27_2: "",
     id_concepto_3: '',
-    neto_no_gravado_3: null,
-    neto_21_3: null,
-    neto_10_3: null,
-    neto_27_3: null,
-    importe_iva_21: null,
-    importe_iva_10: null,
-    importe_iva_27: null,
-    tasa_IIBB_CABA: null,
-    tasa_IIBB: null,
-    tasa_IVA: null,
-    importe_tasa_IIBB_CABA: null,
-    importe_tasa_IIBB: null,
-    importe_tasa_IVA: null,
+    neto_no_gravado_3: "",
+    neto_21_3: "",
+    neto_10_3: "",
+    neto_27_3: "",
+    importe_iva_21: "",
+    importe_iva_10: "",
+    importe_iva_27: "",
+    tasa_IIBB_CABA: "",
+    tasa_IIBB: "",
+    tasa_IVA: "",
+    importe_tasa_IIBB_CABA: "",
+    importe_tasa_IIBB: "",
+    importe_tasa_IVA: "",
     /**PARA MOSTRAR EN FORM */
-    importe_total: null,
-    importe_neto: null,
-    importe_iva: null,
-    importe_otros_impuestos: null,
+    importe_total: "",
+    importe_neto: "",
+    importe_iva: "",
+    importe_otros_impuestos: "",
     /**MOVIMIENTOS CONTABLES Y COSTOS_INGRESOS */
-    importe_neto_total_1: null,
-    importe_neto_total_2: null,
-    importe_neto_total_3: null,
-    importe_iva_total_1: null,
-    importe_iva_total_2: null,
-    importe_iva_total_3: null,
+    importe_neto_total_1: "",
+    importe_neto_total_2: "",
+    importe_neto_total_3: "",
+    importe_iva_total_1: "",
+    importe_iva_total_2: "",
+    importe_iva_total_3: "",
 
     /**MOVIMIENTOS CONTABLES Y COSTOS_INGRESOS */
     observacion: '',
@@ -187,12 +187,12 @@ const Prorrateo = () => {
         importe_neto: 0,
         importe_iva: 0,
         importe_otros_impuestos: 0,
-        importe_neto_total_1: null,
-        importe_neto_total_2: null,
-        importe_neto_total_3: null,
-        importe_iva_total_1: null,
-        importe_iva_total_2: null,
-        importe_iva_total_3: null,
+        importe_neto_total_1: "",
+        importe_neto_total_2: "",
+        importe_neto_total_3: "",
+        importe_iva_total_1: "",
+        importe_iva_total_2: "",
+        importe_iva_total_3: "",
 
         observacion: '',
         cuenta: '',
@@ -589,7 +589,7 @@ const Prorrateo = () => {
       </div>
       <h4>Vehiculos seleccionados: {form["arrayVehiculos"]?.length}</h4>
       <div className={styles.formContainer}>
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <div className={styles.container6}>
 
             <div className={styles.inputContainer}>
@@ -851,7 +851,7 @@ const Prorrateo = () => {
               <span>Forma de pago</span>
               <select name="id_forma_cobro" disabled={form.cta_cte_proveedores === 1 ? true : false} value={form["id_forma_cobro"]}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                <option value={""} disabled >{"Seleccione una opción"}</option>
                 {
                   formasDeCobro?.length && formasDeCobro?.map(e => {
                     return <option key={e.id} value={e.id}>{e.nombre}</option>
