@@ -317,7 +317,7 @@ const IngresosSeguros = () => {
             <h2>Alta de ingreso</h2>
             <div className={styles.formContainer}>
 
-                <form action="" enctype="multipart/form-data" className={styles.form}>
+                <form action="" encType="multipart/form-data" className={styles.form}>
                     <div className={styles.container5}>
                         <div className={styles.inputContainer}>
                             <span>Fecha</span> <span style={{ fontSize: "9px" }}>(asiento y recibo)</span>
@@ -329,7 +329,7 @@ const IngresosSeguros = () => {
                             <span>Concepto</span>
                             <select name="id_concepto" style={{ width: "130%" }} value={form["id_concepto"]}
                                 onChange={handleChange} id="">
-                                <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+                                <option value={""} disabled >{"Seleccione un concepto"}</option>
                                 {
                                     conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
                                         return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
@@ -341,7 +341,7 @@ const IngresosSeguros = () => {
                             <span>Forma de cobro</span>
                             <select name="id_forma_cobro" value={form.id_forma_cobro}
                                 onChange={handleChange} id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                                <option value={""} disabled >{"Seleccione una opción"}</option>
                                 {
                                     formasDeCobro?.length && formasDeCobro?.map(e => {
                                         return <option key={e.id} value={e.id}>{e.nombre}</option>
