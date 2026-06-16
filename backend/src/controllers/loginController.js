@@ -106,7 +106,7 @@ export const recoveryPass = async (req, res) => {
     }
   );
   if (!emailExistente.length)
-    return res.send({ status: false, message: "Email no registrado" });
+    return res.send({ status: true, message: "Verifique su correo electrónico" });
 
   const payload = {
     email: email,
