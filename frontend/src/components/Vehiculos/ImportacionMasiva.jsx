@@ -19,8 +19,21 @@ useToastFeedback({
 const excel = useRef()
 const handleSubmit = (e) => {
   e.preventDefault();
+  
+  const archivo = excel.current?.files?.[0];
+  if (!archivo) {
+    alert("Por favor, seleccione un archivo Excel.");
+    return;
+  }
+  
+  const extension = archivo.name.split('.').pop().toLowerCase();
+  if (!["xls", "xlsx"].includes(extension)) {
+    alert(`El archivo ${archivo.name} no es válido. Solo se permiten planillas Excel (.xls, .xlsx)`);
+    return;
+  }
+
   dispatch(postVehiculosMasivos({
-    file: excel.current.files[0],
+    file: archivo,
     usuario: username
   }));
 };

@@ -15,9 +15,14 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
-import {validacionCUIT} from "../../helpers/validacionCUIT.js"
+import {validacionCUIT} from "../../helpers/validacionCUIT.js";
+import { validarArchivo } from "../../helpers/validarArchivo.js";
 
 export const postCliente = async (req, res) => {
+  const validacionArchivos = validarArchivo(req.files, ["png", "jpg", "jpeg", "webp", "pdf"], ["image/png", "image/jpeg", "image/webp", "application/pdf"]);
+  if (!validacionArchivos.valido) {
+    return res.send({ status: false, message: validacionArchivos.message });
+  }
   const {
     nombre,
     apellido,
@@ -540,6 +545,11 @@ export const getClientes = async (req, res) => {
 
 export const postImagenesCliente = async (req, res) => {
   try {
+    const validacionArchivos = validarArchivo(req.files, ["png", "jpg", "jpeg", "webp", "pdf"], ["image/png", "image/jpeg", "image/webp", "application/pdf"]);
+    if (!validacionArchivos.valido) {
+      return res.send({ status: false, message: validacionArchivos.message });
+    }
+
     const { id } = req.body;
     const files = req.files;
 
