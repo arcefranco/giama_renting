@@ -204,7 +204,7 @@ const FichaCtaCte = () => {
             <div className={styles.containerFicha}>
                 {!isLoading && clientes.map(c => {
                     let saldoCorriente = 0;
-                    const detalleConSaldo = c.detalle.map(m => {
+                    const detalleConSaldo = c.detalle?.map(m => {
                         saldoCorriente += (Number(m.debe) || 0) - (Number(m.haber) || 0);
                         return { ...m, saldoCorriente };
                     });
@@ -244,7 +244,7 @@ const FichaCtaCte = () => {
                                         <td>Haber</td>
                                         <td>Saldo</td>
                                     </tr>
-                                    {detalleConSaldo.map((m, i) => (
+                                    {detalleConSaldo?.map((m, i) => (
                                         <tr key={i} className={styles.detalleRow}>
                                             <td>{m.fecha}</td>
                                             <td className={styles.concepto}>{m.concepto}</td>
