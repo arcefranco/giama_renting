@@ -278,8 +278,20 @@ const VehiculosForm = () => {
 
 
   const handleFileChange = (e) => {
-    const nuevosArchivos = Array.from(e.target.files);
-    setImagenes((prev) => [...prev, ...nuevosArchivos]);
+    const archivosSeleccionados = Array.from(e.target.files);
+    const archivosValidos = [];
+    const extensionesValidas = ["png", "jpg", "jpeg", "webp", "pdf"];
+    
+    for (const archivo of archivosSeleccionados) {
+      const extension = archivo.name.split('.').pop().toLowerCase();
+      if (!extensionesValidas.includes(extension)) {
+        alert(`El archivo ${archivo.name} no es válido. Extensiones permitidas: ${extensionesValidas.join(", ")}`);
+      } else {
+        archivosValidos.push(archivo);
+      }
+    }
+
+    setImagenes((prev) => [...prev, ...archivosValidos]);
 
     // Limpiá el value del input para permitir volver a subir el mismo archivo si se desea
     e.target.value = null;

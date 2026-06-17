@@ -28,6 +28,7 @@ import {
 import { validarCamposObligatorios } from "../../helpers/verificarCampoObligatorio.js";
 import { uploadImagesToS3 } from "../../helpers/s3Services.js";
 import { movimientosProveedores } from "../../helpers/movimientosProveedores.js";
+import { validarArchivo } from "../../helpers/validarArchivo.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
 import * as xlsx from "xlsx";
 
@@ -930,6 +931,10 @@ export const getVehiculosById = async (req, res) => {
 
 export const postVehiculo = async (req, res) => {
   try {
+    const validacionArchivos = validarArchivo(req.files, ["png", "jpg", "jpeg", "webp", "pdf"], ["image/png", "image/jpeg", "image/webp", "application/pdf"]);
+    if (!validacionArchivos.valido) {
+      return res.send({ status: false, message: validacionArchivos.message });
+    }
     const result = await insertVehiculo(req);
     return res.send(result);
   } catch (error) {
@@ -940,6 +945,11 @@ export const postVehiculo = async (req, res) => {
 
 export const postImagenesVehiculo = async (req, res) => {
   try {
+    const validacionArchivos = validarArchivo(req.files, ["png", "jpg", "jpeg", "webp", "pdf"], ["image/png", "image/jpeg", "image/webp", "application/pdf"]);
+    if (!validacionArchivos.valido) {
+      return res.send({ status: false, message: validacionArchivos.message });
+    }
+
     const { id } = req.body;
     const files = req.files;
 
@@ -1853,6 +1863,12 @@ LEFT JOIN conceptos_costos cc ON cc.id = ci.id_concepto AND (cc.activable = 0 OR
 
 export const postVehiculosMasivos = async (req, res) => {
   try {
+    if (req.file) {
+      const validacionArchivos = validarArchivo(req.file, ["xls", "xlsx"], ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]);
+      if (!validacionArchivos.valido) {
+        return res.send({ status: false, message: validacionArchivos.message });
+      }
+    }
     if (!req.file) {
       return res.send({
         status: false,

@@ -11,7 +11,20 @@ const ImageUploader = ({ idVehiculo, dispatchAction }) => {
     setImagenes((prev) => prev.filter((_, i) => i !== index));
   };
   const handleFileChange = (e) => {
-    setImagenes((prev) => [...prev, ...Array.from(e.target.files)]);
+    const archivosSeleccionados = Array.from(e.target.files);
+    const archivosValidos = [];
+    const extensionesValidas = ["png", "jpg", "jpeg", "webp", "pdf"];
+    
+    for (const archivo of archivosSeleccionados) {
+      const extension = archivo.name.split('.').pop().toLowerCase();
+      if (!extensionesValidas.includes(extension)) {
+        alert(`El archivo ${archivo.name} no es válido. Extensiones permitidas: ${extensionesValidas.join(", ")}`);
+      } else {
+        archivosValidos.push(archivo);
+      }
+    }
+
+    setImagenes((prev) => [...prev, ...archivosValidos]);
   };
 
   const subirImagenes = async () => {
