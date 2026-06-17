@@ -12,7 +12,7 @@ export const sendEmail = async (email, token) => {
       subject: "Crear contraseña",
       template: "index",
       context: {
-        text: process.env.HOST + "/password/" + token + "/",
+        text: process.env.HOST + "/password/" + token,
       },
     });
   } catch (error) {

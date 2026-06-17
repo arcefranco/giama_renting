@@ -712,7 +712,6 @@ const Ingresos = () => {
         style={{ fontFamily: "IBM" }}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
-        scrolling={true}
         height={300}
 
         columnAutoWidth={true}>
@@ -756,7 +755,7 @@ const Ingresos = () => {
       <h2>Alta de ingresos del vehículo</h2>
       <div className={styles.formContainer}>
 
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <div className={styles.container3}>
             <div className={styles.inputContainer}>
               <span>Fecha factura</span> <span style={{ fontSize: "9px" }}>(y asientos x deuda)</span>
@@ -775,7 +774,7 @@ const Ingresos = () => {
               <span>Concepto</span>
               <select name="id_concepto" style={{ width: "130%" }} value={form["id_concepto"]}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+                <option value={""} disabled >{"Seleccione un concepto"}</option>
                 {
                   conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
                     return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
@@ -811,6 +810,7 @@ const Ingresos = () => {
               <input
                 type="checkbox"
                 checked={generaFactura}
+                readOnly
               />
 
             </div>
@@ -820,7 +820,7 @@ const Ingresos = () => {
               <span>Concepto</span>
               <select name="id_concepto_2" style={{ width: "130%" }} value={form["id_concepto_2"]}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+                <option value={""} disabled >{"Seleccione un concepto"}</option>
                 {
                   conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
                     return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
@@ -855,6 +855,7 @@ const Ingresos = () => {
               <input
                 type="checkbox"
                 checked={generaFactura2}
+                readOnly
               />
 
             </div>
@@ -864,7 +865,7 @@ const Ingresos = () => {
               <span>Concepto</span>
               <select name="id_concepto_3" style={{ width: "130%" }} value={form["id_concepto_3"]}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione un concepto"}</option>
+                <option value={""} disabled >{"Seleccione un concepto"}</option>
                 {
                   conceptosFiltrados?.length && conceptosFiltrados?.map(e => {
                     return <option key={e.id} value={e.id}>{e.id} - {e.nombre}</option>
@@ -899,6 +900,7 @@ const Ingresos = () => {
               <input
                 type="checkbox"
                 checked={generaFactura3}
+                readOnly
               />
 
             </div>
@@ -912,7 +914,7 @@ const Ingresos = () => {
           </div>
 
         </form>
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <h2>Pago</h2>
           <div className={styles.container3}>
             <div className={styles.inputContainer}>
@@ -926,7 +928,7 @@ const Ingresos = () => {
               <span>Forma de cobro</span>
               <select name="id_forma_cobro_1" value={form.id_forma_cobro_1}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                <option value={""} disabled >{"Seleccione una opción"}</option>
                 {
                   formasDeCobro?.length && formasDeCobro?.map(e => {
                     return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -945,7 +947,7 @@ const Ingresos = () => {
               <span>Forma de cobro</span>
               <select name="id_forma_cobro_2" value={form.id_forma_cobro_2}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                <option value={""} disabled >{"Seleccione una opción"}</option>
                 {
                   formasDeCobro?.length && formasDeCobro?.map(e => {
                     return <option key={e.id} value={e.id}>{e.nombre}</option>
@@ -964,7 +966,7 @@ const Ingresos = () => {
               <span>Forma de cobro</span>
               <select name="id_forma_cobro_3" value={form.id_forma_cobro_3}
                 onChange={handleChange} id="">
-                <option value={""} disabled selected>{"Seleccione una opción"}</option>
+                <option value={""} disabled >{"Seleccione una opción"}</option>
                 {
                   formasDeCobro?.length && formasDeCobro?.map(e => {
                     return <option key={e.id} value={e.id}>{e.nombre}</option>

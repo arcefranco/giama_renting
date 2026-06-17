@@ -37,8 +37,7 @@ const getEstadoDeuda = async (form, header = {}) => {
       ? data
       : { status: false, message: "Formato inesperado en la respuesta." };
   } catch (error) {
-    console.log(error)
-    return ServiceErrorHandler(error, route);
+    return ServiceErrorHandler(error, "ctacte/getEstadoDeuda");
   }
 }
 

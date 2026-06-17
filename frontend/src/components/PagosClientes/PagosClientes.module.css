@@ -5,6 +5,22 @@
     overflow-y: auto;
 }
 
+@keyframes spinAnimation {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spinAnimation 0.7s linear infinite;
+}
+
 .dataGrid {
     font-family: 'Segoe UI', sans-serif;
     border-radius: 6px;
@@ -288,7 +304,7 @@
 
 .detalleRow {
     display: grid;
-    grid-template-columns: 110px 1fr 110px 110px 110px;
+    grid-template-columns: 110px 1fr 110px 110px 110px 110px;
     gap: 6px;
     padding: 6px 10px;
     font-size: 11px;

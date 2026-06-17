@@ -35,6 +35,8 @@ export const PagosClientes = () => {
         observacion: '',
     })
     const [saldoActual, setSaldoActual] = useState(0)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [errorsInputs, setErrorsInputs] = useState({})
     const dispatch = useDispatch()
     useEffect(() => {
         Promise.all([
@@ -188,24 +190,11 @@ export const PagosClientes = () => {
 
     }, [isError, isSuccess, codigo])
     const onSuccess = () => {
-        setForm((prev) => {
-            return {
-                id_cliente: id ? id : prev.id_cliente ? prev.id_cliente : "",
-                fecha: '',
-                usuario: username,
-                id_forma_cobro: '',
-                id_forma_cobro_2: '',
-                id_forma_cobro_3: '',
-                importe_cobro: '',
-                importe_cobro_2: '',
-                importe_cobro_3: '',
-                observacion: '',
-            }
-        })
+        closeModal()
+        
         if (id) {
             dispatch(getCtaCteCliente({ id_cliente: id }))
-        }
-        if (form.id_cliente) {
+        } else if (form.id_cliente) {
             dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
         }
     }
@@ -247,21 +236,54 @@ export const PagosClientes = () => {
             [name]: value,
         });
     };
+    const closeModal = () => {
+        setIsModalOpen(false)
+        setForm(prev => ({
+            id_cliente: id ? id : prev.id_cliente ? prev.id_cliente : '',
+            fecha: '',
+            usuario: username,
+            id_forma_cobro: '',
+            id_forma_cobro_2: '',
+            id_forma_cobro_3: '',
+            importe_cobro: '',
+            importe_cobro_2: '',
+            importe_cobro_3: '',
+            observacion: '',
+        }))
+        setErrorsInputs({})
+    }
+    const openModal = () => {
+        setForm(prev => ({
+            ...prev,
+            fecha: '',
+            id_forma_cobro: '',
+            id_forma_cobro_2: '',
+            id_forma_cobro_3: '',
+            importe_cobro: '',
+            importe_cobro_2: '',
+            importe_cobro_3: '',
+            observacion: '',
+        }))
+        setErrorsInputs({})
+        setIsModalOpen(true)
+    }
     const handleSubmit = () => {
-        if (form.fecha && form.id_cliente && form.importe_cobro && form.id_forma_cobro) {
-            dispatch(postPago(form))
-        } else {
-            toast.info("Completar los campos obligatorios", {
-                position: "bottom-center",
-                autoClose: 2000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
+        // Cliente: toast porque el select queda detrás del modal
+        if (!id && !form.id_cliente) {
+            toast.warning("Seleccioná un cliente antes de registrar el cobro", {
+                position: "top-center",
+                autoClose: 3000,
                 theme: "colored",
             })
+            return
         }
+        const newErrors = validate()
+        if (Object.keys(newErrors).length) {
+            setErrorsInputs(newErrors)
+            return
+        }
+        dispatch(postPago(form))
+        // No cerramos el modal acá — onSuccess lo cierra cuando llega la respuesta
     }
     const handleEstadoDeuda = (id, tipo) => {
         dispatch(getEstadoDeuda({ id: id, tipo: tipo }))
@@ -356,10 +378,17 @@ export const PagosClientes = () => {
             dispatch(getCtaCteCliente({ id_cliente: id }))
         }
     }
+    const validate = () => {
+        const newErrors = {}
+        if (!form.fecha) newErrors.fecha = "La fecha es obligatoria"
+        if (!form.id_forma_cobro) newErrors.id_forma_cobro = "Seleccioná una forma de cobro"
+        if (!form.importe_cobro) newErrors.importe_cobro = "El importe es obligatorio"
+        return newErrors
+    }
     return (
 
         <div className={styles.container}>
-            <ToastContainer />
+            <ToastContainer style={{ zIndex: 99999 }} />
             {isLoading && (
                 <div className={styles.spinnerOverlay}>
                     <ClipLoader
@@ -373,7 +402,8 @@ export const PagosClientes = () => {
             <h2>Cobros clientes</h2>
             <div style={{
                 display: "flex",
-                columnGap: "15rem"
+                alignItems: "center",
+                justifyContent: "space-between"
             }}>
                 {
                     !id &&
@@ -396,6 +426,7 @@ export const PagosClientes = () => {
                                         ...prevForm,
                                         id_cliente: option?.value || "",
                                     }));
+                                    setErrorsInputs(p => ({ ...p, id_cliente: undefined }))
                                 }}
                                 placeholder="Seleccione un cliente"
                                 filterOption={(option, inputValue) =>
@@ -404,7 +435,11 @@ export const PagosClientes = () => {
                                 styles={customStyles}
 
                             />
-
+                            {errorsInputs.id_cliente && (
+                                <span style={{ color: "#d32f2f", fontSize: "11px", marginTop: "4px", display: "block" }}>
+                                    {errorsInputs.id_cliente}
+                                </span>
+                            )}
 
                         </div>
                     </div>
@@ -416,11 +451,16 @@ export const PagosClientes = () => {
                         </h2>)
                 }
 
+                <button
+                    onClick={openModal}
+                    className={styles.refreshButton}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                >
+                    <span style={{ fontSize: "16px", lineHeight: 1, fontWeight: 400 }}>+</span>
+                    Alta de cobro
+                </button>
             </div>
 
-            <button className={styles.refreshButton} onClick={handleActualizar}>
-                🔄 Actualizar
-            </button>
             <DataGrid
                 className={styles.dataGrid}
                 dataSource={ctacteCliente ? ctacteCliente : null}
@@ -428,7 +468,7 @@ export const PagosClientes = () => {
                 style={{ fontFamily: "IBM" }}
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
-                scrolling={true}
+
                 height={300}
 
                 columnAutoWidth={true}>
@@ -457,105 +497,203 @@ export const PagosClientes = () => {
                     }
                 </p>
             </div>
-            <h2>Alta cobro</h2>
-            <div className={styles.formContainer} >
-                <form action="" enctype="multipart/form-data" className={styles.form} style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr",
-                    justifyContent: "space-around"
-                }}>
-                    <div className={styles.inputContainer}>
-                        <div style={{ display: "flex", flexDirection: "row", placeItems: "center", justifyContent: "space-between" }}>
-                            <span>Fecha</span> <span style={{ fontSize: "9px" }}>(asientos y recibo)</span>
-                        </div>
-                        <input type="date" value={form.fecha} onChange={handleChange} name='fecha' />
-                    </div>
-                    <div></div>
-                    <div style={{ display: "flex" }}>
-                        <div className={styles.inputContainer}>
-                            <span>Forma de cobro</span>
-                            <select name="id_forma_cobro"
-                                onChange={handleChange}
-                                value={form.id_forma_cobro}
-                                id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
-                                {
-                                    formasDeCobro?.length && formasDeCobro?.map(e => {
-                                        return <option key={e.id} value={e.id}>{e.nombre}</option>
-                                    })
-                                }
-                            </select>
-                        </div>
 
-
-                        <div className={styles.inputContainer}>
-                            <span>Importe</span>
-                            <input type="number" value={form.importe_cobro} name='importe_cobro' onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div></div>
-                    <div style={{ display: "flex" }}>
-                        <div className={styles.inputContainer}>
-                            <span>Forma de cobro</span>
-                            <select name="id_forma_cobro_2"
-                                onChange={handleChange}
-                                value={form.id_forma_cobro_2}
-                                id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
-                                {
-                                    formasDeCobro?.length && formasDeCobro?.map(e => {
-                                        return <option key={e.id} value={e.id}>{e.nombre}</option>
-                                    })
-                                }
-                            </select>
-                        </div>
-
-
-                        <div className={styles.inputContainer}>
-                            <span>Importe</span>
-                            <input type="number" value={form.importe_cobro_2} name='importe_cobro_2' onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div></div>
-                    <div style={{ display: "flex" }}>
-                        <div className={styles.inputContainer}>
-                            <span>Forma de cobro</span>
-                            <select name="id_forma_cobro_3"
-                                onChange={handleChange}
-                                value={form.id_forma_cobro_3}
-                                id="">
-                                <option value={""} disabled selected>{"Seleccione una opción"}</option>
-                                {
-                                    formasDeCobro?.length && formasDeCobro?.map(e => {
-                                        return <option key={e.id} value={e.id}>{e.nombre}</option>
-                                    })
-                                }
-                            </select>
-                        </div>
-
-
-                        <div className={styles.inputContainer}>
-                            <span>Importe</span>
-                            <input type="number" value={form.importe_cobro_3} name='importe_cobro_3' onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div></div>
-
-
-                    <div className={styles.inputContainer}>
-                        <span>Observacion</span>
-                        <textarea value={form.observacion} name='observacion' onChange={handleChange} />
-                    </div>
-                    {/*    </div> */}
-                </form>
-                <button
-                    className={styles.sendBtn}
-                    onClick={handleSubmit}
+            {isModalOpen && (
+                <div
+                    onClick={e => e.target === e.currentTarget && closeModal()}
+                    style={{
+                        position: "fixed",
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.55)",
+                        backdropFilter: "blur(3px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 1000
+                    }}
                 >
-                    Enviar
-                </button>
+                    <div style={{
+                        backgroundColor: "#fff",
+                        borderRadius: "12px",
+                        boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+                        width: "520px",
+                        maxWidth: "95vw",
+                        maxHeight: "90vh",
+                        overflowY: "auto",
+                        display: "flex",
+                        flexDirection: "column"
+                    }}>
+                        {/* Header del modal */}
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "20px 24px",
+                            borderBottom: "1px solid #f0f0f0",
+                            backgroundColor: "#800000",
+                            borderRadius: "12px 12px 0 0"
+                        }}>
+                            <h3 style={{ margin: 0, color: "#fff", fontSize: "17px", fontWeight: 600 }}>
+                                Alta de cobro
+                            </h3>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                style={{
+                                    background: "rgba(255,255,255,0.2)",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: "32px", height: "32px",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    cursor: "pointer",
+                                    fontSize: "18px",
+                                    color: "#fff",
+                                    lineHeight: 1,
+                                    transition: "background 0.2s"
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.35)"}
+                                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                            >
+                                &times;
+                            </button>
+                        </div>
 
-            </div>
+                        {/* Cuerpo del modal */}
+                        <form action="" encType="multipart/form-data" style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0",
+                            padding: "24px"
+                        }}>
+                            {/* Fecha */}
+                            <div style={{ marginBottom: "16px" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                    Fecha <span style={{ color: "#999", fontWeight: 400, textTransform: "none" }}>(asientos y recibo)</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    value={form.fecha}
+                                    onChange={(e) => { handleChange(e); setErrorsInputs(p => ({ ...p, fecha: undefined })) }}
+                                    name='fecha'
+                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: `1px solid ${errorsInputs.fecha ? "#d32f2f" : "#ddd"}`, fontSize: "14px" }}
+                                />
+                                {errorsInputs.fecha && <span style={{ color: "#d32f2f", fontSize: "11px", marginTop: "4px", display: "block" }}>{errorsInputs.fecha}</span>}
+                            </div>
+
+                            {/* Separador de sección */}
+                            <p style={{ margin: "8px 0 14px", fontSize: "12px", fontWeight: 700, color: "#800000", textTransform: "uppercase", letterSpacing: "0.8px", borderBottom: "2px solid #f0e0e0", paddingBottom: "6px" }}>
+                                Medios de pago
+                            </p>
+
+                            {/* Fila 1 */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px", marginBottom: "12px" }}>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Forma de cobro 1</label>
+                                    <select name="id_forma_cobro"
+                                        onChange={(e) => { handleChange(e); setErrorsInputs(p => ({ ...p, id_forma_cobro: undefined })) }}
+                                        value={form.id_forma_cobro}
+                                        style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: `1px solid ${errorsInputs.id_forma_cobro ? "#d32f2f" : "#ddd"}`, fontSize: "14px" }}>
+                                        <option value="" disabled>Seleccione...</option>
+                                        {formasDeCobro?.length && formasDeCobro.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                                    </select>
+                                    {errorsInputs.id_forma_cobro && <span style={{ color: "#d32f2f", fontSize: "11px", marginTop: "4px", display: "block" }}>{errorsInputs.id_forma_cobro}</span>}
+                                </div>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Importe</label>
+                                    <input type="number" value={form.importe_cobro} name='importe_cobro'
+                                        onChange={(e) => { handleChange(e); setErrorsInputs(p => ({ ...p, importe_cobro: undefined })) }}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: `1px solid ${errorsInputs.importe_cobro ? "#d32f2f" : "#ddd"}`, fontSize: "14px" }} />
+                                    {errorsInputs.importe_cobro && <span style={{ color: "#d32f2f", fontSize: "11px", marginTop: "4px", display: "block" }}>{errorsInputs.importe_cobro}</span>}
+                                </div>
+                            </div>
+
+                            {/* Fila 2 */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px", marginBottom: "12px" }}>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Forma de cobro 2</label>
+                                    <select name="id_forma_cobro_2" onChange={handleChange} value={form.id_forma_cobro_2}
+                                        style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}>
+                                        <option value="" disabled>Seleccione...</option>
+                                        {formasDeCobro?.length && formasDeCobro.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Importe</label>
+                                    <input type="number" value={form.importe_cobro_2} name='importe_cobro_2' onChange={handleChange}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }} />
+                                </div>
+                            </div>
+
+                            {/* Fila 3 */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px", marginBottom: "16px" }}>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Forma de cobro 3</label>
+                                    <select name="id_forma_cobro_3" onChange={handleChange} value={form.id_forma_cobro_3}
+                                        style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}>
+                                        <option value="" disabled>Seleccione...</option>
+                                        {formasDeCobro?.length && formasDeCobro.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Importe</label>
+                                    <input type="number" value={form.importe_cobro_3} name='importe_cobro_3' onChange={handleChange}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }} />
+                                </div>
+                            </div>
+
+                            {/* Observación */}
+                            <div style={{ marginBottom: "24px" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Observación</label>
+                                <textarea
+                                    value={form.observacion}
+                                    name='observacion'
+                                    onChange={handleChange}
+                                    rows={3}
+                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", resize: "vertical", fontFamily: "inherit" }}
+                                />
+                            </div>
+
+                            {/* Footer del modal */}
+                            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                                <button
+                                    type="button"
+                                    onClick={() => closeModal()}
+                                    disabled={isLoading}
+                                    style={{
+                                        padding: "10px 20px", borderRadius: "8px",
+                                        border: "1px solid #ddd", background: "#fff",
+                                        color: isLoading ? "#bbb" : "#555", fontSize: "14px", fontWeight: 600,
+                                        cursor: isLoading ? "not-allowed" : "pointer"
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSubmit}
+                                    disabled={isLoading}
+                                    style={{
+                                        display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                                        padding: "10px 24px", borderRadius: "8px",
+                                        border: "none",
+                                        backgroundColor: isLoading ? "#b36060" : "#800000",
+                                        color: "#fff", fontSize: "14px", fontWeight: 600,
+                                        cursor: isLoading ? "not-allowed" : "pointer",
+                                        boxShadow: "0 4px 12px rgba(128,0,0,0.3)",
+                                        position: "relative"
+                                    }}
+                                    onMouseEnter={e => { if (!isLoading) e.currentTarget.style.backgroundColor = "#a00000" }}
+                                    onMouseLeave={e => { if (!isLoading) e.currentTarget.style.backgroundColor = "#800000" }}
+                                >
+                                    <span style={{ visibility: isLoading ? "hidden" : "visible" }}>Confirmar cobro</span>
+                                    {isLoading && (
+                                        <span className={styles.spinner} style={{ position: "absolute" }}></span>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -57,6 +57,8 @@ const ReporteContratos = () => {
     resetAction: reset,
   })
 
+
+
   useEffect(() => {
     dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: form.vigentes }))
   }, [form.vigentes]);
@@ -91,7 +93,10 @@ const ReporteContratos = () => {
   const renderCliente = (data) => {
     if (data.value) {
       const cliente = clientes?.find(e => e.id == data.value)
-      let nombre_final = cliente?.nombre ? `${cliente.nombre} ${cliente.apellido}` : `${cliente.razon_social}`
+      // Guard añadido para evitar el crash "Cannot read properties of undefined (reading 'razon_social')"
+      // Esto ocurre si el contrato tiene un id_cliente que ya no existe en la lista de clientes.
+      if (!cliente) return <div><span>CLIENTE NO ENCONTRADO</span></div>;
+      let nombre_final = cliente.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente.razon_social || "SIN DATOS");
       return <div>
         <span>{nombre_final}</span>
       </div>
@@ -207,7 +212,9 @@ const ReporteContratos = () => {
   const getClienteExportValue = (id_cliente) => {
     if (!id_cliente) return '';
     const cliente = clientes?.find(e => e.id == id_cliente);
-    return cliente ? `${cliente.nombre} ${cliente.apellido}` : '';
+    // Guard añadido para la exportación a Excel, previene el mismo crash de undefined
+    if (!cliente) return "CLIENTE NO ENCONTRADO";
+    return cliente.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente.razon_social || "SIN DATOS");
   };
 
   // Fechas: YYYY-MM-DD a DD/MM/YYYY

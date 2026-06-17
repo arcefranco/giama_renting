@@ -113,7 +113,7 @@ const Modelos = () => {
           <Column dataField="id_modelo" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
         </DataGrid>
         <h2>Alta de modelos</h2>
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <div className={styles.inputContainer}>
             <span>Nombre</span>
             <input type="text" name='nombre' value={form["nombre"]}

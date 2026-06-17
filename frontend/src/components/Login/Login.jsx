@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './Login.module.css';
 import tick from '../../assets/tick.png';
 import cross from '../../assets/cross.png';
 import Eye from '../../assets/Eye.svg';
 import EyeHidden from '../../assets/Eye-Hidden.svg';
 import Car from "../../assets/Vector.png"
-import { logIn } from '../../reducers/Login/loginSlice';
+import { logIn , reset} from '../../reducers/Login/loginSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -13,15 +13,27 @@ import { getContratosAVencer } from '../../reducers/Alquileres/alquileresSlice';
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { status, message, isSuccess, isError, roles } = useSelector(state => state.loginReducer)
+  const { status, message, isSuccess, isError, roles, isLoading } = useSelector(state => state.loginReducer)
   const [email, setEmail] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
 
-    if (!isError && message) {
-      toast.error(message, {
+    if (isError && message) {
+      let mensajeParaUsuario = "Ocurrio un error inesperado. Por favor, intenta nuevamente."
+      const errorString = typeof message === 'string' ? message : JSON.stringify(message)
+      if (errorString.includes("SequelizeConnectionError") || errorString.includes("ETIMEDOUT")) {
+        mensajeParaUsuario = "No se pudo conectar con el servidor. Intentá más tarde.";
+      } else if (errorString.toLowerCase().includes("credentials") || errorString.toLowerCase().includes("incorrect")) {
+        // ACÁ poné la palabra clave que usa tu backend cuando la contraseña está mal
+        mensajeParaUsuario = "Usuario o contraseña incorrectos.";
+      } else {
+        // Si es un string normal y limpio, lo mostramos (ej: "El usuario no existe")
+        mensajeParaUsuario = message;
+      }
+
+      toast.error(mensajeParaUsuario, {
         position: "bottom-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -33,11 +45,12 @@ const Login = () => {
       })
     }
 
+    dispatch(reset())
 
-
-  }, [isError])
+  }, [isError,message,dispatch])
 
   useEffect(() => {
+
     if (isSuccess && status) {
       if (roles.includes("1") || roles.includes("2")) {
         dispatch(getContratosAVencer())
@@ -103,11 +116,15 @@ const Login = () => {
           </div>
           <a className={styles.a} href="/recovery">¿Olvidaste tu contraseña?</a>
           {
-            isValidEmail ?
+            isLoading ? (
+              <button className={styles.buttonLoading} disabled><div className={styles.loading}><div className={styles.spinner}></div></div></button>
+            ) : isValidEmail ? (
               <button className={styles.button} onClick={handleSubmit}>Ingresar</button>
-              :
-              <button className={styles.buttonDisabled}>Ingresar</button>
+            ) : (
+              <button className={styles.buttonDisabled} disabled>Ingresar</button>
+            )
           }
+
         </div>
       </form>
       <div className={styles.svg}><img src={Car} style={{ width: "17rem" }} alt="" /></div>

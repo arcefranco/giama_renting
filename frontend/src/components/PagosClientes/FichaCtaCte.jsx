@@ -49,7 +49,7 @@ const FichaCtaCte = () => {
         setClientes(
             clientesBase.filter(c =>
                 c.nombre_cliente
-                    .toLowerCase()
+                    ?.toLowerCase()
                     .includes(filtro.toLowerCase())
             )
         );
@@ -100,7 +100,7 @@ const FichaCtaCte = () => {
             // ENCABEZADOS
             // =========================
             const headerRow = ws.getRow(rowIndex);
-            const headers = ["Fecha", "Concepto", "Debe", "Haber"];
+            const headers = ["Fecha", "Concepto", "Debe", "Haber", "Saldo"];
 
             headers.forEach((h, i) => {
                 const cell = headerRow.getCell(i + 1);
@@ -119,6 +119,7 @@ const FichaCtaCte = () => {
             // =========================
             // DETALLE (AGRUPADO)
             // =========================
+            let saldoCorriente = 0;
             cliente.detalle.forEach((mov) => {
                 const row = ws.getRow(rowIndex);
                 if (mov.fecha) {
@@ -134,6 +135,9 @@ const FichaCtaCte = () => {
                 row.getCell(2).value = mov.concepto || "";
                 row.getCell(3).value = mov.debe ? Math.trunc(mov.debe) : "";
                 row.getCell(4).value = mov.haber ? Math.trunc(mov.haber) : "";
+                saldoCorriente += (Number(mov.debe) || 0) - (Number(mov.haber) || 0);
+                row.getCell(5).value = Math.trunc(saldoCorriente);
+                row.getCell(5).numFmt = '#,##0';
 
                 row.outlineLevel = 1; // 👈 hace plegable
 
@@ -151,6 +155,8 @@ const FichaCtaCte = () => {
         ws.columns = [
             { width: 15 },
             { width: 50 },
+            { width: 18 },
+            { width: 15 },
             { width: 15 },
             { width: 15 },
         ];
@@ -196,54 +202,63 @@ const FichaCtaCte = () => {
             </div>
             {isLoading && <ClipLoader />}
             <div className={styles.containerFicha}>
-                {!isLoading && clientes.map(c => (
-                    <div key={c.id_cliente} className={styles.clienteCard}>
-                        {/* CABECERA */}
-                        <div
-                            className={styles.header}
-                            onClick={() => toggle(c.id_cliente)}
-                        >
-                            <span className={styles.nombre}>{c.nombre_cliente}</span>
-
-                            <span
-                                className={
-                                    c.saldo < 0 ? styles.saldoNegativo : styles.saldoPositivo
-                                }
+                {!isLoading && clientes.map(c => {
+                    let saldoCorriente = 0;
+                    const detalleConSaldo = c.detalle.map(m => {
+                        saldoCorriente += (Number(m.debe) || 0) - (Number(m.haber) || 0);
+                        return { ...m, saldoCorriente };
+                    });
+                    return (
+                        <div key={c.id_cliente} className={styles.clienteCard}>
+                            {/* CABECERA */}
+                            <div
+                                className={styles.header}
+                                onClick={() => toggle(c.id_cliente)}
                             >
-                                {/*           {c.saldo < 0 ? "Debe" : "A favor"}:{" "} */}
-                                {c.saldo < 0
-                                    ? `(${Math.abs(Math.trunc(c.saldo)).toLocaleString("es-AR")})`
-                                    : Math.trunc(c.saldo).toLocaleString("es-AR")
-                                }
-                            </span>
-                        </div>
+                                <span className={styles.nombre}>{c.nombre_cliente}</span>
 
-                        {/* DETALLE */}
-                        {open[c.id_cliente] && (
-                            <div className={styles.detalleBox}>
-                                <tr className={styles.detalleRow} style={{
-                                    background: "#c7c7c7", position: "sticky",
-                                    top: 0, right: 0
-                                }}>
-                                    <td>Fecha</td>
-                                    <td>Detalle</td>
-                                    <td>Nro recibo/factura</td>
-                                    <td>Debe</td>
-                                    <td>Haber</td>
-                                </tr>
-                                {c.detalle.map((m, i) => (
-                                    <tr key={i} className={styles.detalleRow}>
-                                        <td>{m.fecha}</td>
-                                        <td className={styles.concepto}>{m.concepto}</td>
-                                        <td className={styles.concepto}>{m.nro_comprobante}</td>
-                                        <td>{Math.abs(m.debe) != 0 ? Math.trunc(m.debe).toLocaleString("es-AR") : ""}</td>
-                                        <td>{Math.abs(m.haber) != 0 ? Math.trunc(m.haber).toLocaleString("es-AR") : ""}</td>
-                                    </tr>
-                                ))}
+                                <span
+                                    className={
+                                        c.saldo < 0 ? styles.saldoNegativo : styles.saldoPositivo
+                                    }
+                                >
+                                    {/*           {c.saldo < 0 ? "Debe" : "A favor"}:{" "} */}
+                                    {c.saldo < 0
+                                        ? `(${Math.abs(Math.trunc(c.saldo)).toLocaleString("es-AR")})`
+                                        : Math.trunc(c.saldo).toLocaleString("es-AR")
+                                    }
+                                </span>
                             </div>
-                        )}
-                    </div>
-                ))}
+
+                            {/* DETALLE */}
+                            {open[c.id_cliente] && (
+                                <div className={styles.detalleBox}>
+                                    <tr className={styles.detalleRow} style={{
+                                        background: "#c7c7c7", position: "sticky",
+                                        top: 0, right: 0
+                                    }}>
+                                        <td>Fecha</td>
+                                        <td>Detalle</td>
+                                        <td>Nro recibo/factura</td>
+                                        <td>Debe</td>
+                                        <td>Haber</td>
+                                        <td>Saldo</td>
+                                    </tr>
+                                    {detalleConSaldo.map((m, i) => (
+                                        <tr key={i} className={styles.detalleRow}>
+                                            <td>{m.fecha}</td>
+                                            <td className={styles.concepto}>{m.concepto}</td>
+                                            <td className={styles.concepto}>{m.nro_comprobante}</td>
+                                            <td>{Math.abs(m.debe) != 0 ? Math.trunc(m.debe).toLocaleString("es-AR") : ""}</td>
+                                            <td>{Math.abs(m.haber) != 0 ? Math.trunc(m.haber).toLocaleString("es-AR") : ""}</td>
+                                            <td>{Math.trunc(m.saldoCorriente).toLocaleString("es-AR")}</td>
+                                        </tr>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
 
             </div>
         </div>

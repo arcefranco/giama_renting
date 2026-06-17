@@ -66,14 +66,14 @@ const Alertas = () => {
                     </div>
                 )}
                 <h2>Alta de alertas</h2>
-                <form action="" enctype="multipart/form-data" className={styles.form}>
+                <form action="" encType="multipart/form-data" className={styles.form}>
                     <div className={styles.inputContainer}>
                         <span>Usuario</span>
                         <select name="usuario" value={form.usuario} onChange={handleChange}>
                             <option value="">Seleccione un usuario</option>
                             {
                                 usuarios?.length && usuarios.map(e => {
-                                    return <option value={e.id}>{e.nombre}</option>
+                                    return <option key={e.id} value={e.id}>{e.nombre}</option>
                                 })
                             }
                         </select>

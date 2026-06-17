@@ -296,7 +296,7 @@ const ReporteRecibos = () => {
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
                 columnAutoWidth={true}
-                height={400}
+                height={650}
                 onExporting={onExporting}
             >
                 <Export enabled={true} fileName="Listado_Recibos" />
@@ -304,7 +304,7 @@ const ReporteRecibos = () => {
                 <SearchPanel visible={true} highlightCaseSensitive={true} />
                 <HeaderFilter visible={true} />
                 <Scrolling mode="standard" />
-                <Paging defaultPageSize={10} />
+                <Paging defaultPageSize={15} />
                 <Column dataField="id" caption="Nro. Recibo" width={100} dataType="string" alignment="left" />
                 <Column
                     dataField="fecha"
@@ -399,9 +399,9 @@ const ReporteRecibos = () => {
                 <Column dataField="importe_total" caption="Importe total" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
                 <Column dataField="AsientoAnulacion" caption="Asiento anulación" dataType="string" alignment="right" allowFiltering={false} allowHeaderFiltering={true} />
 
-                <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
+                <Column dataField="id" name="imprimir_recibo" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
-                <Column dataField="id" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
+                <Column dataField="id" name="anular_recibo" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderAnularRecibo} />
             </DataGrid>
         </div>

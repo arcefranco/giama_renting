@@ -34,7 +34,7 @@ const VehiculosForm = () => {
       codigo: 2
     }
   ]
-  const [tasa, setTasa] = useState(null)
+  const [tasa, setTasa] = useState("")
   const [form, setFormData] = useState({
     modelo: '',
     dominio: '',
@@ -321,18 +321,18 @@ const VehiculosForm = () => {
         )}
         <h2>Formulario de ingreso de vehiculos</h2>
 
-        <form action="" enctype="multipart/form-data" className={styles.form}>
+        <form action="" encType="multipart/form-data" className={styles.form}>
           <div className={styles.inputContainer}>
             <span>Modelo</span>
             <select name="modelo" value={form["modelo"]}
               onChange={handleChange} id="">
-              <option value={""} disabled selected>{"Seleccione un modelo"}</option>
+              <option value={""} disabled >{"Seleccione un modelo"}</option>
               {
                 modelos?.length && modelos?.map(e => {
-                  return <option value={e.id}>{e.nombre}</option>
+                  return <option key={e.id} value={e.id}>{e.nombre}</option>
                 })
               }
-            </select>
+            </select> 
           </div>
           <div className={styles.inputContainer}>
             <span>Nro. Chasis</span>
@@ -375,10 +375,10 @@ const VehiculosForm = () => {
           <div className={styles.inputContainer}>
             <span>Cuenta contable</span>
             <select name="cuenta_contable" value={form["cuenta_contable"]} onChange={handleChange}>
-              <option value={""} disabled selected>{"Seleccione una cuenta"}</option>
+              <option value={""} disabled >{"Seleccione una cuenta"}</option>
               {
                 cuentasFiltradas?.length && cuentasFiltradas?.map(e => {
-                  return <option value={e.Codigo}>{e.Nombre}</option>
+                  return <option key={e.Codigo} value={e.Codigo}>{e.Nombre}</option>
                 })
               }
             </select>
@@ -478,10 +478,10 @@ const VehiculosForm = () => {
             <span>Tasa</span>
             <select name="tasa" value={tasa}
               onChange={(e) => setTasa(e.target.value)} id="">
-              <option value={""} disabled selected>{"Seleccione una tasa"}</option>
+              <option value={""} disabled >{"Seleccione una tasa"}</option>
               {
                 tasas?.length && tasas?.map(e => {
-                  return <option value={e.codigo}>{e.concepto}</option>
+                  return <option key={e.codigo} value={e.codigo}>{e.concepto}</option>
                 })
               }
             </select>
