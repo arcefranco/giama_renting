@@ -998,14 +998,16 @@ async function registrarCostoIngresoIndividual({
   let cuenta_secundaria_percepcion_IIBB_CABA;
   let cuenta_percepcion_IVA;
   let cuenta_secundaria_percepcion_IVA;
-  let total_conceptos = 0;
 
   let nombre_proveedor;
   let dominio;
   let observacion_asientos;
+  let total_conceptos = 0;
+
   if(id_concepto) total_conceptos = total_conceptos + 1
   if(id_concepto_2) total_conceptos = total_conceptos + 1
   if(id_concepto_3) total_conceptos = total_conceptos + 1
+
   //obtengo si es ingreso o egreso
   try {
     const result = await giama_renting.query(
@@ -2218,25 +2220,9 @@ export const prorrateo = async (req, res) => {
     arrayVehiculos,
     fecha,
     id_forma_cobro,
-    /**PARA MOSTRAR EN FORM (NETOS PARA CALCULAR TAMBIEN TOTAL C/NETO A MOVPROV)*/
-    id_concepto,
-    neto_no_gravado,
-    neto_21,
-    neto_10,
-    neto_27,
-    id_concepto_2,
-    neto_no_gravado_2,
-    neto_21_2,
-    neto_10_2,
-    neto_27_2,
-    id_concepto_3,
-    neto_no_gravado_3,
-    neto_21_3,
-    neto_10_3,
-    neto_27_3,
-    importe_iva_21,
-    importe_iva_10,
-    importe_iva_27,
+    /** ARRAY DE CONCEPTOS DINAMICO */
+    conceptosCargados: conceptos,
+    
     tasa_IIBB_CABA,
     tasa_IIBB,
     tasa_IVA,
@@ -2248,15 +2234,8 @@ export const prorrateo = async (req, res) => {
     importe_neto,
     importe_iva,
     importe_otros_impuestos,
-    /**MOVIMIENTOS CONTABLES Y COSTOS_INGRESOS */
-    importe_neto_total_1,
-    importe_neto_total_2,
-    importe_neto_total_3,
-    importe_iva_total_1,
-    importe_iva_total_2,
-    importe_iva_total_3,
 
-    /**MOVIMIENTOS CONTABLES Y COSTOS_INGRESOS */
+    /** GENERALES */
     observacion,
     cuenta,
     ingreso_egreso,
@@ -2267,24 +2246,18 @@ export const prorrateo = async (req, res) => {
     numero_comprobante_2,
     cod_proveedor,
     usuario,
-  } = req.body
+  } = req.body;
+
   let NroAsiento;
   let NroAsientoSecundario;
   let cuentaIVA;
   let cuentaSecundariaIVA;
-  let cuenta_concepto;
-  let cuenta_secundaria_concepto;
-  let nombre_concepto;
-  let cuenta_concepto_2;
-  let cuenta_secundaria_concepto_2;
-  let nombre_concepto_2;
-  let cuenta_concepto_3;
-  let cuenta_secundaria_concepto_3;
-  let nombre_concepto_3;
   let cuenta_forma_cobro;
   let cuenta_secundaria_forma_cobro;
+  
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
+  
   let cuenta_percepcion_IIBB;
   let cuenta_secundaria_percepcion_IIBB;
   let cuenta_percepcion_IIBB_CABA;
@@ -2292,28 +2265,31 @@ export const prorrateo = async (req, res) => {
   let cuenta_percepcion_IVA;
   let cuenta_secundaria_percepcion_IVA;
 
+  // --- DEBUGGING FRONTEND ---
+  console.log("=====================================================");
+  console.log("TIPO DE DATOS DE CONCEPTOS:", typeof conceptos);
+  console.log("CONTENIDO DE CONCEPTOS:", conceptos);
+  console.log("=====================================================");
 
-  let importe_neto_1_formateado = importe_neto_total_1 ? parseFloat(importe_neto_total_1) : 0;
-  let importe_neto_2_formateado = importe_neto_total_2 ? parseFloat(importe_neto_total_2) : 0;
-  let importe_neto_3_formateado = importe_neto_total_3 ? parseFloat(importe_neto_total_3) : 0;
-  let importe_iva_1_formateado =  importe_iva_total_1 ? parseFloat(importe_iva_total_1) : 0;
-  let importe_iva_2_formateado =  importe_iva_total_2 ? parseFloat(importe_iva_total_2) : 0;
-  let importe_iva_3_formateado =  importe_iva_total_3 ? parseFloat(importe_iva_total_3) : 0;
-
-  let importe_total_1 = importe_neto_1_formateado + importe_iva_1_formateado;
-  let importe_total_2 = importe_neto_2_formateado + importe_iva_2_formateado;
-  let importe_total_3 = importe_neto_3_formateado + importe_iva_3_formateado;
-
-  let total_conceptos = 0;
-  
-  if(id_concepto) total_conceptos ++
-  if(id_concepto_2) total_conceptos ++
-  if(id_concepto_3) total_conceptos ++
-  
-  if(total_conceptos === 0){
-    return res.send({status: false, message: "Debe seleccionar al menos un concepto"})
+  // Si viene como string (por ej. desde FormData), lo parseamos
+  let conceptosParseados = conceptos;
+  if (typeof conceptos === 'string') {
+    try {
+      conceptosParseados = JSON.parse(conceptos);
+    } catch (error) {
+      return res.send({status: false, message: "El formato de los conceptos no es válido"});
+    }
   }
 
+  // Validación dinámica usando .some()
+  if (!conceptosParseados || !Array.isArray(conceptosParseados) || !conceptosParseados.some(c => c.id_concepto)) {
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
+    return res.send({status: false, message: "Debe enviar al menos un concepto válido"});
+  }
+
+  const conceptosValidos = conceptosParseados.filter(c => c.id_concepto);
+  const total_conceptos = conceptosValidos.length;
   if(importe_total <= 0 || !importe_total){
     transaction_asientos.rollback();
     transaction_costos_ingresos.rollback();
@@ -2336,6 +2312,8 @@ export const prorrateo = async (req, res) => {
   )}-${padWithZeros(numero_comprobante_2, 8)}`;
 
   if (!arrayVehiculos?.length) {
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
     return res.send({
       status: false,
       message: "No hay vehículos seleccionados",
@@ -2346,72 +2324,40 @@ export const prorrateo = async (req, res) => {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
     return res.send({ status: false, message: error.message });
   }
-  //obtengo cuentas contables de los tres conceptos
-  try {
-    const result = await giama_renting.query(
-      `SELECT nombre, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto`,
-      {
-        type: QueryTypes.SELECT,
-        replacements: { id_concepto },
+  // Obtengo cuentas contables de TODOS los conceptos de manera dinámica (Sin N+1)
+  const idsConceptos = conceptosParseados.filter(c => c.id_concepto).map(c => c.id_concepto);
+  let cuentasPorConcepto = {};
+
+  if (idsConceptos.length > 0) {
+    try {
+      // Hacemos UNA sola query pidiendo todos los IDs juntos en vez de hacer 3 queries separadas
+      const result = await giama_renting.query(
+        `SELECT id, nombre, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id IN (:ids)`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { ids: idsConceptos },
+        }
+      );
+
+      if (!result.length) {
+        return res.send({
+          status: false,
+          message: "No se encontraron los conceptos especificados",
+        });
       }
-    );
-    if (!result.length)
-      return res.send({
-        status: false,
-        message: "No se encontró el concepto especificado",
+
+      // Guardamos en memoria (un diccionario) para acceso instantáneo (O(1)) más adelante
+      result.forEach(row => {
+        cuentasPorConcepto[row.id] = {
+          nombre: row.nombre,
+          cuenta_contable: row.cuenta_contable,
+          cuenta_secundaria: row.cuenta_secundaria
+        };
       });
-    nombre_concepto = result[0]["nombre"];
-    cuenta_concepto = result[0]["cuenta_contable"];
-    cuenta_secundaria_concepto = result[0]["cuenta_secundaria"];
-  } catch (error) {
-    return res.send({
-      status: false,
-      message: "Hubo un problema al buscar las cuentas contables",
-    });
-  }
-  if(id_concepto_2){
-    try {
-      const result = await giama_renting.query(
-        `SELECT nombre, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto_2`,
-        {
-          type: QueryTypes.SELECT,
-          replacements: { id_concepto_2 },
-        }
-      );
-      if (!result.length)
-        return res.send({
-          status: false,
-          message: "No se encontró el concepto especificado",
-        });
-      nombre_concepto_2 = result[0]["nombre"];
-      cuenta_concepto_2 = result[0]["cuenta_contable"];
-      cuenta_secundaria_concepto_2 = result[0]["cuenta_secundaria"];
-    } catch (error) {
-      return res.send({
-        status: false,
-        message: "Hubo un problema al buscar las cuentas contables",
-      });
-    }
-  }
-  if(id_concepto_3){
-    try {
-      const result = await giama_renting.query(
-        `SELECT nombre cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto_3`,
-        {
-          type: QueryTypes.SELECT,
-          replacements: { id_concepto_3 },
-        }
-      );
-      if (!result.length)
-        return res.send({
-          status: false,
-          message: "No se encontró el concepto especificado",
-        });
-      nombre_concepto_3 = result[0]["nombre"];
-      cuenta_concepto_3 = result[0]["cuenta_contable"];
-      cuenta_secundaria_concepto_3 = result[0]["cuenta_secundaria"];
     } catch (error) {
       return res.send({
         status: false,
@@ -2657,28 +2603,15 @@ export const prorrateo = async (req, res) => {
         numero_comprobante_1,
         numero_comprobante_2,
         importe_total,
-        cuenta_concepto,
-        cuenta_concepto_2,
-        cuenta_concepto_3,
+        
+        // --- DINÁMICO ---
+        conceptos: conceptosParseados,
+        cuentasPorConcepto,
+        
         NroAsiento,
         NroAsientoSecundario,
         usuario,
         transaction_asientos,
-        neto_no_gravado,
-        neto_21,
-        neto_10,
-        neto_27,
-        neto_no_gravado_2,
-        neto_21_2,
-        neto_10_2,
-        neto_27_2,
-        neto_no_gravado_3,
-        neto_21_3,
-        neto_10_3,
-        neto_27_3,
-        importe_iva_21,
-        importe_iva_10,
-        importe_iva_27,
         tasa_IIBB_CABA,
         tasa_IIBB,
         tasa_IVA,
@@ -2701,239 +2634,132 @@ export const prorrateo = async (req, res) => {
 
 
   for (const [index, id_vehiculo] of arrayVehiculos.entries()) {
-  let netoDividido_1 = Math.floor((importe_neto_total_1 / cantidad) * 100) / 100;
-  let netoDividido_2 = Math.floor((importe_neto_total_2 / cantidad) * 100) / 100;
-  let netoDividido_3 = Math.floor((importe_neto_total_3 / cantidad) * 100) / 100;
-  let diferencia_1 = importe_neto_total_1 - netoDividido_1 * cantidad;
-  let diferencia_2 = importe_neto_total_2 - netoDividido_2 * cantidad;
-  let diferencia_3 = importe_neto_total_3 - netoDividido_3 * cantidad;
-  let totalDividido_1 = importe_total_1 / cantidad;
-  let totalDividido_2 = importe_total_2 / cantidad;
-  let totalDividido_3 = importe_total_3 / cantidad;
-  let ivaDividido_1 = importe_iva_total_1 / cantidad;
-  let ivaDividido_2 = importe_iva_total_2 / cantidad;
-  let ivaDividido_3 = importe_iva_total_3 / cantidad;
-  let otrosImpuestosDividido = importe_otros_impuestos / cantidad;
-  let otrosImpuestosIndividual = otrosImpuestosDividido / total_conceptos
-    let importeAUsar_1 = netoDividido_1;
-    let importeAUsar_2 = netoDividido_2;
-    let importeAUsar_3 = netoDividido_3;
-    let importeTotalAusar_1 = totalDividido_1;
-    let importeTotalAusar_2 = totalDividido_2;
-    let importeTotalAusar_3 = totalDividido_3;
     
-    let dominio;
-    if (index === cantidad - 1) {
-      importeAUsar_1 += diferencia_1;
-      importeTotalAusar_1 = importeAUsar_1 + ivaDividido_1;
-
-      importeAUsar_2 += diferencia_2;
-      importeTotalAusar_2 = importeAUsar_2 + ivaDividido_2;
-
-      importeAUsar_3 += diferencia_3;
-      importeTotalAusar_3 = importeAUsar_3 + ivaDividido_3;
-    }
-    console.log(importeAUsar_1)
-    console.log(importeAUsar_2)
-    console.log(importeAUsar_3)
-    //obtengo dominio del vehiculo
+    // 1. Buscamos el dominio del vehículo (se hace 1 vez por vehículo)
+    let dominio = "SIN DOMINIO";
     try {
       let result = await giama_renting.query(
         "SELECT dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
-        {
-          type: QueryTypes.SELECT,
-          replacements: [id_vehiculo],
-        }
+        { type: QueryTypes.SELECT, replacements: [id_vehiculo] }
       );
-      if (!result.length) dominio = "SIN DOMINIO";
-      if (result[0]["dominio"]) dominio = result[0]["dominio"];
-      if (result[0]["dominio_provisorio"] && !result[0]["dominio"])
-        dominio = result[0]["dominio_provisorio"];
+      if (result.length) {
+        if (result[0]["dominio"]) dominio = result[0]["dominio"];
+        else if (result[0]["dominio_provisorio"]) dominio = result[0]["dominio_provisorio"];
+      }
     } catch (error) {
-      console.log(error);
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
       const { body } = handleError(error, "Dominios", acciones.get);
       return res.send(body);
     }
-    //inserto asientos
-    try {
-      await asientoContable(
-        "c_movimientos",
-        NroAsiento,
-        cuenta_concepto,
-        "D",
-        importeAUsar_1,
-        observacion + `${nombre_concepto} (${dominio})`,
-        transaction_asientos,
-        numero_comprobante,
-        fecha,
-        NroAsientoSecundario,
-        FA_FC
-      );
-      await asientoContable(
-        "c2_movimientos",
-        NroAsientoSecundario,
-        cuenta_secundaria_concepto,
-        "D",
-        importeAUsar_1,
-        observacion + `${nombre_concepto} (${dominio})`,
-        transaction_asientos,
-        numero_comprobante,
-        fecha,
-        null,
-        FA_FC
-      );
-      if(id_concepto_2){
-      await asientoContable(
-        "c_movimientos",
-        NroAsiento,
-        cuenta_concepto_2,
-        "D",
-        importeAUsar_2,
-        observacion + `${nombre_concepto_2} (${dominio})`,
-        transaction_asientos,
-        numero_comprobante,
-        fecha,
-        NroAsientoSecundario,
-        FA_FC
-      );
-      await asientoContable(
-        "c2_movimientos",
-        NroAsientoSecundario,
-        cuenta_secundaria_concepto_2,
-        "D",
-        importeAUsar_2,
-        observacion + `${nombre_concepto_2}  (${dominio})`,
-        transaction_asientos,
-        numero_comprobante,
-        fecha,
-        null,
-        FA_FC
-      );
-      }
-      if(id_concepto_3){
-      await asientoContable(
-        "c_movimientos",
-        NroAsiento,
-        cuenta_concepto_3,
-        "D",
-        importeAUsar_3,
-        observacion + `${nombre_concepto_3}  (${dominio})`,
-        transaction_asientos,
-        numero_comprobante,
-        fecha,
-        NroAsientoSecundario,
-        FA_FC
-      );
-      await asientoContable(
-        "c2_movimientos",
-        NroAsientoSecundario,
-        cuenta_secundaria_concepto_3,
-        "D",
-        importeAUsar_3,
-        observacion + `${nombre_concepto_3}  (${dominio})`,
-        transaction_asientos,
-        numero_comprobante,
-        fecha,
-        null,
-        FA_FC
-      );
-      }
-    } catch (error) {
-      transaction_costos_ingresos.rollback();
-      console.log(error);
-      const { body } = handleError(
-        error,
-        "registrar costo/ingreso",
-        acciones.post
-      );
-      return res.send(body);
-    }
-    const factor = -1;
 
-    //inserto en costos_ingresos
-    try {
-      await giama_renting.query(
-        `INSERT INTO costos_ingresos 
-      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
-      importe_total, observacion, nro_asiento, id_forma_cobro, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [
-            id_vehiculo,
-            fecha,
-            id_concepto,
-            comprobante,
-            importeAUsar_1 * factor,
-            ivaDividido_1 * factor,
-            otrosImpuestosIndividual * factor,
-            importeTotalAusar_1 * factor,
-            observacion + ` (${dominio})`,
-            NroAsiento,
-            id_forma_cobro ? id_forma_cobro : null,
-            null,
-          ],
-          transaction: transaction_costos_ingresos,
-        }
-      );
-      if(id_concepto_2){
-      await giama_renting.query(
-        `INSERT INTO costos_ingresos 
-      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
-      importe_total, observacion, nro_asiento, id_forma_cobro, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [
-            id_vehiculo,
-            fecha,
-            id_concepto_2,
-            comprobante,
-            importeAUsar_2 * factor,
-            ivaDividido_2 * factor,
-            otrosImpuestosIndividual * factor,
-            importeTotalAusar_2 * factor,
-            observacion + ` (${dominio})`,
-            NroAsiento,
-            id_forma_cobro ? id_forma_cobro : null,
-            null,
-          ],
-          transaction: transaction_costos_ingresos,
-        }
-      );
+    // 2. Otros impuestos (esto era a nivel general, no por concepto)
+    let otrosImpuestosDividido = importe_otros_impuestos ? (importe_otros_impuestos / cantidad) : 0;
+    let otrosImpuestosIndividual = otrosImpuestosDividido / total_conceptos;
+
+    // 3. Iteramos dinámicamente sobre los conceptos
+    for (const concepto of conceptosValidos) {
+      
+      const datosCuenta = cuentasPorConcepto[concepto.id_concepto];
+      if (!datosCuenta) continue;
+
+      let importe_neto_total = parseFloat(concepto.neto_no_gravado || 0) + 
+                               parseFloat(concepto.neto_21 || 0) + 
+                               parseFloat(concepto.neto_10 || 0) + 
+                               parseFloat(concepto.neto_27 || 0);
+
+      let importe_iva_total = (parseFloat(concepto.neto_21 || 0) * 0.21) + 
+                              (parseFloat(concepto.neto_10 || 0) * 0.105) + 
+                              (parseFloat(concepto.neto_27 || 0) * 0.27);
+
+      let importe_total_concepto = importe_neto_total + importe_iva_total;
+
+      // Calculamos la división para este vehículo
+      let netoDividido = Math.floor((importe_neto_total / cantidad) * 100) / 100;
+      let diferencia = importe_neto_total - (netoDividido * cantidad);
+      
+      let ivaDividido = importe_iva_total / cantidad;
+      let totalDividido = importe_total_concepto / cantidad;
+
+      let importeAUsar = netoDividido;
+      let importeTotalAusar = totalDividido;
+
+      // Si es el último vehículo, le sumamos la diferencia de centavos
+      if (index === cantidad - 1) {
+        importeAUsar += diferencia;
+        importeTotalAusar = importeAUsar + ivaDividido;
       }
-      if(id_concepto_3){
-      await giama_renting.query(
-        `INSERT INTO costos_ingresos 
-      (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
-      importe_total, observacion, nro_asiento, id_forma_cobro, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [
-            id_vehiculo,
+
+      // A. ASIENTO CONTABLE
+      try {
+        await asientoContable(
+          "c_movimientos",
+          NroAsiento,
+          datosCuenta.cuenta_contable,
+          "D",
+          importeAUsar,
+          observacion + ` ${datosCuenta.nombre} (${dominio})`,
+          transaction_asientos,
+          numero_comprobante,
+          fecha,
+          NroAsientoSecundario,
+          FA_FC
+        );
+        
+        if (datosCuenta.cuenta_secundaria) {
+          await asientoContable(
+            "c2_movimientos",
+            NroAsientoSecundario,
+            datosCuenta.cuenta_secundaria,
+            "D",
+            importeAUsar,
+            observacion + ` ${datosCuenta.nombre} (${dominio})`,
+            transaction_asientos,
+            numero_comprobante,
             fecha,
-            id_concepto_3,
-            comprobante,
-            importeAUsar_3 * factor,
-            ivaDividido_3 * factor,
-            otrosImpuestosIndividual * factor,
-            importeTotalAusar_3 * factor,
-            observacion + ` (${dominio})`,
-            NroAsiento,
-            id_forma_cobro ? id_forma_cobro : null,
             null,
-          ],
-          transaction: transaction_costos_ingresos,
+            FA_FC
+          );
         }
-      );
+      } catch (error) {
+        await transaction_asientos.rollback();
+        await transaction_costos_ingresos.rollback();
+        const { body } = handleError(error, "registrar costo/ingreso", acciones.post);
+        return res.send(body);
       }
-    } catch (error) {
-      transaction_asientos.rollback();
-      console.log(error);
-      const { body } = handleError(
-        error,
-        "registrar costo/ingreso",
-        acciones.post
-      );
-      return res.send(body);
+
+      // B. INSERT EN COSTOS INGRESOS
+      try {
+        const factor = -1;
+        await giama_renting.query(
+          `INSERT INTO costos_ingresos 
+          (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+          importe_total, observacion, nro_asiento, id_forma_cobro, nro_recibo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          {
+            type: QueryTypes.INSERT,
+            replacements: [
+              id_vehiculo,
+              fecha,
+              concepto.id_concepto,
+              comprobante,
+              importeAUsar * factor,
+              ivaDividido * factor,
+              otrosImpuestosIndividual * factor,
+              importeTotalAusar * factor,
+              observacion + ` (${dominio})`,
+              NroAsiento,
+              id_forma_cobro ? id_forma_cobro : null,
+              null,
+            ],
+            transaction: transaction_costos_ingresos,
+          }
+        );
+      } catch (error) {
+        await transaction_asientos.rollback();
+        await transaction_costos_ingresos.rollback();
+        const { body } = handleError(error, "costos_ingresos", acciones.post);
+        return res.send(body);
+      }
     }
   }
 

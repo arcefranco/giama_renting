@@ -58,7 +58,7 @@ export const movimientosProveedores = async ({
           tasa_IVA ? tasa_IVA : null,
           importe_tasa_IVA ? importe_tasa_IVA : null,
           tasa_IIBB_CABA ? tasa_IIBB_CABA : null,
-          importe_tasa_IIBB_CABA ? importe_tasa_IIBB_CABA : null 
+          importe_tasa_IIBB_CABA ? importe_tasa_IIBB_CABA : null
         ],
         transaction: transaction_asientos,
       }
@@ -67,8 +67,7 @@ export const movimientosProveedores = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -99,7 +98,7 @@ export const movimientosProveedores = async ({
           tasa_IVA ? tasa_IVA : null,
           importe_tasa_IVA ? importe_tasa_IVA : null,
           tasa_IIBB_CABA ? tasa_IIBB_CABA : null,
-          importe_tasa_IIBB_CABA ? importe_tasa_IIBB_CABA : null 
+          importe_tasa_IIBB_CABA ? importe_tasa_IIBB_CABA : null
         ],
         transaction: transaction_asientos,
       }
@@ -107,8 +106,7 @@ export const movimientosProveedores = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -126,8 +124,7 @@ export const movimientosProveedores = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -171,8 +168,7 @@ export const movimientosProveedores = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -193,8 +189,7 @@ export const movimientosProveedores = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -207,28 +202,17 @@ export const movimientosProveedoresEgresos = async ({
   numero_comprobante_1,
   numero_comprobante_2,
   importe_total,
-  cuenta_concepto,
-  cuenta_concepto_2,
-  cuenta_concepto_3,
+
+  // --- NUESTROS DATOS DINÁMICOS ---
+  conceptos,
+  cuentasPorConcepto,
+  // --------------------------------
   NroAsiento,
   NroAsientoSecundario,
   usuario,
   transaction_asientos,
-  neto_no_gravado,
-  neto_21,
-  neto_10,
-  neto_27,
-  neto_no_gravado_2,
-  neto_21_2,
-  neto_10_2,
-  neto_27_2,
-  neto_no_gravado_3,
-  neto_21_3,
-  neto_10_3,
-  neto_27_3,
-  importe_iva_21,
-  importe_iva_10,
-  importe_iva_27,
+
+  // Estos impuestos son a nivel factura general, se mantienen:
   tasa_IIBB_CABA,
   tasa_IIBB,
   tasa_IVA,
@@ -241,21 +225,27 @@ export const movimientosProveedoresEgresos = async ({
   let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
-  let importe_neto_1 = neto_no_gravado + neto_21 + neto_10 + neto_27;
-  let importe_neto_2;
-  let importe_neto_3;
-  let importe_neto_21_total = neto_21 + neto_21_2 + neto_21_3;
-  let importe_neto_27_total = neto_27 + neto_27_2 + neto_27_3;
-  let importe_neto_10_total = neto_10 + neto_10_2 + neto_10_3;
 
-  let importe_neto_no_gravado_total =
-    neto_no_gravado + neto_no_gravado_2 + neto_no_gravado_3;
-  if (cuenta_concepto_2) {
-    importe_neto_2 = neto_no_gravado_2 + neto_21_2 + neto_10_2 + neto_27_2;
-  }
-  if (cuenta_concepto_3) {
-    importe_neto_3 = neto_no_gravado_3 + neto_21_3 + neto_10_3 + neto_27_3;
-  }
+
+
+  // Consolidamos todos los netos e IVAs recorriendo los conceptos dinámicamente
+  const totales = conceptos.reduce((acc, c) => {
+    acc.neto_no_gravado += parseFloat(c.neto_no_gravado || 0);
+    acc.neto_21 += parseFloat(c.neto_21 || 0);
+    acc.neto_10 += parseFloat(c.neto_10 || 0);
+    acc.neto_27 += parseFloat(c.neto_27 || 0);
+
+    acc.iva_21 += parseFloat(c.neto_21 || 0) * 0.21;
+    acc.iva_10 += parseFloat(c.neto_10 || 0) * 0.105;
+    acc.iva_27 += parseFloat(c.neto_27 || 0) * 0.27;
+
+    return acc;
+  }, {
+    neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0,
+    iva_21: 0, iva_10: 0, iva_27: 0
+  });
+
+
 
   let insertMovProv;
   //c_movprov
@@ -274,16 +264,16 @@ export const movimientosProveedoresEgresos = async ({
           FA_FC,
           NroComprobante,
           fecha,
-          importe_neto_no_gravado_total,
-          importe_neto_21_total,
-          importe_neto_27_total,
-          importe_neto_10_total,
+          totales.neto_no_gravado,
+          totales.neto_21,
+          totales.neto_27,
+          totales.neto_10,
           21,
           27,
           10.5,
-          importe_iva_21,
-          importe_iva_27,
-          importe_iva_10,
+          totales.iva_21,
+          totales.iva_27,
+          totales.iva_10,
           tasa_IIBB,
           importe_tasa_IIBB,
           tasa_IVA,
@@ -300,8 +290,7 @@ export const movimientosProveedoresEgresos = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -321,16 +310,16 @@ export const movimientosProveedoresEgresos = async ({
           FA_FC,
           NroComprobante,
           fecha,
-          importe_neto_no_gravado_total,
-          importe_neto_21_total,
-          importe_neto_27_total,
-          importe_neto_10_total,
+          totales.neto_no_gravado,
+          totales.neto_21,
+          totales.neto_27,
+          totales.neto_10,
           21,
           27,
           10.5,
-          importe_iva_21,
-          importe_iva_27,
-          importe_iva_10,
+          totales.iva_21,
+          totales.iva_27,
+          totales.iva_10,
           tasa_IIBB,
           importe_tasa_IIBB,
           tasa_IVA,
@@ -345,70 +334,37 @@ export const movimientosProveedoresEgresos = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
   //c_movprovdetalles
-  try {
-    await pa7_giama_renting.query(
-      `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante,
-      CtaContable, Importe) VALUES (?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [insertMovProv, 3, cuenta_concepto, importe_neto_1],
-        transaction: transaction_asientos,
+  for (const concepto of conceptos) {
+    if (!concepto.id_concepto) continue;
+
+    const cuentaContable = cuentasPorConcepto[concepto.id_concepto]?.cuenta_contable;
+    const netoConcepto = Number(concepto.neto_no_gravado || 0) + Number(concepto.neto_21 || 0) + Number(concepto.neto_27 || 0) + Number(concepto.neto_10 || 0);
+
+    if (netoConcepto > 0 && cuentaContable) {
+      try {
+        await pa7_giama_renting.query(
+          `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante, CtaContable, Importe) 
+         VALUES (?, ?, ?, ?)`,
+          {
+            type: QueryTypes.INSERT,
+            replacements: [insertMovProv, 3, cuentaContable, netoConcepto],
+            transaction: transaction_asientos,
+          }
+        ); // <- Faltaba cerrar con punto y coma acá
+      } catch (error) { // <- Faltaba cerrar la llave del try antes del catch
+        console.log(error);
+        throw new Error(
+          `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""}`
+        );
       }
-    );
-  } catch (error) {
-    console.log(error);
-    throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
-      }`
-    );
-  }
-  if (cuenta_concepto_2) {
-    try {
-      await pa7_giama_renting.query(
-        `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante,
-      CtaContable, Importe) VALUES (?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [insertMovProv, 3, cuenta_concepto_2, importe_neto_2],
-          transaction: transaction_asientos,
-        }
-      );
-    } catch (error) {
-      console.log(error);
-      throw new Error(
-        `Error al insertar registro en proveedores ${
-          error.message ? ` :${error.message}` : ""
-        }`
-      );
     }
   }
-  if (cuenta_concepto_3) {
-    try {
-      await pa7_giama_renting.query(
-        `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante,
-      CtaContable, Importe) VALUES (?,?,?,?)`,
-        {
-          type: QueryTypes.INSERT,
-          replacements: [insertMovProv, 3, cuenta_concepto_3, importe_neto_3],
-          transaction: transaction_asientos,
-        }
-      );
-    } catch (error) {
-      console.log(error);
-      throw new Error(
-        `Error al insertar registro en proveedores ${
-          error.message ? ` :${error.message}` : ""
-        }`
-      );
-    }
-  }
+
   //c_movprovctacte
   try {
     let A_C = tipo_comprobante == 1 ? "A" : tipo_comprobante == 3 ? "C" : null;
@@ -449,8 +405,7 @@ export const movimientosProveedoresEgresos = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
@@ -471,8 +426,7 @@ export const movimientosProveedoresEgresos = async ({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar registro en proveedores ${
-        error.message ? ` :${error.message}` : ""
+      `Error al insertar registro en proveedores ${error.message ? ` :${error.message}` : ""
       }`
     );
   }
