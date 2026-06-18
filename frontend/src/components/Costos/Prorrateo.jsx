@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux';
 import {
   getConceptosCostos,
@@ -12,10 +12,11 @@ import { locale } from 'devextreme/localization';
 import 'devextreme/dist/css/dx.carmine.css';
 import styles from "./IngresosEgresos.module.css";
 import { ClipLoader } from "react-spinners";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import Select from 'react-select';
 import { useToastFeedback } from '../../customHooks/useToastFeedback.jsx';
 import { resetIngreso } from '../../reducers/Recibos/recibosSlice.js';
+import ConceptoLinea from './components/ConceptoLinea.jsx';
 
 
 const Prorrateo = () => {
@@ -25,6 +26,15 @@ const Prorrateo = () => {
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { username } = useSelector((state) => state.loginReducer)
   const { modelos, proveedores, formasDeCobro } = useSelector((state) => state.generalesReducer)
+
+  const initialStateConceptos = [
+    { id_concepto: '', neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0 },
+    { id_concepto: '', neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0 },
+    { id_concepto: '', neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0 }
+  ];
+
+  const [conceptosCargados, setConceptosCargados] = useState(initialStateConceptos);
+
   const [form, setForm] = useState({
     arrayVehiculos: [],
     fecha: '',
@@ -343,108 +353,35 @@ const Prorrateo = () => {
     return isNaN(n) ? 0 : n;
   };
 
-  const handleChangeNumbers = (e) => {
-    const { name, value } = e.target;
+  const recalcularTotales = (conceptos, currentForm, changedField) => {
+    let totalNetoCalc = 0;
+    let totalNetoGravado = 0;
+    
+    let IVA21Fixed = 0;
+    let IVA10Fixed = 0;
+    let IVA27Fixed = 0;
 
-    // siempre guardo el string que escribe el usuario
-    let newForm = { ...form, [name]: value };
+    conceptos.forEach(c => {
+      const n21 = toNumber(c.neto_21);
+      const n10 = toNumber(c.neto_10);
+      const n27 = toNumber(c.neto_27);
+      const nNG = toNumber(c.neto_no_gravado);
 
-    // convertir a número solo cuando haga falta
-    const neto_21 = toNumber(newForm.neto_21);
-    const neto_10 = toNumber(newForm.neto_10);
-    const neto_27 = toNumber(newForm.neto_27);
-    const neto_no_gravado = toNumber(newForm.neto_no_gravado);
+      totalNetoCalc += n21 + n10 + n27 + nNG;
+      totalNetoGravado += n21 + n10 + n27;
 
-    const neto_21_2 = toNumber(newForm.neto_21_2)
-    const neto_10_2 = toNumber(newForm.neto_10_2)
-    const neto_27_2 = toNumber(newForm.neto_27_2)
-    const neto_no_gravado_2 = toNumber(newForm.neto_no_gravado_2)
+      IVA21Fixed += n21 * 0.21;
+      IVA10Fixed += n10 * 0.105;
+      IVA27Fixed += n27 * 0.27;
+    });
 
-    const neto_21_3 = toNumber(newForm.neto_21_3)
-    const neto_10_3 = toNumber(newForm.neto_10_3)
-    const neto_27_3 = toNumber(newForm.neto_27_3)
-    const neto_no_gravado_3 = toNumber(newForm.neto_no_gravado_3)
+    const newForm = { ...currentForm };
 
-
-    // IVA calculado a partir del número (no del string)
-    if (name === "neto_21" || name === "neto_10" || name === "neto_27"
-      || name === "neto_21_2" || name === "neto_10_2" || name === "neto_27_2"
-      || name === "neto_21_3" || name === "neto_10_3" || name === "neto_27_3"
-    ) {
-      let IVA21Fixed = neto_21 ? (neto_21 * 0.21).toFixed(2) : 0
-      let IVA21_2Fixed = neto_21_2 ? (neto_21_2 * 0.21).toFixed(2) : 0
-      let IVA21_3Fixed = neto_21_3 ? (neto_21_3 * 0.21).toFixed(2) : 0
-
-      let IVA10Fixed = neto_10 ? (neto_10 * 0.105).toFixed(2) : 0
-      let IVA10_2Fixed = neto_10_2 ? (neto_10_2 * 0.105).toFixed(2) : 0
-      let IVA10_3Fixed = neto_10_3 ? (neto_10_3 * 0.105).toFixed(2) : 0
-
-      let IVA27Fixed = neto_27 ? (neto_27 * 0.27).toFixed(2) : 0
-      let IVA27_2Fixed = neto_27_2 ? (neto_27_2 * 0.27).toFixed(2) : 0
-      let IVA27_3Fixed = neto_27_3 ? (neto_27_3 * 0.27).toFixed(2) : 0
-
-
-      newForm.importe_iva_21 = (toNumber(IVA21Fixed) + toNumber(IVA21_2Fixed) + toNumber(IVA21_3Fixed)).toFixed(2);
-      newForm.importe_iva_10 = (toNumber(IVA10Fixed) + toNumber(IVA10_2Fixed) + toNumber(IVA10_3Fixed)).toFixed(2);
-      newForm.importe_iva_27 = (toNumber(IVA27Fixed) + toNumber(IVA27_2Fixed) + toNumber(IVA27_3Fixed)).toFixed(2);
-
-      /**MOVIMIENTOS CONTABLES Y COSTOS_INGRESOS */
-      newForm.importe_iva_total_1 = (toNumber(IVA21Fixed) + toNumber(IVA27Fixed) + toNumber(IVA10Fixed)).toFixed(2)
-      newForm.importe_iva_total_2 = (toNumber(IVA21_2Fixed) + toNumber(IVA27_2Fixed) + toNumber(IVA10_2Fixed)).toFixed(2)
-      newForm.importe_iva_total_3 = (toNumber(IVA21_3Fixed) + toNumber(IVA27_3Fixed) + toNumber(IVA10_3Fixed)).toFixed(2)
-      /**MOVIMIENTOS CONTABLES Y COSTOS_INGRESOS*/
-
-      newForm.tasa_IIBB = ""
-      newForm.tasa_IIBB_CABA = ""
-      newForm.tasa_IVA = ""
-      newForm.importe_tasa_IIBB = ""
-      newForm.importe_tasa_IIBB_CABA = ""
-      newForm.importe_tasa_IVA = ""
+    if (changedField === "concepto") {
+      newForm.importe_iva_21 = IVA21Fixed.toFixed(2);
+      newForm.importe_iva_10 = IVA10Fixed.toFixed(2);
+      newForm.importe_iva_27 = IVA27Fixed.toFixed(2);
     }
-
-
-    // Totales
-    const totalNetoCalc =
-      (neto_no_gravado || 0) +
-      (neto_21 || 0) +
-      (neto_10 || 0) +
-      (neto_27 || 0) +
-      (neto_no_gravado_2 || 0) +
-      (neto_21_2 || 0) +
-      (neto_10_2 || 0) +
-      (neto_27_2 || 0) +
-      (neto_no_gravado_3 || 0) +
-      (neto_21_3 || 0) +
-      (neto_10_3 || 0) +
-      (neto_27_3 || 0);
-
-    const totalNetoGravado = /**PARA CALCULAR SOBRE TASA */
-      (neto_21 || 0) +
-      (neto_10 || 0) +
-      (neto_27 || 0) +
-      (neto_21_2 || 0) +
-      (neto_10_2 || 0) +
-      (neto_27_2 || 0) +
-      (neto_21_3 || 0) +
-      (neto_10_3 || 0) +
-      (neto_27_3 || 0);
-    const totalNeto1Calc = (neto_no_gravado || 0) +
-      (neto_21 || 0) +
-      (neto_10 || 0) +
-      (neto_27 || 0);
-
-    const totalNeto2Calc = (neto_no_gravado_2 || 0) +
-      (neto_21_2 || 0) +
-      (neto_10_2 || 0) +
-      (neto_27_2 || 0);
-
-
-    const totalNeto3Calc = (neto_no_gravado_3 || 0) +
-      (neto_21_3 || 0) +
-      (neto_10_3 || 0) +
-      (neto_27_3 || 0);
-
-
 
     const totalIVACalc =
       (toNumber(newForm.importe_iva_21) || 0) +
@@ -454,63 +391,83 @@ const Prorrateo = () => {
     setTotalNeto(totalNetoCalc);
     setTotalIVA(totalIVACalc);
 
-    setTotalNeto_1(totalNeto1Calc);
-    setTotalNeto_2(totalNeto2Calc);
-    setTotalNeto_3(totalNeto3Calc);
-
     newForm.importe_neto = totalNetoCalc.toFixed(2);
     newForm.importe_iva = totalIVACalc.toFixed(2);
 
-    /**MOVIMIENTOS CONTABLES  Y COSTOS_INGRESOS*/
-    newForm.importe_neto_total_1 = totalNeto1Calc.toFixed(2);
-    newForm.importe_neto_total_2 = totalNeto2Calc.toFixed(2);
-    newForm.importe_neto_total_3 = totalNeto3Calc.toFixed(2);
-    /**MOVIMIENTOS CONTABLES  Y COSTOS_INGRESOS*/
-
-    // Tasas (mismo criterio: convertir al vuelo)
     const tasa_IIBB_CABA = toNumber(newForm.tasa_IIBB_CABA);
     const tasa_IIBB = toNumber(newForm.tasa_IIBB);
     const tasa_IVA = toNumber(newForm.tasa_IVA);
 
-
-    if (name === "tasa_IIBB_CABA" || name === "tasa_IIBB" || name === "tasa_IVA") {
-      let importe_tasa_IIBB_CABA = tasa_IIBB_CABA
-        ? ((tasa_IIBB_CABA / 100) * totalNetoGravado).toFixed(2)
-        : "";
-      let importe_tasa_IIBB = tasa_IIBB
-        ? ((tasa_IIBB / 100) * totalNetoGravado).toFixed(2)
-        : "";
-      let importe_tasa_IVA = tasa_IVA
-        ? ((tasa_IVA / 100) * totalNetoGravado).toFixed(2)
-        : "";
-
-      newForm.importe_tasa_IIBB_CABA = importe_tasa_IIBB_CABA
-      newForm.importe_tasa_IIBB = importe_tasa_IIBB
-      newForm.importe_tasa_IVA = importe_tasa_IVA
-
+    if (changedField === "concepto" || changedField === "tasa_IIBB_CABA" || changedField === "tasa_IIBB" || changedField === "tasa_IVA") {
+      newForm.importe_tasa_IIBB_CABA = tasa_IIBB_CABA ? ((tasa_IIBB_CABA / 100) * totalNetoGravado).toFixed(2) : "";
+      newForm.importe_tasa_IIBB = tasa_IIBB ? ((tasa_IIBB / 100) * totalNetoGravado).toFixed(2) : "";
+      newForm.importe_tasa_IVA = tasa_IVA ? ((tasa_IVA / 100) * totalNetoGravado).toFixed(2) : "";
     }
 
-    newForm.importe_otros_impuestos = (
+    const totalPercCalc =
       (toNumber(newForm.importe_tasa_IIBB_CABA) || 0) +
       (toNumber(newForm.importe_tasa_IIBB) || 0) +
-      (toNumber(newForm.importe_tasa_IVA) || 0)
-    ).toFixed(2);
+      (toNumber(newForm.importe_tasa_IVA) || 0);
 
-    setTotalPerc(
-      (toNumber(newForm.importe_tasa_IIBB_CABA) || 0) +
-      (toNumber(newForm.importe_tasa_IIBB) || 0) +
-      (toNumber(newForm.importe_tasa_IVA) || 0)
-    );
+    newForm.importe_otros_impuestos = totalPercCalc.toFixed(2);
+    setTotalPerc(totalPercCalc);
 
     setForm(newForm);
   };
 
-  const handleSubmit = () => {
+  const handleChangeNumbers = (e) => {
+    const { name, value } = e.target;
+    let newForm = { ...form, [name]: value };
+    recalcularTotales(conceptosCargados, newForm, name);
+  };
 
-    dispatch(prorrateo(form))
+  const handleChangeConcepto = (index, e) => {
+    const { name, value } = e.target; // name será "neto_21", "neto_10", etc.
 
+    // 1. Hacemos una copia del array completo usando spread operator (...)
+    const nuevosConceptos = [...conceptosCargados];
+
+    // 2. Modificamos SOLAMENTE el objeto en la posición 'index'
+    nuevosConceptos[index] = {
+      ...nuevosConceptos[index], // Copiamos todo lo que ya tenía este objeto
+      [name]: value // Pisamos dinámicamente el valor del input que cambió
+    };
+
+    // 3. Guardamos el nuevo array en el estado
+    setConceptosCargados(nuevosConceptos);
+    recalcularTotales(nuevosConceptos, form, "concepto");
+  };
+
+  const handleSubmit = (e) => {
+    e?.preventDefault();
+
+    const payload = {
+      ...form,
+      conceptosCargados: conceptosCargados
+    };
+
+    dispatch(prorrateo(payload));
   }
-
+  const agregarLinea = (e) => {
+    e.preventDefault();
+    setConceptosCargados([
+      ...conceptosCargados,
+      {
+        id_concepto: null,
+        neto_no_gravado: 0,
+        neto_21: 0,
+        neto_10: 0,
+        neto_27: 0,
+      },
+    ]);
+  };
+  const eliminarLinea = (indexAEliminar) => {
+    // Si querés evitar que borren todos los renglones, podés descomentar esto:
+    if (conceptosCargados.length === 1) return;
+    const nuevoArray = conceptosCargados.filter((_, index) => index !== indexAEliminar);
+    setConceptosCargados(nuevoArray);
+    recalcularTotales(nuevoArray, form, "concepto");
+  };
   const customStylesProveedores = {
     container: (provided) => ({
       ...provided,
@@ -611,6 +568,7 @@ const Prorrateo = () => {
               />
 
             </div>
+
             {form.cta_cte_proveedores == 1 &&
               <div className={styles.inputContainerProv}>
                 <span>Proveedores</span>
@@ -658,138 +616,23 @@ const Prorrateo = () => {
             </div>
 
           </div>
-          <div className={styles.container6}>
-            <div className={styles.inputContainer}>
-              <span>Concepto</span>
-              <Select
-                options={conceptosFiltrados}
-                value={
-                  conceptosFiltrados?.find(
-                    (opt) => String(opt.value) === String(form.id_concepto)
-                  ) || null
-                }
-                onChange={(option) => {
-                  setForm((prevForm) => ({
-                    ...prevForm,
-                    id_concepto: option?.value || "",
-                  }));
-                }}
-                placeholder="Seleccione un concepto"
-                filterOption={(option, inputValue) =>
-                  option.data.searchKey.includes(inputValue.toLowerCase())
-                }
-                styles={customStylesProveedores}
-              />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto no gravado</span>
-              <input type="text" name='neto_no_gravado' value={form.neto_no_gravado} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 21%</span>
-              <input type="text" name='neto_21' value={form.neto_21} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 10,5%</span>
-              <input type="text" name='neto_10' value={form.neto_10} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 27%</span>
-              <input type="text" name='neto_27' value={form.neto_27} onChange={handleChangeNumbers} />
-            </div>
-            <div></div>
-
-          </div>
+          {conceptosCargados.map((concepto, index) => (
+            <ConceptoLinea key={index} index={index} eliminarLinea={eliminarLinea} concepto={concepto} conceptosFiltrados={conceptosFiltrados} handleChangeConcepto={handleChangeConcepto} styles={styles} customStylesProveedores={customStylesProveedores} />
+          ))}
 
           <div className={styles.container6}>
-            <div className={styles.inputContainer}>
-              <span>Concepto</span>
-              <Select
-                options={conceptosFiltrados}
-                value={
-                  conceptosFiltrados?.find(
-                    (opt) => String(opt.value) === String(form.id_concepto_2)
-                  ) || null
-                }
-                onChange={(option) => {
-                  setForm((prevForm) => ({
-                    ...prevForm,
-                    id_concepto_2: option?.value || "",
-                  }));
-                }}
-                placeholder="Seleccione un concepto"
-                filterOption={(option, inputValue) =>
-                  option.data.searchKey.includes(inputValue.toLowerCase())
-                }
-                styles={customStylesProveedores}
-              />
+            <div></div><div></div><div></div><div></div><div></div>
+            <div className={styles.inputContainer} style={{ alignItems: 'center', justifyContent: 'center', margin: '0 0.5rem' }}>
+              <button
+                type="button"
+                className={styles.addBtn}
+                style={{ margin: 0, width: '100%' }}
+                onClick={agregarLinea}
+              >
+                + Agregar Línea
+              </button>
             </div>
-            <div className={styles.inputContainer}>
-              <span>Neto no gravado</span>
-              <input type="text" name='neto_no_gravado_2' value={form.neto_no_gravado_2} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 21%</span>
-              <input type="text" name='neto_21_2' value={form.neto_21_2} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 10,5%</span>
-              <input type="text" name='neto_10_2' value={form.neto_10_2} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 27%</span>
-              <input type="text" name='neto_27_2' value={form.neto_27_2} onChange={handleChangeNumbers} />
-            </div>
-            <div></div>
-
           </div>
-
-          <div className={styles.container6}>
-            <div className={styles.inputContainer}>
-              <span>Concepto</span>
-              <Select
-                options={conceptosFiltrados}
-                value={
-                  conceptosFiltrados?.find(
-                    (opt) => String(opt.value) === String(form.id_concepto_3)
-                  ) || null
-                }
-                onChange={(option) => {
-                  setForm((prevForm) => ({
-                    ...prevForm,
-                    id_concepto_3: option?.value || "",
-                  }));
-                }}
-                placeholder="Seleccione un concepto"
-                filterOption={(option, inputValue) =>
-                  option.data.searchKey.includes(inputValue.toLowerCase())
-                }
-                styles={customStylesProveedores}
-              />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto no gravado</span>
-              <input type="text" name='neto_no_gravado_3' value={form.neto_no_gravado_3} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 21%</span>
-              <input type="text" name='neto_21_3' value={form.neto_21_3} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 10,5%</span>
-              <input type="text" name='neto_10_3' value={form.neto_10_3} onChange={handleChangeNumbers} />
-            </div>
-            <div className={styles.inputContainer}>
-              <span>Neto al 27%</span>
-              <input type="text" name='neto_27_3' value={form.neto_27_3} onChange={handleChangeNumbers} />
-            </div>
-            <div></div>
-
-          </div>
-          {/* FIN CONCEPTOS */}
-
-
-
           <div className={styles.container3}>
             <div className={styles.inputContainer}>
               <span>IVA 21%</span>
@@ -873,7 +716,7 @@ const Prorrateo = () => {
         <button
           className={styles.sendBtn}
           onClick={handleSubmit}
-          disabled={!form["fecha"] || !form["id_concepto"] ? true : false}
+          disabled={!form["fecha"] || conceptosCargados.filter(c => c.id_concepto).length === 0 || (form.cta_cte_proveedores === 0 && !form.id_forma_cobro)}
         >
           Enviar
         </button>
