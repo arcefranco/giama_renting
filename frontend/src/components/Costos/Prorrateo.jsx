@@ -28,9 +28,9 @@ const Prorrateo = () => {
   const { modelos, proveedores, formasDeCobro } = useSelector((state) => state.generalesReducer)
 
   const initialStateConceptos = [
-    { id_concepto: '', neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0 },
-    { id_concepto: '', neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0 },
-    { id_concepto: '', neto_no_gravado: 0, neto_21: 0, neto_10: 0, neto_27: 0 }
+    { id_concepto: '', neto_no_gravado: "", neto_21: "", neto_10: "", neto_27: "", importe_excluido: "" },
+    { id_concepto: '', neto_no_gravado: "", neto_21: "", neto_10: "", neto_27: "", importe_excluido: "" },
+    { id_concepto: '', neto_no_gravado: "", neto_21: "", neto_10: "", neto_27: "", importe_excluido: "" }
   ];
 
   const [conceptosCargados, setConceptosCargados] = useState(initialStateConceptos);
@@ -356,7 +356,7 @@ const Prorrateo = () => {
   const recalcularTotales = (conceptos, currentForm, changedField) => {
     let totalNetoCalc = 0;
     let totalNetoGravado = 0;
-    
+
     let IVA21Fixed = 0;
     let IVA10Fixed = 0;
     let IVA27Fixed = 0;
@@ -454,10 +454,11 @@ const Prorrateo = () => {
       ...conceptosCargados,
       {
         id_concepto: null,
-        neto_no_gravado: 0,
-        neto_21: 0,
-        neto_10: 0,
-        neto_27: 0,
+        neto_no_gravado: "",
+        neto_21: "",
+        neto_10: "",
+        neto_27: "",
+        importe_excluido: ""
       },
     ]);
   };
@@ -475,6 +476,11 @@ const Prorrateo = () => {
       fontSize: "10px"
     })
   };
+
+  const tieneLineasIncompletas = conceptosCargados.some(c =>
+    !c.id_concepto && (toNumber(c.neto_21) > 0 || toNumber(c.neto_10) > 0 || toNumber(c.neto_27) > 0 || toNumber(c.neto_no_gravado) > 0)
+  );
+
   return (
     <div className={styles.container}>
       <ToastContainer />
@@ -620,8 +626,8 @@ const Prorrateo = () => {
             <ConceptoLinea key={index} index={index} eliminarLinea={eliminarLinea} concepto={concepto} conceptosFiltrados={conceptosFiltrados} handleChangeConcepto={handleChangeConcepto} styles={styles} customStylesProveedores={customStylesProveedores} />
           ))}
 
-          <div className={styles.container6}>
-            <div></div><div></div><div></div><div></div><div></div>
+          <div className={styles.container7}>
+            <div></div><div></div><div></div><div></div><div></div><div></div>
             <div className={styles.inputContainer} style={{ alignItems: 'center', justifyContent: 'center', margin: '0 0.5rem' }}>
               <button
                 type="button"
@@ -716,7 +722,12 @@ const Prorrateo = () => {
         <button
           className={styles.sendBtn}
           onClick={handleSubmit}
-          disabled={!form["fecha"] || conceptosCargados.filter(c => c.id_concepto).length === 0 || (form.cta_cte_proveedores === 0 && !form.id_forma_cobro)}
+          disabled={
+            !form["fecha"] ||
+            conceptosCargados.filter(c => c.id_concepto).length === 0 ||
+            (form.cta_cte_proveedores === 0 && !form.id_forma_cobro) ||
+            tieneLineasIncompletas
+          }
         >
           Enviar
         </button>

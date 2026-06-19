@@ -3,7 +3,7 @@ import localStyles from './ConceptoLinea.module.css';
 
 const ConceptoLinea = ({ index, concepto, eliminarLinea, conceptosFiltrados, handleChangeConcepto, styles, customStylesProveedores }) => {
     return (
-        <div className={styles.container6}>
+        <div className={styles.container7}>
             <div className={styles.inputContainer}>
                 <span>Concepto</span>
                 <Select
@@ -38,6 +38,10 @@ const ConceptoLinea = ({ index, concepto, eliminarLinea, conceptosFiltrados, han
             <div className={styles.inputContainer}>
                 <span>Neto al 27%</span>
                 <input type="text" name='neto_27' value={concepto.neto_27} onChange={(e) => handleChangeConcepto(index, e)} />
+            </div>
+            <div className={styles.inputContainer}>
+                <span>Excluir de Prorrateo</span>
+                <input type="number" name='importe_excluido' value={concepto.importe_excluido} onChange={(e) => handleChangeConcepto(index, e)} />
             </div>
             <div className={styles.inputContainer} style={{ alignItems: 'center' }}>
                 {index >= 3 && (
