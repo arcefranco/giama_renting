@@ -451,14 +451,27 @@ export const PagosClientes = () => {
                         </h2>)
                 }
 
-                <button
-                    onClick={openModal}
-                    className={styles.refreshButton}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
-                >
-                    <span style={{ fontSize: "16px", lineHeight: 1, fontWeight: 400 }}>+</span>
-                    Alta de cobro
-                </button>
+                <div style={{ display: "flex", gap: "10px" }}>
+                    <button
+                        onClick={handleActualizar}
+                        className={styles.refreshButton}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                            <path d="M21 3v5h-5" />
+                        </svg>
+                        Actualizar
+                    </button>
+                    <button
+                        onClick={openModal}
+                        className={styles.refreshButton}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                    >
+                        <span style={{ fontSize: "16px", lineHeight: 1, fontWeight: 400 }}>+</span>
+                        Alta de cobro
+                    </button>
+                </div>
             </div>
 
             <DataGrid
