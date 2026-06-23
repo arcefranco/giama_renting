@@ -2238,12 +2238,20 @@ export const prorrateo = async (req, res) => {
     usuario,
   } = req.body;
 
-  let NroAsiento;
-  let NroAsientoSecundario;
   let cuentaIVA;
   let cuentaSecundariaIVA;
   let cuenta_forma_cobro;
   let cuenta_secundaria_forma_cobro;
+
+  //busco nro asiento/nro asiento secundario ANTES de las transacciones
+  let NroAsiento;
+  let NroAsientoSecundario;
+  try {
+    NroAsiento = await getNumeroAsiento();
+    NroAsientoSecundario = await getNumeroAsientoSecundario();
+  } catch (error) {
+    return res.send({ status: false, message: error.message });
+  }
 
   let transaction_costos_ingresos = await giama_renting.transaction();
   let transaction_asientos = await pa7_giama_renting.transaction();
@@ -2255,11 +2263,6 @@ export const prorrateo = async (req, res) => {
   let cuenta_percepcion_IVA;
   let cuenta_secundaria_percepcion_IVA;
 
-  // --- DEBUGGING FRONTEND ---
-  console.log("=====================================================");
-  console.log("TIPO DE DATOS DE CONCEPTOS:", typeof conceptos);
-  console.log("CONTENIDO DE CONCEPTOS:", conceptos);
-  console.log("=====================================================");
 
   // Si viene como string (por ej. desde FormData), lo parseamos
   let conceptosParseados = conceptos;
@@ -2309,15 +2312,7 @@ export const prorrateo = async (req, res) => {
       message: "No hay vehículos seleccionados",
     });
   }
-  //busco nro asiento/nro asiento secundario
-  try {
-    NroAsiento = await getNumeroAsiento();
-    NroAsientoSecundario = await getNumeroAsientoSecundario();
-  } catch (error) {
-    await transaction_asientos.rollback();
-    await transaction_costos_ingresos.rollback();
-    return res.send({ status: false, message: error.message });
-  }
+  // (NroAsiento ahora se obtiene arriba)
   // Obtengo cuentas contables de TODOS los conceptos de manera dinámica (Sin N+1)
   const idsConceptos = conceptosParseados.filter(c => c.id_concepto).map(c => c.id_concepto);
   let cuentasPorConcepto = {};
@@ -2334,6 +2329,8 @@ export const prorrateo = async (req, res) => {
       );
 
       if (!result.length) {
+        await transaction_asientos.rollback();
+        await transaction_costos_ingresos.rollback();
         return res.send({
           status: false,
           message: "No se encontraron los conceptos especificados",
@@ -2349,6 +2346,8 @@ export const prorrateo = async (req, res) => {
         };
       });
     } catch (error) {
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
       return res.send({
         status: false,
         message: "Hubo un problema al buscar las cuentas contables",
@@ -2377,10 +2376,12 @@ export const prorrateo = async (req, res) => {
     cuenta_percepcion_IVA = result[4]["valor_str"];
     cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
   } catch (error) {
-    throw new Error(
-      `Error al buscar parametros de percepcion ${error.message ? `: ${error.message}` : ""
-      }`
-    );
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
+    return res.send({
+      status: false,
+      message: `Error al buscar parametros de percepcion ${error.message ? `: ${error.message}` : ""}`
+    });
   }
   //obtengo cuentas contables de la forma de cobro/pago para el TOTAL (si es cta cte proveedores, se usan esas en su lugar)
   if (cta_cte_proveedores == 1) {
@@ -2396,10 +2397,12 @@ export const prorrateo = async (req, res) => {
       cuenta_forma_cobro = result[0]["valor_str"];
       cuenta_secundaria_forma_cobro = result[1]["valor_str"];
     } catch (error) {
-      throw new Error(
-        `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
-        }`
-      );
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
+      return res.send({
+        status: false,
+        message: `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""}`
+      });
     }
   } else {
     try {
@@ -2410,18 +2413,22 @@ export const prorrateo = async (req, res) => {
           replacements: [id_forma_cobro],
         }
       );
-      if (!result.length)
+      if (!result.length) {
+        await transaction_asientos.rollback();
+        await transaction_costos_ingresos.rollback();
         return res.send({
           status: false,
           message: "No se encontró la forma de cobro especificada",
         });
+      }
       cuenta_forma_cobro = result[0]["cuenta_contable"];
       cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
     } catch (error) {
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
       return res.send({
         status: false,
-        message: `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
-          }`,
+        message: `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""}`,
       });
     }
   }
@@ -2431,6 +2438,8 @@ export const prorrateo = async (req, res) => {
     cuentaSecundariaIVA = await getParametro("IC22");
   } catch (error) {
     console.log(error);
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
     const { body } = handleError(error, "Parámetro", acciones.get);
     return res.send(body);
   }
@@ -2438,7 +2447,7 @@ export const prorrateo = async (req, res) => {
   //insert movimientos fijos (TOTAL e IVA)
   try {
     if (importe_iva) { //puede ser solo neto no gravado
-      asientoContable(
+      await asientoContable(
         "c_movimientos",
         NroAsiento,
         cuentaIVA,
@@ -2453,7 +2462,7 @@ export const prorrateo = async (req, res) => {
       );
     }
     if (importe_iva) {
-      asientoContable(
+      await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
         cuentaSecundariaIVA,
@@ -2469,7 +2478,7 @@ export const prorrateo = async (req, res) => {
 
     }
     if (importe_tasa_IIBB_CABA) {
-      asientoContable(
+      await asientoContable(
         "c_movimientos",
         NroAsiento,
         cuenta_percepcion_IIBB_CABA,
@@ -2482,7 +2491,7 @@ export const prorrateo = async (req, res) => {
         NroAsientoSecundario,
         FA_FC
       );
-      asientoContable(
+      await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
         cuenta_secundaria_percepcion_IIBB_CABA,
@@ -2497,7 +2506,7 @@ export const prorrateo = async (req, res) => {
       );
     }
     if (importe_tasa_IIBB) {
-      asientoContable(
+      await asientoContable(
         "c_movimientos",
         NroAsiento,
         cuenta_percepcion_IIBB,
@@ -2510,7 +2519,7 @@ export const prorrateo = async (req, res) => {
         NroAsientoSecundario,
         FA_FC
       );
-      asientoContable(
+      await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
         cuenta_secundaria_percepcion_IIBB,
@@ -2525,7 +2534,7 @@ export const prorrateo = async (req, res) => {
       );
     }
     if (importe_tasa_IVA) {
-      asientoContable(
+      await asientoContable(
         "c_movimientos",
         NroAsiento,
         cuenta_percepcion_IVA,
@@ -2538,7 +2547,7 @@ export const prorrateo = async (req, res) => {
         NroAsientoSecundario,
         FA_FC
       );
-      asientoContable(
+      await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
         cuenta_secundaria_percepcion_IVA,
@@ -2552,7 +2561,7 @@ export const prorrateo = async (req, res) => {
         FA_FC
       );
     }
-    asientoContable(
+    await asientoContable(
       "c_movimientos",
       NroAsiento,
       cuenta_forma_cobro,
@@ -2565,7 +2574,7 @@ export const prorrateo = async (req, res) => {
       NroAsientoSecundario,
       FA_FC
     );
-    asientoContable(
+    await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario,
       cuenta_secundaria_forma_cobro,
@@ -2579,6 +2588,8 @@ export const prorrateo = async (req, res) => {
       FA_FC
     );
   } catch (error) {
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
     return res.send({ status: false, message: error.message });
   }
   if (cta_cte_proveedores == 1) {
