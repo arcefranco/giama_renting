@@ -17,6 +17,7 @@ import {
   getFichas,
   postImagenesVehiculo,
   postVehiculosMasivos,
+  postActualizarKilometraje
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 import { auth } from "../middlewares/auth.js";
@@ -92,5 +93,12 @@ vehiculosRouter.post(
   authorizeRoles("5"),
   getFichas
 );
+vehiculosRouter.post(
+  "/postActualizarKilometraje",
+  auth,
+  authorizeRoles("2","4"),
+  upload.single("file"),
+  postActualizarKilometraje
+); 
 
 export default vehiculosRouter;

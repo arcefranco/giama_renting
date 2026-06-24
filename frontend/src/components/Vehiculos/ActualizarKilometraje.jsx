@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
+import { toast } from 'react-toastify'
 import styles from './VehiculosForm.module.css'
+import { postActualizarKilometraje } from '../../reducers/Vehiculos/vehiculosSlice'
 
 const ActualizarKilometraje = () => {
-  const { username } = useSelector((state) => state.loginReducer)
+  const dispatch = useDispatch()
   const excelKm = useRef()
   const [archivoKm, setArchivoKm] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -15,7 +17,7 @@ const ActualizarKilometraje = () => {
     if (!file) return
     const ext = file.name.split('.').pop().toLowerCase()
     if (!['xls', 'xlsx'].includes(ext)) {
-      alert('Solo se permiten archivos Excel (.xls, .xlsx)')
+      toast.error('Solo se permiten archivos Excel (.xls, .xlsx)')
       return
     }
     setArchivoKm(file)
@@ -28,14 +30,23 @@ const ActualizarKilometraje = () => {
     if (file) setArchivoKm(file)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmitKilometraje = async (e) => {
+    console.log("submit");
     e.preventDefault()
     if (!archivoKm) {
-      alert('Por favor, seleccioná un archivo Excel.')
+      toast.error('Por favor, seleccioná un archivo Excel.')
       return
     }
-    // TODO: dispatch acción de kilometraje cuando exista el endpoint
-    alert('La ruta del backend para actualizar kilometraje todavía no está conectada.')
+
+    const res = await dispatch(postActualizarKilometraje(archivoKm))
+
+    // El backend devuelve { status: true/false, message: "..." }
+    if (res.payload?.status) {
+      toast.success(res.payload.message || 'Archivo subido correctamente')
+      setArchivoKm(null) // Limpiar después del éxito
+    } else {
+      toast.error(res.payload?.message || 'Error al subir el archivo')
+    }
   }
 
   return (
@@ -70,10 +81,10 @@ const ActualizarKilometraje = () => {
       <div className={styles.dropZoneActions}>
         <button
           className={styles.sendBtn}
-          onClick={handleSubmit}
+          onClick={handleSubmitKilometraje}
           disabled={!archivoKm}
         >
-          Subir
+          Subir 
         </button>
       </div>
     </>

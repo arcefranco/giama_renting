@@ -173,7 +173,15 @@ export const getAmortizacion = createAsyncThunk(
       rejectWithValue
     )
 );
-
+export const postActualizarKilometraje = createAsyncThunk(
+  "postActualizarKilometraje",
+  async (file, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.postActualizarKilometraje(file),
+      responses.successObject,
+      rejectWithValue
+    )
+);
 /* export const getAllAmortizaciones = createAsyncThunk(
   "getAllAmortizaciones",
   async (_, { rejectWithValue }) =>
