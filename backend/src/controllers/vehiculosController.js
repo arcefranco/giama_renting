@@ -439,8 +439,8 @@ export const insertVehiculo = async (req) => {
   if (mensajeError) {
     return { status: false, message: mensajeError };
   }
-/*   const importe_neto = costo / 1.21;
-  const importe_iva = costo - importe_neto; */
+  /*   const importe_neto = costo / 1.21;
+    const importe_iva = costo - importe_neto; */
   try {
     meses_amortizacion = await getParametro("AMRT");
     cuentaRODN = await getParametro("RODN");
@@ -453,7 +453,7 @@ export const insertVehiculo = async (req) => {
     const { body } = handleError(error, "parámetro");
     return body;
   }
-    //obtengo cuentas percepcion IIBB, IIBB CABA e IVA si hay importe
+  //obtengo cuentas percepcion IIBB, IIBB CABA e IVA si hay importe
 
   try {
     const result = await giama_renting.query(
@@ -476,8 +476,7 @@ export const insertVehiculo = async (req) => {
     cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
   } catch (error) {
     throw new Error(
-      `Error al buscar parametros de percepcion ${
-        error.message ? `: ${error.message}` : ""
+      `Error al buscar parametros de percepcion ${error.message ? `: ${error.message}` : ""
       }`
     );
   }
@@ -495,7 +494,7 @@ export const insertVehiculo = async (req) => {
     return body;
   }
 
-  
+
 
   try {
     const result = await giama_renting.query(
@@ -602,12 +601,12 @@ export const insertVehiculo = async (req) => {
   //asientos
   try {
     //asientos
-       await asientoContable(
+    await asientoContable(
       "c_movimientos",
       NroAsiento,
       cuentaRODN,
       "D",
-      importe_neto, 
+      importe_neto,
       concepto,
       transaction_pa7_giama_renting,
       numero_comprobante,
@@ -615,7 +614,7 @@ export const insertVehiculo = async (req) => {
       NroAsientoSecundario,
       "FA"
     );
-    if(importe_iva > 0) {
+    if (importe_iva > 0) {
       await asientoContable(
         "c_movimientos",
         NroAsiento,
@@ -630,8 +629,8 @@ export const insertVehiculo = async (req) => {
         "FA"
       );
     }
-    if(importe_iva_10_5 > 0){
-        await asientoContable(
+    if (importe_iva_10_5 > 0) {
+      await asientoContable(
         "c_movimientos",
         NroAsiento,
         cuentaIC10,
@@ -645,50 +644,50 @@ export const insertVehiculo = async (req) => {
         "FA"
       );
     }
-    if(importe_tasa_IVA > 0){
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuenta_percepcion_IVA,
-      "D",
-      importe_tasa_IVA,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      NroAsientoSecundario,
-      "FA"
-    );
+    if (importe_tasa_IVA > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_percepcion_IVA,
+        "D",
+        importe_tasa_IVA,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        NroAsientoSecundario,
+        "FA"
+      );
     }
-    if(importe_tasa_IIBB > 0){
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuenta_percepcion_IIBB,
-      "D",
-      importe_tasa_IIBB,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      NroAsientoSecundario,
-      "FA"
-    );
+    if (importe_tasa_IIBB > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_percepcion_IIBB,
+        "D",
+        importe_tasa_IIBB,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        NroAsientoSecundario,
+        "FA"
+      );
     }
-    if(importe_tasa_IIBB_CABA > 0){
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento,
-      cuenta_percepcion_IIBB_CABA,
-      "D",
-      importe_tasa_IIBB_CABA,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      NroAsientoSecundario,
-      "FA"
-    );
+    if (importe_tasa_IIBB_CABA > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_percepcion_IIBB_CABA,
+        "D",
+        importe_tasa_IIBB_CABA,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        NroAsientoSecundario,
+        "FA"
+      );
     }
     await asientoContable(
       "c_movimientos",
@@ -717,7 +716,7 @@ export const insertVehiculo = async (req) => {
       null,
       "FA"
     );
-    if (importe_iva > 0){
+    if (importe_iva > 0) {
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
@@ -732,8 +731,8 @@ export const insertVehiculo = async (req) => {
         "FA"
       );
     }
-    if (importe_iva_10_5 > 0){
-        await asientoContable(
+    if (importe_iva_10_5 > 0) {
+      await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario,
         cuentaIS10,
@@ -747,50 +746,50 @@ export const insertVehiculo = async (req) => {
         "FA"
       );
     }
-    if(importe_tasa_IVA > 0){
-    await asientoContable(
-      "c_movimientos",
-      NroAsientoSecundario,
-      cuenta_secundaria_percepcion_IVA,
-      "D",
-      importe_tasa_IVA,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      null,
-      "FA"
-    );
+    if (importe_tasa_IVA > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_percepcion_IVA,
+        "D",
+        importe_tasa_IVA,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        null,
+        "FA"
+      );
     }
-    if(importe_tasa_IIBB > 0){
-    await asientoContable(
-      "c_movimientos",
-      NroAsientoSecundario,
-      cuenta_secundaria_percepcion_IIBB,
-      "D",
-      importe_tasa_IIBB,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      null,
-      "FA"
-    );
+    if (importe_tasa_IIBB > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_percepcion_IIBB,
+        "D",
+        importe_tasa_IIBB,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        null,
+        "FA"
+      );
     }
-    if(importe_tasa_IIBB_CABA > 0){
-    await asientoContable(
-      "c2_movimientos",
-      NroAsientoSecundario,
-      cuenta_secundaria_percepcion_IIBB_CABA,
-      "D",
-      importe_tasa_IIBB_CABA,
-      concepto,
-      transaction_pa7_giama_renting,
-      numero_comprobante,
-      fecha_factura,
-      null,
-      "FA"
-    );
+    if (importe_tasa_IIBB_CABA > 0) {
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_percepcion_IIBB_CABA,
+        "D",
+        importe_tasa_IIBB_CABA,
+        concepto,
+        transaction_pa7_giama_renting,
+        numero_comprobante,
+        fecha_factura,
+        null,
+        "FA"
+      );
     }
     await asientoContable(
       "c2_movimientos",
@@ -1085,57 +1084,57 @@ export const updateVehiculo = async (req, res) => {
   }
 
   //PERMISOS ESPECIFICOS
-    
-    //FINANZAS
+
+  //FINANZAS
 
 
-  if(fecha_inicio_amortizacion && vehiculoAnterior[0]["fecha_inicio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de la fecha inicio de amortización"})
+  if (fecha_inicio_amortizacion && vehiculoAnterior[0]["fecha_inicio_amortizacion"] !== fecha_inicio_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de la fecha inicio de amortización" })
   }
-  if(meses_amortizacion && vehiculoAnterior[0]["meses_amortizacion"] !== meses_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de los meses amortización"})
-  }
-
-    //ADMINISTRACION
-
-  if(dispositivo && vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje"})
+  if (meses_amortizacion && vehiculoAnterior[0]["meses_amortizacion"] !== meses_amortizacion && (!userRoles.includes("2") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de los meses amortización" })
   }
 
-  if(estado && vehiculoAnterior[0]["estado_actual"] !== estado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo"})
+  //ADMINISTRACION
+
+  if (dispositivo && vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje" })
   }
 
-  if(sucursal && vehiculoAnterior[0]["sucursal"] !== sucursal && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de sucursal"})
+  if (estado && vehiculoAnterior[0]["estado_actual"] !== estado && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo" })
   }
 
-  if(proveedor_gps && vehiculoAnterior[0]["proveedor_gps"] !== proveedor_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio del proveedor GPS"})
+  if (sucursal && vehiculoAnterior[0]["sucursal"] !== sucursal && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de sucursal" })
   }
 
-  if(nro_serie_gps && vehiculoAnterior[0]["nro_serie_gps"] !== nro_serie_gps && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio del número serie GPS"})
+  if (proveedor_gps && vehiculoAnterior[0]["proveedor_gps"] !== proveedor_gps && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio del proveedor GPS" })
   }
 
-  if(calcomania && vehiculoAnterior[0]["calcomania"] !== calcomania && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de calcomania"})
+  if (nro_serie_gps && vehiculoAnterior[0]["nro_serie_gps"] !== nro_serie_gps && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio del número serie GPS" })
   }
 
-  if(gnc && vehiculoAnterior[0]["gnc"] !== gnc && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de GNC"})
+  if (calcomania && vehiculoAnterior[0]["calcomania"] !== calcomania && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de calcomania" })
   }
 
-  if(polarizado && vehiculoAnterior[0]["polarizado"] !== polarizado && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de polarizado"})
+  if (gnc && vehiculoAnterior[0]["gnc"] !== gnc && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de GNC" })
   }
 
-  if(cubre_asiento && vehiculoAnterior[0]["cubre_asiento"] !== cubre_asiento && (!userRoles.includes("4") && !userRoles.includes("1")) ){
-    return res.send({status: false, message: "Se requiere permiso de administración para poder realizar cambio de cubre asiento"})
+  if (polarizado && vehiculoAnterior[0]["polarizado"] !== polarizado && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de polarizado" })
+  }
+
+  if (cubre_asiento && vehiculoAnterior[0]["cubre_asiento"] !== cubre_asiento && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+    return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de cubre asiento" })
   }
 
 
- 
+
   let preparadoAhora =
     estado == 2 && vehiculoAnterior[0]["estado_actual"] == 1 ? true : false;
 
@@ -1368,10 +1367,10 @@ export const getAlquileresPeriodo = async (req, res) => {
         replacements:
           mes && anio
             ? [
-                id_vehiculo,
-                finMes.toISOString().split("T")[0],
-                inicioMes.toISOString().split("T")[0],
-              ]
+              id_vehiculo,
+              finMes.toISOString().split("T")[0],
+              inicioMes.toISOString().split("T")[0],
+            ]
             : [id_vehiculo],
       }
     );
@@ -1652,8 +1651,8 @@ export const getFichas = async (req, res) => {
 
     const fechaInicio = filtroPorPeriodo
       ? moment(`${anio}-${mes.toString().padStart(2, "0")}-01`)
-          .startOf("month")
-          .format("YYYY-MM-DD")
+        .startOf("month")
+        .format("YYYY-MM-DD")
       : "1900-01-01";
 
     const fechaFin = filtroPorPeriodo
@@ -1931,6 +1930,107 @@ export const postVehiculosMasivos = async (req, res) => {
     return res.status(500).send({
       status: false,
       message: "Error al procesar archivo",
+    });
+  }
+};
+export const postActualizarKilometraje = async (req, res) => {
+  const COLUMNAS_REQUERIDAS = ["Dominio", "Kilometraje_Actual"];
+
+  if (!req.file) {
+    return res.send({ status: false, message: "Debe subir un archivo Excel" });
+  }
+
+  const validacion = validarArchivo(req.file, ["xls", "xlsx"], [
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ]);
+  
+  if (!validacion.valido) {
+    return res.send({ status: false, message: validacion.message });
+  }
+
+  
+  const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+  const sheetName = workbook.SheetNames[0];
+  const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+  if (!data.length) {
+    return res.send({ status: false, message: "El archivo está vacío" });
+  }
+
+
+  const columnasArchivo = Object.keys(data[0]);
+  const columnasFaltantes = COLUMNAS_REQUERIDAS.filter(
+    (c) => !columnasArchivo.includes(c)
+  );
+  
+  if (columnasFaltantes.length) {
+    return res.send({
+      status: false,
+      message: `El archivo no tiene el formato correcto. Faltan las columnas: ${columnasFaltantes.join(", ")}`,
+    });
+  }
+
+  const transaction = await giama_renting.transaction();
+  try {
+    for (const row of data) {
+      const dominio = row["Dominio"]?.toString().trim().toUpperCase();
+      const kmNuevo = parseFloat(row["Kilometraje_Actual"]);
+
+      if (!dominio || isNaN(kmNuevo)) {
+        await transaction.rollback();
+        return res.send({
+          status: false,
+          message: `Fila con datos inválidos: Dominio="${row["Dominio"]}", Kilometraje="${row["Kilometraje_Actual"]}"`,
+        });
+      }
+
+     
+      const [vehiculo] = await giama_renting.query(
+        `SELECT id, kilometros_actuales FROM vehiculos WHERE dominio = :dominio LIMIT 1`,
+        { type: QueryTypes.SELECT, replacements: { dominio } }
+      );
+
+      if (!vehiculo) {
+        await transaction.rollback();
+        return res.send({
+          status: false,
+          message: `El dominio "${dominio}" no existe en el sistema`,
+        });
+      }
+
+      const kmActual = parseFloat(vehiculo.kilometros_actuales) || 0;
+
+      if (kmNuevo <= kmActual) {
+        await transaction.rollback();
+        return res.send({
+          status: false,
+          message: `El kilometraje nuevo (${kmNuevo}) debe ser mayor al actual (${kmActual}) para el dominio "${dominio}"`,
+        });
+      }
+
+   
+      await giama_renting.query(
+        `UPDATE vehiculos SET kilometros_actuales = :kmNuevo WHERE id = :id`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: { kmNuevo, id: vehiculo.id },
+          transaction,
+        }
+      );
+    }
+
+    await transaction.commit();
+    return res.send({
+      status: true,
+      message: `${data.length} vehículo(s) actualizados correctamente`,
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error(error);
+    return res.status(500).send({
+      status: false,
+      message: "Error al procesar el archivo",
     });
   }
 };
