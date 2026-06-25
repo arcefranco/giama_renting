@@ -1252,6 +1252,42 @@ async function registrarCostoIngresoIndividual({
   const factor = -1;
 
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
+    const conceptos = [];
+    const cuentasPorConcepto = {};
+
+    if (id_concepto) {
+      conceptos.push({
+        id_concepto,
+        neto_no_gravado: toNumber(neto_no_gravado),
+        neto_21: toNumber(neto_21),
+        neto_10: toNumber(neto_10),
+        neto_27: toNumber(neto_27),
+      });
+      cuentasPorConcepto[id_concepto] = { cuenta_contable: cuenta_concepto };
+    }
+
+    if (id_concepto_2) {
+      conceptos.push({
+        id_concepto: id_concepto_2,
+        neto_no_gravado: toNumber(neto_no_gravado_2),
+        neto_21: toNumber(neto_21_2),
+        neto_10: toNumber(neto_10_2),
+        neto_27: toNumber(neto_27_2),
+      });
+      cuentasPorConcepto[id_concepto_2] = { cuenta_contable: cuenta_concepto_2 };
+    }
+
+    if (id_concepto_3) {
+      conceptos.push({
+        id_concepto: id_concepto_3,
+        neto_no_gravado: toNumber(neto_no_gravado_3),
+        neto_21: toNumber(neto_21_3),
+        neto_10: toNumber(neto_10_3),
+        neto_27: toNumber(neto_27_3),
+      });
+      cuentasPorConcepto[id_concepto_3] = { cuenta_contable: cuenta_concepto_3 };
+    }
+
     await movimientosProveedoresEgresos({
       fecha,
       cod_proveedor,
@@ -1259,28 +1295,15 @@ async function registrarCostoIngresoIndividual({
       numero_comprobante_1,
       numero_comprobante_2,
       importe_total,
-      cuenta_concepto,
-      cuenta_concepto_2,
-      cuenta_concepto_3,
+      
+      conceptos,
+      cuentasPorConcepto,
+
       NroAsiento,
       NroAsientoSecundario,
       usuario,
       transaction_asientos,
-      neto_no_gravado: toNumber(neto_no_gravado),
-      neto_21: toNumber(neto_21),
-      neto_10: toNumber(neto_10),
-      neto_27: toNumber(neto_27),
-      neto_no_gravado_2: toNumber(neto_no_gravado_2),
-      neto_21_2: toNumber(neto_21_2),
-      neto_10_2: toNumber(neto_10_2),
-      neto_27_2: toNumber(neto_27_2),
-      neto_no_gravado_3: toNumber(neto_no_gravado_3),
-      neto_21_3: toNumber(neto_21_3),
-      neto_10_3: toNumber(neto_10_3),
-      neto_27_3: toNumber(neto_27_3),
-      importe_iva_21: toNumber(importe_iva_21),
-      importe_iva_10: toNumber(importe_iva_10),
-      importe_iva_27: toNumber(importe_iva_27),
+      
       tasa_IIBB_CABA,
       tasa_IIBB,
       tasa_IVA,
