@@ -263,3 +263,131 @@
   width: 100%;
   background-color: transparent;
 }
+
+/* === IMPORTACION MASIVA === */
+
+.tabsBar {
+  display: flex;
+  gap: 1rem;
+  margin-left: 1rem;
+  border-bottom: 2px solid #ddd;
+  width: 90%;
+}
+
+.tabBtn {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background-color: transparent;
+  color: #555;
+  font-weight: bold;
+  font-size: 14px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tabBtn:hover {
+  color: #800000;
+}
+
+.tabBtnActive {
+  border-bottom: 3px solid #800000;
+  color: #800000;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 90%;
+  margin-top: 1rem;
+  padding: 0 1rem;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  color: #800000;
+  font-size: 20px;
+}
+
+.downloadBtn {
+  width: 8rem;
+  height: 2rem;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  background-color: #800000;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.downloadBtn:hover {
+  background-color: #a52a2a;
+}
+
+.downloadIcon {
+  width: 19px;
+}
+
+/* Drag & Drop */
+.dropZone {
+  width: 100%;
+  border: 2px dashed #aab4c8;
+  border-radius: 10px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.dropZone:hover {
+  border-color: #800000;
+  background-color: #fff5f5;
+}
+
+.dropZoneDragging {
+  border-color: #800000;
+  background-color: #fff5f5;
+}
+
+.dropZoneIcon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dropZoneFileName {
+  font-weight: bold;
+  color: #800000;
+  margin: 0;
+}
+
+.dropZoneHint {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+}
+
+.dropZoneTitle {
+  font-weight: bold;
+  color: #334155;
+  margin: 0;
+}
+
+.dropZoneSubtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.dropZoneActions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
