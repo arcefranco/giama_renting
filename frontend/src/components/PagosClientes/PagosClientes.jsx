@@ -191,7 +191,7 @@ export const PagosClientes = () => {
     }, [isError, isSuccess, codigo])
     const onSuccess = () => {
         closeModal()
-        
+
         if (id) {
             dispatch(getCtaCteCliente({ id_cliente: id }))
         } else if (form.id_cliente) {

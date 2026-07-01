@@ -37,6 +37,12 @@ const prorrateo = async (form) => {
   return postFunction("costos/prorrateo", form);
 };
 
+const postImportacionesMultas = async (form) => {
+  return postFunction("costos/importacionMultas", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
 const costosService = {
   getCuentasContables,
   postConceptoCostos,
@@ -47,6 +53,7 @@ const costosService = {
   postCostos_Ingresos,
   getCostosIngresosByIdVehiculo,
   prorrateo,
-  ingresos_seguros
+  ingresos_seguros,
+  postImportacionesMultas
 };
 export default costosService;

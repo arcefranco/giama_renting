@@ -13,6 +13,7 @@ const initialState = {
   isSuccess: false,
   isLoading: false,
   message: "",
+  errores_importacion: [],
 };
 
 export const getCuentasContables = createAsyncThunk(
@@ -105,7 +106,15 @@ export const ingresos_seguros = createAsyncThunk(
     )
 );
 
-
+export const postImportacionesMultas = createAsyncThunk(
+  "postImportacionesMultas",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.postImportacionesMultas(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
 
 export const costosSlice = createSlice({
   name: "costos",
@@ -116,6 +125,7 @@ export const costosSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = "";
+      state.errores_importacion = [];
     },
     resetCostosVehiculo: (state) => {
       state.costos_ingresos_vehiculo = [];
@@ -268,6 +278,25 @@ export const costosSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
+    });
+    builder.addCase(postImportacionesMultas.pending, (state) => {
+      state.isLoading = true;
+      state.isSuccess = false;
+      state.isError = false;
+    });
+    builder.addCase(postImportacionesMultas.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+      state.errores_importacion = action.payload.errores || [];
+    });
+    builder.addCase(postImportacionesMultas.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+      state.errores_importacion = action.payload.errores || [];
     });
   },
 });

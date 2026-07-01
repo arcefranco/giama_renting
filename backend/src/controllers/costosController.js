@@ -5,6 +5,8 @@ import { getParametro } from "../../helpers/getParametro.js";
 import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
+  getNumeroAsientoTransaccion,
+  getNumeroAsientoSecundarioTransaccion
 } from "../../helpers/getNumeroAsiento.js";
 import { handleError, acciones } from "../../helpers/handleError.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
@@ -926,7 +928,7 @@ const asientos_ingresos = async (
   return;
 };
 //FUNCION AUXILIAR
-async function registrarCostoIngresoIndividual({
+export async function registrarCostoIngresoIndividual({
   id_vehiculo,
   fecha,
   importe_total,
@@ -1060,7 +1062,7 @@ async function registrarCostoIngresoIndividual({
       }
     );
 
-    if (result[0]["RazonSocial"]) nombre_proveedor = result[0]["RazonSocial"];
+    if (result.length > 0 && result[0]["RazonSocial"]) nombre_proveedor = result[0]["RazonSocial"];
     else nombre_proveedor = "SIN NOMBRE PROVEEDOR";
   } catch (error) {
     throw new Error(
@@ -1430,7 +1432,7 @@ async function registrarCostoIngresoIndividual({
 
 
 
-async function registrarIngresoIndividual({
+export async function registrarIngresoIndividual({
   debe_ingreso,
   id_vehiculo,
   fecha_deuda,
@@ -1623,10 +1625,10 @@ async function registrarIngresoIndividual({
   }
   //obtengo numeros de asiento
   try {
-    NroAsiento_pago = await getNumeroAsiento();
-    NroAsientoSecundario_pago = await getNumeroAsientoSecundario();
-    NroAsiento_deuda = await getNumeroAsiento();
-    NroAsientoSecundario_deuda = await getNumeroAsientoSecundario();
+    NroAsiento_pago = await getNumeroAsientoTransaccion(transaction_asientos);
+    NroAsientoSecundario_pago = await getNumeroAsientoSecundarioTransaccion(transaction_asientos);
+    NroAsiento_deuda = await getNumeroAsientoTransaccion(transaction_asientos);
+    NroAsientoSecundario_deuda = await getNumeroAsientoSecundarioTransaccion(transaction_asientos);
   } catch (error) {
     throw error;
   }
@@ -2266,6 +2268,9 @@ export const prorrateo = async (req, res) => {
   let cuenta_forma_cobro;
   let cuenta_secundaria_forma_cobro;
 
+  let transaction_costos_ingresos = await giama_renting.transaction();
+  let transaction_asientos = await pa7_giama_renting.transaction();
+
   //busco nro asiento/nro asiento secundario ANTES de las transacciones
   let NroAsiento;
   let NroAsientoSecundario;
@@ -2275,9 +2280,6 @@ export const prorrateo = async (req, res) => {
   } catch (error) {
     return res.send({ status: false, message: error.message });
   }
-
-  let transaction_costos_ingresos = await giama_renting.transaction();
-  let transaction_asientos = await pa7_giama_renting.transaction();
 
   let cuenta_percepcion_IIBB;
   let cuenta_secundaria_percepcion_IIBB;

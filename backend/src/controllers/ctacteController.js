@@ -3,7 +3,7 @@ import { QueryError, QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { insertPago } from "../../helpers/insertPago.js";
-import {asientoContable} from "../../helpers/asientoContable.js"
+import { asientoContable } from "../../helpers/asientoContable.js"
 import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
@@ -15,14 +15,14 @@ import { padWithZeros } from "../../helpers/padWithZeros.js";
 
 const contra_asiento_factura = async (id_factura, nro_asiento_original, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario) => {
 
-const fecha = getTodayDate()
+  const fecha = getTodayDate()
 
   //realizo los asientos
   try {
 
-  const nro_comprobante = padWithZeros(`${NroAsiento}`, 13)
-await giama_renting.query(
-  `INSERT INTO c_movimientos (
+    const nro_comprobante = padWithZeros(`${NroAsiento}`, 13)
+    await giama_renting.query(
+      `INSERT INTO c_movimientos (
     Fecha,
     NroAsiento,
     Cuenta,
@@ -46,15 +46,15 @@ await giama_renting.query(
   FROM c_movimientos
   WHERE NroAsiento = :nro_asiento_original
   `,
-  {
-    type: QueryTypes.INSERT,
-    replacements: {fecha, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
-    transaction: transaction_pa7_giama_renting
-  }
-);
+      {
+        type: QueryTypes.INSERT,
+        replacements: { fecha, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
+        transaction: transaction_pa7_giama_renting
+      }
+    );
 
-await giama_renting.query(
-  `INSERT INTO c2_movimientos (
+    await giama_renting.query(
+      `INSERT INTO c2_movimientos (
     Fecha,
     NroAsiento,
     Cuenta,
@@ -76,12 +76,12 @@ await giama_renting.query(
   FROM c_movimientos
   WHERE NroAsiento = :nro_asiento_original
   `,
-  {
-    type: QueryTypes.INSERT,
-    replacements: {fecha, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
-    transaction: transaction_pa7_giama_renting
-  }
-);
+      {
+        type: QueryTypes.INSERT,
+        replacements: { fecha, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
+        transaction: transaction_pa7_giama_renting
+      }
+    );
 
   } catch (error) {
     console.log(error);
@@ -99,9 +99,9 @@ const contra_asiento_recibo = async (nro_recibo, transaction_pa7_giama_renting, 
         replacements: [nro_recibo]
       }
     )
-    if (result_pago.length){
+    if (result_pago.length) {
       nro_asiento_original = result_pago[0]["nro_asiento"]
-    }else{
+    } else {
       throw new Error("No se encontró el numero de asiento del cobro original")
     }
   } catch (error) {
@@ -126,9 +126,9 @@ const contra_asiento_recibo = async (nro_recibo, transaction_pa7_giama_renting, 
   //realizo los asientos
   try {
 
-  const nro_comprobante = padWithZeros(`${NroAsiento}`, 13)
-await giama_renting.query(
-  `INSERT INTO c_movimientos (
+    const nro_comprobante = padWithZeros(`${NroAsiento}`, 13)
+    await giama_renting.query(
+      `INSERT INTO c_movimientos (
     Fecha,
     NroAsiento,
     Cuenta,
@@ -152,15 +152,15 @@ await giama_renting.query(
   FROM c_movimientos
   WHERE NroAsiento = :nro_asiento_original
   `,
-  {
-    type: QueryTypes.INSERT,
-    replacements: {fecha, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
-    transaction: transaction_pa7_giama_renting
-  }
-);
+      {
+        type: QueryTypes.INSERT,
+        replacements: { fecha, NroAsiento, nro_comprobante, NroAsientoSecundario, nro_asiento_original },
+        transaction: transaction_pa7_giama_renting
+      }
+    );
 
-await giama_renting.query(
-  `INSERT INTO c2_movimientos (
+    await giama_renting.query(
+      `INSERT INTO c2_movimientos (
     Fecha,
     NroAsiento,
     Cuenta,
@@ -182,12 +182,12 @@ await giama_renting.query(
   FROM c_movimientos
   WHERE NroAsiento = :nro_asiento_original
   `,
-  {
-    type: QueryTypes.INSERT,
-    replacements: {fecha, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
-    transaction: transaction_pa7_giama_renting
-  }
-);
+      {
+        type: QueryTypes.INSERT,
+        replacements: { fecha, NroAsientoSecundario, nro_comprobante, nro_asiento_original },
+        transaction: transaction_pa7_giama_renting
+      }
+    );
 
   } catch (error) {
     console.log(error);
@@ -202,14 +202,14 @@ const eliminarPago = async (nro_recibo) => {
     })
   } catch (error) {
     console.log(error)
-    throw new Error ("Hubo un error al eliminar el pago")
+    throw new Error("Hubo un error al eliminar el pago")
   }
 }
 
 export const postPago = async (req, res) => {
-    const {
+  const {
     id_cliente,
-    fecha,  
+    fecha,
     id_forma_cobro,
     id_forma_cobro_2,
     id_forma_cobro_3,
@@ -219,28 +219,28 @@ export const postPago = async (req, res) => {
     observacion,
     //faltan
     usuario,
-    } = req.body
-    let nro_recibo;
-    let NroAsiento;
-    let NroAsientoSecundario;
-    let transaction_giama_renting = await giama_renting.transaction()
-    let transaction_pa7_giama_renting = await pa7_giama_renting.transaction()
-    let cuenta_contable_forma_cobro;
-    let cuenta_secundaria_forma_cobro;
-    let cuenta_contable_forma_cobro_2;
-    let cuenta_secundaria_forma_cobro_2;
-    let cuenta_contable_forma_cobro_3;
-    let cuenta_secundaria_forma_cobro_3;
+  } = req.body
+  let nro_recibo;
+  let NroAsiento;
+  let NroAsientoSecundario;
+  let transaction_giama_renting = await giama_renting.transaction()
+  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction()
+  let cuenta_contable_forma_cobro;
+  let cuenta_secundaria_forma_cobro;
+  let cuenta_contable_forma_cobro_2;
+  let cuenta_secundaria_forma_cobro_2;
+  let cuenta_contable_forma_cobro_3;
+  let cuenta_secundaria_forma_cobro_3;
   let importe_total_1_formateado = importe_cobro ? parseFloat(importe_cobro) : 0
-  let importe_total_2_formateado = importe_cobro_2 ? parseFloat(importe_cobro_2) : 0 
+  let importe_total_2_formateado = importe_cobro_2 ? parseFloat(importe_cobro_2) : 0
   let importe_total_3_formateado = importe_cobro_3 ? parseFloat(importe_cobro_3) : 0
   let CUIT;
   let nombre_completo_cliente;
   console.log(usuario);
   const importe_total_cobro = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
 
-    //buscar CUIT del cliente
-    try {
+  //buscar CUIT del cliente
+  try {
     const result = await giama_renting.query(
       "SELECT nro_documento, nombre, apellido, razon_social FROM clientes WHERE id = ?",
       {
@@ -248,17 +248,17 @@ export const postPago = async (req, res) => {
         replacements: [id_cliente],
       }
     );
-    if (result[0]["nro_documento"]){
+    if (result[0]["nro_documento"]) {
       CUIT = result[0]["nro_documento"]
-    } 
-    if(result[0]["nombre"] && result[0]["apellido"]){
+    }
+    if (result[0]["nombre"] && result[0]["apellido"]) {
       nombre_completo_cliente = `${result[0]["nombre"]} ${result[0]["apellido"]}`
-    }else if(result[0]["razon_social"]){
+    } else if (result[0]["razon_social"]) {
       nombre_completo_cliente = `${result[0]["razon_social"]}`
-    }else{
+    } else {
       nombre_completo_cliente = "SIN NOMBRE"
     }
-    } catch (error) {
+  } catch (error) {
     const { body } = handleError(
       error,
       "documento del cliente",
@@ -278,220 +278,220 @@ export const postPago = async (req, res) => {
 
   //cuenta contable de la forma de cobro
   try {
-  cuenta_contable_forma_cobro = await getCuentaContableFormaCobro(id_forma_cobro) 
-  cuenta_secundaria_forma_cobro = await getCuentaSecundariaFormaCobro(id_forma_cobro)
-  if(id_forma_cobro_2){
-  cuenta_contable_forma_cobro_2 = await getCuentaContableFormaCobro(id_forma_cobro_2) 
-  cuenta_secundaria_forma_cobro_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_2)
-  }
-  if(id_forma_cobro_3){
-  cuenta_contable_forma_cobro_3 = await getCuentaContableFormaCobro(id_forma_cobro_3) 
-  cuenta_secundaria_forma_cobro_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_3)
-  }
+    cuenta_contable_forma_cobro = await getCuentaContableFormaCobro(id_forma_cobro)
+    cuenta_secundaria_forma_cobro = await getCuentaSecundariaFormaCobro(id_forma_cobro)
+    if (id_forma_cobro_2) {
+      cuenta_contable_forma_cobro_2 = await getCuentaContableFormaCobro(id_forma_cobro_2)
+      cuenta_secundaria_forma_cobro_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_2)
+    }
+    if (id_forma_cobro_3) {
+      cuenta_contable_forma_cobro_3 = await getCuentaContableFormaCobro(id_forma_cobro_3)
+      cuenta_secundaria_forma_cobro_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_3)
+    }
   } catch (error) {
-  console.log(error);
-  const { body } = handleError(error, "parámetro");
-  return res.send(body);
+    console.log(error);
+    const { body } = handleError(error, "parámetro");
+    return res.send(body);
   }
-//inserto el recibo
+  //inserto el recibo
   try {
     nro_recibo = await insertRecibo(
-        fecha,
-        observacion,
-        importe_total_cobro,
-        usuario,
-        id_cliente,
-        null,
-        null,
-        null,
-        id_forma_cobro,
-        id_forma_cobro_2,
-        id_forma_cobro_3,
-        transaction_giama_renting,
-        importe_cobro_2,
-        importe_cobro_3,
-        importe_cobro
+      fecha,
+      observacion,
+      importe_total_cobro,
+      usuario,
+      id_cliente,
+      null,
+      null,
+      null,
+      id_forma_cobro,
+      id_forma_cobro_2,
+      id_forma_cobro_3,
+      transaction_giama_renting,
+      importe_cobro_2,
+      importe_cobro_3,
+      importe_cobro
     )
-} catch (error) {
+  } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
     const { body } = handleError(error, "Recibo de alquiler", acciones.post);
     return res.send(body);
   }
-//inserto el pago
+  //inserto el pago
   try {
-    await insertPago(    
-    id_cliente,
-    fecha,  
-    usuario,
-    id_forma_cobro,
-    importe_cobro,
-    nro_recibo,
-    observacion,
-    NroAsiento,
-    transaction_giama_renting)
-    if(id_forma_cobro_2){
-    await insertPago(    
-    id_cliente,
-    fecha,  
-    usuario,
-    id_forma_cobro_2,
-    importe_cobro_2,
-    nro_recibo,
-    observacion,
-    NroAsiento,
-    transaction_giama_renting)
+    await insertPago(
+      id_cliente,
+      fecha,
+      usuario,
+      id_forma_cobro,
+      importe_cobro,
+      nro_recibo,
+      observacion,
+      NroAsiento,
+      transaction_giama_renting)
+    if (id_forma_cobro_2) {
+      await insertPago(
+        id_cliente,
+        fecha,
+        usuario,
+        id_forma_cobro_2,
+        importe_cobro_2,
+        nro_recibo,
+        observacion,
+        NroAsiento,
+        transaction_giama_renting)
     }
-    if(id_forma_cobro_3){
-    await insertPago(    
-    id_cliente,
-    fecha,  
-    usuario,
-    id_forma_cobro_3,
-    importe_cobro_3,
-    nro_recibo,
-    observacion,
-    NroAsiento,
-    transaction_giama_renting)
+    if (id_forma_cobro_3) {
+      await insertPago(
+        id_cliente,
+        fecha,
+        usuario,
+        id_forma_cobro_3,
+        importe_cobro_3,
+        nro_recibo,
+        observacion,
+        NroAsiento,
+        transaction_giama_renting)
     }
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
     const { body } = handleError(
-        error,
-        "pago",
-        acciones.post
+      error,
+      "pago",
+      acciones.post
     );
     return res.send(body);
   }
-let observacion_asientos = `RECIBO: ${nro_recibo} Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} Observación: ${observacion}`
-//asientos
-try {
-  await asientoContable(
-    "c_movimientos",
-    NroAsiento,
-    cuenta_contable_forma_cobro,
-    "D",
-    importe_cobro,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha,
-    NroAsientoSecundario,
-    null
-  );
-  if(importe_cobro_2){
-  await asientoContable(
-    "c_movimientos",
-    NroAsiento,
-    cuenta_contable_forma_cobro_2,
-    "D",
-    importe_cobro_2,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha,
-    NroAsientoSecundario,
-    null
-  );
-  }
-  if(importe_cobro_3){
-  await asientoContable(
-    "c_movimientos",
-    NroAsiento,
-    cuenta_contable_forma_cobro_3,
-    "D",
-    importe_cobro_3,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha,
-    NroAsientoSecundario,
-    null
-  );
-  }
-  await asientoContable(
-    "c_movimientos",
-    NroAsiento,
-    110310,//"cuenta_nueva",
-    "H",
-    importe_total_cobro,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha,
-    NroAsientoSecundario,
-    null
-  );
-  await asientoContable(
-    "c2_movimientos",
-    NroAsientoSecundario,
-    cuenta_secundaria_forma_cobro,
-    "D",
-    importe_cobro,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha
-  );
-  if(importe_cobro_2){
+  let observacion_asientos = `RECIBO: ${nro_recibo} Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} Observación: ${observacion}`
+  //asientos
+  try {
     await asientoContable(
-    "c2_movimientos",
-    NroAsientoSecundario,
-    cuenta_secundaria_forma_cobro_2,
-    "D",
-    importe_cobro_2,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha
-  );
-  }
-  if(importe_cobro_3){
+      "c_movimientos",
+      NroAsiento,
+      cuenta_contable_forma_cobro,
+      "D",
+      importe_cobro,
+      observacion_asientos,
+      transaction_pa7_giama_renting,
+      nro_recibo,
+      fecha,
+      NroAsientoSecundario,
+      null
+    );
+    if (importe_cobro_2) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_contable_forma_cobro_2,
+        "D",
+        importe_cobro_2,
+        observacion_asientos,
+        transaction_pa7_giama_renting,
+        nro_recibo,
+        fecha,
+        NroAsientoSecundario,
+        null
+      );
+    }
+    if (importe_cobro_3) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento,
+        cuenta_contable_forma_cobro_3,
+        "D",
+        importe_cobro_3,
+        observacion_asientos,
+        transaction_pa7_giama_renting,
+        nro_recibo,
+        fecha,
+        NroAsientoSecundario,
+        null
+      );
+    }
     await asientoContable(
-    "c2_movimientos",
-    NroAsientoSecundario,
-    cuenta_secundaria_forma_cobro_3,
-    "D",
-    importe_cobro_3,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha
-  );
+      "c_movimientos",
+      NroAsiento,
+      110310,//"cuenta_nueva",
+      "H",
+      importe_total_cobro,
+      observacion_asientos,
+      transaction_pa7_giama_renting,
+      nro_recibo,
+      fecha,
+      NroAsientoSecundario,
+      null
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_secundaria_forma_cobro,
+      "D",
+      importe_cobro,
+      observacion_asientos,
+      transaction_pa7_giama_renting,
+      nro_recibo,
+      fecha
+    );
+    if (importe_cobro_2) {
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_forma_cobro_2,
+        "D",
+        importe_cobro_2,
+        observacion_asientos,
+        transaction_pa7_giama_renting,
+        nro_recibo,
+        fecha
+      );
+    }
+    if (importe_cobro_3) {
+      await asientoContable(
+        "c2_movimientos",
+        NroAsientoSecundario,
+        cuenta_secundaria_forma_cobro_3,
+        "D",
+        importe_cobro_3,
+        observacion_asientos,
+        transaction_pa7_giama_renting,
+        nro_recibo,
+        fecha
+      );
+    }
+
+
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      110310, //cuenta_nueva_secundaria
+      "H",
+      importe_total_cobro,
+      observacion_asientos,
+      transaction_pa7_giama_renting,
+      nro_recibo,
+      fecha,
+      null,
+      null
+    );
+
+  } catch (error) {
+    console.log(error);
+    transaction_giama_renting.rollback();
+    transaction_pa7_giama_renting.rollback();
+    const { body } = handleError(error);
+    return res.send(body);
   }
 
-    
-  await asientoContable(
-    "c2_movimientos",
-    NroAsientoSecundario,
-    110310, //cuenta_nueva_secundaria
-    "H",
-    importe_total_cobro,
-    observacion_asientos,
-    transaction_pa7_giama_renting,
-    nro_recibo,
-    fecha,
-    null,
-    null
-  );
-  
-} catch (error) {
-console.log(error);
-transaction_giama_renting.rollback();
-transaction_pa7_giama_renting.rollback();
-const { body } = handleError(error);
-return res.send(body);
-}
 
-
-await transaction_giama_renting.commit()
-await transaction_pa7_giama_renting.commit()
-return res.send({status: true, message: "Cobro ingresado correctamente", data: nro_recibo})
+  await transaction_giama_renting.commit()
+  await transaction_pa7_giama_renting.commit()
+  return res.send({ status: true, message: "Cobro ingresado correctamente", data: nro_recibo })
 }
 
 export const ctaCteCliente = async (req, res) => {
-  const {id_cliente} = req.body
+  const { id_cliente } = req.body
   try {
     const resultado = await giama_renting.query(`SELECT
     m.fecha,
@@ -621,8 +621,8 @@ ORDER BY m.fecha, m.tipo;`, {
 }
 
 export const fichaCtaCte = async (req, res) => {
-const {fecha} = req.body
-const query = `SELECT
+  const { fecha } = req.body
+  const query = `SELECT
     m.id_cliente,
         COALESCE(
         NULLIF(CONCAT(c.nombre, ' ', c.apellido), ' '),
@@ -731,7 +731,7 @@ INNER JOIN clientes c ON c.id = m.id_cliente
 WHERE c.es_cia_seguros = 0
 ORDER BY m.id_cliente, m.fecha, m.tipo;
 `
-const query_fecha = `SELECT
+  const query_fecha = `SELECT
     m.id_cliente,
     COALESCE(
         NULLIF(CONCAT(c.nombre, ' ', c.apellido), ' '),
@@ -839,65 +839,65 @@ INNER JOIN clientes c ON c.id = m.id_cliente
 WHERE c.es_cia_seguros = 0
 ORDER BY m.id_cliente, m.fecha, m.tipo;
 `;
-if(fecha){
-try {
-    const rows = await giama_renting.query(query_fecha, {
-      type: QueryTypes.SELECT,
-      replacements: {fecha: fecha}
-    });
-    
-  const cuentas = {};
-  
-  rows.forEach(r => {
-    const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
-  
-    if (!cuentas[nombre]) {
-      cuentas[nombre] = {
-        id_cliente: r.id_cliente,
-        nombre_cliente: nombre,
-        saldo: 0,
-        detalle: []
-      };
-    }
-  
-    cuentas[nombre].detalle.push(r);
-    cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
-  });
-    return res.send(cuentas)
-  } catch (error) {
-    const { body } = handleError(error, "ficha", acciones.get);
-    return res.send(body);
-  }
-}else{
-  try {
-    const rows = await giama_renting.query(query, {
-      type: QueryTypes.SELECT
-    });
-    
-  const cuentas = {};
-  
-  rows.forEach(r => {
-    const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
-  
-    if (!cuentas[nombre]) {
-      cuentas[nombre] = {
-        id_cliente: r.id_cliente,
-        nombre_cliente: nombre,
-        saldo: 0,
-        detalle: []
-      };
-    }
-  
-    cuentas[nombre].detalle.push(r);
-    cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
-  });
-    return res.send(cuentas)
-  } catch (error) {
-    const { body } = handleError(error, "ficha", acciones.get);
-    return res.send(body);
-  }
+  if (fecha) {
+    try {
+      const rows = await giama_renting.query(query_fecha, {
+        type: QueryTypes.SELECT,
+        replacements: { fecha: fecha }
+      });
 
-}
+      const cuentas = {};
+
+      rows.forEach(r => {
+        const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
+
+        if (!cuentas[nombre]) {
+          cuentas[nombre] = {
+            id_cliente: r.id_cliente,
+            nombre_cliente: nombre,
+            saldo: 0,
+            detalle: []
+          };
+        }
+
+        cuentas[nombre].detalle.push(r);
+        cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
+      });
+      return res.send(cuentas)
+    } catch (error) {
+      const { body } = handleError(error, "ficha", acciones.get);
+      return res.send(body);
+    }
+  } else {
+    try {
+      const rows = await giama_renting.query(query, {
+        type: QueryTypes.SELECT
+      });
+
+      const cuentas = {};
+
+      rows.forEach(r => {
+        const nombre = r.nombre_cliente?.trim() || `Cliente ${r.id_cliente}`;
+
+        if (!cuentas[nombre]) {
+          cuentas[nombre] = {
+            id_cliente: r.id_cliente,
+            nombre_cliente: nombre,
+            saldo: 0,
+            detalle: []
+          };
+        }
+
+        cuentas[nombre].detalle.push(r);
+        cuentas[nombre].saldo += (Number(r.debe) || 0) - (Number(r.haber) || 0);
+      });
+      return res.send(cuentas)
+    } catch (error) {
+      const { body } = handleError(error, "ficha", acciones.get);
+      return res.send(body);
+    }
+
+  }
 
 }
 
@@ -912,20 +912,20 @@ export const getEstadoDeuda = async (req, res) => {
   let genera_factura;
   //tipo 1: alquiler; tipo 3: ingreso; tipo 2: depósito
   //codigo 1: no hay factura; codigo 2: hay factura no emitida; codigo 3: hay factura emitida
-  if(tipo == 1){
+  if (tipo == 1) {
     tabla = "alquileres"
-  }else if(tipo == 3){
+  } else if (tipo == 3) {
     tabla = "costos_ingresos"
   }
-  else if(tipo == 2){
-    return res.send({status: true, codigo: 4, message: "El registro no generó factura. Se realizará una reversión del asiento. ¿Desea continuar?", id_registro: id, tipo_deuda: tipo})
+  else if (tipo == 2) {
+    return res.send({ status: true, codigo: 4, message: "El registro no generó factura. Se realizará una reversión del asiento. ¿Desea continuar?", id_registro: id, tipo_deuda: tipo })
   }
-  else{
-    return res.send({status: false, message: "Error al determinar el tipo de deuda."})
+  else {
+    return res.send({ status: false, message: "Error al determinar el tipo de deuda." })
   }
-  if(tipo == 3){
+  if (tipo == 3) {
     try {
-      const result_concepto = await giama_renting.query("SELECT id_concepto FROM costos_ingresos WHERE id = ?",{
+      const result_concepto = await giama_renting.query("SELECT id_concepto FROM costos_ingresos WHERE id = ?", {
         type: QueryTypes.SELECT,
         replacements: [id]
       })
@@ -935,14 +935,14 @@ export const getEstadoDeuda = async (req, res) => {
         replacements: [id_concepto]
       })
       genera_factura = result_genera_factura[0]["genera_factura"]
-  
-      if(genera_factura == 0){
-        return res.send({status: true, codigo: 4, message: "El registro no generó factura. Se realizará una reversión del asiento. ¿Desea continuar?", id_registro: id, tipo_deuda: tipo})
+
+      if (genera_factura == 0) {
+        return res.send({ status: true, codigo: 4, message: "El registro no generó factura. Se realizará una reversión del asiento. ¿Desea continuar?", id_registro: id, tipo_deuda: tipo })
       }
-      
+
     } catch (error) {
       console.log(error)
-      return res.send({status: false, message: "Error al reconocer el concepto del ingreso"})
+      return res.send({ status: false, message: "Error al reconocer el concepto del ingreso" })
     }
   }
   try {
@@ -954,49 +954,49 @@ export const getEstadoDeuda = async (req, res) => {
       }
     );
     id_factura = result[0]?.id_factura_pa6;
-    
+
   } catch (error) {
     const { body } = handleError(error, tabla, acciones.get);
     return res.send(body);
   }
 
-  if(!id_factura){
-    return res.send({status: true, codigo: 1, message: "El registro de alquiler no tiene factura asociada. Consultar con sistemas."})
-  }else{
-  try {
-   const result = await pa7_giama_renting.query(
-      "SELECT * FROM facturas WHERE Id = ?",
-      {
-        type: QueryTypes.SELECT,
-        replacements: [id_factura],
+  if (!id_factura) {
+    return res.send({ status: true, codigo: 1, message: "El registro de alquiler no tiene factura asociada. Consultar con sistemas." })
+  } else {
+    try {
+      const result = await pa7_giama_renting.query(
+        "SELECT * FROM facturas WHERE Id = ?",
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id_factura],
+        }
+      );
+      if (!result || result.length === 0) {
+        return res.send({ status: false, message: "Factura no encontrada" });
       }
-    );
-    if (!result || result.length === 0) {
-      return res.send({ status: false, message: "Factura no encontrada" });
-    }
-    const factura = result[0];
-    NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
-    tipo_factura = factura.Tipo;
-    CodigoCliente = factura.CodigoCliente;
-    if(NumeroFacturaEmitida){
-      return res.send({status: true, codigo: 2, message: "Si se anula esta factura se deberá generar una nota de crédito. ¿Desea continuar?", tipo: tipo_factura, cliente: CodigoCliente, id_registro: id, id_factura: id_factura, tipo_deuda: tipo})
-    }else{
-      return res.send({status: true, codigo: 3, message: "Si se anula esta factura se eliminará su registro. ¿Desea continuar?", tipo: tipo_factura, cliente: CodigoCliente, id_registro: id, id_factura: id_factura, tipo_deuda: tipo})
-    }
+      const factura = result[0];
+      NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
+      tipo_factura = factura.Tipo;
+      CodigoCliente = factura.CodigoCliente;
+      if (NumeroFacturaEmitida) {
+        return res.send({ status: true, codigo: 2, message: "Si se anula esta factura se deberá generar una nota de crédito. ¿Desea continuar?", tipo: tipo_factura, cliente: CodigoCliente, id_registro: id, id_factura: id_factura, tipo_deuda: tipo })
+      } else {
+        return res.send({ status: true, codigo: 3, message: "Si se anula esta factura se eliminará su registro. ¿Desea continuar?", tipo: tipo_factura, cliente: CodigoCliente, id_registro: id, id_factura: id_factura, tipo_deuda: tipo })
+      }
     } catch (error) {
-    console.log(error)
-    const { body } = handleError(error, "Factura", acciones.get);
-    return res.send(body);
+      console.log(error)
+      const { body } = handleError(error, "Factura", acciones.get);
+      return res.send(body);
     }
 
 
-}
+  }
 }
 
 export const anulacionFactura = async (req, res) => {
-  const {id_registro, id_factura, tipo_factura, cliente, tipo} = req.body
-  if(!id_factura || !id_registro || !tipo_factura ||!cliente || !tipo){
-   return res.send({status: false, message: "Faltan datos para completar la operación"})
+  const { id_registro, id_factura, tipo_factura, cliente, tipo } = req.body
+  if (!id_factura || !id_registro || !tipo_factura || !cliente || !tipo) {
+    return res.send({ status: false, message: "Faltan datos para completar la operación" })
   }
   let tipo_NC;
   let NumeroFacturaEmitida;
@@ -1008,20 +1008,20 @@ export const anulacionFactura = async (req, res) => {
   let NroAsientoFactura;
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
-  if(tipo == 1){
+  if (tipo == 1) {
     tabla = "alquileres"
     campo = "anulado"
     fecha_anulacion_campo = "fecha_anulacion"
-  }else if(tipo == 3){
+  } else if (tipo == 3) {
     tabla = "costos_ingresos"
     campo = "anulado"
     fecha_anulacion_campo = "fecha_anulacion"
-  }else if(tipo == 2){
+  } else if (tipo == 2) {
     tabla = "contratos_alquiler"
     campo = "anulado_deposito"
     fecha_anulacion_campo = "fecha_anulacion_deposito"
-  }else{
-    return res.send({status: false, message: "Error al determinar el tipo de deuda."})
+  } else {
+    return res.send({ status: false, message: "Error al determinar el tipo de deuda." })
   }
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
@@ -1029,84 +1029,84 @@ export const anulacionFactura = async (req, res) => {
     NroAsiento_nuevo = await getNumeroAsiento();
     NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
     const registro_original = await giama_renting.query(`SELECT * FROM ${tabla} WHERE id = ${id_registro}`)
-    if(!registro_original[0].length){
-      return res.send({status: false, message: "Error al encontrar el registro original"})
-    }else{
+    if (!registro_original[0].length) {
+      return res.send({ status: false, message: "Error al encontrar el registro original" })
+    } else {
       console.log(registro_original[0])
     }
     const result = await pa7_giama_renting.query(
       "SELECT * FROM facturas WHERE Id = ? AND tipo = ? AND CodigoCliente =  ?", {
-        type: QueryTypes.SELECT,
-        replacements: [id_factura, tipo_factura, cliente]
-      }
+      type: QueryTypes.SELECT,
+      replacements: [id_factura, tipo_factura, cliente]
+    }
     )
-    if(!result.length){
-      return res.send({status: false, message: "No se encontró la factura"})
+    if (!result.length) {
+      return res.send({ status: false, message: "No se encontró la factura" })
     }
     const factura = result[0]
     NumeroFacturaEmitida = factura.NumeroFacturaEmitida;
     CAE = factura.CAE;
     VtoCAE = factura.VtoCAE;
     NroAsientoFactura = factura.NroAsiento;
-    if(factura.Tipo === "FA"){
+    if (factura.Tipo === "FA") {
       tipo_NC = "CA"
-    }else if(factura.Tipo === "FB"){
+    } else if (factura.Tipo === "FB") {
       tipo_NC = "CB"
     }
 
-        if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
-    
-          await pa7_giama_renting.query("DELETE FROM facturasitems WHERE IdFactura = ?", {
-            type: QueryTypes.DELETE,
-            replacements: [id_factura],
-            transaction: transaction_pa7_giama_renting
-          });
-          await pa7_giama_renting.query("DELETE FROM facturas WHERE Id = ?", {
-            type: QueryTypes.DELETE,
-            replacements: [id_factura],
-            transaction: transaction_pa7_giama_renting
-          });
-    
-          await contra_asiento_factura(id_factura, NroAsientoFactura, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
-          await giama_renting.query(`UPDATE ${tabla} SET ${campo} = 1, ${fecha_anulacion_campo} = ? WHERE id = ?`,{
-            type: QueryTypes.UPDATE,
-            replacements: [getTodayDate(), id_registro],
-            transaction: transaction_giama_renting
-          })
-          await transaction_giama_renting.commit(); 
-          await transaction_pa7_giama_renting.commit();  
-    
-          return res.send({ status: true, message: "Factura anulada correctamente" });
-    
-        } else if (!NumeroFacturaEmitida || !CAE || !VtoCAE) {
-    
-          return res.send({
-            status: false,
-            message: "La factura aún no puede ser eliminada",
-          });
-    
-        } else {
-          const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ...otrosCampos } = factura; 
-          if (!tipo_NC) {
-            return res.send({status: false, message: "No está aclarado el tipo de nota de crédito"})
-          }
-          let id_ndc;
-          let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
-          const result = await pa7_giama_renting.query(
-            `INSERT INTO facturas 
+    if (!NumeroFacturaEmitida && !CAE && !VtoCAE) {
+
+      await pa7_giama_renting.query("DELETE FROM facturasitems WHERE IdFactura = ?", {
+        type: QueryTypes.DELETE,
+        replacements: [id_factura],
+        transaction: transaction_pa7_giama_renting
+      });
+      await pa7_giama_renting.query("DELETE FROM facturas WHERE Id = ?", {
+        type: QueryTypes.DELETE,
+        replacements: [id_factura],
+        transaction: transaction_pa7_giama_renting
+      });
+
+      await contra_asiento_factura(id_factura, NroAsientoFactura, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
+      await giama_renting.query(`UPDATE ${tabla} SET ${campo} = 1, ${fecha_anulacion_campo} = ? WHERE id = ?`, {
+        type: QueryTypes.UPDATE,
+        replacements: [getTodayDate(), id_registro],
+        transaction: transaction_giama_renting
+      })
+      await transaction_giama_renting.commit();
+      await transaction_pa7_giama_renting.commit();
+
+      return res.send({ status: true, message: "Factura anulada correctamente" });
+
+    } else if (!NumeroFacturaEmitida || !CAE || !VtoCAE) {
+
+      return res.send({
+        status: false,
+        message: "La factura aún no puede ser eliminada",
+      });
+
+    } else {
+      const { Id, Tipo, PuntoVenta, FacAsoc, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ...otrosCampos } = factura;
+      if (!tipo_NC) {
+        return res.send({ status: false, message: "No está aclarado el tipo de nota de crédito" })
+      }
+      let id_ndc;
+      let FacAsoc_insertada = `${padWithZeros(PuntoVenta, 5)}${padWithZeros(NumeroFacturaEmitida, 8)}`;
+      const result = await pa7_giama_renting.query(
+        `INSERT INTO facturas 
              (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${Object.keys(otrosCampos).join(", ")})
              VALUES (?,?,?,?,?,?,?,?, ${Object.keys(otrosCampos).map(() => "?").join(", ")})`,
-            {
-              type: QueryTypes.INSERT,
-              replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, NroAsiento_nuevo, NroAsientoSecundario_nuevo, ...Object.values(otrosCampos)],
-              transaction: transaction_pa7_giama_renting
-            }
-          );
-          id_ndc = result[0]
-          
-          const descripcion_facturas_items = `Anulación factura ${Tipo} ${padWithZeros(PuntoVenta, 5)}-${padWithZeros(NumeroFacturaEmitida, 8)}`
-          await giama_renting.query(
-            `INSERT INTO facturasitems (
+        {
+          type: QueryTypes.INSERT,
+          replacements: [tipo_NC, FacAsoc_insertada, PuntoVenta, null, null, null, NroAsiento_nuevo, NroAsientoSecundario_nuevo, ...Object.values(otrosCampos)],
+          transaction: transaction_pa7_giama_renting
+        }
+      );
+      id_ndc = result[0]
+
+      const descripcion_facturas_items = `Anulación factura ${Tipo} ${padWithZeros(PuntoVenta, 5)}-${padWithZeros(NumeroFacturaEmitida, 8)}`
+      await giama_renting.query(
+        `INSERT INTO facturasitems (
               IdFactura,
               TipoAlicuota,
               Descripcion,
@@ -1130,24 +1130,24 @@ export const anulacionFactura = async (req, res) => {
             FROM facturasitems
             WHERE IdFactura = :id_factura
             `,
-            {
-              type: QueryTypes.INSERT,
-              replacements: {id_ndc, descripcion_facturas_items, id_factura},
-              transaction: transaction_pa7_giama_renting
-            }
-          );
-          await contra_asiento_factura(id_factura, NroAsientoFactura, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
-          await giama_renting.query(`UPDATE ${tabla} SET ${campo} = 1, ${fecha_anulacion_campo} = ? WHERE id = ?`,{
-            type: QueryTypes.UPDATE,
-            replacements: [getTodayDate(), id_registro],
-            transaction: transaction_giama_renting
-          })
-  
-          await transaction_giama_renting.commit(); 
-          await transaction_pa7_giama_renting.commit();  
-          return res.send({ status: true, message: `Factura anulada correctamente. Nota de crédito generada (id comprobante: ${id_ndc})`});
+        {
+          type: QueryTypes.INSERT,
+          replacements: { id_ndc, descripcion_facturas_items, id_factura },
+          transaction: transaction_pa7_giama_renting
         }
-    
+      );
+      await contra_asiento_factura(id_factura, NroAsientoFactura, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
+      await giama_renting.query(`UPDATE ${tabla} SET ${campo} = 1, ${fecha_anulacion_campo} = ? WHERE id = ?`, {
+        type: QueryTypes.UPDATE,
+        replacements: [getTodayDate(), id_registro],
+        transaction: transaction_giama_renting
+      })
+
+      await transaction_giama_renting.commit();
+      await transaction_pa7_giama_renting.commit();
+      return res.send({ status: true, message: `Factura anulada correctamente. Nota de crédito generada (id comprobante: ${id_ndc})` });
+    }
+
   } catch (error) {
     console.log(error)
     await transaction_giama_renting.rollback();
@@ -1169,52 +1169,52 @@ export const anulacionRecibo = async (req, res) => {
     NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
   } catch (error) {
     console.log(error)
-    return res.send({status: false, message: "Error al obtener número de asiento"})
+    return res.send({ status: false, message: "Error al obtener número de asiento" })
   }
-    try {
-      await contra_asiento_recibo(nro_recibo, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
-      await eliminarPago(nro_recibo);
-      await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
-        type: QueryTypes.UPDATE,
-        replacements: [1, getTodayDate(), nro_recibo],
-        transaction: transaction_giama_renting
-      })
+  try {
+    await contra_asiento_recibo(nro_recibo, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
+    await eliminarPago(nro_recibo);
+    await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?", {
+      type: QueryTypes.UPDATE,
+      replacements: [1, getTodayDate(), nro_recibo],
+      transaction: transaction_giama_renting
+    })
 
-      await transaction_giama_renting.commit(); 
-      await transaction_pa7_giama_renting.commit();  
+    await transaction_giama_renting.commit();
+    await transaction_pa7_giama_renting.commit();
 
-      return res.send({ status: true, message: "Recibo anulado correctamente" });
-    } catch (error) {
-      console.log(error)
+    return res.send({ status: true, message: "Recibo anulado correctamente" });
+  } catch (error) {
+    console.log(error)
     await transaction_giama_renting.rollback();
     await transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Recibo", acciones.delete);
     return res.send(body);
-    }
+  }
 
-  
+
 
 };
 
 export const anulacionDeuda = async (req, res) => {
-  const {tipo, id_registro} = req.body
+  const { tipo, id_registro } = req.body
   let tabla;
   let campo;
   let campo_fecha_anulacion;
   let nro_asiento_original;
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
-  if(tipo == 2){
+  if (tipo == 2) {
     tabla = "contratos_alquiler"
     campo = "anulado_deposito"
     campo_fecha_anulacion = "fecha_anulacion_deposito"
   }
-  else if(tipo == 3){
+  else if (tipo == 3) {
     tabla = "costos_ingresos"
     campo = "anulado"
     campo_fecha_anulacion = "fecha_anulacion"
-  }else{
-    return res.send({status: false, message: "Error al determinar registro"})
+  } else {
+    return res.send({ status: false, message: "Error al determinar registro" })
   }
 
   try {
@@ -1226,11 +1226,11 @@ export const anulacionDeuda = async (req, res) => {
       }
     );
     console.log(result)
-    if(!result.length){
-      return res.send({status: false, message: "Error al obtener numero de asiento original"})
+    if (!result.length) {
+      return res.send({ status: false, message: "Error al obtener numero de asiento original" })
     }
     nro_asiento_original = result[0]["nro_asiento"];
-    
+
   } catch (error) {
     const { body } = handleError(error, tabla, acciones.get);
     return res.send(body);
@@ -1240,15 +1240,15 @@ export const anulacionDeuda = async (req, res) => {
     NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
   } catch (error) {
     console.log(error)
-    return res.send({status: false, message: "Error al obtener número de asiento"})
+    return res.send({ status: false, message: "Error al obtener número de asiento" })
   }
   const fecha = getTodayDate()
 
-let transaction_pa7_giama_renting = await pa7_giama_renting.transaction()
-try {
-  const nro_comprobante = padWithZeros(`${NroAsiento_nuevo}`, 13)
-  await giama_renting.query(
-  `INSERT INTO c_movimientos (
+  let transaction_pa7_giama_renting = await pa7_giama_renting.transaction()
+  try {
+    const nro_comprobante = padWithZeros(`${NroAsiento_nuevo}`, 13)
+    await giama_renting.query(
+      `INSERT INTO c_movimientos (
     Fecha,
     NroAsiento,
     Cuenta,
@@ -1272,15 +1272,15 @@ try {
   FROM c_movimientos
   WHERE NroAsiento = :nro_asiento_original
   `,
-  {
-    type: QueryTypes.INSERT,
-    replacements: {fecha, NroAsiento_nuevo, nro_comprobante, NroAsientoSecundario_nuevo, nro_asiento_original },
-    transaction: transaction_pa7_giama_renting
-  }
-);
+      {
+        type: QueryTypes.INSERT,
+        replacements: { fecha, NroAsiento_nuevo, nro_comprobante, NroAsientoSecundario_nuevo, nro_asiento_original },
+        transaction: transaction_pa7_giama_renting
+      }
+    );
 
-  await giama_renting.query(
-  `INSERT INTO c2_movimientos (
+    await giama_renting.query(
+      `INSERT INTO c2_movimientos (
     Fecha,
     NroAsiento,
     Cuenta,
@@ -1302,12 +1302,12 @@ try {
   FROM c_movimientos
   WHERE NroAsiento = :nro_asiento_original
   `,
-  {
-    type: QueryTypes.INSERT,
-    replacements: {fecha, NroAsientoSecundario_nuevo, nro_comprobante, nro_asiento_original },
-    transaction: transaction_pa7_giama_renting
-  }
-  );
+      {
+        type: QueryTypes.INSERT,
+        replacements: { fecha, NroAsientoSecundario_nuevo, nro_comprobante, nro_asiento_original },
+        transaction: transaction_pa7_giama_renting
+      }
+    );
     await giama_renting.query(
       `UPDATE ${tabla} SET ${campo} = 1, ${campo_fecha_anulacion} = ? WHERE id = ?`,
       {
@@ -1316,13 +1316,13 @@ try {
       }
     );
     await transaction_pa7_giama_renting.commit()
-    return res.send({status: true, message: "Comprobante anulado correctamente"})
+    return res.send({ status: true, message: "Comprobante anulado correctamente" })
 
 
   } catch (error) {
     console.log(error);
     await transaction_pa7_giama_renting.rollback()
-    return res.send({status: false, message: "Error al anular el comprobante"})
+    return res.send({ status: false, message: "Error al anular el comprobante" })
   }
 
 }
