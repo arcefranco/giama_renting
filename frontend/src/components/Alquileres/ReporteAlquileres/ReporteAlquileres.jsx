@@ -255,7 +255,7 @@ const ReporteAlquileres = () => {
   return (
     <div className={styles.container}>
       <ToastContainer />
-      {isLoading && (
+      {(isLoading) && (
         <div className={styles.spinnerOverlay}>
           <ClipLoader
             size={60}
