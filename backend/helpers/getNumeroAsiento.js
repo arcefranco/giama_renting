@@ -34,3 +34,37 @@ export const getNumeroAsientoSecundario = async () => {
     throw new Error("Error al obtener número de asiento");
   }
 };
+
+export const getNumeroAsientoTransaccion = async (transaction) => {
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasiento(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT, transaction }
+    );
+    return result[2][0].nroAsiento;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error al obtener número de asiento");
+  }
+};
+
+export const getNumeroAsientoSecundarioTransaccion = async (transaction) => {
+  try {
+    const result = await pa7_giama_renting.query(
+      `
+        SET @nro_asiento = 0;
+        CALL net_getnumeroasientosecundario(@nro_asiento);
+        SELECT @nro_asiento AS nroAsiento;
+      `,
+      { type: QueryTypes.SELECT, transaction }
+    );
+    return result[2][0].nroAsiento;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error al obtener número de asiento");
+  }
+};
