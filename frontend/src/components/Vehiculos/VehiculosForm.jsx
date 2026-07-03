@@ -198,7 +198,6 @@ const VehiculosForm = () => {
           ...newForm,
           importe_iva: nuevoIVA,
           importe_total: round2(neto + nuevoIVA),
-          importe_neto: neto,
           // Reset de tasas
           tasa_IVA: "",
           tasa_IIBB: "",
@@ -214,7 +213,6 @@ const VehiculosForm = () => {
           ...newForm,
           importe_iva_10_5: nuevoIVA,
           importe_total: round2(neto + nuevoIVA),
-          importe_neto: neto,
           // Reset de tasas
           tasa_IVA: "",
           tasa_IIBB: "",
