@@ -595,6 +595,8 @@ const Ingresos = () => {
       dispatch(postCostos_Ingresos(form))
     }
   }
+
+  console.log(conceptosFiltrados)
   const renderFecha = (data) => {
     let fechaSplit = data.value.split("-")
     return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`

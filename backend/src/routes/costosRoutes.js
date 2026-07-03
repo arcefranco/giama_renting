@@ -13,6 +13,9 @@ import {
 } from "../controllers/costosController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
+import { upload } from "../middlewares/upload.js";
+import { importacionesMultas } from "../controllers/importacionesController.js";
+
 const costosRouter = Router();
 
 costosRouter.use((req, res, next) => {
@@ -67,5 +70,13 @@ costosRouter.post(
   authorizeRoles("2"),
   getCostosIngresosByIdVehiculo
 );
+costosRouter.post(
+  "/importacionMultas",
+  auth,
+  authorizeRoles("2", "4"),
+  upload.single("file"),
+  importacionesMultas 
+);
+
 costosRouter.post("/prorrateo", auth, authorizeRoles("2"), prorrateo);
 export default costosRouter;

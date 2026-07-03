@@ -1392,6 +1392,8 @@ export const postAlquiler = async (req, res) => {
         fecha_factura_alquiler
       );
     } catch (error) {
+      await transaction_giama_renting.rollback();
+      await transaction_pa7_giama_renting.rollback();
       const { body } = handleError(error, "Factura", acciones.post);
       return res.send(body);
     }
