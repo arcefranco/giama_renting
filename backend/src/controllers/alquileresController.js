@@ -1149,8 +1149,8 @@ export const postAlquiler = async (req, res) => {
     usuario,
     observacion,
   } = req.body;
-  let fechaDesdeSplit = fecha_desde_alquiler.split("-");
-  let fechaHastaSplit = fecha_hasta_alquiler.split("-");
+  let fechaDesdeSplit = fecha_desde_alquiler.split("T")[0].split("-");
+  let fechaHastaSplit = fecha_hasta_alquiler.split("T")[0].split("-");
   let alquileresVigentes;
 
   let NroAsiento_deuda;

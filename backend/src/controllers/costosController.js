@@ -1717,10 +1717,10 @@ export async function registrarIngresoIndividual({
         }`
       );
     }
-  }
+  } 
   //armo el detalle del recibo segun nombres de concepto que generen recibo.
-  const detalle_recibo = conceptos_recibo.join(" + ").concat(` CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_pago}`);
-  const detalle_factura = conceptos_recibo.join(" + ").concat(` CUIT/CUIL: ${CUIT} - ASIENTO: ${NroAsiento_deuda}`);
+  const detalle_recibo = conceptos_recibo.join(" + ").concat(` - ASIENTO: ${NroAsiento_pago}`);
+  const detalle_factura = conceptos_recibo.join(" + ") + (observacion ? ' - OBS: ' + observacion : '');
 
 
 
