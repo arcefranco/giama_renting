@@ -72,15 +72,56 @@ export const importacionesMultas = async (req, res) => {
                     continue;
                 }
 
-                const parts = fila.Fecha_Infraccion.toString().split("/");
+                let rawFecha = fila.Fecha_Infraccion;
+                let fechaString = "";
+
+                // Si Excel mandó la fecha como número de serie (ej: 46194 para 21/06/2026)
+                if (typeof rawFecha === 'number') {
+                    // 25569 es la diferencia en días entre 01/01/1900 (Excel) y 01/01/1970 (Unix)
+                    const fechaJS = new Date(Math.round((rawFecha - 25569) * 86400 * 1000));
+                    const d = String(fechaJS.getUTCDate()).padStart(2, '0');
+                    const m = String(fechaJS.getUTCMonth() + 1).padStart(2, '0');
+                    const y = fechaJS.getUTCFullYear();
+                    fechaString = `${d}/${m}/${y}`;
+                } else if (rawFecha instanceof Date) {
+                    const d = String(rawFecha.getUTCDate()).padStart(2, '0');
+                    const m = String(rawFecha.getUTCMonth() + 1).padStart(2, '0');
+                    const y = rawFecha.getUTCFullYear();
+                    fechaString = `${d}/${m}/${y}`;
+                } else {
+                    fechaString = rawFecha.toString().trim();
+                }
+
+                const parts = fechaString.split("/");
                 if (parts.length !== 3) {
-                    errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): El formato de fecha "${fila.Fecha_Infraccion}" no es válido. Debe ser DD/MM/YYYY.`);
+                    errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): El formato de fecha "${rawFecha}" no es válido. Debe ser DD/MM/YYYY.`);
                     await transaction.rollback();
                     await transaction_asientos.rollback();
                     continue;
                 }
                 const [dia, mes, anio] = parts;
-                const fechaSql = `${anio}-${mes}-${dia} ${fila.Hora}:00`;
+                
+                let rawHora = fila.Hora;
+                let horaStr = "00:00:00";
+                if (typeof rawHora === 'number') {
+                    // Excel time (fracción de un día)
+                    const decimalTime = rawHora % 1;
+                    const totalSeconds = Math.round(decimalTime * 86400);
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    horaStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                } else {
+                    horaStr = rawHora.toString().trim();
+                    const tParts = horaStr.split(":");
+                    if (tParts.length === 2) {
+                        horaStr = `${tParts[0].padStart(2, '0')}:${tParts[1].padStart(2, '0')}:00`;
+                    } else if (tParts.length === 1) {
+                        horaStr = `${tParts[0].padStart(2, '0')}:00:00`;
+                    }
+                }
+
+                const fechaSql = `${anio}-${mes}-${dia} ${horaStr}`;
 
                 const [cliente] = await giama_renting.query(
                     `SELECT id_cliente 
