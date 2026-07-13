@@ -100,7 +100,9 @@ const ReporteAlquileres = () => {
       const modeloNombre = modelo?.nombre || "";
       const vehiculoTexto = `${dominio} ${modeloNombre}`
 
-      const clienteTexto = `${cliente?.nombre || ""} ${cliente?.apellido || ""}`
+      const clienteTexto = cliente?.razon_social 
+        ? cliente.razon_social 
+        : `${cliente?.nombre || ""} ${cliente?.apellido || ""}`
 
       return {
         ...a,

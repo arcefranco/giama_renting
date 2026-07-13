@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { getContratos, reset } from "./../../../reducers/Alquileres/alquileresSlice"
+import { getContratos, reset, renovacionFlota } from "./../../../reducers/Alquileres/alquileresSlice"
 import { getVehiculos } from "./../../../reducers/Vehiculos/vehiculosSlice"
 import { getClientes } from "./../../../reducers/Clientes/clientesSlice"
 import { getModelos } from "./../../../reducers/Generales/generalesSlice"
@@ -24,6 +24,32 @@ const ReporteContratos = () => {
   const dispatch = useDispatch()
   const location = useLocation();
   const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
+
+  const PERIODOS = [
+    { label: '1 mes', meses: 1 },
+    { label: '3 meses', meses: 3 },
+    { label: '1 año', meses: 12 },
+  ];
+
+  const calcularFechaHasta = (fechaDesde, meses) => {
+    if (!fechaDesde || !meses) return '';
+    const d = new Date(fechaDesde);
+    d.setMonth(d.getMonth() + meses);
+    // Retroceder 1 día para que sea el último día del período
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  };
+
+  const [modalFlota, setModalFlota] = useState({
+    visible: false,
+    id_alquiler: null,
+    fecha_desde: '',
+    fecha_hasta: '',
+    periodo_meses: 1,
+    importe_total_nuevo: '',
+    vehiculos_flota: [],
+  });
+
   useEffect(() => {
     Promise.all([
       dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: 1 })),
@@ -42,14 +68,16 @@ const ReporteContratos = () => {
     isLoading
   } = useSelector((state) => state.alquileresReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
-  const { roles } = useSelector((state) => state.loginReducer)
+  const { roles, usuario } = useSelector((state) => state.loginReducer)
   const { modelos } = useSelector((state) => state.generalesReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
+
   const [form, setForm] = useState({
     fecha_desde: '',
     fecha_hasta: '',
     vigentes: 1
   })
+
   useToastFeedback({
     isError,
     isSuccess,
@@ -57,14 +85,14 @@ const ReporteContratos = () => {
     resetAction: reset,
   })
 
-
-
   useEffect(() => {
     dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: form.vigentes }))
   }, [form.vigentes]);
+
   const handleActualizar = () => {
     dispatch(getContratos({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"], vigentes: form["vigentes"] }))
   }
+
   const handleCheckChange = (e) => {
     const { name, checked } = e.target;
     setForm(prevForm => ({
@@ -72,12 +100,14 @@ const ReporteContratos = () => {
       [name]: checked ? 1 : 0
     }));
   }
+
   const renderFecha = (data) => {
     if (data.value) {
       let fechaSplit = data?.value?.split("-")
       return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`
     }
   }
+
   const renderVehiculo = (data) => {
     if (data.value) {
       const vehiculo = vehiculos?.find(e => e.id == data.value)
@@ -93,29 +123,23 @@ const ReporteContratos = () => {
   const renderCliente = (data) => {
     if (data.value) {
       const cliente = clientes?.find(e => e.id == data.value)
-      // Guard añadido para evitar el crash "Cannot read properties of undefined (reading 'razon_social')"
-      // Esto ocurre si el contrato tiene un id_cliente que ya no existe en la lista de clientes.
       if (!cliente) return <div><span>CLIENTE NO ENCONTRADO</span></div>;
       let nombre_final = cliente.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente.razon_social || "SIN DATOS");
       return <div>
         <span>{nombre_final}</span>
       </div>
-
     }
   }
-
 
   const normalizar = (str) => {
     if (!str) return "";
     return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
-  // Creamos una versión de 'clientes' con campos normalizados para búsqueda
   const clientesParaGrid = useMemo(() => {
     if (!clientes?.length) return [];
     return clientes.map(c => ({
       ...c,
-      // Campos nuevos que usará el lookup para buscar
       nombreNorm: normalizar(c.nombre),
       apellidoNorm: normalizar(c.apellido),
       razonsocialNorm: normalizar(c.razon_social)
@@ -126,14 +150,12 @@ const ReporteContratos = () => {
     if (!vehiculos?.length) return [];
     return vehiculos?.map(c => ({
       ...c,
-      // Campos nuevos que usará el lookup para buscar
       dominio: normalizar(c.dominio),
       modelo: normalizar(c.modelo)
     }));
   }, [vehiculos]);
 
   const renderModificar = (data) => {
-    const row = data.data
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
@@ -149,7 +171,6 @@ const ReporteContratos = () => {
   }
 
   const renderModificarVehiculo = (data) => {
-    const row = data.data
     return (
       <button
         style={{
@@ -165,7 +186,53 @@ const ReporteContratos = () => {
   }
 
   const renderRenovarAlquiler = (data) => {
-    const row = data.data
+    const row = data.data;
+    const cliente = clientes?.find(c => c.id == row.id_cliente);
+    const esEmpresa = !!(cliente?.razon_social);
+
+    if (esEmpresa) {
+      return (
+        <button
+          onClick={() => {
+            const fechaDesde = row.ultima_fecha_hasta || row.fecha_hasta;
+
+            // Buscar todos los contratos de la misma flota (mismo cliente + mismas fechas de contrato)
+            const contratosFlota = (esAVencer ? contratosAVencer : contratos)?.filter(
+              c => c.id_cliente === row.id_cliente
+                && c.fecha_desde === row.fecha_desde
+                && c.fecha_hasta === row.fecha_hasta
+            ) || [];
+
+            const vehiculosFlota = contratosFlota.map(c => {
+              const v = vehiculos?.find(veh => veh.id === c.id_vehiculo);
+              const m = modelos?.find(mod => mod.id === v?.modelo);
+              return {
+                id: c.id_vehiculo,
+                dominio: v?.dominio || v?.dominio_provisorio || 'SIN DOMINIO',
+                modelo: m?.nombre || ''
+              };
+            });
+
+            setModalFlota({
+              visible: true,
+              id_alquiler: row.ultimo_alquiler_id,
+              fecha_desde: fechaDesde,
+              fecha_hasta: calcularFechaHasta(fechaDesde, 1),
+              periodo_meses: 1,
+              importe_total_nuevo: '',
+              vehiculos_flota: vehiculosFlota,
+            });
+          }}
+          style={{
+            color: '#2e7d32', fontSize: "11px",
+            textDecoration: 'underline', background: 'none', border: 'none',
+            cursor: 'pointer', fontWeight: 'bold'
+          }}
+        >
+          🔄 Renovar Flota
+        </button>
+      );
+    }
 
     return (
       <button
@@ -179,10 +246,7 @@ const ReporteContratos = () => {
         Renovar alquiler
       </button>
     );
-
   }
-
-
 
   const handleCustomSummary = (e) => {
     if (e.name === "countVehiculos") {
@@ -194,80 +258,184 @@ const ReporteContratos = () => {
       }
     }
   };
+
   const getVehiculoExportValue = (id_vehiculo) => {
     if (!id_vehiculo) return '';
     const vehiculo = vehiculos?.find(e => e.id == id_vehiculo);
     if (!vehiculo) return "SIN DATOS";
-
-    // Obtener dominio
     const dominio = vehiculo.dominio || vehiculo.dominio_provisorio || "SIN DOMINIO";
-
-    // Obtener modelo
     const modeloNombre = modelos?.find(e => e.id == vehiculo.modelo)?.nombre || "";
-
     return `${dominio} ${modeloNombre}`;
   };
 
-  // Cliente: Nombre y Apellido
   const getClienteExportValue = (id_cliente) => {
     if (!id_cliente) return '';
     const cliente = clientes?.find(e => e.id == id_cliente);
-    // Guard añadido para la exportación a Excel, previene el mismo crash de undefined
     if (!cliente) return "CLIENTE NO ENCONTRADO";
     return cliente.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente.razon_social || "SIN DATOS");
   };
 
-  // Fechas: YYYY-MM-DD a DD/MM/YYYY
   const getFechaExportValue = (fecha_iso) => {
     if (!fecha_iso) return '';
     const fechaSplit = fecha_iso.split("-");
-    // Formato DD/MM/YYYY
     return `${fechaSplit[2]}/${fechaSplit[1]}/${fechaSplit[0]}`;
   };
+
   const onExporting = (e) => {
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Contratos');
-
     exportDataGrid({
       component: e.component,
       worksheet: worksheet,
       autoFilterEnabled: true,
-
-      // ******* Lógica para sobrescribir los valores en el Excel *******
       customizeCell: ({ gridCell, excelCell }) => {
         if (gridCell.rowType === 'data') {
           const dataField = gridCell.column.dataField;
-          const rawValue = gridCell.data[dataField]; // Valor original del array 'contratos'
-
-          // Columna Vehículo (id_vehiculo)
+          const rawValue = gridCell.data[dataField];
           if (dataField === 'id_vehiculo') {
             excelCell.value = getVehiculoExportValue(rawValue);
-          }
-          // Columna Cliente (id_cliente)
-          else if (dataField === 'id_cliente') {
+          } else if (dataField === 'id_cliente') {
             excelCell.value = getClienteExportValue(rawValue);
-          }
-          // Columnas de Fecha (fecha_desde, fecha_hasta)
-          else if (dataField === 'fecha_desde' || dataField === 'fecha_hasta') {
+          } else if (dataField === 'fecha_desde' || dataField === 'fecha_hasta') {
             excelCell.value = getFechaExportValue(rawValue);
           }
         }
       },
-      // ***************************************************************
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
         saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'Listado_Contratos.xlsx');
       });
     });
   };
+
+  const handleRenovarFlota = () => {
+    if (!modalFlota.importe_total_nuevo || parseFloat(modalFlota.importe_total_nuevo) <= 0) {
+      toast.error("Ingresá el importe total de la renovación");
+      return;
+    }
+    dispatch(renovacionFlota({
+      id_alquiler: modalFlota.id_alquiler,
+      fecha_desde_nuevo: modalFlota.fecha_desde,
+      fecha_hasta_nuevo: modalFlota.fecha_hasta,
+      importe_total_nuevo: parseFloat(modalFlota.importe_total_nuevo),
+      usuario,
+    }));
+    setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', periodo_meses: 1, importe_total_nuevo: '', vehiculos_flota: [] });
+  };
+
   return (
     <div className={styles.container}>
       <ToastContainer />
+
+      {/* ===== MODAL RENOVACIÓN DE FLOTA ===== */}
+      {modalFlota.visible && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '10px', padding: '2rem',
+            minWidth: '340px', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)'
+          }}>
+            <h3 style={{ marginBottom: '1.2rem', color: '#1a1a2e' }}>🔄 Renovar Flota Empresarial</h3>
+
+            {/* Listado de autos de la flota */}
+            {modalFlota.vehiculos_flota?.length > 0 && (
+              <div style={{ marginBottom: '1rem', background: '#f5f5f5', borderRadius: '8px', padding: '10px 12px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '6px' }}>
+                  Vehículos incluidos ({modalFlota.vehiculos_flota.length})
+                </span>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {modalFlota.vehiculos_flota.map(v => (
+                    <li key={v.id} style={{
+                      background: '#1a1a2e', color: '#fff',
+                      borderRadius: '4px', padding: '3px 8px',
+                      fontSize: '11px', fontWeight: 'bold'
+                    }}>
+                      {v.dominio} <span style={{ fontWeight: 'normal', opacity: 0.8 }}>{v.modelo}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#555' }}>Fecha desde (inicio del nuevo mes)</label>
+              <input
+                type="date"
+                value={modalFlota.fecha_desde}
+                onChange={e => setModalFlota(p => ({ ...p, fecha_desde: e.target.value }))}
+                style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#555' }}>Período de renovación</label>
+              <select
+                value={modalFlota.periodo_meses}
+                onChange={e => {
+                  const meses = parseInt(e.target.value);
+                  setModalFlota(p => ({
+                    ...p,
+                    periodo_meses: meses,
+                    fecha_hasta: calcularFechaHasta(p.fecha_desde, meses)
+                  }));
+                }}
+                style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+              >
+                {PERIODOS.map(op => (
+                  <option key={op.meses} value={op.meses}>{op.label}</option>
+                ))}
+              </select>
+              {modalFlota.fecha_hasta && (
+                <span style={{ fontSize: '11px', color: '#777', marginTop: '4px', display: 'block' }}>
+                  Vence: {modalFlota.fecha_hasta.split('-').reverse().join('/')}
+                </span>
+              )}
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#555' }}>Importe total de la flota (IVA incluido)</label>
+              <input
+                type="number"
+                placeholder="Ej: 150000"
+                value={modalFlota.importe_total_nuevo}
+                onChange={e => setModalFlota(p => ({ ...p, importe_total_nuevo: e.target.value }))}
+                style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', importe_total_nuevo: '' })}
+                style={{
+                  padding: '8px 18px', borderRadius: '6px', border: '1px solid #ccc',
+                  background: '#f5f5f5', cursor: 'pointer', fontSize: '13px'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRenovarFlota}
+                style={{
+                  padding: '8px 18px', borderRadius: '6px', border: 'none',
+                  background: '#2e7d32', color: '#fff', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 'bold'
+                }}
+              >
+                Confirmar Renovación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ===== FIN MODAL ===== */}
+
       {isLoading && (
         <div className={styles.spinnerOverlay}>
           <ClipLoader
             size={60}
-            color="#800020" // bordó
+            color="#800020"
             loading={true}
           />
           <span className={styles.loadingText}>Cargando contratos...</span>
@@ -306,13 +474,12 @@ const ReporteContratos = () => {
             displayExpr={(item) => item ? `${item.dominio}` : ""}
             searchExpr={["dominio"]}
           />
-
         </Column>
         <Column
           dataField="id_cliente"
-          dataType="number" // Asegúrate de que coincida con el tipo de 'id' (tu ejemplo dice 5)
+          dataType="number"
           caption="Cliente"
-          cellRender={renderCliente} // Puedes mantener tu render personalizado
+          cellRender={renderCliente}
           alignment="center"
           allowHeaderFiltering={false}
         >

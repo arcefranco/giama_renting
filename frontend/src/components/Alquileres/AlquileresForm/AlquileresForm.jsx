@@ -284,7 +284,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
   },
     [form.ingresa_alquiler, form.id_vehiculo, form.id_cliente, form.fecha_desde_alquiler,
     form.fecha_hasta_alquiler,
-      modoContrato
+      modoContrato, vehiculo, cliente
     ])
 
   const obtenerRangosOcupados = (alquileres) => //funcion para utilizar en el datepicker
