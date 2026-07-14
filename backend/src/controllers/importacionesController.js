@@ -3,6 +3,7 @@ import { QueryTypes } from "sequelize";
 import xlsx from "xlsx";
 import { validarArchivo } from "../../helpers/validarArchivo.js";
 import { registrarIngresoIndividual } from "./costosController.js";
+import { getTodayDate } from "../../helpers/getTodayDate.js";
 
 export const importacionesMultas = async (req, res) => {
     const COLUMNAS_REQUERIDAS = ["Dominio", "Fecha_Infraccion", "Hora", "Motivo_Infraccion", "Importe", "Acta_Nro"];
@@ -151,12 +152,12 @@ export const importacionesMultas = async (req, res) => {
                 await registrarIngresoIndividual({
                     debe_ingreso: fila.Importe,
                     id_vehiculo: vehiculo.ID,
-                    fecha_deuda: fechaSql,
+                    fecha_deuda: `${getTodayDate()} 00:00:00`,
                     fecha_pago: null,
                     id_forma_cobro_1: null,
                     total_cobro_1: 0,
                     id_cliente: cliente.id_cliente,
-                    observacion: `MULTA - Acta: ${fila.Acta_Nro} - Motivo: ${fila.Motivo_Infraccion}`,
+                    observacion: `Dominio: ${fila.Dominio} - MULTA - Acta: ${fila.Acta_Nro} - Motivo: ${fila.Motivo_Infraccion}`,
                     observacion_pago: '',
                     usuario: req.user ? req.user.email : 'sistema',
                     id_concepto: ID_CONCEPTO_MULTAS,
