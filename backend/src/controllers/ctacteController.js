@@ -12,7 +12,8 @@ import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../.
 import { handleError, acciones } from "../../helpers/handleError.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
-import { postDevolucionGarantia } from "../../../frontend/src/reducers/PagosClientes/pagosClientesSlice.js";
+import { getProveedorPA6 } from "../../helpers/getProveedorPA6.js";
+import { insertOdp } from "../../helpers/insertOdp.js";
 
 const contra_asiento_factura = async (id_factura, nro_asiento_original, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario) => {
 
@@ -1331,7 +1332,10 @@ export const anulacionDeuda = async (req, res) => {
 
 
 export const postDevolucionGarantia = async (req, res) => {
-  const { id_cliente, fecha, id_forma_pago, importe, observacion } = req.body;
+  const { id_cliente, fecha, id_forma_pago, importe, observacion, usuario_alta_registro } = req.body;
+
+  let transaction_giama_renting;
+  let transaction_pa7_giama_renting;
 
   try {
     const [clienteRenting] = await giama_renting.query("SELECT nro_documento,nombre,apellido,razon_social FROM clientes WHERE id = ?", { replacements: [id_cliente], type: QueryTypes.SELECT });
@@ -1340,8 +1344,72 @@ export const postDevolucionGarantia = async (req, res) => {
       return res.send({ status: false, message: "No se encontró el cliente en Renting." });
     }
 
+    const cuitCliente = clienteRenting.nro_documento;
+    const nombreParaPA6 = clienteRenting.razon_social || `${clienteRenting.nombre} ${clienteRenting.apellido}`;
+
+    const idProveedorPA6 = await getProveedorPA6(cuitCliente, nombreParaPA6);
+
+    if (!idProveedorPA6) {
+      return res.send({ status: false, message: `El chofer no está cargado como proveedor en PA6 (CUIT: ${cuitCliente}). Por favor, déjelo de alta primero en el sistema PA6.` });
+    }
+
+    // 2. Iniciamos Transacciones
+    transaction_giama_renting = await giama_renting.transaction();
+    transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+
+    let NroAsiento_nuevo = await getNumeroAsiento();
+    const cuentaHaber = await getCuentaContableFormaCobro(id_forma_pago);
+    const cuentaDebe = "210103"; // Cuenta contable de Depósito en Garantía
+    
+    // 3. Generamos la ODP con el nuevo helper
+    const nuevoIdOdp = await insertOdp(importe, observacion, NroAsiento_nuevo, idProveedorPA6, transaction_pa7_giama_renting);
+
+    // 4. Asientos Contables en PA6 (c_movimientos)
+    // DEBE: Disminuye la deuda de Garantía (Pasivo)
+    await asientoContable("c_movimientos", NroAsiento_nuevo, cuentaDebe, "D", importe, "Devolucion Garantia", transaction_pa7_giama_renting, nuevoIdOdp, getTodayDate(), null, 1);
+    // HABER: Disminuye el Banco/Caja (Activo)
+    await asientoContable("c_movimientos", NroAsiento_nuevo, cuentaHaber, "H", importe, "Devolucion Garantia", transaction_pa7_giama_renting, nuevoIdOdp, getTodayDate(), null, 1);
+
+    // Buscamos el id_vehiculo asociado a la garantía de este cliente para el asiento
+    const [vehiculoData] = await giama_renting.query(
+      `SELECT id_vehiculo FROM contratos_alquiler WHERE id_cliente = ? AND deposito_garantia > 0 ORDER BY id DESC LIMIT 1`,
+      { replacements: [id_cliente], type: QueryTypes.SELECT }
+    );
+    const id_vehiculo = vehiculoData ? vehiculoData.id_vehiculo : 1;
+
+    // 5. Impacto en la Cuenta Corriente de Renting (Para la grilla visual)
+    // Movimiento negativo en costos_ingresos para anular el Debe
+    await giama_renting.query(
+      `INSERT INTO costos_ingresos (id_cliente, id_vehiculo, fecha, id_concepto, importe_total, observacion, nro_asiento) 
+       VALUES (?, ?, ?, 39, ?, ?, ?)`, // Concepto 39 temporal hasta crear uno de Devolucion Garantia
+      {
+        replacements: [id_cliente, id_vehiculo, getTodayDate(), (importe * -1), "Devolución de Garantía: " + (observacion || ''), NroAsiento_nuevo],
+        type: QueryTypes.INSERT,
+        transaction: transaction_giama_renting
+      }
+    );
+
+    // Pago negativo en pagos_clientes para anular el Haber y mantener el saldo en 0
+    await giama_renting.query(
+      `INSERT INTO pagos_clientes (id_cliente, fecha, usuario_alta_registro, id_forma_cobro, importe_cobro, observacion, nro_asiento) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      {
+        replacements: [id_cliente, getTodayDate(), usuario_alta_registro || 'Sistema', id_forma_pago, (importe * -1), "Devolución de Garantía: " + (observacion || ''), NroAsiento_nuevo],
+        type: QueryTypes.INSERT,
+        transaction: transaction_giama_renting
+      }
+    );
+
+    // 6. Confirmamos las transacciones
+    await transaction_pa7_giama_renting.commit();
+    await transaction_giama_renting.commit();
+
+    return res.send({ status: true, message: `Devolución exitosa. Se generó la ODP ${nuevoIdOdp} en PA6.` });
+
   } catch (error) {
-    console.log(error)
-    return res.send({ status: false, message: "Error al devolver la garantía" })
+    console.log(error);
+    if (transaction_pa7_giama_renting) await transaction_pa7_giama_renting.rollback();
+    if (transaction_giama_renting) await transaction_giama_renting.rollback();
+    return res.send({ status: false, message: `Error al devolver la garantía: ${error.message}` });
   }
 }

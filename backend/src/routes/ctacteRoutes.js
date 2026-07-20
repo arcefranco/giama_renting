@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
-import {postPago, ctaCteCliente, fichaCtaCte, getEstadoDeuda, anulacionFactura, anulacionRecibo, anulacionDeuda} from "../controllers/ctacteController.js";
+import {postPago, ctaCteCliente, fichaCtaCte, getEstadoDeuda, anulacionFactura, anulacionRecibo, anulacionDeuda, postDevolucionGarantia} from "../controllers/ctacteController.js";
 const ctacteRouter = Router();
 ctacteRouter.use((req, res, next) => {
   res.header(
@@ -18,4 +18,5 @@ ctacteRouter.post("/getEstadoDeuda", getEstadoDeuda);
 ctacteRouter.post("/anulacionFactura", auth, authorizeRoles("2"), anulacionFactura);
 ctacteRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo);
 ctacteRouter.post("/anulacionDeuda", auth, authorizeRoles("2"), anulacionDeuda);
+ctacteRouter.post("/devolucionGarantia", auth, authorizeRoles("2"), postDevolucionGarantia);
 export default ctacteRouter;

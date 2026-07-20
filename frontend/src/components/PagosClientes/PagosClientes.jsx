@@ -10,7 +10,7 @@ import { getClientes, getClientesById } from '../../reducers/Clientes/clientesSl
 import {
     ctacteCliente as getCtaCteCliente, reset, postPago, anulacionFactura,
     anulacionRecibo, getEstadoDeuda,
-    anulacionDeuda
+    anulacionDeuda, postDevolucionGarantia
 } from '../../reducers/PagosClientes/pagosClientesSlice';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
@@ -375,6 +375,52 @@ export const PagosClientes = () => {
                 </button>
             );
         }
+    }
+    const handleProcesarDevolucion = async () => {
+        if (!formDevolucion.id_forma_pago || !formDevolucion.importe || formDevolucion.importe <= 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Campos incompletos",
+                text: "Por favor complete la forma de pago y un importe válido mayor a cero."
+            });
+            return;
+        }
+
+        const data = {
+            id_cliente: id ? id : form.id_cliente,
+            fecha: formDevolucion.fecha,
+            id_forma_pago: formDevolucion.id_forma_pago,
+            importe: formDevolucion.importe,
+            observacion: formDevolucion.observacion,
+            usuario_alta_registro: username
+        };
+
+        dispatch(postDevolucionGarantia(data)).then((res) => {
+            if (!res.error) {
+                // Si salió todo bien, reseteamos el form y cerramos el modal (si lo tenés con estado)
+                setFormDevolucion({
+                    fecha: new Date().toISOString().split('T')[0], // formato YYYY-MM-DD
+                    id_forma_pago: '',
+                    importe: '',
+                    observacion: ''
+                });
+                setModalDevolucion(false);
+                onSuccess(); // Para que se refresque la grilla
+                Swal.fire({
+                    icon: "success",
+                    title: "Devolución Exitosa",
+                    text: res.payload.message || "Se procesó correctamente",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error al devolver la garantía",
+                    text: res.payload || "No se pudo procesar la devolución. Revisa la consola para más detalles."
+                });
+            }
+        });
     }
     const renderImportes = (data) => {
         const value = Number(data.value) || 0;
@@ -824,7 +870,7 @@ export const PagosClientes = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => alert("Pendiente vincular al backend!")}
+                                    onClick={() => handleProcesarDevolucion()}
                                     style={{ padding: "10px 24px", borderRadius: "8px", border: "none", backgroundColor: "#800000", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(128,0,0,0.3)" }}
                                     onMouseEnter={e => e.currentTarget.style.backgroundColor = "#a00000"}
                                     onMouseLeave={e => e.currentTarget.style.backgroundColor = "#800000"}

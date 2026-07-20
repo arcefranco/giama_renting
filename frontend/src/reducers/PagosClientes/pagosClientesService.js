@@ -63,7 +63,8 @@ const pagosClientesService = {
     getEstadoDeuda,
     anulacionFactura,
     anulacionRecibo,
-    anulacionDeuda
+    anulacionDeuda,
+    postDevolucionGarantia
 }
 
 export default pagosClientesService;
