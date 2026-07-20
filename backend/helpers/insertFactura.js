@@ -14,7 +14,8 @@ export const insertFactura = async (
   concepto,
   transaction_giama_renting,
   transaction_pa7_giama_renting,
-  fecha
+  fecha,
+  itemsArray = null
 ) => {
   let clienteObtenido;
   let existeClienteFacturacion;
@@ -22,6 +23,7 @@ export const insertFactura = async (
   let nombre_provincia;
   let tipo_factura;
   let id_factura;
+  let punto_venta = 2; // Default a 2
 
   let importe_total_preliminar = parseFloat(importe_neto) + parseFloat(importe_iva)
 
@@ -49,6 +51,13 @@ export const insertFactura = async (
     throw new Error("El cliente debe aclarar su tipo responsable");
   if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA"; 
   else tipo_factura = "FB";
+
+  // Determinar Punto de Venta: si tiene razón social o no_es_chofer, asume PV 4 (Empresa), sino PV 2 (Chofer)
+  if (clienteObtenido.razon_social || clienteObtenido.no_es_chofer === 1) {
+    punto_venta = 4;
+  } else {
+    punto_venta = 2;
+  }
   //obtengo el nombre de la provincia del cliente
   try {
     const result = await giama_renting.query(
@@ -136,7 +145,7 @@ export const insertFactura = async (
           21,
           importe_iva,
           usuario,
-          2,
+          punto_venta,
           tipo_factura,
           importe_neto,
           importe_total,
@@ -158,28 +167,51 @@ export const insertFactura = async (
   }
   //inserto en factura items
   try {
-    await pa7_giama_renting.query(
-      `INSERT INTO facturasitems 
-        (IdFactura, TipoAlicuota, Descripcion, Cantidad, PrecioUnitario,
-        Porcentaje, Subtotal) VALUES (?,?,?,?,?,?,?)`,
-      {
-        type: QueryTypes.INSERT,
-        replacements: [
-          id_factura,
-          "S",
-          concepto,
-          1,
-          importe_neto,
-          21,
-          importe_total,
-        ],
-        transaction: transaction_pa7_giama_renting,
+    if (itemsArray && itemsArray.length > 0) {
+      for (const item of itemsArray) {
+        await pa7_giama_renting.query(
+          `INSERT INTO facturasitems 
+            (IdFactura, TipoAlicuota, Descripcion, Cantidad, PrecioUnitario,
+            Porcentaje, Subtotal) VALUES (?,?,?,?,?,?,?)`,
+          {
+            type: QueryTypes.INSERT,
+            replacements: [
+              id_factura,
+              "S",
+              item.descripcion,
+              item.cantidad || 1,
+              item.precioUnitario,
+              item.porcentaje || 21,
+              item.subtotal,
+            ],
+            transaction: transaction_pa7_giama_renting,
+          }
+        );
       }
-    );
+    } else {
+      await pa7_giama_renting.query(
+        `INSERT INTO facturasitems 
+          (IdFactura, TipoAlicuota, Descripcion, Cantidad, PrecioUnitario,
+          Porcentaje, Subtotal) VALUES (?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_factura,
+            "S",
+            concepto,
+            1,
+            importe_neto,
+            21,
+            importe_total,
+          ],
+          transaction: transaction_pa7_giama_renting,
+        }
+      );
+    }
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar la factura ${error.message && error.message}`
+      `Error al insertar los items de la factura ${error.message && error.message}`
     );
   }
   if(parseFloat(importe_total) !== parseFloat(importe_total_preliminar)){

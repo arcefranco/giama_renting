@@ -29,6 +29,10 @@ const cambioVehiculo = async (form) => {
   return postFunction("alquileres/contrato/cambioVehiculo", form);
 };
 
+const renovacionFlota = async (form) => {
+  return postFunction("alquileres/flota/renovacion", form);
+};
+
 const getFormasDeCobro = async () => {
   return getFunction("alquileres/formaDeCobro");
 };
@@ -86,6 +90,7 @@ const alquileresService = {
   getContratosByIdVehiculo,
   getContratosByIdCliente,
   cambioVehiculo,
+  renovacionFlota,
 };
 
 export default alquileresService;

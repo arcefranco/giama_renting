@@ -213,7 +213,7 @@ const ClientesForm = () => {
     const archivosSeleccionados = Array.from(e.target.files);
     const archivosValidos = [];
     const extensionesValidas = ["png", "jpg", "jpeg", "webp", "pdf"];
-    
+
     for (const archivo of archivosSeleccionados) {
       const extension = archivo.name.split('.').pop().toLowerCase();
       if (!extensionesValidas.includes(extension)) {

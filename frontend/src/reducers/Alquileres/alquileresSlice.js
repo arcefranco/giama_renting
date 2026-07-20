@@ -183,6 +183,16 @@ export const getAnulaciones = createAsyncThunk(
       rejectWithValue
     )
 );
+
+export const renovacionFlota = createAsyncThunk(
+  "renovacionFlota",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.renovacionFlota(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
 export const alquileresSlice = createSlice({
   name: "alquileres",
   initialState,
@@ -444,6 +454,21 @@ export const alquileresSlice = createSlice({
       state.anulaciones = action.payload;
     });
     builder.addCase(getAnulaciones.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(renovacionFlota.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(renovacionFlota.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(renovacionFlota.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
