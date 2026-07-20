@@ -31,6 +31,7 @@ import {
   resetAlquiler, resetDeposito
 } from "../../../reducers/Recibos/recibosSlice.js"
 import Swal from 'sweetalert2';
+
 const ContratoAlquiler = () => {
 
   const dispatch = useDispatch();
@@ -64,9 +65,32 @@ const ContratoAlquiler = () => {
     nro_recibo_deposito } = useSelector((state) => state.alquileresReducer)
   const { html_recibo_alquiler, html_recibo_deposito } = useSelector((state) => state.recibosReducer);
   const { username } = useSelector((state) => state.loginReducer)
+  const [esEmpresa, setEsEmpresa] = useState(false);
+  const [vehiculoSeleccionadoFlota, setVehiculoSeleccionadoFlota] = useState(null);
+
+  const formContratoFlotaAdd = () => {
+    if (!vehiculoSeleccionadoFlota) return;
+    const currentFlota = formContrato.vehiculos_flota || [];
+    if (!currentFlota.includes(vehiculoSeleccionadoFlota.value)) {
+      setFormContrato({
+        ...formContrato,
+        vehiculos_flota: [...currentFlota, vehiculoSeleccionadoFlota.value]
+      });
+    }
+    setVehiculoSeleccionadoFlota(null);
+  };
+
+  const formContratoFlotaRemove = (idToRemove) => {
+    setFormContrato({
+      ...formContrato,
+      vehiculos_flota: (formContrato.vehiculos_flota || []).filter(id => id !== idToRemove)
+    });
+  };
+
   const [formContrato, setFormContrato] = useState({
     debe_deposito: '',
     id_vehiculo: '',
+    vehiculos_flota: [],
     id_cliente: '',
     apellido_cliente: '',
     ingresa_deposito: 1,
@@ -85,6 +109,7 @@ const ContratoAlquiler = () => {
   });
   const { vehiculos, vehiculo } = useSelector((state) => state.vehiculosReducer)
   const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
+
   const { modelos, sucursales, formasDeCobro } = useSelector((state) => state.generalesReducer)
   useToastFeedback({
     isError,
@@ -95,6 +120,7 @@ const ContratoAlquiler = () => {
       setFormContrato({
         debe_deposito: '',
         id_vehiculo: '',
+        vehiculos_flota: [],
         id_cliente: '',
         apellido_cliente: '',
         ingresa_deposito: 1,
@@ -142,6 +168,7 @@ const ContratoAlquiler = () => {
       setFormContrato({
         debe_deposito: '',
         id_vehiculo: '',
+        vehiculos_flota: [],
         id_cliente: '',
         ingresa_deposito: 1,
         deposito: '',
@@ -323,7 +350,9 @@ const ContratoAlquiler = () => {
     const payload = {
       ...formAlquiler,
       ...formContrato,
+      es_flota: esEmpresa
     };
+
     dispatch(postContratoAlquiler(payload));
   };
 
@@ -357,10 +386,13 @@ const ContratoAlquiler = () => {
           {renderEstadoVehiculo(e, 'chico')}
         </div>
       ),
-      isDisabled: e.estado_actual !== 2,
+      isDisabled: e.estado_actual !== 2 || e.vehiculo_alquilado === 1 || e.vehiculo_reservado === 1,
       searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
     };
   });
+  
+  console.log("🚗 Autos renderizados en el select:", opcionesVehiculos.map(v => ({ id: v.value, disabled: v.isDisabled, label: v.searchKey })));
+
   const getClienteDisplayName = (cliente) => {
     if (cliente.razon_social) {
       return cliente.razon_social;
@@ -410,26 +442,62 @@ const ContratoAlquiler = () => {
 
           <div className={styles.inputContainer}>
             <span>Vehículo</span>
-            <Select
-              options={opcionesVehiculos}
-              isDisabled={id ? true : false}
-              value={
-                opcionesVehiculos.find(
-                  (opt) => String(opt.value) === String(formContrato.id_vehiculo)
-                ) || null
-              }
-              onChange={(option) => {
-                setFormContrato((prevForm) => ({
-                  ...prevForm,
-                  id_vehiculo: option?.value || "",
-                }));
-              }}
-              placeholder="Seleccione un vehículo"
-              styles={customStyles}
-              filterOption={(option, inputValue) =>
-                option.data.searchKey.includes(inputValue.toLowerCase())
-              }
-            />
+            {!esEmpresa ? (
+              <Select
+                options={opcionesVehiculos}
+                isDisabled={id ? true : false}
+                value={
+                  opcionesVehiculos.find(
+                    (opt) => String(opt.value) === String(formContrato.id_vehiculo)
+                  ) || null
+                }
+                onChange={(option) => {
+                  setFormContrato((prevForm) => ({
+                    ...prevForm,
+                    id_vehiculo: option?.value || "",
+                  }));
+                }}
+                placeholder="Seleccione un vehículo"
+                styles={customStyles}
+                filterOption={(option, inputValue) =>
+                  option.data.searchKey.includes(inputValue.toLowerCase())
+                }
+              />
+            ) : (
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <Select
+                    options={opcionesVehiculos.filter(opt => !(formContrato.vehiculos_flota || []).includes(opt.value))}
+                    value={vehiculoSeleccionadoFlota}
+                    onChange={(opt) => setVehiculoSeleccionadoFlota(opt)}
+                    placeholder="Buscar vehículo..."
+                    styles={customStyles}
+                    filterOption={(option, inputValue) =>
+                      option.data.searchKey ? option.data.searchKey.includes(inputValue.toLowerCase()) : option.label.toLowerCase().includes(inputValue.toLowerCase())
+                    }
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={formContratoFlotaAdd}
+                  disabled={!vehiculoSeleccionadoFlota}
+                  style={{
+                    padding: '0 15px',
+                    backgroundColor: '#800020',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: vehiculoSeleccionadoFlota ? 'pointer' : 'not-allowed',
+                    opacity: vehiculoSeleccionadoFlota ? 1 : 0.6,
+                    fontWeight: 'bold',
+                    height: '38px' // Para que coincida con el alto del Select
+                  }}
+                  title="Añadir a la flota"
+                >
+                  +
+                </button>
+              </div>
+            )}
           </div>
           <div style={{ display: "flex", alignItems: "center" }}>
             <div>
@@ -437,16 +505,21 @@ const ContratoAlquiler = () => {
                 <span>Clientes</span>
                 <Select
                   options={clienteOptions}
+                  styles={customStyles}
                   placeholder="Seleccione un cliente"
                   value={formContrato.id_cliente
                     ? clienteOptions.find(opt => opt.value == formContrato.id_cliente)
                     : null}
                   onChange={(e) => {
                     const selectedCliente = clientes.find(c => c.id === e.value);
+                    const isEmp = !!selectedCliente.razon_social;
+                    setEsEmpresa(isEmp);
                     setFormContrato({
                       ...formContrato,
                       id_cliente: selectedCliente.id,
                       apellido_cliente: selectedCliente.apellido,
+                      vehiculos_flota: [],
+                      id_vehiculo: ""
                     });
                   }}
                   isDisabled={id ? true : false}
@@ -491,6 +564,32 @@ const ContratoAlquiler = () => {
               locale="es"
             />
           </div>
+          {esEmpresa && (formContrato.vehiculos_flota || []).length > 0 && (
+            <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '5px' }}>Vehículos en la Flota:</span>
+              <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', border: '1px solid #dee2e6', fontSize: '14px' }}>
+                <tbody>
+                  {(formContrato.vehiculos_flota || []).map(idVehiculo => {
+                    const v = opcionesVehiculos.find(opt => opt.value === idVehiculo);
+                    return (
+                      <tr key={idVehiculo}>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6' }}>{v ? v.label : `ID: ${idVehiculo}`}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', width: '40px', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => formContratoFlotaRemove(idVehiculo)}
+                            style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', padding: '2px 8px', fontWeight: 'bold' }}
+                          >
+                            X
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </form>
 
         {
@@ -498,7 +597,7 @@ const ContratoAlquiler = () => {
         }
       </div>
       {
-        !id &&
+        !id && !esEmpresa &&
         <div className={styles.container}>
           <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
             <input
@@ -637,7 +736,7 @@ const ContratoAlquiler = () => {
       {
         !id && <AlquileresForm_2 modoContrato={true} onSubmitFinal={handleFinalSubmit}
           idVehiculoSeleccionado={formContrato.id_vehiculo} minDateContrato={formContrato.fecha_desde_contrato}
-          maxDateContrato={formContrato.fecha_hasta_contrato} vehiculo={formContrato.id_vehiculo} cliente={formContrato.id_cliente}
+          maxDateContrato={formContrato.fecha_hasta_contrato} vehiculo={esEmpresa && formContrato.vehiculos_flota?.length > 0 ? "flota" : formContrato.id_vehiculo} cliente={formContrato.id_cliente}
           fecha_recibo_deposito={formContrato.fecha_recibo_deposito}
         />
       }

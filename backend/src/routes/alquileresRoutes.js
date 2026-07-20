@@ -16,8 +16,7 @@ import {
   getContratosByIdCliente,
   cambioVehiculo,
   getContratosAVencer,
-
-
+  renovacionContratoFlota,
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
 import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
@@ -76,4 +75,5 @@ alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
 alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
 alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeAdmin(), cambioVehiculo);
+alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("2"), renovacionContratoFlota);
 export default alquileresRouter;

@@ -58,14 +58,14 @@ export const importacionesMultas = async (req, res) => {
                         transaction
                     }
                 );
-                
+
                 if (!vehiculo) {
                     errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): El dominio "${fila.Dominio}" no existe en el sistema.`);
                     await transaction.rollback();
                     await transaction_asientos.rollback();
                     continue;
                 }
-                
+
                 if (!fila.Fecha_Infraccion || !fila.Hora) {
                     errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): La fecha o la hora de la infracción están vacías.`);
                     await transaction.rollback();
@@ -130,13 +130,13 @@ export const importacionesMultas = async (req, res) => {
                      WHERE id_vehiculo = :id_vehiculo 
                        AND fecha_desde <= :fecha_infraccion 
                        AND (fecha_hasta IS NULL OR fecha_hasta >= :fecha_infraccion)`,
-                    { 
-                        type: QueryTypes.SELECT, 
-                        replacements: { 
-                            id_vehiculo: vehiculo.ID, 
-                            fecha_infraccion: fechaSql 
-                        }, 
-                        transaction 
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: {
+                            id_vehiculo: vehiculo.ID,
+                            fecha_infraccion: fechaSql
+                        },
+                        transaction
                     }
                 );
 
