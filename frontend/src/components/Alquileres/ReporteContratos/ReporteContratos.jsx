@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { getContratos, reset, renovacionFlota } from "./../../../reducers/Alquileres/alquileresSlice"
+import Select from 'react-select';
+import { getContratos, reset, renovacionFlota, cambioVehiculo } from "./../../../reducers/Alquileres/alquileresSlice"
 import { getVehiculos } from "./../../../reducers/Vehiculos/vehiculosSlice"
 import { getClientes } from "./../../../reducers/Clientes/clientesSlice"
 import { getModelos } from "./../../../reducers/Generales/generalesSlice"
@@ -25,27 +26,20 @@ const ReporteContratos = () => {
   const location = useLocation();
   const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
 
-  const PERIODOS = [
-    { label: '1 mes', meses: 1 },
-    { label: '3 meses', meses: 3 },
-    { label: '1 año', meses: 12 },
-  ];
 
-  const calcularFechaHasta = (fechaDesde, meses) => {
-    if (!fechaDesde || !meses) return '';
-    const d = new Date(fechaDesde);
-    d.setMonth(d.getMonth() + meses);
-    // Retroceder 1 día para que sea el último día del período
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().split('T')[0];
-  };
+  
+  const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
+    visible: false,
+    id_contrato: null,
+    id_vehiculo_actual: null,
+    id_vehiculo_nuevo: null
+  });
 
   const [modalFlota, setModalFlota] = useState({
     visible: false,
     id_alquiler: null,
     fecha_desde: '',
     fecha_hasta: '',
-    periodo_meses: 1,
     importe_total_nuevo: '',
     vehiculos_flota: [],
   });
@@ -68,7 +62,7 @@ const ReporteContratos = () => {
     isLoading
   } = useSelector((state) => state.alquileresReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
-  const { roles, usuario } = useSelector((state) => state.loginReducer)
+  const { roles, username } = useSelector((state) => state.loginReducer)
   const { modelos } = useSelector((state) => state.generalesReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
 
@@ -88,6 +82,42 @@ const ReporteContratos = () => {
   useEffect(() => {
     dispatch(getContratos({ fecha_desde: "", fecha_hasta: "", vigentes: form.vigentes }))
   }, [form.vigentes]);
+
+  
+  const opcionesVehiculosLibres = useMemo(() => {
+    if (!vehiculos) return [];
+    return vehiculos
+      .filter(v => !v.fecha_venta && v.estado_actual === 2 && v.vehiculo_alquilado === 0 && v.vehiculo_reservado === 0)
+      .map(e => {
+        const dominio = e.dominio || e.dominio_provisorio || "SIN DOMINIO";
+        const modeloNombre = modelos?.find(m => m.id == e.modelo)?.nombre || "";
+        return {
+          value: e.id,
+          label: `${dominio} - ${modeloNombre}`,
+          searchKey: `${dominio} ${modeloNombre}`.toLowerCase()
+        };
+      });
+  }, [vehiculos, modelos]);
+
+  const handleConfirmarCambioVehiculo = () => {
+    if (!modalCambioVehiculo.id_vehiculo_nuevo) {
+      toast.error("Debe seleccionar un vehículo nuevo");
+      return;
+    }
+    
+    dispatch(cambioVehiculo({
+      id_contrato: modalCambioVehiculo.id_contrato,
+      id_vehiculo: modalCambioVehiculo.id_vehiculo_nuevo
+    })).then((res) => {
+      if (res.payload?.status) {
+        toast.success("Vehículo cambiado exitosamente");
+        setModalCambioVehiculo({ visible: false, id_contrato: null, id_vehiculo_actual: null, id_vehiculo_nuevo: null });
+        handleActualizar();
+      } else {
+        toast.error(res.payload?.message || "Error al cambiar vehículo");
+      }
+    });
+  };
 
   const handleActualizar = () => {
     dispatch(getContratos({ fecha_desde: form["fecha_desde"], fecha_hasta: form["fecha_hasta"], vigentes: form["vigentes"] }))
@@ -174,11 +204,18 @@ const ReporteContratos = () => {
     return (
       <button
         style={{
-          color: "grey", fontSize: "11px",
+          color: "blue", fontSize: "11px",
           textDecoration: 'underline', background: 'none', border: 'none',
-          cursor: "none"
+          cursor: "pointer"
         }}
-        disabled
+        onClick={() => {
+          setModalCambioVehiculo({
+            visible: true,
+            id_contrato: data.data.id,
+            id_vehiculo_actual: data.data.id_vehiculo,
+            id_vehiculo_nuevo: null
+          });
+        }}
       >
         Modificar vehículo
       </button>
@@ -194,7 +231,15 @@ const ReporteContratos = () => {
       return (
         <button
           onClick={() => {
-            const fechaDesde = row.ultima_fecha_hasta || row.fecha_hasta;
+            let fechaDesde = row.ultima_fecha_hasta || row.fecha_hasta;
+            if (row.ultima_fecha_hasta) {
+              const [year, month, day] = row.ultima_fecha_hasta.split('-');
+              const d = new Date(year, month - 1, day);
+              d.setDate(d.getDate() + 1);
+              const m = String(d.getMonth() + 1).padStart(2, '0');
+              const dDay = String(d.getDate()).padStart(2, '0');
+              fechaDesde = `${d.getFullYear()}-${m}-${dDay}`;
+            }
 
             // Buscar todos los contratos de la misma flota (mismo cliente + mismas fechas de contrato)
             const contratosFlota = (esAVencer ? contratosAVencer : contratos)?.filter(
@@ -217,8 +262,7 @@ const ReporteContratos = () => {
               visible: true,
               id_alquiler: row.ultimo_alquiler_id,
               fecha_desde: fechaDesde,
-              fecha_hasta: calcularFechaHasta(fechaDesde, 1),
-              periodo_meses: 1,
+              fecha_hasta: '',
               importe_total_nuevo: '',
               vehiculos_flota: vehiculosFlota,
             });
@@ -318,9 +362,9 @@ const ReporteContratos = () => {
       fecha_desde_nuevo: modalFlota.fecha_desde,
       fecha_hasta_nuevo: modalFlota.fecha_hasta,
       importe_total_nuevo: parseFloat(modalFlota.importe_total_nuevo),
-      usuario,
+      usuario: username,
     }));
-    setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', periodo_meses: 1, importe_total_nuevo: '', vehiculos_flota: [] });
+    setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', importe_total_nuevo: '', vehiculos_flota: [] });
   };
 
   return (
@@ -370,28 +414,14 @@ const ReporteContratos = () => {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#555' }}>Período de renovación</label>
-              <select
-                value={modalFlota.periodo_meses}
-                onChange={e => {
-                  const meses = parseInt(e.target.value);
-                  setModalFlota(p => ({
-                    ...p,
-                    periodo_meses: meses,
-                    fecha_hasta: calcularFechaHasta(p.fecha_desde, meses)
-                  }));
-                }}
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#555' }}>Hasta</label>
+              <input
+                type="date"
+                value={modalFlota.fecha_hasta}
+                min={modalFlota.fecha_desde}
+                onChange={e => setModalFlota(p => ({ ...p, fecha_hasta: e.target.value }))}
                 style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
-              >
-                {PERIODOS.map(op => (
-                  <option key={op.meses} value={op.meses}>{op.label}</option>
-                ))}
-              </select>
-              {modalFlota.fecha_hasta && (
-                <span style={{ fontSize: '11px', color: '#777', marginTop: '4px', display: 'block' }}>
-                  Vence: {modalFlota.fecha_hasta.split('-').reverse().join('/')}
-                </span>
-              )}
+              />
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
@@ -407,7 +437,7 @@ const ReporteContratos = () => {
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', importe_total_nuevo: '' })}
+                onClick={() => setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', importe_total_nuevo: '', vehiculos_flota: [] })}
                 style={{
                   padding: '8px 18px', borderRadius: '6px', border: '1px solid #ccc',
                   background: '#f5f5f5', cursor: 'pointer', fontSize: '13px'
@@ -509,6 +539,56 @@ const ReporteContratos = () => {
             showInColumn="id_vehiculo" />
         </Summary>
       </DataGrid>
+
+      {modalCambioVehiculo.visible && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            background: 'white', padding: '2rem', borderRadius: '8px',
+            width: '400px', maxWidth: '90%', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '18px', color: '#333' }}>
+              Cambiar Vehículo del Contrato
+            </h3>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '12px', marginBottom: '8px', color: '#555' }}>
+                Seleccione el nuevo vehículo a entregar:
+              </label>
+              <Select
+                options={opcionesVehiculosLibres}
+                value={opcionesVehiculosLibres.find(opt => opt.value === modalCambioVehiculo.id_vehiculo_nuevo) || null}
+                onChange={(opt) => setModalCambioVehiculo(p => ({ ...p, id_vehiculo_nuevo: opt?.value }))}
+                placeholder="Buscar vehículo libre..."
+                filterOption={(option, inputValue) => option.data.searchKey.includes(inputValue.toLowerCase())}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setModalCambioVehiculo({ visible: false, id_contrato: null, id_vehiculo_actual: null, id_vehiculo_nuevo: null })}
+                style={{
+                  padding: '8px 18px', borderRadius: '6px', border: '1px solid #ccc',
+                  background: '#f5f5f5', cursor: 'pointer', fontSize: '13px'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarCambioVehiculo}
+                style={{
+                  padding: '8px 18px', borderRadius: '6px', border: 'none',
+                  background: '#800020', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold'
+                }}
+              >
+                Confirmar Cambio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

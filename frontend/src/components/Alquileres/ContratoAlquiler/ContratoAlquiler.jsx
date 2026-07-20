@@ -386,10 +386,13 @@ const ContratoAlquiler = () => {
           {renderEstadoVehiculo(e, 'chico')}
         </div>
       ),
-      isDisabled: e.estado_actual !== 2,
+      isDisabled: e.estado_actual !== 2 || e.vehiculo_alquilado === 1 || e.vehiculo_reservado === 1,
       searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
     };
   });
+  
+  console.log("🚗 Autos renderizados en el select:", opcionesVehiculos.map(v => ({ id: v.value, disabled: v.isDisabled, label: v.searchKey })));
+
   const getClienteDisplayName = (cliente) => {
     if (cliente.razon_social) {
       return cliente.razon_social;
