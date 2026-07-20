@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import DataGrid, { Column, Scrolling, Summary, TotalItem } from "devextreme-react/data-grid"
@@ -36,6 +36,13 @@ export const PagosClientes = () => {
     })
     const [saldoActual, setSaldoActual] = useState(0)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isModalDevolucionOpen, setIsModalDevolucionOpen] = useState(false)
+    const [formDevolucion, setFormDevolucion] = useState({
+        fecha: new Date().toISOString().split('T')[0],
+        id_forma_pago: '',
+        importe: '',
+        observacion: ''
+    })
     const [errorsInputs, setErrorsInputs] = useState({})
     const dispatch = useDispatch()
     useEffect(() => {
@@ -189,7 +196,7 @@ export const PagosClientes = () => {
         }
 
     }, [isError, isSuccess, codigo])
-    const onSuccess = () => {
+    const onSuccess = useCallback(() => {
         closeModal()
 
         if (id) {
@@ -197,7 +204,7 @@ export const PagosClientes = () => {
         } else if (form.id_cliente) {
             dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
         }
-    }
+    }, [id, form.id_cliente, dispatch])
     useEffect(() => {
         if (!codigo) {
             if (isError && message) {
@@ -320,6 +327,26 @@ export const PagosClientes = () => {
     }
     const renderAnulacion = (data) => {
         const row = data.data
+        const isDeposito = row.concepto && (row.concepto.toLowerCase().includes("deposito") || row.concepto.toLowerCase().includes("depósito") || row.concepto.toLowerCase().includes("gtia") || row.concepto.toLowerCase().includes("garantía"));
+        
+        if (isDeposito && row.haber > 0) {
+            return (
+                <button
+                    onClick={() => {
+                        setFormDevolucion(prev => ({ ...prev, importe: row.haber }))
+                        setIsModalDevolucionOpen(true)
+                    }}
+                    style={{
+                        color: '#2e7d32', fontSize: "11px", fontWeight: "bold",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Devolver
+                </button>
+            )
+        }
+
         if (row.tipo == 4) {
             return (
                 <button
@@ -701,6 +728,108 @@ export const PagosClientes = () => {
                                     {isLoading && (
                                         <span className={styles.spinner} style={{ position: "absolute" }}></span>
                                     )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isModalDevolucionOpen && (
+                <div
+                    onClick={e => e.target === e.currentTarget && closeModal()}
+                    style={{
+                        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.55)", backdropFilter: "blur(3px)",
+                        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                    }}
+                >
+                    <div style={{
+                        backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+                        width: "520px", maxWidth: "95vw", display: "flex", flexDirection: "column"
+                    }}>
+                        <div style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "20px 24px", borderBottom: "1px solid #f0f0f0",
+                            backgroundColor: "#800000", borderRadius: "12px 12px 0 0"
+                        }}>
+                            <h3 style={{ margin: 0, color: "#fff", fontSize: "17px", fontWeight: 600 }}>
+                                Devolución de Garantía
+                            </h3>
+                            <button
+                                onClick={() => setIsModalDevolucionOpen(false)}
+                                style={{
+                                    background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "50%",
+                                    width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center",
+                                    cursor: "pointer", fontSize: "18px", color: "#fff"
+                                }}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <form style={{ display: "flex", flexDirection: "column", gap: "0", padding: "24px" }}>
+                            
+                            <div style={{ marginBottom: "16px" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>
+                                    Fecha <span style={{ color: "#999", fontWeight: 400, textTransform: "none" }}>(automática de hoy)</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formDevolucion.fecha}
+                                    disabled
+                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", backgroundColor: "#f5f5f5" }}
+                                />
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px", marginBottom: "16px" }}>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Medio de Pago</label>
+                                    <select
+                                        value={formDevolucion.id_forma_pago}
+                                        onChange={(e) => setFormDevolucion({ ...formDevolucion, id_forma_pago: e.target.value })}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                                    >
+                                        <option value="" disabled>Seleccione...</option>
+                                        {formasDeCobro?.length && formasDeCobro.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Importe a Devolver</label>
+                                    <input
+                                        type="number"
+                                        value={formDevolucion.importe}
+                                        onChange={(e) => setFormDevolucion({ ...formDevolucion, importe: e.target.value })}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }} 
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: "24px" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Observación</label>
+                                <textarea
+                                    value={formDevolucion.observacion}
+                                    onChange={(e) => setFormDevolucion({ ...formDevolucion, observacion: e.target.value })}
+                                    rows={2}
+                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", resize: "vertical" }}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalDevolucionOpen(false)}
+                                    style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", color: "#555", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => alert("Pendiente vincular al backend!")}
+                                    style={{ padding: "10px 24px", borderRadius: "8px", border: "none", backgroundColor: "#800000", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(128,0,0,0.3)" }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#a00000"}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "#800000"}
+                                >
+                                    Procesar Devolución
                                 </button>
                             </div>
                         </form>
