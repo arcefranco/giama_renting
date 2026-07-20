@@ -12,6 +12,7 @@ import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../.
 import { handleError, acciones } from "../../helpers/handleError.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
+import { postDevolucionGarantia } from "../../../frontend/src/reducers/PagosClientes/pagosClientesSlice.js";
 
 const contra_asiento_factura = async (id_factura, nro_asiento_original, transaction_pa7_giama_renting, NroAsiento, NroAsientoSecundario) => {
 
@@ -1329,4 +1330,18 @@ export const anulacionDeuda = async (req, res) => {
 
 
 
+export const postDevolucionGarantia = async (req, res) => {
+  const { id_cliente, fecha, id_forma_pago, importe, observacion } = req.body;
 
+  try {
+    const [clienteRenting] = await giama_renting.query("SELECT nro_documento,nombre,apellido,razon_social FROM clientes WHERE id = ?", { replacements: [id_cliente], type: QueryTypes.SELECT });
+
+    if (!clienteRenting) {
+      return res.send({ status: false, message: "No se encontró el cliente en Renting." });
+    }
+
+  } catch (error) {
+    console.log(error)
+    return res.send({ status: false, message: "Error al devolver la garantía" })
+  }
+}
