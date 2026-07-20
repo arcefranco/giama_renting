@@ -35,9 +35,9 @@ export const movimientosProveedores = async ({
   try {
     const result = await pa7_giama_renting.query(
       `INSERT INTO c_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1, Iva3,
+      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, NetoGravado3, Iva1, Iva3,
       TasaIva1, TasaIva3, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
-      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -47,7 +47,8 @@ export const movimientosProveedores = async ({
           NroComprobante,
           fecha_factura,
           tipo_comprobante == 3 ? importe_neto : null,
-          tipo_comprobante == 1 ? importe_neto : null,
+          tipo_comprobante == 1 ? (importe_iva_10_5 > 0 ? null : importe_neto) : null,
+          tipo_comprobante == 1 ? (importe_iva_10_5 > 0 ? importe_neto : null) : null,
           importe_iva,
           importe_iva_10_5,
           21,
@@ -75,9 +76,9 @@ export const movimientosProveedores = async ({
   try {
     await pa7_giama_renting.query(
       `INSERT INTO c2_movprov (Fecha, Proveedor, 
-      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, Iva1, Iva3,
+      TipoComprobante, NroComprobante, Vencimiento, NetoNoGravado, NetoGravado1, NetoGravado3, Iva1, Iva3,
       TasaIva1, TasaIva3, Total, TasaPercIIBB, PercIIBB, TasaPercIva, PercIva, TasaPercIIBBCABA, 
-      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      PercIIBBCABA) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -87,7 +88,8 @@ export const movimientosProveedores = async ({
           NroComprobante,
           fecha_factura,
           tipo_comprobante == 3 ? importe_neto : null,
-          tipo_comprobante == 1 ? importe_neto : null,
+          tipo_comprobante == 1 ? (importe_iva_10_5 > 0 ? null : importe_neto) : null,
+          tipo_comprobante == 1 ? (importe_iva_10_5 > 0 ? importe_neto : null) : null,
           importe_iva,
           importe_iva_10_5,
           21,
