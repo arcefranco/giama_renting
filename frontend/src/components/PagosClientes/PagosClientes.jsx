@@ -405,7 +405,7 @@ export const PagosClientes = () => {
                     observacion: ''
                 });
                 setModalDevolucion(false);
-                onSuccess(); // Para que se refresque la grilla
+                dispatch(getCtaCteCliente({ id_cliente: id ? id : form.id_cliente })); // Refresca la grilla
                 Swal.fire({
                     icon: "success",
                     title: "Devolución Exitosa",
@@ -425,7 +425,7 @@ export const PagosClientes = () => {
     const renderImportes = (data) => {
         const value = Number(data.value) || 0;
 
-        return value > 0
+        return value !== 0
             ? value.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             : "";
     }
