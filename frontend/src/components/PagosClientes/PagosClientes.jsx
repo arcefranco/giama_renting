@@ -37,11 +37,13 @@ export const PagosClientes = () => {
     const [saldoActual, setSaldoActual] = useState(0)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isModalDevolucionOpen, setIsModalDevolucionOpen] = useState(false)
+    const [isDevolviendo, setIsDevolviendo] = useState(false)
     const [formDevolucion, setFormDevolucion] = useState({
         fecha: new Date().toISOString().split('T')[0],
         id_forma_pago: '',
         importe: '',
-        observacion: ''
+        observacion: '',
+        id_contrato: ''
     })
     const [errorsInputs, setErrorsInputs] = useState({})
     const dispatch = useDispatch()
@@ -329,11 +331,17 @@ export const PagosClientes = () => {
         const row = data.data
         const isDeposito = row.concepto && (row.concepto.toLowerCase().includes("deposito") || row.concepto.toLowerCase().includes("depósito") || row.concepto.toLowerCase().includes("gtia") || row.concepto.toLowerCase().includes("garantía"));
         
-        if (isDeposito && row.haber > 0) {
+        const saldoGarantia = (row.debe || 0) - (row.garantia_devuelta || 0);
+
+        if (isDeposito && row.debe > 0 && saldoGarantia > 0) {
             return (
                 <button
                     onClick={() => {
-                        setFormDevolucion(prev => ({ ...prev, importe: row.haber }))
+                        setFormDevolucion(prev => ({ 
+                            ...prev, 
+                            importe: saldoGarantia,
+                            id_contrato: row.id_registro
+                        }))
                         setIsModalDevolucionOpen(true)
                     }}
                     style={{
@@ -387,24 +395,27 @@ export const PagosClientes = () => {
         }
 
         const data = {
-            id_cliente: id ? id : form.id_cliente,
+            id_cliente: id || form.id_cliente || (cliente?.length > 0 ? cliente[0].id : null),
             fecha: formDevolucion.fecha,
             id_forma_pago: formDevolucion.id_forma_pago,
             importe: formDevolucion.importe,
             observacion: formDevolucion.observacion,
-            usuario_alta_registro: username
+            usuario_alta_registro: username,
+            id_contrato: formDevolucion.id_contrato
         };
 
+        setIsDevolviendo(true);
         dispatch(postDevolucionGarantia(data)).then((res) => {
+            setIsDevolviendo(false);
             if (!res.error) {
-                // Si salió todo bien, reseteamos el form y cerramos el modal (si lo tenés con estado)
+                // Si salió todo bien, reseteamos el form y cerramos el modal
                 setFormDevolucion({
                     fecha: new Date().toISOString().split('T')[0], // formato YYYY-MM-DD
                     id_forma_pago: '',
                     importe: '',
                     observacion: ''
                 });
-                setModalDevolucion(false);
+                setIsModalDevolucionOpen(false);
                 dispatch(getCtaCteCliente({ id_cliente: id ? id : form.id_cliente })); // Refresca la grilla
                 Swal.fire({
                     icon: "success",
@@ -420,6 +431,8 @@ export const PagosClientes = () => {
                     text: res.payload || "No se pudo procesar la devolución. Revisa la consola para más detalles."
                 });
             }
+        }).catch(() => {
+            setIsDevolviendo(false);
         });
     }
     const renderImportes = (data) => {
@@ -555,7 +568,7 @@ export const PagosClientes = () => {
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
 
-                height={300}
+                height={600}
 
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
@@ -564,6 +577,15 @@ export const PagosClientes = () => {
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
+                <Column 
+                    dataField="garantia_devuelta" 
+                    alignment="right" 
+                    caption="Garantía Dev." 
+                    cellRender={(data) => {
+                        const val = Number(data.value);
+                        return (val && val > 0) ? val.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
+                    }} 
+                />
                 <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={renderSaldo} />
                 <Column caption="" cellRender={renderAnulacion} />
 
@@ -863,19 +885,21 @@ export const PagosClientes = () => {
                             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
                                 <button
                                     type="button"
+                                    disabled={isDevolviendo}
                                     onClick={() => setIsModalDevolucionOpen(false)}
-                                    style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", color: "#555", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
+                                    style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", color: "#555", fontSize: "14px", fontWeight: 600, cursor: isDevolviendo ? "not-allowed" : "pointer", opacity: isDevolviendo ? 0.6 : 1 }}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="button"
+                                    disabled={isDevolviendo}
                                     onClick={() => handleProcesarDevolucion()}
-                                    style={{ padding: "10px 24px", borderRadius: "8px", border: "none", backgroundColor: "#800000", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(128,0,0,0.3)" }}
-                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#a00000"}
-                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "#800000"}
+                                    style={{ padding: "10px 24px", borderRadius: "8px", border: "none", backgroundColor: "#800000", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: isDevolviendo ? "not-allowed" : "pointer", boxShadow: "0 4px 12px rgba(128,0,0,0.3)", opacity: isDevolviendo ? 0.6 : 1 }}
+                                    onMouseEnter={e => { if(!isDevolviendo) e.currentTarget.style.backgroundColor = "#a00000" }}
+                                    onMouseLeave={e => { if(!isDevolviendo) e.currentTarget.style.backgroundColor = "#800000" }}
                                 >
-                                    Procesar Devolución
+                                    {isDevolviendo ? "Procesando..." : "Procesar Devolución"}
                                 </button>
                             </div>
                         </form>
