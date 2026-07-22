@@ -52,8 +52,8 @@ export const insertFactura = async (
   if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA"; 
   else tipo_factura = "FB";
 
-  // Determinar Punto de Venta: si tiene razón social o no_es_chofer, asume PV 4 (Empresa), sino PV 2 (Chofer)
-  if (clienteObtenido.razon_social || clienteObtenido.no_es_chofer === 1) {
+  // Determinar Punto de Venta: si tiene razón social asume PV 4 (Empresa), sino PV 2 (Chofer)
+  if (clienteObtenido.razon_social) {
     punto_venta = 4;
   } else {
     punto_venta = 2;

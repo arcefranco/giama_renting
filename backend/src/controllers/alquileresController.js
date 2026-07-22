@@ -23,10 +23,11 @@ import { insertFactura } from "../../helpers/insertFactura.js";
 import { getYesterdayDate } from "../../helpers/getTodayDate.js";
 import { addOneDay } from "../../helpers/addOneDay.js";
 import { insertPago } from "../../helpers/insertPago.js";
-import { getCuentaContableFormaCobro, getCuentaSecundariaFormaCobro } from "../../helpers/getCuentaContableFormaCobro.js";
-
-
-
+import { mapCuentaPorEmpresaYConcepto } from "../../helpers/mapCuentaPorEmpresaYConcepto.js";
+import {
+  getCuentaContableFormaCobro,
+  getCuentaSecundariaFormaCobro,
+} from "../../helpers/getCuentaContableFormaCobro.js";
 
 const insertAlquiler = async (body) => {
   const {
@@ -42,7 +43,7 @@ const insertAlquiler = async (body) => {
     id_contrato,
     transaction,
     id_factura_pa6,
-    fecha_alquiler
+    fecha_alquiler,
   } = body;
   try {
     await giama_renting.query(
@@ -73,17 +74,18 @@ const insertAlquiler = async (body) => {
           observacion ? observacion : "",
           id_contrato,
           fecha_alquiler,
-          id_factura_pa6
+          id_factura_pa6,
         ],
         transaction: transaction,
-      }
+      },
     );
     return true;
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar alquiler${error.message ? `${" :"}${error.message}` : ""
-      }`
+      `Error al insertar alquiler${
+        error.message ? `${" :"}${error.message}` : ""
+      }`,
     );
   }
 };
@@ -108,7 +110,7 @@ export const postFormaCobro = async (req, res) => {
       {
         replacements: [nombre, cuenta_contable, cuenta_secundaria],
         type: QueryTypes.INSERT,
-      }
+      },
     );
     return res.send({
       status: true,
@@ -119,7 +121,6 @@ export const postFormaCobro = async (req, res) => {
     return res.send(body);
   }
 };
-
 
 export const getAlquileresByIdVehiculo = async (req, res) => {
   const { id } = req.body;
@@ -134,14 +135,14 @@ export const getAlquileresByIdVehiculo = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id],
-      }
+      },
     );
     return res.send(result);
   } catch (error) {
     const { body } = handleError(
       error,
       "Alquileres del vehículo",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
@@ -162,7 +163,7 @@ export const getContratosByIdVehiculo = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id],
-      }
+      },
     );
     return res.send(result);
   } catch (error) {
@@ -187,7 +188,7 @@ export const getContratosByIdCliente = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id],
-      }
+      },
     );
     return res.send(result);
   } catch (error) {
@@ -223,7 +224,7 @@ export const getContratosAVencer = async (req, res) => {
         WHERE (a.fecha_hasta < c.fecha_hasta OR a.id IS NULL)
         AND DATEDIFF(c.fecha_hasta, CURDATE()) BETWEEN 0 AND 7
         ORDER BY a.id;`,
-      { type: QueryTypes.SELECT }
+      { type: QueryTypes.SELECT },
     );
 
     return res.send(result);
@@ -231,8 +232,7 @@ export const getContratosAVencer = async (req, res) => {
     const { body } = handleError(error, "Contratos", acciones.get);
     return res.send(body);
   }
-
-}
+};
 
 export const getAlquilerByIdContrato = async (req, res) => {
   const { id } = req.body;
@@ -252,14 +252,14 @@ export const getAlquilerByIdContrato = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id],
-      }
+      },
     );
     return res.send(result);
   } catch (error) {
     const { body } = handleError(
       error,
       "Alquileres del contrato",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
@@ -269,11 +269,14 @@ export const getAlquileres = async (req, res) => {
   const { fecha_desde, fecha_hasta } = req.body;
   if (!fecha_desde || !fecha_hasta) {
     try {
-      const result = await giama_renting.query(`SELECT *
+      const result = await giama_renting.query(
+        `SELECT *
     FROM alquileres
-`, {
-        type: QueryTypes.SELECT,
-      });
+`,
+        {
+          type: QueryTypes.SELECT,
+        },
+      );
       return res.send(result);
     } catch (error) {
       const { body } = handleError(error, "Alquileres", acciones.get);
@@ -291,7 +294,7 @@ export const getAlquileres = async (req, res) => {
         {
           type: QueryTypes.SELECT,
           replacements: [fecha_desde, fecha_hasta],
-        }
+        },
       );
       return res.send(result);
     } catch (error) {
@@ -332,16 +335,18 @@ export const getContratos = async (req, res) => {
 
     if (vigentes) {
       result = await giama_renting.query(
-        baseQuery + `
+        baseQuery +
+          `
         WHERE (a.fecha_hasta <= c.fecha_hasta OR a.id IS NULL)
         ORDER BY a.id;`,
-        { type: QueryTypes.SELECT }
+        { type: QueryTypes.SELECT },
       );
     } else {
       result = await giama_renting.query(
-        baseQuery + `
+        baseQuery +
+          `
         ORDER BY c.id;`,
-        { type: QueryTypes.SELECT }
+        { type: QueryTypes.SELECT },
       );
     }
 
@@ -365,7 +370,7 @@ export const getContratoById = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id],
-      }
+      },
     );
     return res.send(result);
   } catch (error) {
@@ -377,9 +382,11 @@ export const getContratoById = async (req, res) => {
 export const anulacionContrato = async (req, res) => {
   const { id_contrato, fecha_desde_contrato, fecha_hasta_contrato } = req.body;
   if (!fecha_desde_contrato || !fecha_hasta_contrato) {
-    return res.send({ status: false, message: "Debe seleccionar nuevas fechas desde y hasta para continuar" })
+    return res.send({
+      status: false,
+      message: "Debe seleccionar nuevas fechas desde y hasta para continuar",
+    });
   }
-
 
   let contratoAnterior;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -391,7 +398,7 @@ export const anulacionContrato = async (req, res) => {
       {
         replacements: [id_contrato],
         type: QueryTypes.SELECT,
-      }
+      },
     );
     const validatorResult = validateArray(result, "Contrato");
     if (validatorResult) {
@@ -421,64 +428,93 @@ export const anulacionContrato = async (req, res) => {
     nuevaHasta.setHours(0, 0, 0, 0);
   } catch (error) {
     console.log(error);
-    const { body } = handleError(error, "fechas de contratos vigente/nuevo", acciones.get);
+    const { body } = handleError(
+      error,
+      "fechas de contratos vigente/nuevo",
+      acciones.get,
+    );
     return res.send(body);
   }
-
 
   let fechaDesdeHistorial = null;
   let fechaHastaHistorial = null;
 
-  if (nuevaHasta > originalHasta) { /**alargar dureacion del contrato original */
+  if (nuevaHasta > originalHasta) {
+    /**alargar dureacion del contrato original */
     let contratosVehiculo;
     let contratosCliente;
     try {
-      const result = await giama_renting.query(`SELECT * FROM contratos_alquiler WHERE id_vehiculo = ? AND id <> ?`, {
-        type: QueryTypes.SELECT,
-        replacements: [contratoAnterior.id_vehiculo, contratoAnterior.id]
-      })
-      contratosVehiculo = result
+      const result = await giama_renting.query(
+        `SELECT * FROM contratos_alquiler WHERE id_vehiculo = ? AND id <> ?`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [contratoAnterior.id_vehiculo, contratoAnterior.id],
+        },
+      );
+      contratosVehiculo = result;
     } catch (error) {
       console.log(error);
-      const { body } = handleError(error, "contratos del vehículo", acciones.get);
+      const { body } = handleError(
+        error,
+        "contratos del vehículo",
+        acciones.get,
+      );
       return res.send(body);
     }
 
     try {
-      const result = await giama_renting.query(`SELECT * FROM contratos_alquiler WHERE id_cliente = ? AND id <> ?`, {
-        type: QueryTypes.SELECT,
-        replacements: [contratoAnterior.id_cliente, contratoAnterior.id]
-      })
-      contratosCliente = result
+      const result = await giama_renting.query(
+        `SELECT * FROM contratos_alquiler WHERE id_cliente = ? AND id <> ?`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [contratoAnterior.id_cliente, contratoAnterior.id],
+        },
+      );
+      contratosCliente = result;
     } catch (error) {
       console.log(error);
-      const { body } = handleError(error, "contratos del cliente", acciones.get);
+      const { body } = handleError(
+        error,
+        "contratos del cliente",
+        acciones.get,
+      );
       return res.send(body);
     }
     let conflictoContratoCliente = null;
     let conflictoContratoVehiculo = null;
     if (contratosCliente.length) {
-      conflictoContratoCliente = contratosCliente.find(e => e.fecha_desde <= formatearFechaISO(nuevaHasta) && e.fecha_hasta > formatearFechaISO(nuevaDesde));
+      conflictoContratoCliente = contratosCliente.find(
+        (e) =>
+          e.fecha_desde <= formatearFechaISO(nuevaHasta) &&
+          e.fecha_hasta > formatearFechaISO(nuevaDesde),
+      );
     }
     if (contratosVehiculo.length) {
-      conflictoContratoVehiculo = contratosVehiculo.find(e => e.fecha_desde <= formatearFechaISO(nuevaHasta) && e.fecha_hasta > formatearFechaISO(nuevaDesde));
+      conflictoContratoVehiculo = contratosVehiculo.find(
+        (e) =>
+          e.fecha_desde <= formatearFechaISO(nuevaHasta) &&
+          e.fecha_hasta > formatearFechaISO(nuevaDesde),
+      );
     }
 
     if (conflictoContratoCliente) {
       return res.send({
         status: false,
         message: `El cliente tiene un contrato (${conflictoContratoCliente.id}) que entra en conflicto 
-    con la nueva fecha seleccionada`
+    con la nueva fecha seleccionada`,
       });
     } else if (conflictoContratoVehiculo) {
       return res.send({
         status: false,
         message: `El vehículo tiene un contrato (${conflictoContratoVehiculo.id}) que entra en conflicto 
-    con la nueva fecha seleccionada`
+    con la nueva fecha seleccionada`,
       });
     } else {
-      if (formatearFechaISO(nuevaDesde).startsWith("00") || formatearFechaISO(nuevaHasta).startsWith("00")) {
-        return res.send({ status: false, message: "Fechas inválidas" })
+      if (
+        formatearFechaISO(nuevaDesde).startsWith("00") ||
+        formatearFechaISO(nuevaHasta).startsWith("00")
+      ) {
+        return res.send({ status: false, message: "Fechas inválidas" });
       }
       try {
         await giama_renting.query(
@@ -492,7 +528,7 @@ export const anulacionContrato = async (req, res) => {
               id_contrato,
             ],
             transaction: transaction_giama_renting,
-          }
+          },
         );
       } catch (error) {
         console.log(error);
@@ -506,8 +542,6 @@ export const anulacionContrato = async (req, res) => {
         message: "Contrato actualizado correctamente",
       });
     }
-
-
   } else {
     // Detectamos acorte al inicio
     if (nuevaDesde > originalDesde) {
@@ -532,7 +566,7 @@ export const anulacionContrato = async (req, res) => {
         {
           replacements: [id_contrato],
           type: QueryTypes.SELECT,
-        }
+        },
       );
 
       if (alquileres.length) {
@@ -544,18 +578,24 @@ export const anulacionContrato = async (req, res) => {
         const primerDesde = primerAlquiler.fecha_desde;
         const id_primer_alquiler = primerAlquiler.id;
         if (formatearFechaISO(nuevaHasta) < ultimoHasta) {
-          await giama_renting.query("UPDATE alquileres SET fecha_hasta = ? WHERE id = ?", {
-            type: QueryTypes.UPDATE,
-            replacements: [formatearFechaISO(nuevaHasta), id_ultimo_alquiler],
-            transaction: transaction_giama_renting
-          })
+          await giama_renting.query(
+            "UPDATE alquileres SET fecha_hasta = ? WHERE id = ?",
+            {
+              type: QueryTypes.UPDATE,
+              replacements: [formatearFechaISO(nuevaHasta), id_ultimo_alquiler],
+              transaction: transaction_giama_renting,
+            },
+          );
         }
         if (formatearFechaISO(nuevaDesde) > primerDesde) {
-          await giama_renting.query("UPDATE alquileres SET fecha_desde = ? WHERE id = ?", {
-            type: QueryTypes.UPDATE,
-            replacements: [formatearFechaISO(nuevaDesde), id_primer_alquiler],
-            transaction: transaction_giama_renting
-          })
+          await giama_renting.query(
+            "UPDATE alquileres SET fecha_desde = ? WHERE id = ?",
+            {
+              type: QueryTypes.UPDATE,
+              replacements: [formatearFechaISO(nuevaDesde), id_primer_alquiler],
+              transaction: transaction_giama_renting,
+            },
+          );
         }
 
         await giama_renting.query(
@@ -575,7 +615,7 @@ export const anulacionContrato = async (req, res) => {
             ],
             type: QueryTypes.INSERT,
             transaction: transaction_giama_renting,
-          }
+          },
         );
 
         await giama_renting.query(
@@ -589,30 +629,31 @@ export const anulacionContrato = async (req, res) => {
               id_contrato,
             ],
             transaction: transaction_giama_renting,
-          }
+          },
         );
 
         await transaction_giama_renting.commit();
-        return res.send({ status: true, message: "Contrato y alquiler modificados correctamente." })
-
+        return res.send({
+          status: true,
+          message: "Contrato y alquiler modificados correctamente.",
+        });
       }
     } catch (error) {
       console.log(error);
       transaction_giama_renting.rollback();
-      const { body } = handleError(
-        error,
-        "contrato",
-        acciones.post
-      );
+      const { body } = handleError(error, "contrato", acciones.post);
       return res.send(body);
     }
 
-    console.log(formatearFechaISO(nuevaDesde))
-    console.log(formatearFechaISO(nuevaHasta))
+    console.log(formatearFechaISO(nuevaDesde));
+    console.log(formatearFechaISO(nuevaHasta));
 
     //inserto en historial el contrato anterior
-    if (formatearFechaISO(fechaDesdeHistorial).startsWith("19") || formatearFechaISO(fechaHastaHistorial).startsWith("19")) {
-      return res.send({ status: false, message: "Fechas inválidas" })
+    if (
+      formatearFechaISO(fechaDesdeHistorial).startsWith("19") ||
+      formatearFechaISO(fechaHastaHistorial).startsWith("19")
+    ) {
+      return res.send({ status: false, message: "Fechas inválidas" });
     }
     try {
       await giama_renting.query(
@@ -632,7 +673,7 @@ export const anulacionContrato = async (req, res) => {
           ],
           type: QueryTypes.INSERT,
           transaction: transaction_giama_renting,
-        }
+        },
       );
     } catch (error) {
       console.log(error);
@@ -640,13 +681,16 @@ export const anulacionContrato = async (req, res) => {
       const { body } = handleError(
         error,
         "Historial de anulaciones",
-        acciones.post
+        acciones.post,
       );
       return res.send(body);
     }
     //actualizo el contrato en tabla contratos_alquiler
-    if (formatearFechaISO(nuevaDesde).startsWith("00") || formatearFechaISO(nuevaHasta).startsWith("00")) {
-      return res.send({ status: false, message: "Fechas inválidas" })
+    if (
+      formatearFechaISO(nuevaDesde).startsWith("00") ||
+      formatearFechaISO(nuevaHasta).startsWith("00")
+    ) {
+      return res.send({ status: false, message: "Fechas inválidas" });
     }
     try {
       await giama_renting.query(
@@ -660,7 +704,7 @@ export const anulacionContrato = async (req, res) => {
             id_contrato,
           ],
           transaction: transaction_giama_renting,
-        }
+        },
       );
     } catch (error) {
       console.log(error);
@@ -668,7 +712,6 @@ export const anulacionContrato = async (req, res) => {
       const { body } = handleError(error, "contrato", acciones.update);
       return res.send(body);
     }
-
   }
   await transaction_giama_renting.commit();
   return res.send({
@@ -678,170 +721,205 @@ export const anulacionContrato = async (req, res) => {
 };
 
 export const cambioVehiculo = async (req, res) => {
-  const {
-    id_contrato,
-    id_vehiculo,
-  } = req.body
+  const { id_contrato, id_vehiculo } = req.body;
   /**restriccion segun alquileres cobrados */
   /**fecha desde: si el contrato no empezo se mantiene igual;
    *  si el contrato empezo y no tiene alquileres la fecha desde del nuevo es hoy, la fecha hasta del nuevo es la misma
    *  la fecha desde del anterior es la misma y la fecha hasta del anterior es ayer
-   * 
+   *
    * si el contrato empezo y SI tiene alquileres: la fecha desde del nuevo es un dia despues del ultimo dia de alquiler,
    * la fecha hasta del nuevo es la misma
    * la fecha desde del anterior es la misma y la fecha hasta del anterior es el ultimo dia de alquiler  */
 
   let original;
-  let transaction = await giama_renting.transaction()
+  let transaction = await giama_renting.transaction();
   let nuevaDesde;
   let nuevaHasta;
   let originalDesde;
   let originalHasta;
   let alquileres;
-  const hoy = getTodayDate()
+  const hoy = getTodayDate();
   //busco el contrato original
   try {
-    const result = await giama_renting.query(`SELECT * FROM contratos_alquiler WHERE id = ?`, {
-      type: QueryTypes.SELECT,
-      replacements: [id_contrato]
-    })
-    if(!result.length){
-      return res.send({status: false, message: "Contrato no encontrado"})
+    const result = await giama_renting.query(
+      `SELECT * FROM contratos_alquiler WHERE id = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_contrato],
+      },
+    );
+    if (!result.length) {
+      return res.send({ status: false, message: "Contrato no encontrado" });
     }
-    original = result[0]
+    original = result[0];
   } catch (error) {
     console.log(error);
     const { body } = handleError(error, "contrato", acciones.get);
     return res.send(body);
   }
-  if(original["id_vehiculo"] === id_vehiculo){
-    return res.send({status: false, message: "Debe modificar el vehículo para realizar esta acción"})
+  if (original["id_vehiculo"] === id_vehiculo) {
+    return res.send({
+      status: false,
+      message: "Debe modificar el vehículo para realizar esta acción",
+    });
   }
 
   try {
     let result = await giama_renting.query(
-    `
+      `
     SELECT id, fecha_desde, fecha_hasta
     FROM alquileres
     WHERE id_contrato = ?
     ORDER BY fecha_desde ASC
     `,
-    {
-      replacements: [id_contrato],
-      type: QueryTypes.SELECT,
-    }
-  );
-  alquileres = result
-
+      {
+        replacements: [id_contrato],
+        type: QueryTypes.SELECT,
+      },
+    );
+    alquileres = result;
   } catch (error) {
-  console.log(error);
-  const { body } = handleError(error, "Validación de alquileres", acciones.get);
-  return res.send(body);
+    console.log(error);
+    const { body } = handleError(
+      error,
+      "Validación de alquileres",
+      acciones.get,
+    );
+    return res.send(body);
   }
 
-  const vigente = hoy >= original.fecha_desde && hoy <= original.fecha_hasta
+  const vigente = hoy >= original.fecha_desde && hoy <= original.fecha_hasta;
 
-  if(alquileres.length && vigente){
+  if (alquileres.length && vigente) {
     const ultimoAlquiler = alquileres[alquileres.length - 1];
     const ultimoHasta = ultimoAlquiler.fecha_hasta;
-    nuevaDesde = addOneDay(parseISO(ultimoHasta))
-    nuevaHasta = original.fecha_hasta
-    originalDesde = original.fecha_desde
-    originalHasta = ultimoHasta
+    nuevaDesde = addOneDay(parseISO(ultimoHasta));
+    nuevaHasta = original.fecha_hasta;
+    originalDesde = original.fecha_desde;
+    originalHasta = ultimoHasta;
+  } else if (!alquileres.length && vigente) {
+    nuevaDesde = hoy;
+    nuevaHasta = original.fecha_hasta;
+    originalDesde = original.fecha_desde;
+    originalHasta = getYesterdayDate();
   }
-  else if (!alquileres.length && vigente) {
-    nuevaDesde = hoy
-    nuevaHasta = original.fecha_hasta
-    originalDesde = original.fecha_desde
-    originalHasta = getYesterdayDate()
-  }
-  if(!vigente && alquileres.length){
-    return res.send({status: false, message: `No se puede actualizar el contrato debido 
-      a que tiene alquieres cargados y no está en vigencia`})
+  if (!vigente && alquileres.length) {
+    return res.send({
+      status: false,
+      message: `No se puede actualizar el contrato debido 
+      a que tiene alquieres cargados y no está en vigencia`,
+    });
   }
 
   if (vigente) {
-  // caso 1: hoy está dentro del rango del contrato
-  // → cerrar contrato actual (fecha_hasta = ayer) y abrir nuevo
-  //actualizo el contrato original
-  /**elimino deposito del anterior y lo pongo en el nuevo asi como asiento y nro recibo */
-  try {
-    await giama_renting.query(`UPDATE contratos_alquiler SET fecha_desde = ?, fecha_hasta = ?,
+    // caso 1: hoy está dentro del rango del contrato
+    // → cerrar contrato actual (fecha_hasta = ayer) y abrir nuevo
+    //actualizo el contrato original
+    /**elimino deposito del anterior y lo pongo en el nuevo asi como asiento y nro recibo */
+    try {
+      await giama_renting.query(
+        `UPDATE contratos_alquiler SET fecha_desde = ?, fecha_hasta = ?,
       deposito_garantia = NULL, id_forma_cobro = NULL, id_forma_cobro_2 = NULL, id_forma_cobro_3 = NULL, fecha_cobro = NULL
-      WHERE id = ?`, {
-      type: QueryTypes.UPDATE,
-      replacements: [originalDesde, originalHasta, id_contrato],
-      transaction: transaction
-    })
-  } catch (error) {
-    console.log(error);
-    await transaction.rollback();
-    const { body } = handleError(error, "contrato", acciones.update);
-    return res.send(body);
-  }
-  //genero el nuevo contrato igual al original pero con fecha desde y id_vehiculo cambiados
-  //FALTA: actualizar contrato actual, dejar en nulos los datos del deposito para pasarselos al nuevo
-  try {
-    await giama_renting.query(`INSERT INTO contratos_alquiler (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, 
+      WHERE id = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [originalDesde, originalHasta, id_contrato],
+          transaction: transaction,
+        },
+      );
+    } catch (error) {
+      console.log(error);
+      await transaction.rollback();
+      const { body } = handleError(error, "contrato", acciones.update);
+      return res.send(body);
+    }
+    //genero el nuevo contrato igual al original pero con fecha desde y id_vehiculo cambiados
+    //FALTA: actualizar contrato actual, dejar en nulos los datos del deposito para pasarselos al nuevo
+    try {
+      await giama_renting.query(
+        `INSERT INTO contratos_alquiler (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, 
       deposito_garantia, id_forma_cobro, id_forma_cobro_2, id_forma_cobro_3, fecha_cobro, nro_asiento, nro_recibo) 
-      VALUES (?,?,?,?,?,?,?,?,?,?,?)`, {
-        type: QueryTypes.INSERT,
-        replacements: [id_vehiculo, original["id_cliente"], nuevaDesde, nuevaHasta, 
-        original.deposito_garantia, original.id_forma_cobro, original.id_forma_cobro_2, original.id_forma_cobro_3, 
-        original.fecha_cobro, original.nro_asiento, original.nro_recibo],
-        transaction: transaction
-      })
-  } catch (error) {
-    console.log(error);
-    await transaction.rollback();
-    const { body } = handleError(error, "contrato", acciones.post);
-    return res.send(body);
-  }
-  try {
-    await giama_renting.query(`UPDATE vehiculos SET estado_actual = ? WHERE id = ?`, {
-      type: QueryTypes.UPDATE,
-      replacements: [1, id_vehiculo],
-      transaction: transaction
-    })
-  } catch (error) {
-    console.log(error);
-    await transaction.rollback();
-    const { body } = handleError(error, "contrato", acciones.update);
-    return res.send(body);
-  }
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            id_vehiculo,
+            original["id_cliente"],
+            nuevaDesde,
+            nuevaHasta,
+            original.deposito_garantia,
+            original.id_forma_cobro,
+            original.id_forma_cobro_2,
+            original.id_forma_cobro_3,
+            original.fecha_cobro,
+            original.nro_asiento,
+            original.nro_recibo,
+          ],
+          transaction: transaction,
+        },
+      );
+    } catch (error) {
+      console.log(error);
+      await transaction.rollback();
+      const { body } = handleError(error, "contrato", acciones.post);
+      return res.send(body);
+    }
+    try {
+      await giama_renting.query(
+        `UPDATE vehiculos SET estado_actual = ? WHERE id = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [1, id_vehiculo],
+          transaction: transaction,
+        },
+      );
+    } catch (error) {
+      console.log(error);
+      await transaction.rollback();
+      const { body } = handleError(error, "contrato", acciones.update);
+      return res.send(body);
+    }
   } else {
-  // caso 2: hoy está fuera del rango (antes o después)
-  // → solo actualizar el vehículo, sin duplicar contrato
-  try {
-    await giama_renting.query(`UPDATE contratos_alquiler SET id_vehiculo = ? WHERE id = ?`, {
-      type: QueryTypes.UPDATE,
-      replacements: [id_vehiculo, id_contrato],
-      transaction: transaction
-    })
-  } catch (error) {
-    console.log(error);
-    await transaction.rollback();
-    const { body } = handleError(error, "contrato", acciones.update);
-    return res.send(body);
-  }
-  try {
-    await giama_renting.query(`UPDATE vehiculos SET estado_actual = ? WHERE id = ?`, {
-      type: QueryTypes.UPDATE,
-      replacements: [1, id_vehiculo],
-      transaction: transaction
-    })
-  } catch (error) {
-    console.log(error);
-    await transaction.rollback();
-    const { body } = handleError(error, "contrato", acciones.update);
-    return res.send(body);
-  }
+    // caso 2: hoy está fuera del rango (antes o después)
+    // → solo actualizar el vehículo, sin duplicar contrato
+    try {
+      await giama_renting.query(
+        `UPDATE contratos_alquiler SET id_vehiculo = ? WHERE id = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [id_vehiculo, id_contrato],
+          transaction: transaction,
+        },
+      );
+    } catch (error) {
+      console.log(error);
+      await transaction.rollback();
+      const { body } = handleError(error, "contrato", acciones.update);
+      return res.send(body);
+    }
+    try {
+      await giama_renting.query(
+        `UPDATE vehiculos SET estado_actual = ? WHERE id = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [1, id_vehiculo],
+          transaction: transaction,
+        },
+      );
+    } catch (error) {
+      console.log(error);
+      await transaction.rollback();
+      const { body } = handleError(error, "contrato", acciones.update);
+      return res.send(body);
+    }
   }
 
-
-  await transaction.commit()
-  return res.send({status: true, message: "Contrato actualizado correctamente"})
-}
+  await transaction.commit();
+  return res.send({
+    status: true,
+    message: "Contrato actualizado correctamente",
+  });
+};
 
 export const anulacionAlquiler = async (req, res) => {
   //ANULACION DE CONTRATO
@@ -878,7 +956,7 @@ export const anulacionAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_forma_cobro],
-      }
+      },
     );
     const validatorResult = validateArray(result, "Cuenta contable");
     if (validatorResult) {
@@ -896,7 +974,7 @@ export const anulacionAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_forma_cobro],
-      }
+      },
     );
     const validatorResult = validateArray(result, "Cuenta secundaria");
     if (validatorResult) {
@@ -914,7 +992,7 @@ export const anulacionAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
-      }
+      },
     );
     const validatorResult = validateArray(result, "Cliente");
     if (validatorResult) {
@@ -933,7 +1011,7 @@ export const anulacionAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_alquiler],
-      }
+      },
     );
     const validatorResult = validateArray(result, "Alquiler");
     if (validatorResult) {
@@ -946,7 +1024,7 @@ export const anulacionAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "Fechas del alquiler original",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
@@ -963,7 +1041,7 @@ export const anulacionAlquiler = async (req, res) => {
     });
   }
   concepto = `Anulacion alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
-    fecha_hasta_actual
+    fecha_hasta_actual,
   )} hasta: 
   ${formatearFechaISOText(fecha_hasta_anterior)}`;
   //obtengo parametros IVA21/22, ALQU Y ALQ2
@@ -1018,7 +1096,7 @@ export const anulacionAlquiler = async (req, res) => {
           NroAsiento,
         ],
         transaction: transaction_giama_renting,
-      }
+      },
     );
   } catch (error) {
     console.log(error);
@@ -1035,7 +1113,7 @@ export const anulacionAlquiler = async (req, res) => {
       "H",
       importe_total,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
     );
     await asientoContable(
       "c_movimientos",
@@ -1044,7 +1122,7 @@ export const anulacionAlquiler = async (req, res) => {
       "D",
       importe_neto,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
     );
     await asientoContable(
       "c_movimientos",
@@ -1053,7 +1131,7 @@ export const anulacionAlquiler = async (req, res) => {
       "D",
       importe_iva,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
     );
     //movimientos contables en C2_MOVIMIENTOS
     await asientoContable(
@@ -1063,7 +1141,7 @@ export const anulacionAlquiler = async (req, res) => {
       "H",
       importe_total,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
     );
     await asientoContable(
       "c2_movimientos",
@@ -1072,7 +1150,7 @@ export const anulacionAlquiler = async (req, res) => {
       "D",
       importe_neto,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
     );
     await asientoContable(
       "c2_movimientos",
@@ -1081,7 +1159,7 @@ export const anulacionAlquiler = async (req, res) => {
       "D",
       importe_iva,
       concepto,
-      transaction_pa7_giama_renting
+      transaction_pa7_giama_renting,
     );
   } catch (error) {
     console.log(error);
@@ -1109,7 +1187,7 @@ export const getAnulaciones = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_alquiler],
-      }
+      },
     );
   } catch (error) {
     console.log(error);
@@ -1119,7 +1197,6 @@ export const getAnulaciones = async (req, res) => {
 
   return res.send(anulaciones);
 };
-
 
 export const postAlquiler = async (req, res) => {
   const {
@@ -1155,7 +1232,6 @@ export const postAlquiler = async (req, res) => {
   let NroAsiento_pago;
   let NroAsientoSecundario_pago;
 
-
   let cuentaIV21;
   let cuentaIV21_2;
   let cuentaALQU;
@@ -1167,6 +1243,7 @@ export const postAlquiler = async (req, res) => {
   let estadoCliente;
   let CUIT;
   let dominio;
+  let esEmpresa = false;
   let concepto_deuda;
   let concepto_pago;
 
@@ -1175,19 +1252,35 @@ export const postAlquiler = async (req, res) => {
   let cuenta_contable_forma_cobro_alquiler_2;
   let cuenta_secundaria_forma_cobro_alquiler_2;
   let cuenta_contable_forma_cobro_alquiler_3;
-  let cuenta_secundaria_forma_cobro_alquiler_3
+  let cuenta_secundaria_forma_cobro_alquiler_3;
 
-  let importe_total_1_formateado = importe_total_1 ? parseFloat(importe_total_1) : 0
-  let importe_total_2_formateado = importe_total_2 ? parseFloat(importe_total_2) : 0
-  let importe_total_3_formateado = importe_total_3 ? parseFloat(importe_total_3) : 0
+  let importe_total_1_formateado = importe_total_1
+    ? parseFloat(importe_total_1)
+    : 0;
+  let importe_total_2_formateado = importe_total_2
+    ? parseFloat(importe_total_2)
+    : 0;
+  let importe_total_3_formateado = importe_total_3
+    ? parseFloat(importe_total_3)
+    : 0;
 
-  const importe_total_pago = (importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado).toFixed(2)
+  const importe_total_pago = (
+    importe_total_1_formateado +
+    importe_total_2_formateado +
+    importe_total_3_formateado
+  ).toFixed(2);
 
   if (!(debe_alquiler > 0)) {
-    return res.send({ status: false, message: "Debe aclarar el importe total del alquiler" })
+    return res.send({
+      status: false,
+      message: "Debe aclarar el importe total del alquiler",
+    });
   }
   if (!fecha_factura_alquiler) {
-    return res.send({ status: false, message: "Debe aclarar la fecha de factura" })
+    return res.send({
+      status: false,
+      message: "Debe aclarar la fecha de factura",
+    });
   }
 
   //buscar el estado del cliente
@@ -1201,10 +1294,11 @@ export const postAlquiler = async (req, res) => {
   }
 
   if (fecha_desde_alquiler > fecha_hasta_alquiler) {
-    return res.send({ status: false, message: `La fecha "desde" del alquiler no puede ser posterior a su fecha "hasta"` })
+    return res.send({
+      status: false,
+      message: `La fecha "desde" del alquiler no puede ser posterior a su fecha "hasta"`,
+    });
   }
-
-
 
   //buscar si el vehiculo está vendido // dominio
   try {
@@ -1213,7 +1307,7 @@ export const postAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
-      }
+      },
     );
     if (result[0]["fecha_venta"]) {
       return res.send({
@@ -1229,27 +1323,24 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "Fecha de venta del vehiculo",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
 
-  //buscar CUIT del cliente
+  //buscar CUIT del cliente y determinar si es empresa
   try {
     const result = await giama_renting.query(
-      "SELECT nro_documento FROM clientes WHERE id = ?",
+      "SELECT nro_documento, razon_social, no_es_chofer FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
-      }
+      },
     );
-    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
+    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"];
+    esEmpresa = !!result[0]["razon_social"];
   } catch (error) {
-    const { body } = handleError(
-      error,
-      "documento del cliente",
-      acciones.get
-    );
+    const { body } = handleError(error, "documento del cliente", acciones.get);
     return res.send(body);
   }
   //buscar si las fechas se exceden del limite permitido
@@ -1259,7 +1350,7 @@ export const postAlquiler = async (req, res) => {
       {
         replacements: [id_contrato],
         type: QueryTypes.SELECT,
-      }
+      },
     );
     const { fecha_desde, fecha_hasta } = contrato[0];
     if (fecha_desde_alquiler < fecha_desde) {
@@ -1289,7 +1380,7 @@ export const postAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
-      }
+      },
     );
     alquileresVigentes = result;
     const parseDate = (str) => new Date(str);
@@ -1304,7 +1395,7 @@ export const postAlquiler = async (req, res) => {
         const hastaExistente = parseDate(fecha_hasta);
 
         return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
-      }
+      },
     );
 
     if (hayConflicto) {
@@ -1319,7 +1410,7 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "Alquileres del vehiculo",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
@@ -1337,18 +1428,37 @@ export const postAlquiler = async (req, res) => {
   //obtengo cuentas contables de las formas de cobro
   try {
     if (id_forma_cobro_alquiler_1) {
-      cuenta_contable_forma_cobro_alquiler_1 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1)
-      cuenta_secundaria_forma_cobro_alquiler_1 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1)
+      cuenta_contable_forma_cobro_alquiler_1 =
+        await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1);
+      cuenta_secundaria_forma_cobro_alquiler_1 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1);
     }
 
     if (id_forma_cobro_alquiler_2) {
-      cuenta_contable_forma_cobro_alquiler_2 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2)
-      cuenta_secundaria_forma_cobro_alquiler_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2)
+      cuenta_contable_forma_cobro_alquiler_2 =
+        await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2);
+      cuenta_secundaria_forma_cobro_alquiler_2 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2);
     }
 
     if (id_forma_cobro_alquiler_3) {
-      cuenta_contable_forma_cobro_alquiler_3 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3)
-      cuenta_secundaria_forma_cobro_alquiler_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3)
+      cuenta_contable_forma_cobro_alquiler_3 =
+        await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3);
+      cuenta_secundaria_forma_cobro_alquiler_3 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3);
+    }
+
+    if (esEmpresa) {
+      cuentaALQU = mapCuentaPorEmpresaYConcepto({
+        esEmpresa,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU,
+      });
+      cuentaALQU_2 = mapCuentaPorEmpresaYConcepto({
+        esEmpresa,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU_2,
+      });
     }
   } catch (error) {
     console.log(error);
@@ -1366,11 +1476,10 @@ export const postAlquiler = async (req, res) => {
     return res.send(body);
   }
 
-
   let concepto_factura = `Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
-  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT} Observación: ${observacion}`
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT} Observación: ${observacion}`;
   let concepto_recibo = `(PAGO) Alquiler - ${apellido_cliente} - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} 
-  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`
+  hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`;
   //inserto factura
   if (debe_alquiler > 0) {
     try {
@@ -1385,7 +1494,7 @@ export const postAlquiler = async (req, res) => {
         concepto_factura,
         transaction_giama_renting,
         transaction_pa7_giama_renting,
-        fecha_factura_alquiler
+        fecha_factura_alquiler,
       );
     } catch (error) {
       await transaction_giama_renting.rollback();
@@ -1396,7 +1505,12 @@ export const postAlquiler = async (req, res) => {
   }
 
   //inserto recibo si hay alguna forma de cobro
-  if ((id_forma_cobro_alquiler_1 || id_forma_cobro_alquiler_2 || id_forma_cobro_alquiler_3) && debe_alquiler > 0) {
+  if (
+    (id_forma_cobro_alquiler_1 ||
+      id_forma_cobro_alquiler_2 ||
+      id_forma_cobro_alquiler_3) &&
+    debe_alquiler > 0
+  ) {
     try {
       nro_recibo = await insertRecibo(
         fecha_recibo_alquiler,
@@ -1423,7 +1537,6 @@ export const postAlquiler = async (req, res) => {
     }
   }
 
-
   //inserto alquiler
   try {
     await insertAlquiler({
@@ -1439,7 +1552,7 @@ export const postAlquiler = async (req, res) => {
       id_contrato: id_contrato,
       transaction: transaction_giama_renting,
       id_factura_pa6: nro_factura,
-      fecha_alquiler: fecha_factura_alquiler
+      fecha_alquiler: fecha_factura_alquiler,
     });
   } catch (error) {
     console.log(error);
@@ -1447,64 +1560,71 @@ export const postAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "semana adelantada de alquiler",
-      acciones.post
+      acciones.post,
     );
     return res.send(body);
   }
 
   //se insertan pagos en pagos_clientes segun cantidad de medios de pago
   if (id_forma_cobro_alquiler_1) {
-
     try {
-      await insertPago(id_cliente, fecha_recibo_alquiler, usuario, id_forma_cobro_alquiler_1,
-        importe_total_1_formateado, nro_recibo, observacion, NroAsiento_pago, transaction_giama_renting
-      )
-
+      await insertPago(
+        id_cliente,
+        fecha_recibo_alquiler,
+        usuario,
+        id_forma_cobro_alquiler_1,
+        importe_total_1_formateado,
+        nro_recibo,
+        observacion,
+        NroAsiento_pago,
+        transaction_giama_renting,
+      );
     } catch (error) {
       console.log(error);
       transaction_giama_renting.rollback();
-      const { body } = handleError(
-        error,
-        "pago",
-        acciones.post
-      );
+      const { body } = handleError(error, "pago", acciones.post);
       return res.send(body);
     }
   }
 
   if (id_forma_cobro_alquiler_2) {
-
     try {
-      await insertPago(id_cliente, fecha_recibo_alquiler, usuario, id_forma_cobro_alquiler_2,
-        importe_total_2_formateado, nro_recibo, observacion, NroAsiento_pago, transaction_giama_renting
-      )
-
+      await insertPago(
+        id_cliente,
+        fecha_recibo_alquiler,
+        usuario,
+        id_forma_cobro_alquiler_2,
+        importe_total_2_formateado,
+        nro_recibo,
+        observacion,
+        NroAsiento_pago,
+        transaction_giama_renting,
+      );
     } catch (error) {
       console.log(error);
       transaction_giama_renting.rollback();
-      const { body } = handleError(
-        error,
-        "pago",
-        acciones.post
-      );
+      const { body } = handleError(error, "pago", acciones.post);
       return res.send(body);
     }
   }
 
   if (id_forma_cobro_alquiler_3) {
     try {
-      await insertPago(id_cliente, fecha_recibo_alquiler, usuario, id_forma_cobro_alquiler_3,
-        importe_total_3_formateado, nro_recibo, observacion, NroAsiento_pago, transaction_giama_renting
-      )
-
+      await insertPago(
+        id_cliente,
+        fecha_recibo_alquiler,
+        usuario,
+        id_forma_cobro_alquiler_3,
+        importe_total_3_formateado,
+        nro_recibo,
+        observacion,
+        NroAsiento_pago,
+        transaction_giama_renting,
+      );
     } catch (error) {
       console.log(error);
       transaction_giama_renting.rollback();
-      const { body } = handleError(
-        error,
-        "pago",
-        acciones.post
-      );
+      const { body } = handleError(error, "pago", acciones.post);
       return res.send(body);
     }
   }
@@ -1521,7 +1641,7 @@ export const postAlquiler = async (req, res) => {
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
-      110310, //"cuenta_nueva", 
+      110310, //"cuenta_nueva",
       "D",
       debe_alquiler,
       concepto_deuda,
@@ -1529,8 +1649,8 @@ export const postAlquiler = async (req, res) => {
       null,
       fecha_factura_alquiler,
       NroAsientoSecundario_deuda,
-      null
-    )
+      null,
+    );
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
@@ -1542,8 +1662,8 @@ export const postAlquiler = async (req, res) => {
       null,
       fecha_factura_alquiler,
       NroAsientoSecundario_deuda,
-      null
-    )
+      null,
+    );
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
@@ -1555,9 +1675,9 @@ export const postAlquiler = async (req, res) => {
       null,
       fecha_factura_alquiler,
       NroAsientoSecundario_deuda,
-      null
-    )
-    //mov secundarios 
+      null,
+    );
+    //mov secundarios
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_deuda,
@@ -1569,8 +1689,8 @@ export const postAlquiler = async (req, res) => {
       null,
       fecha_factura_alquiler,
       null,
-      null
-    )
+      null,
+    );
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_deuda,
@@ -1582,8 +1702,8 @@ export const postAlquiler = async (req, res) => {
       null,
       fecha_factura_alquiler,
       null,
-      null
-    )
+      null,
+    );
     await asientoContable(
       "c2_movimientos",
       NroAsientoSecundario_deuda,
@@ -1595,8 +1715,8 @@ export const postAlquiler = async (req, res) => {
       null,
       fecha_factura_alquiler,
       null,
-      null
-    )
+      null,
+    );
   } catch (error) {
     console.log(error);
     transaction_giama_renting.rollback();
@@ -1618,7 +1738,7 @@ export const postAlquiler = async (req, res) => {
         nro_recibo,
         fecha_recibo_alquiler,
         NroAsientoSecundario_pago,
-        null
+        null,
       );
     }
     if (cuenta_contable_forma_cobro_alquiler_2) {
@@ -1633,7 +1753,7 @@ export const postAlquiler = async (req, res) => {
         nro_recibo,
         fecha_recibo_alquiler,
         NroAsientoSecundario_pago,
-        null
+        null,
       );
     }
     if (cuenta_contable_forma_cobro_alquiler_3) {
@@ -1648,14 +1768,18 @@ export const postAlquiler = async (req, res) => {
         nro_recibo,
         fecha_recibo_alquiler,
         NroAsientoSecundario_pago,
-        null
+        null,
       );
     }
-    if (cuenta_contable_forma_cobro_alquiler_1 || cuenta_contable_forma_cobro_alquiler_2 || cuenta_contable_forma_cobro_alquiler_3) {
+    if (
+      cuenta_contable_forma_cobro_alquiler_1 ||
+      cuenta_contable_forma_cobro_alquiler_2 ||
+      cuenta_contable_forma_cobro_alquiler_3
+    ) {
       await asientoContable(
         "c_movimientos",
         NroAsiento_pago,
-        110310,//"cuenta_nueva",
+        110310, //"cuenta_nueva",
         "H",
         importe_total_pago,
         concepto_pago,
@@ -1663,11 +1787,9 @@ export const postAlquiler = async (req, res) => {
         nro_recibo,
         fecha_recibo_alquiler,
         NroAsientoSecundario_pago,
-        null
+        null,
       );
     }
-
-
 
     //asientos secundarios
     if (cuenta_secundaria_forma_cobro_alquiler_1) {
@@ -1680,7 +1802,7 @@ export const postAlquiler = async (req, res) => {
         concepto_pago,
         transaction_pa7_giama_renting,
         nro_recibo,
-        fecha_recibo_alquiler
+        fecha_recibo_alquiler,
       );
     }
     if (cuenta_secundaria_forma_cobro_alquiler_2) {
@@ -1693,7 +1815,7 @@ export const postAlquiler = async (req, res) => {
         concepto_pago,
         transaction_pa7_giama_renting,
         nro_recibo,
-        fecha_recibo_alquiler
+        fecha_recibo_alquiler,
       );
     }
     if (cuenta_secundaria_forma_cobro_alquiler_3) {
@@ -1706,10 +1828,14 @@ export const postAlquiler = async (req, res) => {
         concepto_pago,
         transaction_pa7_giama_renting,
         nro_recibo,
-        fecha_recibo_alquiler
+        fecha_recibo_alquiler,
       );
     }
-    if (cuenta_secundaria_forma_cobro_alquiler_1 || cuenta_secundaria_forma_cobro_alquiler_2 || cuenta_secundaria_forma_cobro_alquiler_3) {
+    if (
+      cuenta_secundaria_forma_cobro_alquiler_1 ||
+      cuenta_secundaria_forma_cobro_alquiler_2 ||
+      cuenta_secundaria_forma_cobro_alquiler_3
+    ) {
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_pago,
@@ -1721,7 +1847,7 @@ export const postAlquiler = async (req, res) => {
         nro_recibo,
         fecha_recibo_alquiler,
         null,
-        null
+        null,
       );
     }
   } catch (error) {
@@ -1814,6 +1940,7 @@ export const postContratoAlquiler = async (req, res) => {
   let idContrato;
   let CUIT;
   let no_es_chofer;
+  let esEmpresa = false;
   let id_factura;
   let cuenta_contable_forma_cobro_contrato;
   let cuenta_secundaria_forma_cobro_contrato;
@@ -1836,28 +1963,40 @@ export const postContratoAlquiler = async (req, res) => {
   let fecha_desde_contrato_parseada = formatearFechaISO(fecha_desde_contrato);
   let fecha_hasta_contrato_parseada = formatearFechaISO(fecha_hasta_contrato);
 
-  let importe_total_1_formateado = importe_total_1 ? parseFloat(importe_total_1) : 0
-  let importe_total_2_formateado = importe_total_2 ? parseFloat(importe_total_2) : 0
-  let importe_total_3_formateado = importe_total_3 ? parseFloat(importe_total_3) : 0
+  let importe_total_1_formateado = importe_total_1
+    ? parseFloat(importe_total_1)
+    : 0;
+  let importe_total_2_formateado = importe_total_2
+    ? parseFloat(importe_total_2)
+    : 0;
+  let importe_total_3_formateado = importe_total_3
+    ? parseFloat(importe_total_3)
+    : 0;
 
+  const importe_total_pago_alquiler =
+    importe_total_1_formateado +
+    importe_total_2_formateado +
+    importe_total_3_formateado;
 
-  const importe_total_pago_alquiler = importe_total_1_formateado + importe_total_2_formateado + importe_total_3_formateado
+  let deposito_formateado = deposito ? parseFloat(deposito) : 0;
+  let deposito_2_formateado = deposito_2 ? parseFloat(deposito_2) : 0;
+  let deposito_3_formateado = deposito_3 ? parseFloat(deposito_3) : 0;
 
-
-  let deposito_formateado = deposito ? parseFloat(deposito) : 0
-  let deposito_2_formateado = deposito_2 ? parseFloat(deposito_2) : 0
-  let deposito_3_formateado = deposito_3 ? parseFloat(deposito_3) : 0
-
-  const deposito_total_pago = deposito_formateado + deposito_2_formateado + deposito_3_formateado;
-  const importe_neto_alquiler_deuda = (parseFloat(debe_alquiler) / 1.21).toFixed(2)
-  const importe_iva_alquiler_deuda = (debe_alquiler - importe_neto_alquiler_deuda).toFixed(2)
+  const deposito_total_pago =
+    deposito_formateado + deposito_2_formateado + deposito_3_formateado;
+  const importe_neto_alquiler_deuda = (
+    parseFloat(debe_alquiler) / 1.21
+  ).toFixed(2);
+  const importe_iva_alquiler_deuda = (
+    debe_alquiler - importe_neto_alquiler_deuda
+  ).toFixed(2);
 
   //verificar campos obligatorios
   const camposObligatorios = ["fecha_desde_contrato", "fecha_hasta_contrato"];
   const campoFaltante = verificarCamposObligatorios(
     req.body,
     camposObligatorios,
-    "cliente"
+    "cliente",
   );
   let dominio;
   if (campoFaltante) {
@@ -1869,12 +2008,17 @@ export const postContratoAlquiler = async (req, res) => {
 
   //si adeuda deposito/alquiler debe aclarar e importe
   if (ingresa_alquiler && !debe_alquiler) {
-    return res.send({ status: false, message: "Debe aclarar el importe que se adeuda de alquiler" })
+    return res.send({
+      status: false,
+      message: "Debe aclarar el importe que se adeuda de alquiler",
+    });
   }
 
   if (ingresa_deposito && !debe_deposito) {
-
-    return res.send({ status: false, message: "Debe aclarar el importe que se adeuda de depósito" })
+    return res.send({
+      status: false,
+      message: "Debe aclarar el importe que se adeuda de depósito",
+    });
   }
   //buscar el estado del cliente
   try {
@@ -1888,20 +2032,17 @@ export const postContratoAlquiler = async (req, res) => {
   //buscar CUIT del cliente
   try {
     const result = await giama_renting.query(
-      "SELECT nro_documento, no_es_chofer FROM clientes WHERE id = ?",
+      "SELECT nro_documento, no_es_chofer, razon_social FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
-      }
+      },
     );
-    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"]
-    if (result[0]["no_es_chofer"]) no_es_chofer = result[0]["no_es_chofer"]
+    if (result[0]["nro_documento"]) CUIT = result[0]["nro_documento"];
+    if (result[0]["no_es_chofer"]) no_es_chofer = result[0]["no_es_chofer"];
+    esEmpresa = !!result[0]["razon_social"];
   } catch (error) {
-    const { body } = handleError(
-      error,
-      "documento del cliente",
-      acciones.get
-    );
+    const { body } = handleError(error, "documento del cliente", acciones.get);
     return res.send(body);
   }
   //buscar el estado del vehículo
@@ -1931,19 +2072,23 @@ export const postContratoAlquiler = async (req, res) => {
             fecha_hasta_contrato_parseada,
             fecha_desde_contrato_parseada,
           ],
-        }
+        },
       );
       if (result.length > 0) {
         return res.send({
           status: false,
-          message: "El cliente ya tiene un contrato en las fechas seleccionadas",
+          message:
+            "El cliente ya tiene un contrato en las fechas seleccionadas",
         });
       }
     } catch (error) {
-      const { body } = handleError(error, "Contratos del cliente", acciones.get);
+      const { body } = handleError(
+        error,
+        "Contratos del cliente",
+        acciones.get,
+      );
       return res.send(body);
     }
-
   }
   //buscar si el vehiculo está vendido // dominio del vehiculo
   try {
@@ -1952,7 +2097,7 @@ export const postContratoAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
-      }
+      },
     );
     if (result[0]["fecha_venta"]) {
       return res.send({
@@ -1969,7 +2114,7 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "Fecha de venta del vehiculo",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
@@ -1980,7 +2125,7 @@ export const postContratoAlquiler = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_vehiculo],
-      }
+      },
     );
     alquileresVigentes = result;
     const parseDate = (str) => new Date(str);
@@ -1995,7 +2140,7 @@ export const postContratoAlquiler = async (req, res) => {
         const hastaExistente = parseDate(fecha_hasta);
 
         return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
-      }
+      },
     );
 
     if (hayConflicto) {
@@ -2010,7 +2155,7 @@ export const postContratoAlquiler = async (req, res) => {
     const { body } = handleError(
       error,
       "alquileres del vehiculo",
-      acciones.get
+      acciones.get,
     );
     return res.send(body);
   }
@@ -2029,32 +2174,45 @@ export const postContratoAlquiler = async (req, res) => {
   //OBTENGO CUENTAS CONTABLES DE FORMAS COBRO
   try {
     if (id_forma_cobro_contrato) {
-      cuenta_contable_forma_cobro_contrato = await getCuentaContableFormaCobro(id_forma_cobro_contrato)
-      cuenta_secundaria_forma_cobro_contrato = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato)
+      cuenta_contable_forma_cobro_contrato = await getCuentaContableFormaCobro(
+        id_forma_cobro_contrato,
+      );
+      cuenta_secundaria_forma_cobro_contrato =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato);
     }
     if (id_forma_cobro_contrato_2) {
-      cuenta_contable_forma_cobro_contrato_2 = await getCuentaContableFormaCobro(id_forma_cobro_contrato_2)
-      cuenta_secundaria_forma_cobro_contrato_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_2)
+      cuenta_contable_forma_cobro_contrato_2 =
+        await getCuentaContableFormaCobro(id_forma_cobro_contrato_2);
+      cuenta_secundaria_forma_cobro_contrato_2 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_2);
     }
 
     if (id_forma_cobro_contrato_3) {
-      cuenta_contable_forma_cobro_contrato_3 = await getCuentaContableFormaCobro(id_forma_cobro_contrato_3)
-      cuenta_secundaria_forma_cobro_contrato_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_3)
+      cuenta_contable_forma_cobro_contrato_3 =
+        await getCuentaContableFormaCobro(id_forma_cobro_contrato_3);
+      cuenta_secundaria_forma_cobro_contrato_3 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_contrato_3);
     }
 
     if (id_forma_cobro_alquiler_1) {
-      cuenta_contable_forma_cobro_alquiler_1 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1)
-      cuenta_secundaria_forma_cobro_alquiler_1 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1)
+      cuenta_contable_forma_cobro_alquiler_1 =
+        await getCuentaContableFormaCobro(id_forma_cobro_alquiler_1);
+      cuenta_secundaria_forma_cobro_alquiler_1 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_1);
     }
 
     if (id_forma_cobro_alquiler_2) {
-      cuenta_contable_forma_cobro_alquiler_2 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2)
-      cuenta_secundaria_forma_cobro_alquiler_2 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2)
+      cuenta_contable_forma_cobro_alquiler_2 =
+        await getCuentaContableFormaCobro(id_forma_cobro_alquiler_2);
+      cuenta_secundaria_forma_cobro_alquiler_2 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_2);
     }
 
     if (id_forma_cobro_alquiler_3) {
-      cuenta_contable_forma_cobro_alquiler_3 = await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3)
-      cuenta_secundaria_forma_cobro_alquiler_3 = await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3)
+      cuenta_contable_forma_cobro_alquiler_3 =
+        await getCuentaContableFormaCobro(id_forma_cobro_alquiler_3);
+      cuenta_secundaria_forma_cobro_alquiler_3 =
+        await getCuentaSecundariaFormaCobro(id_forma_cobro_alquiler_3);
     }
   } catch (error) {
     console.log(error);
@@ -2069,12 +2227,25 @@ export const postContratoAlquiler = async (req, res) => {
     cuentaALQU_2 = await getParametro("ALQ2");
     cuentaDEPO = await getParametro("DEPO");
     cuentaDEP2 = await getParametro("DEP2");
+    if (esEmpresa) {
+      cuentaALQU = mapCuentaPorEmpresaYConcepto({
+        esEmpresa,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU,
+      });
+      cuentaALQU_2 = mapCuentaPorEmpresaYConcepto({
+        esEmpresa,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU_2,
+      });
+    }
   } catch (error) {
     console.log(error);
     const { body } = handleError(error, "parámetro");
     return res.send(body);
   }
-  if (ingresa_alquiler == 1 && debe_alquiler > 0) { //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
+  if (ingresa_alquiler == 1 && debe_alquiler > 0) {
+    //buscar si el vehiculo está alquilado (en la tabla alquileres por id) en las fechas seleccionadas
     try {
       const result = await giama_renting.query(
         `SELECT fecha_desde, 
@@ -2084,7 +2255,7 @@ export const postContratoAlquiler = async (req, res) => {
         {
           type: QueryTypes.SELECT,
           replacements: [id_vehiculo],
-        }
+        },
       );
       alquileresVigentes = result;
       const parseDate = (str) => new Date(str);
@@ -2098,7 +2269,7 @@ export const postContratoAlquiler = async (req, res) => {
           const hastaExistente = parseDate(fecha_hasta);
 
           return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
-        }
+        },
       );
 
       if (hayConflicto) {
@@ -2113,13 +2284,14 @@ export const postContratoAlquiler = async (req, res) => {
       const { body } = handleError(
         error,
         "Alquileres del vehiculo",
-        acciones.get
+        acciones.get,
       );
       return res.send(body);
     }
   }
 
-  if (ingresa_alquiler == 1 && debe_alquiler > 0) { //creo numeros de asiento alquiler
+  if (ingresa_alquiler == 1 && debe_alquiler > 0) {
+    //creo numeros de asiento alquiler
     try {
       NroAsiento_alquiler_deuda = await getNumeroAsiento();
       NroAsientoSecundario_alquiler_deuda = await getNumeroAsiento();
@@ -2132,7 +2304,8 @@ export const postContratoAlquiler = async (req, res) => {
     }
   }
 
-  if (ingresa_deposito == 1) { //creo numeros de asiento deposito
+  if (ingresa_deposito == 1) {
+    //creo numeros de asiento deposito
     try {
       NroAsiento_deposito_deuda = await getNumeroAsiento();
       NroAsientoSecundario_deposito_deuda = await getNumeroAsiento();
@@ -2147,7 +2320,6 @@ export const postContratoAlquiler = async (req, res) => {
   const transaction_giama_renting = await giama_renting.transaction();
   const transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   try {
-
     const [result] = await giama_renting.query(
       `INSERT INTO contratos_alquiler 
         (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia,
@@ -2161,10 +2333,10 @@ export const postContratoAlquiler = async (req, res) => {
           fecha_hasta_contrato_parseada,
           debe_deposito ? debe_deposito : null,
           NroAsiento_deposito_deuda ? NroAsiento_deposito_deuda : null,
-          getTodayDate()
+          getTodayDate(),
         ],
         transaction: transaction_giama_renting,
-      }
+      },
     );
     idContrato = result;
     //cambio el estado del vehiculo a "listo para alquilar" (2)
@@ -2174,22 +2346,20 @@ export const postContratoAlquiler = async (req, res) => {
         type: QueryTypes.UPDATE,
         replacements: [id_vehiculo],
         transaction: transaction_giama_renting,
-      }
+      },
     );
     let concepto_deuda_alquiler = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
-      fecha_desde_alquiler
+      fecha_desde_alquiler,
     )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)} CUIT/CUIL: ${CUIT}- 
     ASIENTO: ${NroAsiento_alquiler_deuda}`;
 
     let concepto_deuda_alquiler_FACTURA = `Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
-      fecha_desde_alquiler
+      fecha_desde_alquiler,
     )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)} CUIT/CUIL: ${CUIT} DOMINIO: ${dominio} 
     Observación: ${observacion}`;
 
-
-
     let concepto_pago_alquiler = `(PAGO) Alquiler - ${apellido_cliente} - desde: ${formatearFechaISOText(
-      fecha_desde_alquiler
+      fecha_desde_alquiler,
     )} hasta: ${formatearFechaISOText(fecha_hasta_alquiler)} CUIT/CUIL: ${CUIT}- 
     ASIENTO: ${NroAsiento_alquiler_pago}`;
     let concepto_deuda_deposito = `Deposito en garantía - Dominio: ${dominio} CUIT/CUIL: ${CUIT} - 
@@ -2209,9 +2379,8 @@ export const postContratoAlquiler = async (req, res) => {
         concepto_deuda_alquiler_FACTURA,
         transaction_giama_renting,
         transaction_pa7_giama_renting,
-        fecha_factura_alquiler
+        fecha_factura_alquiler,
       );
-
     }
 
     //inserto recibo alquiler
@@ -2232,9 +2401,8 @@ export const postContratoAlquiler = async (req, res) => {
         transaction_giama_renting,
         importe_total_2_formateado > 0 ? importe_total_2_formateado : null,
         importe_total_3_formateado > 0 ? importe_total_3_formateado : null,
-        importe_total_1_formateado > 0 ? importe_total_1_formateado : null
+        importe_total_1_formateado > 0 ? importe_total_1_formateado : null,
       );
-
     }
 
     //inserto recibo del depósito del contrato
@@ -2254,7 +2422,7 @@ export const postContratoAlquiler = async (req, res) => {
         transaction_giama_renting,
         deposito_2_formateado > 0 ? deposito_2_formateado : null,
         deposito_3_formateado > 0 ? deposito_3_formateado : null,
-        deposito_formateado > 0 ? deposito_formateado : null
+        deposito_formateado > 0 ? deposito_formateado : null,
       );
     }
     //inserto alquiler
@@ -2272,7 +2440,7 @@ export const postContratoAlquiler = async (req, res) => {
         id_contrato: idContrato,
         transaction: transaction_giama_renting,
         id_factura_pa6: id_factura ? id_factura : null,
-        fecha_alquiler: fecha_factura_alquiler
+        fecha_alquiler: fecha_factura_alquiler,
       });
     }
 
@@ -2280,63 +2448,98 @@ export const postContratoAlquiler = async (req, res) => {
 
     if (importe_total_pago_alquiler > 0) {
       if (id_forma_cobro_alquiler_1) {
-        await insertPago(id_cliente, fecha_recibo_alquiler, usuario,
-          id_forma_cobro_alquiler_1, importe_total_1_formateado,
-          nro_recibo_alquiler, observacion, NroAsiento_alquiler_pago,
-          transaction_giama_renting
-        )
+        await insertPago(
+          id_cliente,
+          fecha_recibo_alquiler,
+          usuario,
+          id_forma_cobro_alquiler_1,
+          importe_total_1_formateado,
+          nro_recibo_alquiler,
+          observacion,
+          NroAsiento_alquiler_pago,
+          transaction_giama_renting,
+        );
       }
 
       if (id_forma_cobro_alquiler_2) {
-        await insertPago(id_cliente, fecha_recibo_alquiler, usuario,
-          id_forma_cobro_alquiler_2, importe_total_2_formateado,
-          nro_recibo_alquiler, observacion, NroAsiento_alquiler_pago,
-          transaction_giama_renting
-        )
+        await insertPago(
+          id_cliente,
+          fecha_recibo_alquiler,
+          usuario,
+          id_forma_cobro_alquiler_2,
+          importe_total_2_formateado,
+          nro_recibo_alquiler,
+          observacion,
+          NroAsiento_alquiler_pago,
+          transaction_giama_renting,
+        );
       }
 
       if (id_forma_cobro_alquiler_3) {
-        await insertPago(id_cliente, fecha_recibo_alquiler, usuario,
-          id_forma_cobro_alquiler_3, importe_total_3_formateado,
-          nro_recibo_alquiler, observacion, NroAsiento_alquiler_pago,
-          transaction_giama_renting
-        )
+        await insertPago(
+          id_cliente,
+          fecha_recibo_alquiler,
+          usuario,
+          id_forma_cobro_alquiler_3,
+          importe_total_3_formateado,
+          nro_recibo_alquiler,
+          observacion,
+          NroAsiento_alquiler_pago,
+          transaction_giama_renting,
+        );
       }
     }
 
     //se insertan los pagos del deposito
     if (deposito_total_pago > 0) {
       if (id_forma_cobro_contrato) {
-        await insertPago(id_cliente, fecha_recibo_deposito, usuario,
-          id_forma_cobro_contrato, deposito_formateado,
-          nro_recibo_deposito, observacion, NroAsiento_deposito_pago,
-          transaction_giama_renting
-        )
+        await insertPago(
+          id_cliente,
+          fecha_recibo_deposito,
+          usuario,
+          id_forma_cobro_contrato,
+          deposito_formateado,
+          nro_recibo_deposito,
+          observacion,
+          NroAsiento_deposito_pago,
+          transaction_giama_renting,
+        );
       }
       if (id_forma_cobro_contrato_2) {
-        await insertPago(id_cliente, fecha_recibo_deposito, usuario,
-          id_forma_cobro_contrato_2, deposito_2_formateado,
-          nro_recibo_deposito, observacion, NroAsiento_deposito_pago,
-          transaction_giama_renting
-        )
+        await insertPago(
+          id_cliente,
+          fecha_recibo_deposito,
+          usuario,
+          id_forma_cobro_contrato_2,
+          deposito_2_formateado,
+          nro_recibo_deposito,
+          observacion,
+          NroAsiento_deposito_pago,
+          transaction_giama_renting,
+        );
       }
       if (id_forma_cobro_contrato_3) {
-        await insertPago(id_cliente, fecha_recibo_deposito, usuario,
-          id_forma_cobro_contrato_3, deposito_3_formateado,
-          nro_recibo_deposito, observacion, NroAsiento_deposito_pago,
-          transaction_giama_renting
-        )
+        await insertPago(
+          id_cliente,
+          fecha_recibo_deposito,
+          usuario,
+          id_forma_cobro_contrato_3,
+          deposito_3_formateado,
+          nro_recibo_deposito,
+          observacion,
+          NroAsiento_deposito_pago,
+          transaction_giama_renting,
+        );
       }
     }
 
     //movimientos contables
     if (ingresa_alquiler == 1 && debe_alquiler > 0) {
-
       //por la deuda
       await asientoContable(
         "c_movimientos",
         NroAsiento_alquiler_deuda,
-        110310,//"cuenta_nueva", 
+        110310, //"cuenta_nueva",
         "D",
         debe_alquiler,
         concepto_deuda_alquiler,
@@ -2344,8 +2547,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_factura_alquiler,
         NroAsientoSecundario_alquiler_deuda,
-        null
-      )
+        null,
+      );
       await asientoContable(
         "c_movimientos",
         NroAsiento_alquiler_deuda,
@@ -2357,8 +2560,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_factura_alquiler,
         NroAsientoSecundario_alquiler_deuda,
-        null
-      )
+        null,
+      );
       await asientoContable(
         "c_movimientos",
         NroAsiento_alquiler_deuda,
@@ -2370,13 +2573,13 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_factura_alquiler,
         NroAsientoSecundario_alquiler_deuda,
-        null
-      )
-      //mov secundarios 
+        null,
+      );
+      //mov secundarios
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_alquiler_deuda,
-        110310,//"cuenta_nueva_secundaria", 
+        110310, //"cuenta_nueva_secundaria",
         "D",
         debe_alquiler,
         concepto_deuda_alquiler,
@@ -2384,8 +2587,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_factura_alquiler,
         null,
-        null
-      )
+        null,
+      );
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_alquiler_deuda,
@@ -2397,8 +2600,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_factura_alquiler,
         null,
-        null
-      )
+        null,
+      );
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_alquiler_deuda,
@@ -2410,9 +2613,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_factura_alquiler,
         null,
-        null
-      )
-
+        null,
+      );
 
       //por el pago
       if (importe_total_pago_alquiler > 0) {
@@ -2428,7 +2630,7 @@ export const postContratoAlquiler = async (req, res) => {
             nro_recibo_alquiler,
             fecha_recibo_alquiler,
             NroAsientoSecundario_alquiler_pago,
-            null
+            null,
           );
         }
         if (cuenta_contable_forma_cobro_alquiler_2) {
@@ -2443,7 +2645,7 @@ export const postContratoAlquiler = async (req, res) => {
             nro_recibo_alquiler,
             fecha_recibo_alquiler,
             NroAsientoSecundario_alquiler_pago,
-            null
+            null,
           );
         }
         if (cuenta_contable_forma_cobro_alquiler_3) {
@@ -2458,24 +2660,25 @@ export const postContratoAlquiler = async (req, res) => {
             nro_recibo_alquiler,
             fecha_recibo_alquiler,
             NroAsientoSecundario_alquiler_pago,
-            null
+            null,
           );
         }
-        if (cuenta_contable_forma_cobro_alquiler_1 ||
+        if (
+          cuenta_contable_forma_cobro_alquiler_1 ||
           cuenta_contable_forma_cobro_alquiler_2 ||
           cuenta_contable_forma_cobro_alquiler_3
         ) {
           await asientoContable(
             "c_movimientos",
             NroAsiento_alquiler_pago,
-            110310,//"cuenta_nueva",
+            110310, //"cuenta_nueva",
             "H",
             importe_total_pago_alquiler,
             concepto_pago_alquiler,
             transaction_pa7_giama_renting,
             nro_recibo_alquiler,
             fecha_recibo_alquiler,
-            NroAsientoSecundario_alquiler_pago
+            NroAsientoSecundario_alquiler_pago,
           );
         }
 
@@ -2490,7 +2693,7 @@ export const postContratoAlquiler = async (req, res) => {
             concepto_pago_alquiler,
             transaction_pa7_giama_renting,
             nro_recibo_alquiler,
-            fecha_recibo_alquiler
+            fecha_recibo_alquiler,
           );
         }
         if (cuenta_secundaria_forma_cobro_alquiler_2) {
@@ -2503,7 +2706,7 @@ export const postContratoAlquiler = async (req, res) => {
             concepto_pago_alquiler,
             transaction_pa7_giama_renting,
             nro_recibo_alquiler,
-            fecha_recibo_alquiler
+            fecha_recibo_alquiler,
           );
         }
         if (cuenta_secundaria_forma_cobro_alquiler_3) {
@@ -2516,27 +2719,27 @@ export const postContratoAlquiler = async (req, res) => {
             concepto_pago_alquiler,
             transaction_pa7_giama_renting,
             nro_recibo_alquiler,
-            fecha_recibo_alquiler
+            fecha_recibo_alquiler,
           );
         }
-        if (cuenta_secundaria_forma_cobro_alquiler_1 ||
+        if (
+          cuenta_secundaria_forma_cobro_alquiler_1 ||
           cuenta_secundaria_forma_cobro_alquiler_2 ||
-          cuenta_secundaria_forma_cobro_alquiler_3) {
+          cuenta_secundaria_forma_cobro_alquiler_3
+        ) {
           await asientoContable(
             "c2_movimientos",
             NroAsientoSecundario_alquiler_pago,
-            110310,//"cuenta_nueva_secundaria",
+            110310, //"cuenta_nueva_secundaria",
             "H",
             importe_total_pago_alquiler,
             concepto_pago_alquiler,
             transaction_pa7_giama_renting,
             nro_recibo_alquiler,
-            fecha_recibo_alquiler
+            fecha_recibo_alquiler,
           );
         }
-
       }
-
     }
     if (ingresa_deposito == 1) {
       //por la deuda
@@ -2544,7 +2747,7 @@ export const postContratoAlquiler = async (req, res) => {
       await asientoContable(
         "c_movimientos",
         NroAsiento_deposito_deuda,
-        110310,//"cuenta_nueva", 
+        110310, //"cuenta_nueva",
         "D",
         debe_deposito,
         concepto_deuda_deposito,
@@ -2552,8 +2755,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_deuda_deposito,
         NroAsientoSecundario_deposito_deuda,
-        null
-      )
+        null,
+      );
       await asientoContable(
         "c_movimientos",
         NroAsiento_deposito_deuda,
@@ -2565,13 +2768,13 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_deuda_deposito,
         NroAsientoSecundario_deposito_deuda,
-        null
-      )
-      //mov secundarios 
+        null,
+      );
+      //mov secundarios
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_deposito_deuda,
-        110310,//"cuenta_nueva_secundaria", 
+        110310, //"cuenta_nueva_secundaria",
         "D",
         debe_deposito,
         concepto_deuda_deposito,
@@ -2579,8 +2782,8 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_deuda_deposito,
         null,
-        null
-      )
+        null,
+      );
       await asientoContable(
         "c2_movimientos",
         NroAsientoSecundario_deposito_deuda,
@@ -2592,13 +2795,11 @@ export const postContratoAlquiler = async (req, res) => {
         null,
         fecha_deuda_deposito,
         null,
-        null
-      )
-
+        null,
+      );
 
       //por el pago
       if (deposito_total_pago > 0) {
-
         if (cuenta_contable_forma_cobro_contrato) {
           await asientoContable(
             "c_movimientos",
@@ -2610,7 +2811,7 @@ export const postContratoAlquiler = async (req, res) => {
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
             fecha_recibo_deposito,
-            NroAsientoSecundario_deposito_pago
+            NroAsientoSecundario_deposito_pago,
           );
         }
         if (cuenta_contable_forma_cobro_contrato_2) {
@@ -2624,7 +2825,7 @@ export const postContratoAlquiler = async (req, res) => {
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
             fecha_recibo_deposito,
-            NroAsientoSecundario_deposito_pago
+            NroAsientoSecundario_deposito_pago,
           );
         }
         if (cuenta_contable_forma_cobro_contrato_3) {
@@ -2638,20 +2839,20 @@ export const postContratoAlquiler = async (req, res) => {
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
             fecha_recibo_deposito,
-            NroAsientoSecundario_deposito_pago
+            NroAsientoSecundario_deposito_pago,
           );
         }
         await asientoContable(
           "c_movimientos",
           NroAsiento_deposito_pago,
-          110310,//"cuenta_nueva",
+          110310, //"cuenta_nueva",
           "H",
           deposito_total_pago,
           concepto_pago_deposito,
           transaction_pa7_giama_renting,
           nro_recibo_deposito,
           fecha_recibo_deposito,
-          NroAsientoSecundario_deposito_pago
+          NroAsientoSecundario_deposito_pago,
         );
         //movimientos contables secundarios
         if (cuenta_secundaria_forma_cobro_contrato) {
@@ -2664,7 +2865,7 @@ export const postContratoAlquiler = async (req, res) => {
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
-            fecha_recibo_deposito
+            fecha_recibo_deposito,
           );
         }
         if (cuenta_secundaria_forma_cobro_contrato_2) {
@@ -2677,7 +2878,7 @@ export const postContratoAlquiler = async (req, res) => {
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
-            fecha_recibo_deposito
+            fecha_recibo_deposito,
           );
         }
         if (cuenta_secundaria_forma_cobro_contrato_3) {
@@ -2690,23 +2891,26 @@ export const postContratoAlquiler = async (req, res) => {
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
-            fecha_recibo_deposito
+            fecha_recibo_deposito,
           );
         }
-        if (cuenta_secundaria_forma_cobro_contrato || cuenta_secundaria_forma_cobro_contrato_2 || cuenta_secundaria_forma_cobro_contrato_3) {
+        if (
+          cuenta_secundaria_forma_cobro_contrato ||
+          cuenta_secundaria_forma_cobro_contrato_2 ||
+          cuenta_secundaria_forma_cobro_contrato_3
+        ) {
           await asientoContable(
             "c2_movimientos",
             NroAsientoSecundario_deposito_pago,
-            110310,//"cuenta_nueva_secundaria",
+            110310, //"cuenta_nueva_secundaria",
             "H",
             deposito_total_pago,
             concepto_pago_deposito,
             transaction_pa7_giama_renting,
             nro_recibo_deposito,
-            fecha_recibo_deposito
+            fecha_recibo_deposito,
           );
         }
-
       }
     }
 
@@ -2718,10 +2922,10 @@ export const postContratoAlquiler = async (req, res) => {
       status: true,
       message: "Contrato y alquiler ingresados con éxito",
     });
-
   } catch (error) {
     if (transaction_giama_renting) await transaction_giama_renting.rollback();
-    if (transaction_pa7_giama_renting) await transaction_pa7_giama_renting.rollback();
+    if (transaction_pa7_giama_renting)
+      await transaction_pa7_giama_renting.rollback();
     const { body } = handleError(error, "Contrato alquiler");
     return res.send(body);
   }
@@ -2738,11 +2942,22 @@ export const postContratoFlota = async (req, res) => {
     debe_alquiler,
     importe_total_1,
     usuario,
-    apellido_cliente
+    apellido_cliente,
   } = req.body;
 
-  if (!id_cliente || !vehiculos_flota?.length || !fecha_desde_contrato || !fecha_hasta_contrato || !fecha_desde_alquiler || !fecha_hasta_alquiler) {
-    return res.send({ status: false, message: "Faltan datos obligatorios (fechas, cliente o vehículos) para registrar la flota." });
+  if (
+    !id_cliente ||
+    !vehiculos_flota?.length ||
+    !fecha_desde_contrato ||
+    !fecha_hasta_contrato ||
+    !fecha_desde_alquiler ||
+    !fecha_hasta_alquiler
+  ) {
+    return res.send({
+      status: false,
+      message:
+        "Faltan datos obligatorios (fechas, cliente o vehículos) para registrar la flota.",
+    });
   }
 
   let fecha_desde_contrato_parseada = formatearFechaISO(fecha_desde_contrato);
@@ -2771,12 +2986,15 @@ export const postContratoFlota = async (req, res) => {
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
-      }
+      },
     );
     if (result[0] && result[0]["nro_documento"]) {
       CUIT = result[0]["nro_documento"];
     } else {
-      return res.send({ status: false, message: "La empresa no tiene un CUIT válido cargado." });
+      return res.send({
+        status: false,
+        message: "La empresa no tiene un CUIT válido cargado.",
+      });
     }
   } catch (error) {
     const { body } = handleError(error, "documento del cliente", acciones.get);
@@ -2784,9 +3002,16 @@ export const postContratoFlota = async (req, res) => {
   }
 
   // Parseamos el importe total enviado por el frontend (fuera del bucle)
-  const importe_total_formateado = debe_alquiler ? parseFloat(debe_alquiler) : (importe_total_1 ? parseFloat(importe_total_1) : 0);
+  const importe_total_formateado = debe_alquiler
+    ? parseFloat(debe_alquiler)
+    : importe_total_1
+      ? parseFloat(importe_total_1)
+      : 0;
   if (importe_total_formateado <= 0) {
-    return res.send({ status: false, message: "El importe total debe ser mayor a 0 para facturar la flota." });
+    return res.send({
+      status: false,
+      message: "El importe total debe ser mayor a 0 para facturar la flota.",
+    });
   }
 
   const divisor = vehiculos_flota.length;
@@ -2804,6 +3029,37 @@ export const postContratoFlota = async (req, res) => {
     let patentesFlota = [];
     let facturaItems = [];
 
+    // Detección de empresa y mapeo contable
+    const resultClienteFlota = await giama_renting.query(
+      "SELECT razon_social FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+        transaction: transaction_giama_renting,
+      },
+    );
+    const esEmpresaFlota = !!(
+      resultClienteFlota.length && resultClienteFlota[0]["razon_social"]
+    );
+
+    let cuentaALQU = await getParametro("ALQU");
+    let cuentaALQU_2 = await getParametro("ALQ2");
+    let cuentaIV21 = await getParametro("IV21");
+    let cuentaIV21_2 = await getParametro("IV22");
+
+    if (esEmpresaFlota) {
+      cuentaALQU = mapCuentaPorEmpresaYConcepto({
+        esEmpresa: esEmpresaFlota,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU,
+      });
+      cuentaALQU_2 = mapCuentaPorEmpresaYConcepto({
+        esEmpresa: esEmpresaFlota,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU_2,
+      });
+    }
+
     // Obtener números de asiento para los alquileres (deuda) y facturación
     let NroAsiento_deuda = await getNumeroAsiento();
     let NroAsientoSecundario_deuda = await getNumeroAsientoSecundario();
@@ -2812,21 +3068,25 @@ export const postContratoFlota = async (req, res) => {
     for (let i = 0; i < divisor; i++) {
       const id_vehiculo = vehiculos_flota[i];
       try {
-
         const resultVehiculo = await giama_renting.query(
           "SELECT v.fecha_venta, v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre FROM vehiculos v LEFT JOIN modelos m ON v.modelo = m.id WHERE v.id = ?",
           {
             type: QueryTypes.SELECT,
             replacements: [id_vehiculo],
-            transaction: transaction_giama_renting
-          }
+            transaction: transaction_giama_renting,
+          },
         );
 
         if (resultVehiculo[0]["fecha_venta"]) {
-          throw new Error(`El vehículo ID ${id_vehiculo} se encuentra vendido.`);
+          throw new Error(
+            `El vehículo ID ${id_vehiculo} se encuentra vendido.`,
+          );
         }
 
-        let dominio = resultVehiculo[0]["dominio"] || resultVehiculo[0]["dominio_provisorio"] || "SIN DOMINIO";
+        let dominio =
+          resultVehiculo[0]["dominio"] ||
+          resultVehiculo[0]["dominio_provisorio"] ||
+          "SIN DOMINIO";
         let modeloStr = resultVehiculo[0]["modelo_nombre"] || "";
         patentesFlota.push(dominio);
 
@@ -2836,10 +3096,16 @@ export const postContratoFlota = async (req, res) => {
           itemNeto = restanteNeto;
           itemIva = parseFloat((itemTotal - itemNeto).toFixed(2));
         } else {
-          itemTotal = parseFloat((importe_total_formateado / divisor).toFixed(2));
-          itemNeto = parseFloat((parseFloat((importe_total_formateado / 1.21).toFixed(2)) / divisor).toFixed(2));
+          itemTotal = parseFloat(
+            (importe_total_formateado / divisor).toFixed(2),
+          );
+          itemNeto = parseFloat(
+            (
+              parseFloat((importe_total_formateado / 1.21).toFixed(2)) / divisor
+            ).toFixed(2),
+          );
           itemIva = parseFloat((itemTotal - itemNeto).toFixed(2));
-          
+
           restanteTotal = parseFloat((restanteTotal - itemTotal).toFixed(2));
           restanteNeto = parseFloat((restanteNeto - itemNeto).toFixed(2));
         }
@@ -2849,31 +3115,34 @@ export const postContratoFlota = async (req, res) => {
           cantidad: 1,
           precioUnitario: itemNeto,
           porcentaje: 21,
-          subtotal: itemTotal
+          subtotal: itemTotal,
         });
-
 
         const resultContratos = await giama_renting.query(
           "SELECT fecha_desde, fecha_hasta FROM contratos_alquiler WHERE id_vehiculo = ?",
           {
             type: QueryTypes.SELECT,
             replacements: [id_vehiculo],
-            transaction: transaction_giama_renting
-          }
+            transaction: transaction_giama_renting,
+          },
         );
 
         const parseDate = (str) => new Date(str);
         const nuevaDesde = parseDate(fecha_desde_contrato);
         const nuevaHasta = parseDate(fecha_hasta_contrato);
 
-        const hayConflicto = resultContratos.some(({ fecha_desde, fecha_hasta }) => {
-          const desdeExistente = parseDate(fecha_desde);
-          const hastaExistente = parseDate(fecha_hasta);
-          return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
-        });
+        const hayConflicto = resultContratos.some(
+          ({ fecha_desde, fecha_hasta }) => {
+            const desdeExistente = parseDate(fecha_desde);
+            const hastaExistente = parseDate(fecha_hasta);
+            return nuevaDesde <= hastaExistente && desdeExistente <= nuevaHasta;
+          },
+        );
 
         if (hayConflicto) {
-          throw new Error(`El vehículo ${dominio} ya tiene un contrato en las fechas seleccionadas.`);
+          throw new Error(
+            `El vehículo ${dominio} ya tiene un contrato en las fechas seleccionadas.`,
+          );
         }
 
         // --- PASO 3: INSERTAR CONTRATO Y ALQUILER ---
@@ -2888,10 +3157,10 @@ export const postContratoFlota = async (req, res) => {
               fecha_desde_contrato_parseada,
               fecha_hasta_contrato_parseada,
               0, // deposito_garantia = 0 para flotas
-              formatearFechaISO(new Date()) // fecha_contrato
+              formatearFechaISO(new Date()), // fecha_contrato
             ],
             transaction: transaction_giama_renting,
-          }
+          },
         );
 
         let idContratoNuevo = insertContrato;
@@ -2914,10 +3183,10 @@ export const postContratoFlota = async (req, res) => {
               idContratoNuevo,
               "Vehículo parte de Flota Empresarial",
               formatearFechaISO(new Date()), // Se factura el mismo día
-              NroAsiento_deuda
+              NroAsiento_deuda,
             ],
             transaction: transaction_giama_renting,
-          }
+          },
         );
 
         // --- PASO 4: BLOQUEAR EL VEHÍCULO ---
@@ -2927,9 +3196,8 @@ export const postContratoFlota = async (req, res) => {
             type: QueryTypes.UPDATE,
             replacements: [id_vehiculo],
             transaction: transaction_giama_renting,
-          }
+          },
         );
-
       } catch (error) {
         // Lanzamos el error hacia afuera para que el catch principal haga rollback de ambas bases de datos
         throw error;
@@ -2938,10 +3206,12 @@ export const postContratoFlota = async (req, res) => {
     // 3. Generar contratos individuales finalizado
 
     // --- PASO 5: FACTURACIÓN Y ASIENTOS (AFUERA DEL BUCLE) ---
- 
+
     // B) Insertar Factura en BA6 (por el total)
     let importe_neto_total = (importe_total_formateado / 1.21).toFixed(2);
-    let importe_iva_total = (importe_total_formateado - importe_neto_total).toFixed(2);
+    let importe_iva_total = (
+      importe_total_formateado - importe_neto_total
+    ).toFixed(2);
 
     const fechaDesdeSplit = fecha_desde_alquiler.split("-");
     const fechaHastaSplit = fecha_hasta_alquiler.split("-");
@@ -2960,7 +3230,7 @@ export const postContratoFlota = async (req, res) => {
       transaction_giama_renting,
       transaction_pa7_giama_renting,
       fecha_desde_alquiler, // usamos esta como fecha de factura
-      facturaItems
+      facturaItems,
     );
 
     // Asignar la factura a los alquileres que generamos recién
@@ -2969,24 +3239,90 @@ export const postContratoFlota = async (req, res) => {
       {
         type: QueryTypes.UPDATE,
         replacements: [nro_factura, NroAsiento_deuda],
-        transaction: transaction_giama_renting
-      }
+        transaction: transaction_giama_renting,
+      },
     );
 
-    // C) (Opcional) Si en el frontend también mandan forma de cobro, deberíamos generar el recibo y el asiento de pago.
-    // Por ahora, cerramos los asientos de la deuda.
-    await asientoContable({
-      id_cliente,
-      fecha: fecha_desde_alquiler,
-      nro_asiento: NroAsiento_deuda,
-      nro_asiento_secundario: NroAsientoSecundario_deuda,
-      importe_neto: importe_neto_total,
-      importe_iva: importe_iva_total,
-      importe_total: importe_total_formateado,
-      observacion: concepto_factura,
-      usuario,
-      es_pago: false
-    }, transaction_giama_renting);
+    // C) Movimientos contables por la deuda de la flota
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      110310,
+      "D",
+      importe_total_formateado,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_alquiler,
+      NroAsientoSecundario_deuda,
+      null,
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaALQU,
+      "H",
+      importe_neto_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_alquiler,
+      NroAsientoSecundario_deuda,
+      null,
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaIV21,
+      "H",
+      importe_iva_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_alquiler,
+      NroAsientoSecundario_deuda,
+      null,
+    );
+    // Movimientos secundarios
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      110310,
+      "D",
+      importe_total_formateado,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_alquiler,
+      null,
+      null,
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuentaALQU_2,
+      "H",
+      importe_neto_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_alquiler,
+      null,
+      null,
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuentaIV21_2,
+      "H",
+      importe_iva_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_alquiler,
+      null,
+      null,
+    );
 
     // Confirmar todo si llegamos hasta acá sin que nada explote
     await transaction_giama_renting.commit();
@@ -2994,7 +3330,7 @@ export const postContratoFlota = async (req, res) => {
 
     return res.send({
       status: true,
-      message: `Contratos de flota procesados exitosamente. Factura N° ${nro_factura} generada por el total de la flota.`
+      message: `Contratos de flota procesados exitosamente. Factura N° ${nro_factura} generada por el total de la flota.`,
     });
   } catch (error) {
     console.log("Error en postContratoFlota:", error);
@@ -3003,13 +3339,16 @@ export const postContratoFlota = async (req, res) => {
     if (transaction_giama_renting && !transaction_giama_renting.finished) {
       await transaction_giama_renting.rollback();
     }
-    if (transaction_pa7_giama_renting && !transaction_pa7_giama_renting.finished) {
+    if (
+      transaction_pa7_giama_renting &&
+      !transaction_pa7_giama_renting.finished
+    ) {
       await transaction_pa7_giama_renting.rollback();
     }
 
     return res.send({
       status: false,
-      message: error.message || "Error al generar contratos de flota"
+      message: error.message || "Error al generar contratos de flota",
     });
   }
 };
@@ -3024,12 +3363,23 @@ export const renovacionContratoFlota = async (req, res) => {
     usuario,
   } = req.body;
 
-  if (!id_alquiler || !fecha_desde_nuevo || !fecha_hasta_nuevo || !importe_total_nuevo) {
-    return res.send({ status: false, message: "Faltan datos para renovar la flota" });
+  if (
+    !id_alquiler ||
+    !fecha_desde_nuevo ||
+    !fecha_hasta_nuevo ||
+    !importe_total_nuevo
+  ) {
+    return res.send({
+      status: false,
+      message: "Faltan datos para renovar la flota",
+    });
   }
 
   if (fecha_desde_nuevo > fecha_hasta_nuevo) {
-    return res.send({ status: false, message: `La fecha "desde" de la renovación no puede ser posterior a su fecha "hasta"` });
+    return res.send({
+      status: false,
+      message: `La fecha "desde" de la renovación no puede ser posterior a su fecha "hasta"`,
+    });
   }
 
   try {
@@ -3039,13 +3389,21 @@ export const renovacionContratoFlota = async (req, res) => {
     // 1. Obtener el alquiler de referencia para conseguir el nro_asiento de la flota
     const resultAlquilerRef = await giama_renting.query(
       "SELECT nro_asiento, id_cliente FROM alquileres WHERE id = ?",
-      { type: QueryTypes.SELECT, replacements: [id_alquiler], transaction: transaction_giama_renting }
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_alquiler],
+        transaction: transaction_giama_renting,
+      },
     );
-    if (!resultAlquilerRef.length) throw new Error("No se encontró el alquiler de referencia");
+    if (!resultAlquilerRef.length)
+      throw new Error("No se encontró el alquiler de referencia");
 
     const nro_asiento_flota = resultAlquilerRef[0].nro_asiento;
     const id_cliente = resultAlquilerRef[0].id_cliente;
-    if (!nro_asiento_flota) throw new Error("Este alquiler no pertenece a una flota (sin nro_asiento)");
+    if (!nro_asiento_flota)
+      throw new Error(
+        "Este alquiler no pertenece a una flota (sin nro_asiento)",
+      );
 
     // 2. Traer TODOS los alquileres vigentes de esta flota (mismo nro_asiento, no anulados)
     const alquileresFlota = await giama_renting.query(
@@ -3057,23 +3415,63 @@ export const renovacionContratoFlota = async (req, res) => {
        LEFT JOIN modelos m ON m.id = v.modelo
        LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
        WHERE a.nro_asiento = ? AND a.anulado = 0`,
-      { type: QueryTypes.SELECT, replacements: [nro_asiento_flota], transaction: transaction_giama_renting }
+      {
+        type: QueryTypes.SELECT,
+        replacements: [nro_asiento_flota],
+        transaction: transaction_giama_renting,
+      },
     );
-    if (!alquileresFlota.length) throw new Error("No se encontraron alquileres vigentes para esta flota");
+    if (!alquileresFlota.length)
+      throw new Error("No se encontraron alquileres vigentes para esta flota");
 
     const contratoFechaHasta = alquileresFlota[0].contrato_fecha_hasta;
     if (fecha_hasta_nuevo > contratoFechaHasta) {
-      throw new Error("La fecha hasta de la renovación es posterior a la del contrato original.");
+      throw new Error(
+        "La fecha hasta de la renovación es posterior a la del contrato original.",
+      );
     }
 
     const cantidadVehiculos = alquileresFlota.length;
     const importeTotal = parseFloat(importe_total_nuevo);
     if (importeTotal <= 0) {
-      throw new Error("El importe total debe ser mayor a 0 para facturar la renovación de la flota.");
+      throw new Error(
+        "El importe total debe ser mayor a 0 para facturar la renovación de la flota.",
+      );
     }
-    
+
     let restanteTotal = importeTotal;
     let restanteNeto = parseFloat((importeTotal / 1.21).toFixed(2));
+
+    // Detección de empresa y mapeo contable
+    const resultClienteRenov = await giama_renting.query(
+      "SELECT razon_social FROM clientes WHERE id = ?",
+      {
+        type: QueryTypes.SELECT,
+        replacements: [id_cliente],
+        transaction: transaction_giama_renting,
+      },
+    );
+    const esEmpresaRenov = !!(
+      resultClienteRenov.length && resultClienteRenov[0]["razon_social"]
+    );
+
+    let cuentaALQU = await getParametro("ALQU");
+    let cuentaALQU_2 = await getParametro("ALQ2");
+    let cuentaIV21 = await getParametro("IV21");
+    let cuentaIV21_2 = await getParametro("IV22");
+
+    if (esEmpresaRenov) {
+      cuentaALQU = mapCuentaPorEmpresaYConcepto({
+        esEmpresa: esEmpresaRenov,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU,
+      });
+      cuentaALQU_2 = mapCuentaPorEmpresaYConcepto({
+        esEmpresa: esEmpresaRenov,
+        tipo: "alquiler",
+        cuentaActual: cuentaALQU_2,
+      });
+    }
 
     // 3. Obtener número de asiento para la nueva deuda
     const NroAsiento_deuda = await getNumeroAsiento();
@@ -3095,9 +3493,13 @@ export const renovacionContratoFlota = async (req, res) => {
         itemIva = parseFloat((itemTotal - itemNeto).toFixed(2));
       } else {
         itemTotal = parseFloat((importeTotal / cantidadVehiculos).toFixed(2));
-        itemNeto = parseFloat((parseFloat((importeTotal / 1.21).toFixed(2)) / cantidadVehiculos).toFixed(2));
+        itemNeto = parseFloat(
+          (
+            parseFloat((importeTotal / 1.21).toFixed(2)) / cantidadVehiculos
+          ).toFixed(2),
+        );
         itemIva = parseFloat((itemTotal - itemNeto).toFixed(2));
-        
+
         restanteTotal = parseFloat((restanteTotal - itemTotal).toFixed(2));
         restanteNeto = parseFloat((restanteNeto - itemNeto).toFixed(2));
       }
@@ -3123,7 +3525,7 @@ export const renovacionContratoFlota = async (req, res) => {
             NroAsiento_deuda,
           ],
           transaction: transaction_giama_renting,
-        }
+        },
       );
 
       facturaItems.push({
@@ -3142,7 +3544,9 @@ export const renovacionContratoFlota = async (req, res) => {
     const concepto_factura = `Renovación Flota - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominios: ${dominiosJuntos}`;
 
     const importe_neto_total = (importeTotal / 1.21).toFixed(2);
-    const importe_iva_total = (importeTotal - parseFloat(importe_neto_total)).toFixed(2);
+    const importe_iva_total = (
+      importeTotal - parseFloat(importe_neto_total)
+    ).toFixed(2);
 
     const nro_factura = await insertFactura(
       id_cliente,
@@ -3156,7 +3560,7 @@ export const renovacionContratoFlota = async (req, res) => {
       transaction_giama_renting,
       transaction_pa7_giama_renting,
       fecha_desde_nuevo,
-      facturaItems
+      facturaItems,
     );
 
     // 6. Asignar el nro de factura a los nuevos alquileres
@@ -3166,42 +3570,111 @@ export const renovacionContratoFlota = async (req, res) => {
         type: QueryTypes.UPDATE,
         replacements: [nro_factura, NroAsiento_deuda],
         transaction: transaction_giama_renting,
-      }
+      },
     );
 
     // 7. Generar asiento contable de la deuda
-    await asientoContable({
-      id_cliente,
-      fecha: fecha_desde_nuevo,
-      nro_asiento: NroAsiento_deuda,
-      nro_asiento_secundario: NroAsientoSecundario_deuda,
-      importe_neto: importe_neto_total,
-      importe_iva: importe_iva_total,
-      importe_total: importeTotal,
-      observacion: concepto_factura,
-      usuario,
-      es_pago: false
-    }, transaction_giama_renting);
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      110310,
+      "D",
+      importeTotal,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_nuevo,
+      NroAsientoSecundario_deuda,
+      null,
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaALQU,
+      "H",
+      importe_neto_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_nuevo,
+      NroAsientoSecundario_deuda,
+      null,
+    );
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuentaIV21,
+      "H",
+      importe_iva_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_nuevo,
+      NroAsientoSecundario_deuda,
+      null,
+    );
+    // Movimientos secundarios
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      110310,
+      "D",
+      importeTotal,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_nuevo,
+      null,
+      null,
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuentaALQU_2,
+      "H",
+      importe_neto_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_nuevo,
+      null,
+      null,
+    );
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario_deuda,
+      cuentaIV21_2,
+      "H",
+      importe_iva_total,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      null,
+      fecha_desde_nuevo,
+      null,
+      null,
+    );
 
     await transaction_giama_renting.commit();
     await transaction_pa7_giama_renting.commit();
 
     return res.send({
       status: true,
-      message: `Renovación de flota procesada. Factura N° ${nro_factura} generada por $${importeTotal.toLocaleString("es-AR")}.`
+      message: `Renovación de flota procesada. Factura N° ${nro_factura} generada por $${importeTotal.toLocaleString("es-AR")}.`,
     });
-
   } catch (error) {
     console.log("Error en renovacionContratoFlota:", error);
     if (transaction_giama_renting && !transaction_giama_renting.finished) {
       await transaction_giama_renting.rollback();
     }
-    if (transaction_pa7_giama_renting && !transaction_pa7_giama_renting.finished) {
+    if (
+      transaction_pa7_giama_renting &&
+      !transaction_pa7_giama_renting.finished
+    ) {
       await transaction_pa7_giama_renting.rollback();
     }
     return res.send({
       status: false,
-      message: error.message || "Error al renovar contratos de flota"
+      message: error.message || "Error al renovar contratos de flota",
     });
   }
 };
