@@ -1,37 +1,58 @@
+const mapCuentasEmpresaPorId = {
+  33: "410504", // Franquicia G1
+  34: "410504", // Franquicia G2
+  35: "410506", // Telepase
+  39: "410502", // Km Extra
+  41: "410505", // Recargo Medio de Pago (penalidad empresa)
+  42: "410505", // Recargo Pago Atrasado (penalidad empresa)
+  46: "410401", // Indemnizaciones por seguros
+};
+
+const mapCuentasEmpresaPorNombre = {
+  alquiler: "410501",
+  "km extra": "410502",
+  siniestro: "410503",
+  franquicia: "410504",
+  penalidad: "410505",
+  telepase: "410506",
+  intereses: "410507",
+  seguro: "410401",
+};
+
+const normalizarTexto = (texto) =>
+  `${texto || ""}`
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim();
+
+const getCuentaPorNombre = (nombre) => {
+  const valor = normalizarTexto(nombre);
+  for (const [clave, cuenta] of Object.entries(mapCuentasEmpresaPorNombre)) {
+    if (valor.includes(clave)) return cuenta;
+  }
+  return null;
+};
+
 export const mapCuentaPorEmpresaYConcepto = ({
   esEmpresa = false,
-  tipo = "", // 'alquiler' | 'costo' | 'otro'
+  tipo = "",
+  idConcepto = null,
   nombreConcepto = "",
   cuentaActual = null,
 }) => {
-  if (!esEmpresa) {
-    return cuentaActual;
-  }
-
-  const concepto = `${nombreConcepto || ""}`.toLowerCase().trim();
+  if (!esEmpresa) return cuentaActual;
 
   if (tipo === "alquiler") {
     return "410501";
   }
 
-  if (concepto.includes("km extra")) {
-    return "410502";
+  if (idConcepto && mapCuentasEmpresaPorId[idConcepto]) {
+    return mapCuentasEmpresaPorId[idConcepto];
   }
-  if (concepto.includes("siniestro")) {
-    return "410503";
-  }
-  if (concepto.includes("franquicia")) {
-    return "410504";
-  }
-  if (concepto.includes("penalidad")) {
-    return "410505";
-  }
-  if (concepto.includes("telepase") || concepto.includes("telepases")) {
-    return "410506";
-  }
-  if (concepto.includes("interes") || concepto.includes("financ")) {
-    return "410507";
-  }
+
+  const cuentaPorNombre = getCuentaPorNombre(nombreConcepto);
+  if (cuentaPorNombre) return cuentaPorNombre;
 
   return cuentaActual;
 };
