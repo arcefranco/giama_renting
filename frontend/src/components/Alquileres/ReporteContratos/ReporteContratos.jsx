@@ -488,7 +488,7 @@ const ReporteContratos = () => {
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={550}
+        height="70vh"
         onExporting={onExporting}
       >
         <Scrolling mode="standard" />
