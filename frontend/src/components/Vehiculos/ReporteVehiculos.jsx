@@ -183,7 +183,7 @@ const ReporteVehiculos = () => {
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={400}>
+        height="70vh">
         <SearchPanel visible={true} highlightCaseSensitive={true} />
         <FilterRow visible={true} />
         <HeaderFilter visible={true} />

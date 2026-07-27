@@ -16,6 +16,8 @@ import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
 import { getReciboByIdSlice, reset as resetRecibos } from '../../reducers/Recibos/recibosSlice.js'
 import Swal from 'sweetalert2';
+import { saveAs } from "file-saver-es";
+import axios from 'axios';
 
 export const PagosClientes = () => {
     const { id } = useParams();
@@ -471,6 +473,48 @@ export const PagosClientes = () => {
         if (!form.importe_cobro) newErrors.importe_cobro = "El importe es obligatorio"
         return newErrors
     }
+    const handleExportarExcel = async () => {
+        const clienteId = id || form.id_cliente;
+        if (!clienteId) {
+            toast.warning("Seleccioná un cliente antes de exportar", {
+                position: "top-center",
+                autoClose: 3000,
+                theme: "colored",
+            });
+            return;
+        }
+
+        try {
+            toast.info("Exportando...", { autoClose: 2000, position: "bottom-right", theme: "colored" });
+            const response = await axios.post(
+                import.meta.env.VITE_REACT_APP_HOST + "ctacte/exportarCtacteCliente",
+                { id_cliente: clienteId },
+                {
+                    withCredentials: true,
+                    responseType: 'blob'
+                }
+            );
+            let fileName = `CtaCte_${clienteId}.xlsx`;
+            const disposition = response.headers['content-disposition'];
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) { 
+                  fileName = matches[1].replace(/['"]/g, '');
+                }
+            }
+            const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, fileName);
+        } catch (error) {
+            console.error(error);
+            toast.error("Ocurrió un error al exportar la cuenta corriente", {
+                position: "bottom-center",
+                autoClose: 5000,
+                theme: "colored",
+            });
+        }
+    }
+
     return (
 
         <div className={styles.container}>
@@ -537,11 +581,11 @@ export const PagosClientes = () => {
                         </h2>)
                 }
 
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                     <button
                         onClick={handleActualizar}
                         className={styles.refreshButton}
-                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0, height: "38px", boxSizing: "border-box" }}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
@@ -552,10 +596,24 @@ export const PagosClientes = () => {
                     <button
                         onClick={openModal}
                         className={styles.refreshButton}
-                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0, height: "38px", boxSizing: "border-box" }}
                     >
                         <span style={{ fontSize: "16px", lineHeight: 1, fontWeight: 400 }}>+</span>
                         Alta de cobro
+                    </button>
+                    <button
+                        onClick={handleExportarExcel}
+                        className={styles.refreshButton}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0, height: "38px", boxSizing: "border-box" }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Exportar Excel
                     </button>
                 </div>
             </div>

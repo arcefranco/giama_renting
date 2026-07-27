@@ -1,5 +1,6 @@
 //insertar pago, obtener cta cte cliente en particular, obtener todos los saldos de clientes
 import { QueryError, QueryTypes } from "sequelize";
+import xlsx from "xlsx";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { insertPago } from "../../helpers/insertPago.js";
@@ -1537,31 +1538,19 @@ export const postDevolucionGarantia = async (req, res) => {
   let transaction_pa7_giama_renting;
 
   try {
-    const [clienteRenting] = await giama_renting.query(
-      "SELECT nro_documento,nombre,apellido,razon_social FROM clientes WHERE id = ?",
-      { replacements: [id_cliente], type: QueryTypes.SELECT },
+    const clienteResult = await giama_renting.query(
+      `SELECT nombre, apellido, razon_social FROM clientes WHERE id = ?`,
+      { replacements: [id_cliente], type: QueryTypes.SELECT }
     );
 
-    if (!clienteRenting) {
+    if (!clienteResult) {
       return res.send({
         status: false,
         message: `No se encontró el cliente en Renting. ID recibido: ${id_cliente}`,
       });
     }
 
-    const cuitCliente = clienteRenting.nro_documento;
-    const nombreParaPA6 =
-      clienteRenting.razon_social ||
-      `${clienteRenting.nombre} ${clienteRenting.apellido}`;
-
-    const idProveedorPA6 = await getProveedorPA6(cuitCliente, nombreParaPA6);
-
-    if (!idProveedorPA6) {
-      return res.send({
-        status: false,
-        message: `El chofer no está cargado como proveedor en PA6 (CUIT: ${cuitCliente}). Por favor, déjelo de alta primero en el sistema PA6.`,
-      });
-    }
+    // Omitimos validación de proveedor porque ya no generamos ODP
 
     // 2. Iniciamos Transacciones
     transaction_giama_renting = await giama_renting.transaction();
@@ -1571,16 +1560,7 @@ export const postDevolucionGarantia = async (req, res) => {
     const cuentaHaber = await getCuentaContableFormaCobro(id_forma_pago);
     const cuentaDebe = "210103"; // Cuenta contable de Depósito en Garantía
 
-    // 3. Generamos la ODP con el nuevo helper
-    const nuevoIdOdp = await insertOdp(
-      importe,
-      observacion,
-      NroAsiento_nuevo,
-      idProveedorPA6,
-      transaction_pa7_giama_renting,
-    );
-
-    // 4. Asientos Contables en PA6 (c_movimientos)
+    // 3. Asientos Contables en PA6 (c_movimientos)
     // DEBE: Disminuye la deuda de Garantía (Pasivo)
     await asientoContable(
       "c_movimientos",
@@ -1590,7 +1570,7 @@ export const postDevolucionGarantia = async (req, res) => {
       importe,
       "Devolucion Garantia",
       transaction_pa7_giama_renting,
-      nuevoIdOdp,
+      null,
       getTodayDate(),
       null,
       1,
@@ -1604,7 +1584,7 @@ export const postDevolucionGarantia = async (req, res) => {
       importe,
       "Devolucion Garantia",
       transaction_pa7_giama_renting,
-      nuevoIdOdp,
+      null,
       getTodayDate(),
       null,
       1,
@@ -1739,7 +1719,7 @@ export const postDevolucionGarantia = async (req, res) => {
 
     return res.send({
       status: true,
-      message: `Devolución exitosa. Se generó la ODP ${nuevoIdOdp} en PA6.`,
+      message: `Devolución exitosa. Se registraron los asientos contables en PA7.`,
     });
   } catch (error) {
     console.log(error);
@@ -1750,5 +1730,195 @@ export const postDevolucionGarantia = async (req, res) => {
       status: false,
       message: `Error al devolver la garantía: ${error.message}`,
     });
+  }
+};
+
+export const exportarCtacteCliente = async (req, res) => {
+  const { id_cliente } = req.body;
+  try {
+    const clienteResult = await giama_renting.query(
+      `SELECT nombre, apellido, razon_social FROM clientes WHERE id = ?`,
+      { replacements: [id_cliente], type: QueryTypes.SELECT }
+    );
+    let nombreCliente = "Cliente Desconocido";
+    if (clienteResult.length > 0) {
+      const c = clienteResult[0];
+      nombreCliente = c.nombre ? `${c.nombre} ${c.apellido}` : c.razon_social;
+    }
+
+    const resultado = await giama_renting.query(
+      `SELECT
+    m.fecha,
+    m.concepto,
+    m.nro_comprobante,
+    m.debe,
+    m.haber,
+    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
+    m.tipo,
+    m.id_registro,
+    m.garantia_devuelta
+FROM (
+    /* PAGOS */
+    SELECT
+        pc.fecha AS fecha,
+        CONCAT(
+            CASE 
+                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
+                THEN CONCAT(' ', pc.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        pc.nro_recibo AS nro_comprobante,
+        NULL AS debe,
+        pc.importe_cobro AS haber,
+        4 AS tipo,
+        pc.id AS id_registro,
+        NULL AS garantia_devuelta
+    FROM pagos_clientes pc
+    INNER JOIN formas_cobro fc 
+        ON fc.id = pc.id_forma_cobro
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+
+    UNION ALL
+
+    /* ALQUILERES */
+    SELECT
+        a.fecha_alquiler AS fecha,
+        CONCAT(
+            'Alquiler - ',
+            v.dominio,
+            ' - ',
+            DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
+            ' al ',
+            DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
+        ) AS concepto,
+        f.numerofacturaemitida AS nro_comprobante,
+        a.importe_total AS debe,
+        NULL AS haber,
+        1 AS tipo,
+        a.id AS id_registro,
+        NULL AS garantia_devuelta
+    FROM alquileres a
+    INNER JOIN vehiculos v 
+        ON v.id = a.id_vehiculo
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = a.id_factura_pa6
+    LEFT JOIN recibos ON a.nro_recibo = recibos.id
+    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+    AND a.anulado = 0
+
+    UNION ALL
+
+    /* DEPOSITO */
+    SELECT
+        ca.fecha_contrato AS fecha,
+        CONCAT(
+            'Deposito gtia - ',
+            v.dominio
+        ) AS concepto,
+        NULL AS nro_comprobante,
+        ca.deposito_garantia AS debe,
+        NULL AS haber,
+        2 AS tipo,
+        ca.id AS id_registro,
+        ca.garantia_devuelta AS garantia_devuelta
+    FROM contratos_alquiler ca
+    INNER JOIN vehiculos v 
+        ON v.id = ca.id_vehiculo
+    LEFT JOIN recibos ON ca.nro_recibo = recibos.id
+    WHERE ca.id_cliente = ?
+      AND ca.deposito_garantia > 0
+      AND IFNULL(recibos.anulado,0) = 0
+      AND ca.anulado_deposito = 0
+
+    UNION ALL
+
+    /* COSTOS / INGRESOS */
+    SELECT
+        ci.fecha AS fecha,
+        CONCAT(
+            cc.nombre,
+            CASE 
+                WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
+                THEN CONCAT(' ', ci.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        f.numerofacturaemitida AS nro_comprobante,
+        ci.importe_total AS debe,
+        NULL AS haber,
+        3 AS tipo,
+        ci.id AS id_registro,
+        NULL AS garantia_devuelta
+    FROM costos_ingresos ci
+    INNER JOIN conceptos_costos cc 
+        ON cc.id = ci.id_concepto
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = ci.id_factura_pa6
+    LEFT JOIN recibos ON ci.nro_recibo = recibos.id
+    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+    AND ci.anulado = 0
+
+) AS m
+CROSS JOIN (SELECT @saldo := 0) AS vars
+ORDER BY m.fecha, m.tipo;`,
+      {
+        replacements: [id_cliente, id_cliente, id_cliente, id_cliente],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    let lastSaldo = 0;
+    const formattedData = resultado.map(item => {
+      lastSaldo = item.saldo ? Number(item.saldo) : 0;
+      return {
+        Fecha: item.fecha ? (item.fecha.split('-')[2] + '/' + item.fecha.split('-')[1] + '/' + item.fecha.split('-')[0]) : '',
+        Concepto: item.concepto || '',
+        'Nro. Comprobante': item.nro_comprobante || '',
+        Debe: item.debe ? Number(item.debe) : '',
+        Haber: item.haber ? Number(item.haber) : '',
+        'Garantía Dev.': item.garantia_devuelta ? Number(item.garantia_devuelta) : '',
+        Saldo: lastSaldo
+      };
+    });
+
+    formattedData.push({
+      Fecha: 'Total',
+      Concepto: '',
+      'Nro. Comprobante': '',
+      Debe: '',
+      Haber: '',
+      'Garantía Dev.': '',
+      Saldo: lastSaldo
+    });
+
+    const worksheet = xlsx.utils.json_to_sheet(formattedData);
+    
+    const objectMaxLength = []; 
+    formattedData.forEach((row) => {
+      Object.entries(row).forEach(([key, value], idx) => {
+        let columnValue = value ? value.toString().length : 0;
+        let headerValue = key.length;
+        let max = Math.max(columnValue, headerValue);
+        objectMaxLength[idx] = max > (objectMaxLength[idx] || 0) ? max : objectMaxLength[idx];
+      });
+    });
+    objectMaxLength[0] = Math.max(objectMaxLength[0] || 0, 10); // Minimum width for Fecha
+    worksheet['!cols'] = objectMaxLength.map(w => ({ width: w + 2 }));
+
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Cuenta Corriente");
+
+    const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g, '-');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+    res.setHeader('Content-Disposition', `attachment; filename="CtaCte_${nombreCliente.replace(/\s+/g, '_')}_${dateStr}.xlsx"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ status: false, message: 'Ocurrió un error al exportar', error });
   }
 };
