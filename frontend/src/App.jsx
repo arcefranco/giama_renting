@@ -46,6 +46,7 @@ import FichaCtaCte from "./components/PagosClientes/FichaCtaCte";
 import IngresosSeguros from "./components/Costos/IngresosSeguros";
 import Alertas from "./components/Usuarios/Alertas/Alertas";
 import ImportacionesMultas from "./components/Costos/ImportacionesMultas";
+import ImportacionesTelepases from "./components/Costos/ImportacionesTelepases";
 function App() {
 
   return (
@@ -129,6 +130,9 @@ function App() {
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/costos/importaciones' element={<ImportacionesMultas />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+            <Route path='/costos/importacionTelepases' element={<ImportacionesTelepases />} />
           </Route>
 
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>

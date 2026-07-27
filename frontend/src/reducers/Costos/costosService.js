@@ -43,6 +43,12 @@ const postImportacionesMultas = async (form) => {
   });
 };
 
+const postImportacionesTelepases = async (form) => {
+  return postFunction("costos/importacionTelepases", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
 const costosService = {
   getCuentasContables,
   postConceptoCostos,
@@ -54,6 +60,7 @@ const costosService = {
   getCostosIngresosByIdVehiculo,
   prorrateo,
   ingresos_seguros,
-  postImportacionesMultas
+  postImportacionesMultas,
+  postImportacionesTelepases
 };
 export default costosService;

@@ -28,6 +28,17 @@ export const postPago = createAsyncThunk(
       rejectWithValue
     )
 );
+
+export const postDevolucionGarantia = createAsyncThunk(
+  "postDevolucionGarantia",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.postDevolucionGarantia(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const ctacteCliente = createAsyncThunk(
   "ctacteCliente",
   async (data, { rejectWithValue }) =>
@@ -92,21 +103,20 @@ export const pagosClientesSlice = createSlice({
   name: "pagosClientes",
   initialState,
   reducers: {
-    reset: (state) => ({ 
-        isError: false,
-        isSuccess: false,
-        isLoading: false,
-        message: "",
-        ctacteCliente: state.ctacteCliente,
-        nro_recibo: null,
-        tipo_factura: null,
-        cliente_factura: null,
-        codigo: null,
-        id_registro: null,
-        id_factura: null,
-        tipo_deuda: null,
-     }),
-
+    reset: (state) => ({
+      isError: false,
+      isSuccess: false,
+      isLoading: false,
+      message: "",
+      ctacteCliente: state.ctacteCliente,
+      nro_recibo: null,
+      tipo_factura: null,
+      cliente_factura: null,
+      codigo: null,
+      id_registro: null,
+      id_factura: null,
+      tipo_deuda: null,
+    }),
   },
   extraReducers: (builder) => {
     builder.addCase(postPago.pending, (state) => {
@@ -125,58 +135,73 @@ export const pagosClientesSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
     });
+    builder.addCase(postDevolucionGarantia.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postDevolucionGarantia.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(postDevolucionGarantia.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message || action.payload || "Error al devolver la garantía";
+    });
     builder.addCase(ctacteCliente.pending, (state) => {
-        state.isLoading = true;
+      state.isLoading = true;
     });
     builder.addCase(ctacteCliente.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.isError = false;
-        state.message = "";
-        state.ctacteCliente = action.payload;
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.ctacteCliente = action.payload;
     });
     builder.addCase(ctacteCliente.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.isSuccess = false;
-        state.message = action.payload.message;
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
     builder.addCase(fichaCtaCte.pending, (state) => {
-        state.isLoading = true;
+      state.isLoading = true;
     });
     builder.addCase(fichaCtaCte.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.isError = false;
-        state.message = "";
-        state.ficha = action.payload;
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.ficha = action.payload;
     });
     builder.addCase(fichaCtaCte.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.isSuccess = false;
-        state.message = action.payload.message;
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
     builder.addCase(getEstadoDeuda.pending, (state) => {
-        state.isLoading = true;
+      state.isLoading = true;
     });
     builder.addCase(getEstadoDeuda.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.isError = false;
-        state.codigo = action.payload.codigo;
-        state.message = action.payload.message;
-        state.cliente_factura = action.payload.cliente;
-        state.tipo_factura = action.payload.tipo;
-        state.id_registro = action.payload.id_registro;
-        state.id_factura = action.payload.id_factura;
-        state.tipo_deuda = action.payload.tipo_deuda
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.codigo = action.payload.codigo;
+      state.message = action.payload.message;
+      state.cliente_factura = action.payload.cliente;
+      state.tipo_factura = action.payload.tipo;
+      state.id_registro = action.payload.id_registro;
+      state.id_factura = action.payload.id_factura;
+      state.tipo_deuda = action.payload.tipo_deuda
     });
     builder.addCase(getEstadoDeuda.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.isSuccess = false;
-        state.message = action.payload.message;
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
     });
     builder.addCase(anulacionFactura.pending, (state) => {
       state.isLoading = true;

@@ -10,10 +10,13 @@ export const getCuentaContableFormaCobro = async (id) => {
         replacements: [id],
       }
     );
+    if (!result || result.length === 0) {
+      throw new Error(`La forma de cobro ID ${id} no existe en la base de datos de Renting o no tiene cuenta contable.`);
+    }
     return result[0]["cuenta_contable"];
   } catch (error) {
     console.log(error);
-    throw new Error(`Error al buscar forma cobro: ${id}`);
+    throw new Error(`Error al buscar forma cobro: ${id}. Detalle: ${error.message}`);
   }
 };
 

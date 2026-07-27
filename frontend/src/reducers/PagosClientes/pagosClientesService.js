@@ -52,7 +52,9 @@ const anulacionRecibo = async (data) => {
 const anulacionDeuda = async (data) => {
   return postFunction("ctacte/anulacionDeuda", data);
 };
-
+const postDevolucionGarantia = async (data) => {
+  return postFunction("ctacte/devolucionGarantia", data);
+};
 
 const pagosClientesService = {
     postPago,
@@ -61,7 +63,8 @@ const pagosClientesService = {
     getEstadoDeuda,
     anulacionFactura,
     anulacionRecibo,
-    anulacionDeuda
+    anulacionDeuda,
+    postDevolucionGarantia
 }
 
 export default pagosClientesService;

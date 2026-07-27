@@ -14,6 +14,7 @@ const initialState = {
   isLoading: false,
   message: "",
   errores_importacion: [],
+  guardados_importacion: [],
 };
 
 export const getCuentasContables = createAsyncThunk(
@@ -116,6 +117,16 @@ export const postImportacionesMultas = createAsyncThunk(
     )
 );
 
+export const postImportacionesTelepases = createAsyncThunk(
+  "postImportacionesTelepases",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.postImportacionesTelepases(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const costosSlice = createSlice({
   name: "costos",
   initialState,
@@ -126,6 +137,7 @@ export const costosSlice = createSlice({
       state.isError = false;
       state.message = "";
       state.errores_importacion = [];
+      state.guardados_importacion = [];
     },
     resetCostosVehiculo: (state) => {
       state.costos_ingresos_vehiculo = [];
@@ -292,6 +304,26 @@ export const costosSlice = createSlice({
       state.errores_importacion = action.payload.errores || [];
     });
     builder.addCase(postImportacionesMultas.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+      state.errores_importacion = action.payload.errores || [];
+    });
+    builder.addCase(postImportacionesTelepases.pending, (state) => {
+      state.isLoading = true;
+      state.isSuccess = false;
+      state.isError = false;
+    });
+    builder.addCase(postImportacionesTelepases.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+      state.errores_importacion = action.payload.errores || [];
+      state.guardados_importacion = action.payload.guardados || [];
+    });
+    builder.addCase(postImportacionesTelepases.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
