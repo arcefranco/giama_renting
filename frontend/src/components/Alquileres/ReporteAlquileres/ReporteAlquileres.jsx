@@ -100,8 +100,8 @@ const ReporteAlquileres = () => {
       const modeloNombre = modelo?.nombre || "";
       const vehiculoTexto = `${dominio} ${modeloNombre}`
 
-      const clienteTexto = cliente?.razon_social 
-        ? cliente.razon_social 
+      const clienteTexto = cliente?.razon_social
+        ? cliente.razon_social
         : `${cliente?.nombre || ""} ${cliente?.apellido || ""}`
 
       return {
@@ -296,14 +296,14 @@ const ReporteAlquileres = () => {
         rowAlternationEnabled={true}
         allowColumnResizing={true}
         columnAutoWidth={true}
-        height={400}
+        height="68vh"
         onExporting={onExporting}
       >
         <SearchPanel visible={true} highlightCaseSensitive={true} />
         <HeaderFilter visible={true} />
         <Export enabled={true} fileName="Listado_Contratos" />
         <Scrolling mode="standard" />
-        <Paging defaultPageSize={10} />
+        <Paging defaultPageSize={15} />
         <Column dataField="vehiculo_texto" caption="Vehículo" dataType="string" alignment="center" />
         <Column dataField="cliente_texto" caption="Cliente" dataType="string" alignment="center" />
         <Column dataField="fecha_desde" allowSearch={false} allowHeaderFiltering={false} caption="Desde" cellRender={renderFecha} alignment="center" />

@@ -1,0 +1,171 @@
+Executing (default): SELECT
+    m.fecha,
+    m.concepto,
+    m.nro_comprobante,
+    m.debe,
+    m.haber,
+    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
+    m.tipo,
+    m.id_registro
+FROM (
+
+    /* PAGOS */
+    SELECT
+        pc.fecha AS fecha,
+        CONCAT(
+            CASE 
+                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
+                THEN CONCAT(' ', pc.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        pc.nro_recibo AS nro_comprobante,
+        NULL AS debe,
+        pc.importe_cobro AS haber,
+        4 AS tipo,
+        pc.id AS id_registro
+    FROM pagos_clientes pc
+    INNER JOIN formas_cobro fc 
+        ON fc.id = pc.id_forma_cobro
+    LEFT JOIN recibos ON pc.nro_recibo = recibos.id
+    WHERE pc.id_cliente = 179 AND IFNULL(recibos.anulado,0) = 0
+
+
+    UNION ALL
+
+
+    /* ALQUILERES */
+    SELECT
+        a.fecha_alquiler AS fecha,
+        CONCAT(
+            'Alquiler - ',
+            v.dominio,
+            ' - ',
+            DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
+            ' al ',
+            DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
+        ) AS concepto,
+        f.numerofacturaemitida AS nro_comprobante,
+        a.importe_total AS debe,
+        NULL AS haber,
+        1 AS tipo,
+        a.id AS id_registro
+    FROM alquileres a
+    INNER JOIN vehiculos v 
+        ON v.id = a.id_vehiculo
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = a.id_factura_pa6
+    LEFT JOIN recibos ON a.nro_recibo = recibos.id
+    WHERE a.id_cliente = 179 AND IFNULL(recibos.anulado,0) = 0
+    AND a.anulado = 0
+
+    UNION ALL
+
+
+    /* DEPOSITO */
+    SELECT
+        ca.fecha_contrato AS fecha,
+        CONCAT(
+            'Deposito gtia - ',
+            v.dominio
+        ) AS concepto,
+        NULL AS nro_comprobante,
+        ca.deposito_garantia AS debe,
+        NULL AS haber,
+        2 AS tipo,
+        ca.id AS id_registro
+    FROM contratos_alquiler ca
+    INNER JOIN vehiculos v 
+        ON v.id = ca.id_vehiculo
+    LEFT JOIN recibos ON ca.nro_recibo = recibos.id
+    WHERE ca.id_cliente = 179
+      AND ca.deposito_garantia > 0
+      AND IFNULL(recibos.anulado,0) = 0
+      AND ca.anulado_deposito = 0
+
+
+    UNION ALL
+
+
+    /* COSTOS / INGRESOS */
+    SELECT
+        ci.fecha AS fecha,
+        CONCAT(
+            cc.nombre,
+            CASE 
+                WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
+                THEN CONCAT(' ', ci.observacion)
+                ELSE ''
+            END
+        ) AS concepto,
+        f.numerofacturaemitida AS nro_comprobante,
+        ci.importe_total AS debe,
+        NULL AS haber,
+        3 AS tipo,
+        ci.id AS id_registro
+    FROM costos_ingresos ci
+    INNER JOIN conceptos_costos cc 
+        ON cc.id = ci.id_concepto
+    LEFT JOIN pa7_giama_renting.facturas f 
+        ON f.id = ci.id_factura_pa6
+    LEFT JOIN recibos ON ci.nro_recibo = recibos.id
+    WHERE ci.id_cliente = 179 AND IFNULL(recibos.anulado,0) = 0
+    AND ci.anulado = 0
+
+) m
+CROSS JOIN (SELECT @saldo := 0) vars
+ORDER BY m.fecha, m.tipo;
+Total rows: 45
+Last 5 rows:
+[
+  {
+    fecha: '2026-06-30',
+    concepto: ' Forma de cobro: Efectivo   -  \nObservación: test alquiler ',
+    nro_comprobante: 560,
+    debe: null,
+    haber: '100000.00',
+    saldo: -675159.7000000001,
+    tipo: 4,
+    id_registro: 490
+  },
+  {
+    fecha: '2026-07-20',
+    concepto: 'Km Extra Devolución de Garantía: test',
+    nro_comprobante: null,
+    debe: '-130000.00',
+    haber: null,
+    saldo: -805159.7000000001,
+    tipo: 3,
+    id_registro: 558
+  },
+  {
+    fecha: '2026-07-20',
+    concepto: ' Devolución de Garantía: test',
+    nro_comprobante: null,
+    debe: null,
+    haber: '-130000.00',
+    saldo: -675159.7000000001,
+    tipo: 4,
+    id_registro: 499
+  },
+  {
+    fecha: '2026-07-21',
+    concepto: 'Km Extra Devolución de Garantía: TEST',
+    nro_comprobante: null,
+    debe: '-130000.00',
+    haber: null,
+    saldo: -805159.7000000001,
+    tipo: 3,
+    id_registro: 559
+  },
+  {
+    fecha: '2026-07-21',
+    concepto: ' Devolución de Garantía: TEST',
+    nro_comprobante: null,
+    debe: null,
+    haber: '-130000.00',
+    saldo: -675159.7000000001,
+    tipo: 4,
+    id_registro: 500
+  }
+]

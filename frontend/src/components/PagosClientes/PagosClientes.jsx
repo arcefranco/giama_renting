@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import DataGrid, { Column, Scrolling, Summary, TotalItem } from "devextreme-react/data-grid"
@@ -10,12 +10,14 @@ import { getClientes, getClientesById } from '../../reducers/Clientes/clientesSl
 import {
     ctacteCliente as getCtaCteCliente, reset, postPago, anulacionFactura,
     anulacionRecibo, getEstadoDeuda,
-    anulacionDeuda
+    anulacionDeuda, postDevolucionGarantia
 } from '../../reducers/PagosClientes/pagosClientesSlice';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
 import { getReciboByIdSlice, reset as resetRecibos } from '../../reducers/Recibos/recibosSlice.js'
 import Swal from 'sweetalert2';
+import { saveAs } from "file-saver-es";
+import axios from 'axios';
 
 export const PagosClientes = () => {
     const { id } = useParams();
@@ -36,6 +38,15 @@ export const PagosClientes = () => {
     })
     const [saldoActual, setSaldoActual] = useState(0)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isModalDevolucionOpen, setIsModalDevolucionOpen] = useState(false)
+    const [isDevolviendo, setIsDevolviendo] = useState(false)
+    const [formDevolucion, setFormDevolucion] = useState({
+        fecha: new Date().toISOString().split('T')[0],
+        id_forma_pago: '',
+        importe: '',
+        observacion: '',
+        id_contrato: ''
+    })
     const [errorsInputs, setErrorsInputs] = useState({})
     const dispatch = useDispatch()
     useEffect(() => {
@@ -189,7 +200,7 @@ export const PagosClientes = () => {
         }
 
     }, [isError, isSuccess, codigo])
-    const onSuccess = () => {
+    const onSuccess = useCallback(() => {
         closeModal()
 
         if (id) {
@@ -197,7 +208,7 @@ export const PagosClientes = () => {
         } else if (form.id_cliente) {
             dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
         }
-    }
+    }, [id, form.id_cliente, dispatch])
     useEffect(() => {
         if (!codigo) {
             if (isError && message) {
@@ -320,6 +331,32 @@ export const PagosClientes = () => {
     }
     const renderAnulacion = (data) => {
         const row = data.data
+        const isDeposito = row.concepto && (row.concepto.toLowerCase().includes("deposito") || row.concepto.toLowerCase().includes("depósito") || row.concepto.toLowerCase().includes("gtia") || row.concepto.toLowerCase().includes("garantía"));
+        
+        const saldoGarantia = (row.debe || 0) - (row.garantia_devuelta || 0);
+
+        if (isDeposito && row.debe > 0 && saldoGarantia > 0) {
+            return (
+                <button
+                    onClick={() => {
+                        setFormDevolucion(prev => ({ 
+                            ...prev, 
+                            importe: saldoGarantia,
+                            id_contrato: row.id_registro
+                        }))
+                        setIsModalDevolucionOpen(true)
+                    }}
+                    style={{
+                        color: '#2e7d32', fontSize: "11px", fontWeight: "bold",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Devolver
+                </button>
+            )
+        }
+
         if (row.tipo == 4) {
             return (
                 <button
@@ -349,10 +386,61 @@ export const PagosClientes = () => {
             );
         }
     }
+    const handleProcesarDevolucion = async () => {
+        if (!formDevolucion.id_forma_pago || !formDevolucion.importe || formDevolucion.importe <= 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Campos incompletos",
+                text: "Por favor complete la forma de pago y un importe válido mayor a cero."
+            });
+            return;
+        }
+
+        const data = {
+            id_cliente: id || form.id_cliente || (cliente?.length > 0 ? cliente[0].id : null),
+            fecha: formDevolucion.fecha,
+            id_forma_pago: formDevolucion.id_forma_pago,
+            importe: formDevolucion.importe,
+            observacion: formDevolucion.observacion,
+            usuario_alta_registro: username,
+            id_contrato: formDevolucion.id_contrato
+        };
+
+        setIsDevolviendo(true);
+        dispatch(postDevolucionGarantia(data)).then((res) => {
+            setIsDevolviendo(false);
+            if (!res.error) {
+                // Si salió todo bien, reseteamos el form y cerramos el modal
+                setFormDevolucion({
+                    fecha: new Date().toISOString().split('T')[0], // formato YYYY-MM-DD
+                    id_forma_pago: '',
+                    importe: '',
+                    observacion: ''
+                });
+                setIsModalDevolucionOpen(false);
+                dispatch(getCtaCteCliente({ id_cliente: id ? id : form.id_cliente })); // Refresca la grilla
+                Swal.fire({
+                    icon: "success",
+                    title: "Devolución Exitosa",
+                    text: res.payload.message || "Se procesó correctamente",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error al devolver la garantía",
+                    text: res.payload || "No se pudo procesar la devolución. Revisa la consola para más detalles."
+                });
+            }
+        }).catch(() => {
+            setIsDevolviendo(false);
+        });
+    }
     const renderImportes = (data) => {
         const value = Number(data.value) || 0;
 
-        return value > 0
+        return value !== 0
             ? value.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             : "";
     }
@@ -385,6 +473,48 @@ export const PagosClientes = () => {
         if (!form.importe_cobro) newErrors.importe_cobro = "El importe es obligatorio"
         return newErrors
     }
+    const handleExportarExcel = async () => {
+        const clienteId = id || form.id_cliente;
+        if (!clienteId) {
+            toast.warning("Seleccioná un cliente antes de exportar", {
+                position: "top-center",
+                autoClose: 3000,
+                theme: "colored",
+            });
+            return;
+        }
+
+        try {
+            toast.info("Exportando...", { autoClose: 2000, position: "bottom-right", theme: "colored" });
+            const response = await axios.post(
+                import.meta.env.VITE_REACT_APP_HOST + "ctacte/exportarCtacteCliente",
+                { id_cliente: clienteId },
+                {
+                    withCredentials: true,
+                    responseType: 'blob'
+                }
+            );
+            let fileName = `CtaCte_${clienteId}.xlsx`;
+            const disposition = response.headers['content-disposition'];
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) { 
+                  fileName = matches[1].replace(/['"]/g, '');
+                }
+            }
+            const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, fileName);
+        } catch (error) {
+            console.error(error);
+            toast.error("Ocurrió un error al exportar la cuenta corriente", {
+                position: "bottom-center",
+                autoClose: 5000,
+                theme: "colored",
+            });
+        }
+    }
+
     return (
 
         <div className={styles.container}>
@@ -451,11 +581,11 @@ export const PagosClientes = () => {
                         </h2>)
                 }
 
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                     <button
                         onClick={handleActualizar}
                         className={styles.refreshButton}
-                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0, height: "38px", boxSizing: "border-box" }}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
@@ -466,10 +596,24 @@ export const PagosClientes = () => {
                     <button
                         onClick={openModal}
                         className={styles.refreshButton}
-                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0 }}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0, height: "38px", boxSizing: "border-box" }}
                     >
                         <span style={{ fontSize: "16px", lineHeight: 1, fontWeight: 400 }}>+</span>
                         Alta de cobro
+                    </button>
+                    <button
+                        onClick={handleExportarExcel}
+                        className={styles.refreshButton}
+                        style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: 0, height: "38px", boxSizing: "border-box" }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Exportar Excel
                     </button>
                 </div>
             </div>
@@ -482,7 +626,7 @@ export const PagosClientes = () => {
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
 
-                height={300}
+                height={600}
 
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
@@ -491,6 +635,15 @@ export const PagosClientes = () => {
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
+                <Column 
+                    dataField="garantia_devuelta" 
+                    alignment="right" 
+                    caption="Garantía Dev." 
+                    cellRender={(data) => {
+                        const val = Number(data.value);
+                        return (val && val > 0) ? val.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
+                    }} 
+                />
                 <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={renderSaldo} />
                 <Column caption="" cellRender={renderAnulacion} />
 
@@ -701,6 +854,110 @@ export const PagosClientes = () => {
                                     {isLoading && (
                                         <span className={styles.spinner} style={{ position: "absolute" }}></span>
                                     )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isModalDevolucionOpen && (
+                <div
+                    onClick={e => e.target === e.currentTarget && closeModal()}
+                    style={{
+                        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.55)", backdropFilter: "blur(3px)",
+                        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                    }}
+                >
+                    <div style={{
+                        backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+                        width: "520px", maxWidth: "95vw", display: "flex", flexDirection: "column"
+                    }}>
+                        <div style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "20px 24px", borderBottom: "1px solid #f0f0f0",
+                            backgroundColor: "#800000", borderRadius: "12px 12px 0 0"
+                        }}>
+                            <h3 style={{ margin: 0, color: "#fff", fontSize: "17px", fontWeight: 600 }}>
+                                Devolución de Garantía
+                            </h3>
+                            <button
+                                onClick={() => setIsModalDevolucionOpen(false)}
+                                style={{
+                                    background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "50%",
+                                    width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center",
+                                    cursor: "pointer", fontSize: "18px", color: "#fff"
+                                }}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <form style={{ display: "flex", flexDirection: "column", gap: "0", padding: "24px" }}>
+                            
+                            <div style={{ marginBottom: "16px" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>
+                                    Fecha <span style={{ color: "#999", fontWeight: 400, textTransform: "none" }}>(automática de hoy)</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formDevolucion.fecha}
+                                    disabled
+                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", backgroundColor: "#f5f5f5" }}
+                                />
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px", marginBottom: "16px" }}>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Medio de Pago</label>
+                                    <select
+                                        value={formDevolucion.id_forma_pago}
+                                        onChange={(e) => setFormDevolucion({ ...formDevolucion, id_forma_pago: e.target.value })}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                                    >
+                                        <option value="" disabled>Seleccione...</option>
+                                        {formasDeCobro?.length && formasDeCobro.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Importe a Devolver</label>
+                                    <input
+                                        type="number"
+                                        value={formDevolucion.importe}
+                                        onChange={(e) => setFormDevolucion({ ...formDevolucion, importe: e.target.value })}
+                                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }} 
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: "24px" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Observación</label>
+                                <textarea
+                                    value={formDevolucion.observacion}
+                                    onChange={(e) => setFormDevolucion({ ...formDevolucion, observacion: e.target.value })}
+                                    rows={2}
+                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", resize: "vertical" }}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                                <button
+                                    type="button"
+                                    disabled={isDevolviendo}
+                                    onClick={() => setIsModalDevolucionOpen(false)}
+                                    style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", color: "#555", fontSize: "14px", fontWeight: 600, cursor: isDevolviendo ? "not-allowed" : "pointer", opacity: isDevolviendo ? 0.6 : 1 }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isDevolviendo}
+                                    onClick={() => handleProcesarDevolucion()}
+                                    style={{ padding: "10px 24px", borderRadius: "8px", border: "none", backgroundColor: "#800000", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: isDevolviendo ? "not-allowed" : "pointer", boxShadow: "0 4px 12px rgba(128,0,0,0.3)", opacity: isDevolviendo ? 0.6 : 1 }}
+                                    onMouseEnter={e => { if(!isDevolviendo) e.currentTarget.style.backgroundColor = "#a00000" }}
+                                    onMouseLeave={e => { if(!isDevolviendo) e.currentTarget.style.backgroundColor = "#800000" }}
+                                >
+                                    {isDevolviendo ? "Procesando..." : "Procesar Devolución"}
                                 </button>
                             </div>
                         </form>

@@ -14,7 +14,7 @@ import {
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
 import { upload } from "../middlewares/upload.js";
-import { importacionesMultas } from "../controllers/importacionesController.js";
+import { importacionesMultas, importacionesTelepases } from "../controllers/importacionesController.js";
 
 const costosRouter = Router();
 
@@ -76,6 +76,13 @@ costosRouter.post(
   authorizeRoles("2", "4"),
   upload.single("file"),
   importacionesMultas 
+);
+costosRouter.post(
+  "/importacionTelepases",
+  auth,
+  authorizeRoles("2", "4"),
+  upload.single("file"),
+  importacionesTelepases 
 );
 
 costosRouter.post("/prorrateo", auth, authorizeRoles("2"), prorrateo);

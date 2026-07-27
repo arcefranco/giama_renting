@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
 import { authorizeRoles } from "../middlewares/roles.js";
-import {postPago, ctaCteCliente, fichaCtaCte, getEstadoDeuda, anulacionFactura, anulacionRecibo, anulacionDeuda} from "../controllers/ctacteController.js";
+import {postPago, ctaCteCliente, fichaCtaCte, getEstadoDeuda, anulacionFactura, anulacionRecibo, anulacionDeuda, postDevolucionGarantia, exportarCtacteCliente} from "../controllers/ctacteController.js";
 const ctacteRouter = Router();
 ctacteRouter.use((req, res, next) => {
   res.header(
@@ -13,9 +13,11 @@ ctacteRouter.use((req, res, next) => {
 
 ctacteRouter.post("/pago", auth, authorizeRoles("2"), postPago);
 ctacteRouter.post("/ctacteCliente", auth, ctaCteCliente);
+ctacteRouter.post("/exportarCtacteCliente", auth, exportarCtacteCliente);
 ctacteRouter.post("/fichaCtaCte", fichaCtaCte);
 ctacteRouter.post("/getEstadoDeuda", getEstadoDeuda);
 ctacteRouter.post("/anulacionFactura", auth, authorizeRoles("2"), anulacionFactura);
 ctacteRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo);
 ctacteRouter.post("/anulacionDeuda", auth, authorizeRoles("2"), anulacionDeuda);
+ctacteRouter.post("/devolucionGarantia", auth, authorizeRoles("2"), postDevolucionGarantia);
 export default ctacteRouter;
