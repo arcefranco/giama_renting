@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
 import { postImportacionesTelepases, reset } from '../../reducers/Costos/costosSlice';
 import { ClipLoader } from "react-spinners";
-import downloadicon from "../../assets/downloadicon.svg";
 import styles from '../Vehiculos/VehiculosForm.module.css';
 
 const ImportacionesTelepases = () => {
@@ -74,24 +73,6 @@ const ImportacionesTelepases = () => {
         dispatch(postImportacionesTelepases(formData));
     };
 
-    const handleDownloadTemplate = async () => {
-        try {
-            const response = await fetch('/Plantilla_Telepases.xlsx');
-            if (!response.ok) throw new Error("Error al obtener la plantilla");
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Plantilla_Telepases.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            toast.error("Ocurrió un error al descargar la plantilla.");
-        }
-    };
-
     const montoTotal = localGuardados.reduce((acc, g) => acc + (g.importeTotal || 0), 0);
     const totalPasadas = localGuardados.reduce((acc, g) => acc + (g.cantidadPasadas || 0), 0);
 
@@ -112,13 +93,6 @@ const ImportacionesTelepases = () => {
             <div>
                 <div className={styles.sectionHeader} style={{ marginTop: "20px", marginLeft: "20px", marginRight: "20px" }}>
                     <h2>Importación masiva de telepases (consolidado)</h2>
-                    <button
-                        className={styles.downloadBtn}
-                        onClick={handleDownloadTemplate}
-                    >
-                        <img src={downloadicon} alt="Descargar" className={styles.downloadIcon} />
-                        Descargar plantilla
-                    </button>
                 </div>
 
                 <p style={{ marginLeft: "20px", marginRight: "20px", color: "#666", fontSize: "14px" }}>

@@ -101,7 +101,7 @@ export const importacionesMultas = async (req, res) => {
                     continue;
                 }
                 const [dia, mes, anio] = parts;
-                
+
                 let rawHora = fila.Hora;
                 let horaStr = "00:00:00";
                 if (typeof rawHora === 'number') {
@@ -237,11 +237,20 @@ export const importacionesTelepases = async (req, res) => {
         }
 
         const worksheet = workbook.Sheets[NOMBRE_PESTANA];
-        const data = xlsx.utils.sheet_to_json(worksheet);
+        let dataRaw = xlsx.utils.sheet_to_json(worksheet);
 
-        if (data.length === 0) {
+        if (dataRaw.length === 0) {
             return res.send({ status: false, message: `La pestaña "${NOMBRE_PESTANA}" está vacía` });
         }
+
+        // Normalizar los nombres de las columnas (sacar espacios extra y mayúsculas)
+        const data = dataRaw.map(row => {
+            const normalizedRow = {};
+            for (const key in row) {
+                normalizedRow[key.trim().toUpperCase()] = row[key];
+            }
+            return normalizedRow;
+        });
 
         // Validar columnas requeridas
         const columnasArchivo = Object.keys(data[0]);
@@ -453,11 +462,19 @@ export const importacionesTelepases = async (req, res) => {
                     ? `${clienteConsolidado.fechaMin} al ${clienteConsolidado.fechaMax}`
                     : "S/D";
 
-                const observacion = `Importación consolidada - Período: ${rangoFechas}`;
-
-                // Usamos el primer vehículo del cliente para el registro
+                // Usamos el primer vehículo del cliente para el registro base
                 const primerDetalle = clienteConsolidado.detallePatentes[0];
                 const importeTotal = parseFloat(clienteConsolidado.totalNeto.toFixed(2));
+
+                const lineasObservacion = clienteConsolidado.detallePatentes.map((d, index) => {
+                    if (index === 0) {
+                        // La primera línea será concatenada por costosController con "Telepase - Dominio: X - OBS: "
+                        return `Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
+                    }
+                    // Las siguientes líneas simulan ser ítems independientes
+                    return `Telepase - Dominio: ${d.patente} - OBS: Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
+                });
+                const observacion = lineasObservacion.join('\n');
 
                 await registrarIngresoIndividual({
                     debe_ingreso: importeTotal,

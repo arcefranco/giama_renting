@@ -1031,8 +1031,7 @@ export async function registrarCostoIngresoIndividual({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al buscar una cuenta contable ${
-        error.message ? `${" :"}${error.message}` : ""
+      `Error al buscar una cuenta contable ${error.message ? `${" :"}${error.message}` : ""
       }`,
     );
   }
@@ -1052,8 +1051,7 @@ export async function registrarCostoIngresoIndividual({
     else dominio = "SIN DOMINIO";
   } catch (error) {
     throw new Error(
-      `Error al buscar un dominio ${
-        error.message ? `${" :"}${error.message}` : ""
+      `Error al buscar un dominio ${error.message ? `${" :"}${error.message}` : ""
       }`,
     );
   }
@@ -1072,8 +1070,7 @@ export async function registrarCostoIngresoIndividual({
     else nombre_proveedor = "SIN NOMBRE PROVEEDOR";
   } catch (error) {
     throw new Error(
-      `Error al buscar razon social del proveedor:  ${
-        error.message ? `${" :"}${error.message}` : ""
+      `Error al buscar razon social del proveedor:  ${error.message ? `${" :"}${error.message}` : ""
       }`,
     );
   }
@@ -1098,8 +1095,7 @@ export async function registrarCostoIngresoIndividual({
       /*       await transaction_asientos.rollback();
             await transaction_costos_ingresos.rollback(); */
       throw new Error(
-        `Error al buscar una cuenta contable ${
-          error.message ? `${" :"}${error.message}` : ""
+        `Error al buscar una cuenta contable ${error.message ? `${" :"}${error.message}` : ""
         }`,
       );
     }
@@ -1122,8 +1118,7 @@ export async function registrarCostoIngresoIndividual({
     } catch (error) {
       console.log(error);
       throw new Error(
-        `Error al buscar una cuenta contable ${
-          error.message ? `${" :"}${error.message}` : ""
+        `Error al buscar una cuenta contable ${error.message ? `${" :"}${error.message}` : ""
         }`,
       );
     }
@@ -1152,8 +1147,7 @@ export async function registrarCostoIngresoIndividual({
     cuenta_secundaria_percepcion_IVA = result[5]["valor_str"];
   } catch (error) {
     throw new Error(
-      `Error al buscar parametros de percepcion ${
-        error.message ? `: ${error.message}` : ""
+      `Error al buscar parametros de percepcion ${error.message ? `: ${error.message}` : ""
       }`,
     );
   }
@@ -1174,8 +1168,7 @@ export async function registrarCostoIngresoIndividual({
       cuenta_secundaria_forma_cobro = result[1]["valor_str"];
     } catch (error) {
       throw new Error(
-        `Error al buscar cuentas contables de la forma de cobro ${
-          error.message ? `: ${error.message}` : ""
+        `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
         }`,
       );
     }
@@ -1194,8 +1187,7 @@ export async function registrarCostoIngresoIndividual({
       cuenta_secundaria_forma_cobro = result[0]["cuenta_secundaria"];
     } catch (error) {
       throw new Error(
-        `Error al buscar cuentas contables de la forma de cobro ${
-          error.message ? `: ${error.message}` : ""
+        `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
         }`,
       );
     }
@@ -1588,8 +1580,7 @@ export async function registrarIngresoIndividual({
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al buscar una cuenta contable ${
-        error.message ? `${" :"}${error.message}` : ""
+      `Error al buscar una cuenta contable ${error.message ? `${" :"}${error.message}` : ""
       }`,
     );
   }
@@ -1620,8 +1611,7 @@ export async function registrarIngresoIndividual({
     } catch (error) {
       console.log(error);
       throw new Error(
-        `Error al buscar una cuenta contable ${
-          error.message ? `${" :"}${error.message}` : ""
+        `Error al buscar una cuenta contable ${error.message ? `${" :"}${error.message}` : ""
         }`,
       );
     }
@@ -1653,8 +1643,7 @@ export async function registrarIngresoIndividual({
     } catch (error) {
       console.log(error);
       throw new Error(
-        `Error al buscar una cuenta contable ${
-          error.message ? `${" :"}${error.message}` : ""
+        `Error al buscar una cuenta contable ${error.message ? `${" :"}${error.message}` : ""
         }`,
       );
     }
@@ -1727,8 +1716,7 @@ export async function registrarIngresoIndividual({
       cuenta_secundaria_forma_cobro_1 = result[0]["cuenta_secundaria"];
     } catch (error) {
       throw new Error(
-        `Error al buscar cuentas contables de la forma de cobro ${
-          error.message ? `: ${error.message}` : ""
+        `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
         }`,
       );
     }
@@ -1748,8 +1736,7 @@ export async function registrarIngresoIndividual({
       cuenta_secundaria_forma_cobro_2 = result[0]["cuenta_secundaria"];
     } catch (error) {
       throw new Error(
-        `Error al buscar cuentas contables de la forma de cobro ${
-          error.message ? `: ${error.message}` : ""
+        `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
         }`,
       );
     }
@@ -1769,8 +1756,7 @@ export async function registrarIngresoIndividual({
       cuenta_secundaria_forma_cobro_3 = result[0]["cuenta_secundaria"];
     } catch (error) {
       throw new Error(
-        `Error al buscar cuentas contables de la forma de cobro ${
-          error.message ? `: ${error.message}` : ""
+        `Error al buscar cuentas contables de la forma de cobro ${error.message ? `: ${error.message}` : ""
         }`,
       );
     }
