@@ -251,8 +251,14 @@ const asientos_costos_ingresos = async (
 
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
-  const dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
-  const dhTotal = ingreso_egreso === "I" ? "D" : "H";
+  let is_nc = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
+  let dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
+  let dhTotal = ingreso_egreso === "I" ? "D" : "H";
+  
+  if (is_nc) {
+    dhNetoEIva = dhNetoEIva === "D" ? "H" : "D";
+    dhTotal = dhTotal === "D" ? "H" : "D";
+  }
   try {
     if (ingreso_egreso === "E") cuentaIVA = await getParametro("IC21");
     if (ingreso_egreso === "I") cuentaIVA = await getParametro("IV21");
@@ -1193,7 +1199,13 @@ export async function registrarCostoIngresoIndividual({
     }
   }
   if (ingreso_egreso === "E") {
-    FA_FC = tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+    FA_FC =
+      tipo_comprobante == 1 ? "FA" : 
+      tipo_comprobante == 3 ? "FC" : 
+      tipo_comprobante == 2 ? "NDA" :
+      tipo_comprobante == 4 ? "NCA" :
+      tipo_comprobante == 5 ? "NDC" :
+      tipo_comprobante == 6 ? "NCC" : null;
     comprobante = `${FA_FC}-${padWithZeros(
       numero_comprobante_1,
       5,
@@ -1253,7 +1265,11 @@ export async function registrarCostoIngresoIndividual({
   } catch (error) {
     throw error;
   }
-  const factor = -1;
+  let is_nc = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
+  let factor = -1;
+  if (ingreso_egreso === "E" && is_nc) {
+    factor = 1;
+  }
 
   if (ingreso_egreso === "E" && cta_cte_proveedores == 1) {
     const conceptos = [];
@@ -2386,7 +2402,12 @@ export const prorrateo = async (req, res) => {
   }
 
   let FA_FC =
-    tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+    tipo_comprobante == 1 ? "FA" : 
+    tipo_comprobante == 3 ? "FC" : 
+    tipo_comprobante == 2 ? "NDA" :
+    tipo_comprobante == 4 ? "NCA" :
+    tipo_comprobante == 5 ? "NDC" :
+    tipo_comprobante == 6 ? "NCC" : null;
 
   let numero_comprobante = `${padWithZeros(
     numero_comprobante_1,
@@ -2842,7 +2863,11 @@ export const prorrateo = async (req, res) => {
 
       // B. INSERT EN COSTOS INGRESOS
       try {
-        const factor = -1;
+        let is_nc = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
+        let factor = -1;
+        if (ingreso_egreso === "E" && is_nc) {
+          factor = 1;
+        }
         await giama_renting.query(
           `INSERT INTO costos_ingresos 
           (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
