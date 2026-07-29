@@ -26,7 +26,12 @@ export const movimientosProveedores = async ({
   importe_tasa_IVA,
 }) => {
   let FA_FC =
-    tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+    tipo_comprobante == 1 ? "FA" : 
+    tipo_comprobante == 3 ? "FC" : 
+    tipo_comprobante == 2 ? "NDA" :
+    tipo_comprobante == 4 ? "NCA" :
+    tipo_comprobante == 5 ? "NDC" :
+    tipo_comprobante == 6 ? "NCC" : null;
   let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
@@ -223,7 +228,12 @@ export const movimientosProveedoresEgresos = async ({
   importe_tasa_IVA,
 }) => {
   let FA_FC =
-    tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : null;
+    tipo_comprobante == 1 ? "FA" : 
+    tipo_comprobante == 3 ? "FC" : 
+    tipo_comprobante == 2 ? "NDA" :
+    tipo_comprobante == 4 ? "NCA" :
+    tipo_comprobante == 5 ? "NDC" :
+    tipo_comprobante == 6 ? "NCC" : null;
   let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
