@@ -137,10 +137,10 @@ export const movimientosProveedores = async ({
   }
   //c_movprovctacte
   try {
-    let A_C = tipo_comprobante == 1 ? "A" : tipo_comprobante == 3 ? "C" : null;
-    let DenomComprobante =
-      tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : null;
-    let ConceptoComprobante = `Factura "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
+    let A_C = (tipo_comprobante == 1 || tipo_comprobante == 2 || tipo_comprobante == 4) ? "A" : (tipo_comprobante == 3 || tipo_comprobante == 5 || tipo_comprobante == 6) ? "C" : null;
+    let DenomComprobante = tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : tipo_comprobante == 2 ? "NDA" : tipo_comprobante == 4 ? "NCA" : tipo_comprobante == 5 ? "NDC" : tipo_comprobante == 6 ? "NCC" : null;
+    let tipo_nombre = (tipo_comprobante == 1 || tipo_comprobante == 3) ? "Factura" : (tipo_comprobante == 2 || tipo_comprobante == 5) ? "Nota de Débito" : (tipo_comprobante == 4 || tipo_comprobante == 6) ? "Nota de Crédito" : "Comprobante";
+    let ConceptoComprobante = `${tipo_nombre} "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
     await pa7_giama_renting.query(
       `INSERT INTO c_movprovctacte (IdProveedor, ConceptoComprobante,
       DenomComprobante, NroComprobante, Fecha, TipoComprobante, IdComprobante, 
@@ -379,10 +379,10 @@ export const movimientosProveedoresEgresos = async ({
 
   //c_movprovctacte
   try {
-    let A_C = tipo_comprobante == 1 ? "A" : tipo_comprobante == 3 ? "C" : null;
-    let DenomComprobante =
-      tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : null;
-    let ConceptoComprobante = `Factura "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
+    let A_C = (tipo_comprobante == 1 || tipo_comprobante == 2 || tipo_comprobante == 4) ? "A" : (tipo_comprobante == 3 || tipo_comprobante == 5 || tipo_comprobante == 6) ? "C" : null;
+    let DenomComprobante = tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : tipo_comprobante == 2 ? "NDA" : tipo_comprobante == 4 ? "NCA" : tipo_comprobante == 5 ? "NDC" : tipo_comprobante == 6 ? "NCC" : null;
+    let tipo_nombre = (tipo_comprobante == 1 || tipo_comprobante == 3) ? "Factura" : (tipo_comprobante == 2 || tipo_comprobante == 5) ? "Nota de Débito" : (tipo_comprobante == 4 || tipo_comprobante == 6) ? "Nota de Crédito" : "Comprobante";
+    let ConceptoComprobante = `${tipo_nombre} "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
     await pa7_giama_renting.query(
       `INSERT INTO c_movprovctacte (IdProveedor, ConceptoComprobante,
       DenomComprobante, NroComprobante, Fecha, TipoComprobante, IdComprobante, 
