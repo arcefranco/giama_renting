@@ -67,20 +67,20 @@ costosRouter.post(
 costosRouter.post(
   "/costos_ingresos_id_vehiculo",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("2", "3", "4", "5"),
   getCostosIngresosByIdVehiculo
 );
 costosRouter.post(
   "/importacionMultas",
   auth,
-  authorizeRoles("2", "4"),
+  authorizeRoles("2"),
   upload.single("file"),
   importacionesMultas 
 );
 costosRouter.post(
   "/importacionTelepases",
   auth,
-  authorizeRoles("2", "4"),
+  authorizeRoles("2"),
   upload.single("file"),
   importacionesTelepases 
 );

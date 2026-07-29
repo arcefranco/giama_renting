@@ -63,6 +63,7 @@ const ReporteContratos = () => {
   } = useSelector((state) => state.alquileresReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { roles, username } = useSelector((state) => state.loginReducer)
+  const userRoles = roles ? roles.split(",") : []
   const { modelos } = useSelector((state) => state.generalesReducer)
   const { clientes } = useSelector((state) => state.clientesReducer)
 
@@ -186,6 +187,7 @@ const ReporteContratos = () => {
   }, [vehiculos]);
 
   const renderModificar = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("3")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
@@ -223,6 +225,7 @@ const ReporteContratos = () => {
   }
 
   const renderRenovarAlquiler = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("3")) return null;
     const row = data.data;
     const cliente = clientes?.find(c => c.id == row.id_cliente);
     const esEmpresa = !!(cliente?.razon_social);
@@ -526,7 +529,7 @@ const ReporteContratos = () => {
           customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
         <Column caption="" cellRender={renderModificar} alignment="center" />
         {
-          hasAdminAccess(roles) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
+          (roles?.includes("1") || roles?.includes("3")) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
         }
         <Column dataField="nro_asiento" caption="Asiento depósito" alignment="center" />
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />

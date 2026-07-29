@@ -35,33 +35,33 @@ vehiculosRouter.use((req, res, next) => {
 vehiculosRouter.get(
   "/getVehiculos",
   auth,
-  authorizeRoles("5"),
+  authorizeRoles("4", "5"),
   getVehiculos
 );
 vehiculosRouter.post(
   "/getVehiculosById",
   auth,
-  authorizeRoles("5"),
+  authorizeRoles("4", "5"),
   getVehiculosById
 );
 vehiculosRouter.post(
   "/postVehiculo",
   auth,
-  authorizeRoles("2"),
+  authorizeAdmin(),
   upload.array("images"),
   postVehiculo
 );
 vehiculosRouter.post(
   "/postImagenesVehiculo",
   auth,
-  authorizeRoles("4", "3"),
+  authorizeRoles("4"),
   upload.array("images"),
   postImagenesVehiculo
 );
 vehiculosRouter.post(
   "/postVehiculosMasivos",
   auth,
-  authorizeRoles("2"),
+  authorizeAdmin(),
   upload.single("file"),
   postVehiculosMasivos
 );
@@ -82,15 +82,15 @@ vehiculosRouter.post("/getCostoNetoVehiculo", auth, getCostoNetoVehiculo);
 vehiculosRouter.post(
   "/getSituacionFlota",
   auth,
-  authorizeRoles("5"),
+  authorizeRoles("4", "5"),
   getSituacionFlota
 );
-vehiculosRouter.post("/getAlquileresPeriodo", auth, authorizeRoles("5"), getAlquileresPeriodo);
-vehiculosRouter.post("/getAmortizacion", auth, authorizeRoles("5"), getAmortizacion);
+vehiculosRouter.post("/getAlquileresPeriodo", auth, authorizeRoles("4", "5"), getAlquileresPeriodo);
+vehiculosRouter.post("/getAmortizacion", auth, authorizeRoles("4", "5"), getAmortizacion);
 vehiculosRouter.post(
   "/getFichas",
   auth,
-  authorizeRoles("5"),
+  authorizeRoles("4", "5"),
   getFichas
 );
 vehiculosRouter.post(

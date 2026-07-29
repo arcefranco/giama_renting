@@ -39,13 +39,13 @@ clientesRouter.post(
 clientesRouter.get(
   "/getClientes",
   auth,
-  authorizeRoles("5"),
+  authorizeRoles("3", "4", "5"),
   getClientes
 );
-clientesRouter.post("/getclientesById", auth,   authorizeRoles("5"), getClientesById);
-clientesRouter.post("/getDateroByIdCliente", auth,   authorizeRoles("5"), getDateroByIdCliente);
-clientesRouter.post("/getEstadoCliente", auth,   authorizeRoles("5"), getEstadoCliente);
-clientesRouter.post("/getImagenesclientes", auth,   authorizeRoles("5"), getImagenesClientes);
+clientesRouter.post("/getclientesById", auth,   authorizeRoles("3", "4", "5"), getClientesById);
+clientesRouter.post("/getDateroByIdCliente", auth,   authorizeRoles("3", "4", "5"), getDateroByIdCliente);
+clientesRouter.post("/getEstadoCliente", auth,   authorizeRoles("3", "4", "5"), getEstadoCliente);
+clientesRouter.post("/getImagenesclientes", auth,   authorizeRoles("3", "4", "5"), getImagenesClientes);
 clientesRouter.post("/eliminarImagenes", auth, authorizeRoles("3"), eliminarImagenes);
 clientesRouter.post("/updateCliente", auth, authorizeRoles("3"), updateCliente);
 /* clientesRouter.post(

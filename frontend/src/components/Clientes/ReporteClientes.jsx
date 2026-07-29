@@ -32,6 +32,9 @@ const ReporteClientes = () => {
     isSuccess,
     isLoading
   } = useSelector((state) => state.clientesReducer)
+  
+  const { roles } = useSelector((state) => state.loginReducer);
+  const userRoles = roles ? roles.split(",") : [];
   useToastFeedback({
     isError,
     isSuccess,
@@ -71,6 +74,7 @@ const ReporteClientes = () => {
     }
   }
   const renderCtaCteCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}pagosClientes/${data.data.id}`, '_blank')}
@@ -91,6 +95,7 @@ const ReporteClientes = () => {
     );
   };
   const renderModificarCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("3")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}clientes/actualizar/${data.data.id}`, '_blank')}

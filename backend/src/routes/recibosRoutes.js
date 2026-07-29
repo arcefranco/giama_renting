@@ -11,8 +11,8 @@ recibosRouter.use((req, res, next) => {
   next();
 });
 
-recibosRouter.post("/getReciboById", auth, authorizeRoles("5"), getReciboById);
-recibosRouter.get("/getRecibos", auth, authorizeRoles("5"), getRecibos);
-recibosRouter.post("/getRecibosByFormaCobro", auth, authorizeRoles("5"), getRecibosByFormaCobro);
+recibosRouter.post("/getReciboById", auth, authorizeRoles("2"), getReciboById);
+recibosRouter.get("/getRecibos", auth, authorizeRoles("2"), getRecibos);
+recibosRouter.post("/getRecibosByFormaCobro", auth, authorizeRoles("2"), getRecibosByFormaCobro);
 recibosRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo)
 export default recibosRouter;

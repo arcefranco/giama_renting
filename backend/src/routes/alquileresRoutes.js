@@ -31,7 +31,7 @@ alquileresRouter.use((req, res, next) => {
 alquileresRouter.post(
   "/contrato",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("3"),
   postContratoAlquiler
 );
 alquileresRouter.post("/postAlquiler", auth, authorizeRoles("2"), postAlquiler);
@@ -54,26 +54,26 @@ alquileresRouter.post("/id", getAlquilerByIdContrato);
 alquileresRouter.post(
   "/contrato/id",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2", "3"),
   getContratoById
 );
-alquileresRouter.post("/", auth, authorizeRoles("2", "3", "4"), getAlquileres);
+alquileresRouter.post("/", auth, authorizeRoles("2", "3"), getAlquileres);
 alquileresRouter.post(
   "/contratos",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2", "3"),
   getContratos
 );
 
 alquileresRouter.post(
   "/contratosAVencer",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2", "3"),
   getContratosAVencer
 );
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
-alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
+alquileresRouter.post("/contrato/anulacion", auth, authorizeRoles("3"), anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
-alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeAdmin(), cambioVehiculo);
-alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("2"), renovacionContratoFlota);
+alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeRoles("3"), cambioVehiculo);
+alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("3"), renovacionContratoFlota);
 export default alquileresRouter;
