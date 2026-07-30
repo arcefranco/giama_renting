@@ -291,7 +291,8 @@ export const importacionesTelepases = async (req, res) => {
 
             const tarifa = parseMonto(fila.TARIFA);
             const bonificacion = parseMonto(fila.BONIFICACION);
-            const montoNeto = tarifa - bonificacion;
+            // Tomamos la tarifa bruta sin descontar la bonificación según lo solicitado
+            const montoNeto = tarifa;
 
             if (montoNeto <= 0) {
                 continue; // Pasada sin costo neto, la ignoramos
@@ -468,10 +469,8 @@ export const importacionesTelepases = async (req, res) => {
 
                 const lineasObservacion = clienteConsolidado.detallePatentes.map((d, index) => {
                     if (index === 0) {
-                        // La primera línea será concatenada por costosController con "Telepase - Dominio: X - OBS: "
-                        return `Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
+                        return `Dominio(s): ${patentesStr} - Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
                     }
-                    // Las siguientes líneas simulan ser ítems independientes
                     return `Telepase - Dominio: ${d.patente} - OBS: Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
                 });
                 const observacion = lineasObservacion.join('\n');
