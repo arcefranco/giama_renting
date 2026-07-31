@@ -605,20 +605,8 @@ const Prorrateo = () => {
               <select name="tipo_comprobante" style={{ width: "130%" }} value={form["tipo_comprobante"]}
                 onChange={handleChange} id="">
                 <option value={0}></option>
-                {(!form.cod_proveedor || proveedores?.find(e => e.Codigo == form.cod_proveedor)?.TipoResponsable == 1) && (
-                  <>
-                    <option value={1}>FA</option>
-                    <option value={2}>NDA</option>
-                    <option value={4}>NCA</option>
-                  </>
-                )}
-                {(!form.cod_proveedor || proveedores?.find(e => e.Codigo == form.cod_proveedor)?.TipoResponsable != 1) && (
-                  <>
-                    <option value={3}>FC</option>
-                    <option value={5}>NDC</option>
-                    <option value={6}>NCC</option>
-                  </>
-                )}
+                <option value={1}>FA</option>
+                <option value={3}>FC</option>
               </select>
             </div>
             <div className={styles.inputContainer}>
