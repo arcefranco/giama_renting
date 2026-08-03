@@ -63,89 +63,62 @@ const FichaCtaCte = () => {
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet("Cuentas Corrientes");
 
-        let rowIndex = 1;
+        // 1. Single header row
+        const headerRow = ws.getRow(1);
+        const headers = ["CHOFER", "DOMINIO", "FECHA", "CONCEPTO", "DEBE", "HABER", "SALDO"];
+
+        headers.forEach((h, i) => {
+            const cell = headerRow.getCell(i + 1);
+            cell.value = h;
+            cell.font = { bold: true };
+            cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFFFFF00" }, // Amarillo
+            };
+        });
+
+        let rowIndex = 2;
 
         clientesBase.forEach((cliente) => {
-            const saldo = Math.trunc(cliente.saldo).toLocaleString("es-AR");
-
-            // =========================
-            // TITULO CLIENTE
-            // =========================
-            const titleRow = ws.getRow(rowIndex);
-
-            // Valores separados
-            titleRow.getCell(1).value = cliente.nombre_cliente;
-            titleRow.getCell(2).value = "Saldo";
-            titleRow.getCell(3).value = Math.trunc(cliente.saldo);
-
-            // Estilos
-            [1, 2, 3].forEach((col) => {
-                const cell = titleRow.getCell(col);
-
-                cell.font = { bold: true };
-                cell.fill = {
-                    type: "pattern",
-                    pattern: "solid",
-                    fgColor: { argb: "FFF4B084" }, // canela oscuro
-                };
-            });
-
-            // (opcional pero MUY recomendable)
-            titleRow.getCell(3).numFmt = '#,##0'; // formato número
-            titleRow.getCell(3).alignment = { horizontal: "right" };
-
-            rowIndex++;
-
-            // =========================
-            // ENCABEZADOS
-            // =========================
-            const headerRow = ws.getRow(rowIndex);
-            const headers = ["Fecha", "Concepto", "Debe", "Haber", "Saldo"];
-
-            headers.forEach((h, i) => {
-                const cell = headerRow.getCell(i + 1);
-
-                cell.value = h;
-                cell.font = { bold: true };
-                cell.fill = {
-                    type: "pattern",
-                    pattern: "solid",
-                    fgColor: { argb: "FFF8CBAD" }, // canela claro
-                };
-            });
-
-            rowIndex++;
-
-            // =========================
-            // DETALLE (AGRUPADO)
-            // =========================
             let saldoCorriente = 0;
+            const chofer = cliente.nombre_cliente;
+
             cliente.detalle.forEach((mov) => {
                 const row = ws.getRow(rowIndex);
+
+                // Extraer dominio del concepto usando regex (patente nueva o vieja)
+                let dominio = "";
+                if (mov.concepto) {
+                    const match = mov.concepto.match(/\b([A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d{3})\b/i);
+                    if (match) {
+                        dominio = match[0].toUpperCase();
+                    }
+                }
+
+                row.getCell(1).value = chofer;
+                row.getCell(2).value = dominio;
+
                 if (mov.fecha) {
                     const date = new Date(mov.fecha);
-
-                    const cell = row.getCell(1);
+                    const cell = row.getCell(3);
                     cell.value = date;
-
-                    cell.numFmt = "dd-mm-yyyy"; // 👈 formato Excel
+                    cell.numFmt = "dd/mm/yyyy";
                 } else {
-                    row.getCell(1).value = "";
+                    row.getCell(3).value = "";
                 }
-                row.getCell(2).value = mov.concepto || "";
-                row.getCell(3).value = mov.debe ? Math.trunc(mov.debe) : "";
-                row.getCell(4).value = mov.haber ? Math.trunc(mov.haber) : "";
-                saldoCorriente += (Number(mov.debe) || 0) - (Number(mov.haber) || 0);
-                row.getCell(5).value = Math.trunc(saldoCorriente);
-                row.getCell(5).numFmt = '#,##0';
 
-                row.outlineLevel = 1; // 👈 hace plegable
+                row.getCell(4).value = mov.concepto || "";
+                row.getCell(5).value = mov.debe ? Math.trunc(mov.debe) : "";
+                row.getCell(6).value = mov.haber ? Math.trunc(mov.haber) : "";
+
+                saldoCorriente += (Number(mov.debe) || 0) - (Number(mov.haber) || 0);
+
+                row.getCell(7).value = Math.trunc(saldoCorriente);
+                row.getCell(7).numFmt = '#,##0';
 
                 rowIndex++;
             });
-
-            // espacio entre clientes
-            rowIndex += 2;
         });
 
         // =========================
@@ -153,27 +126,25 @@ const FichaCtaCte = () => {
         // =========================
 
         ws.columns = [
-            { width: 15 },
-            { width: 50 },
-            { width: 18 },
-            { width: 15 },
-            { width: 15 },
-            { width: 15 },
+            { width: 35 }, // CHOFER
+            { width: 15 }, // DOMINIO
+            { width: 15 }, // FECHA
+            { width: 65 }, // CONCEPTO
+            { width: 15 }, // DEBE
+            { width: 15 }, // HABER
+            { width: 15 }, // SALDO
         ];
-
-        // comportamiento del grouping
-        ws.properties.outlineProperties = {
-            summaryBelow: false,
-        };
 
         // =========================
         // EXPORT
         // =========================
         const buffer = await wb.xlsx.writeBuffer();
+        
+        const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g, '-');
 
         saveAs(
             new Blob([buffer]),
-            "Ficha_Cta_Cte.xlsx"
+            `Ficha_Cta_Cte_${dateStr}.xlsx`
         );
     };
 
