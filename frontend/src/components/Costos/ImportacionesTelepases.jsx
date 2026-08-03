@@ -135,6 +135,14 @@ const ImportacionesTelepases = () => {
                         >
                             Subir Telepases
                         </button>
+                        <a 
+                            href="/Plantilla_Telepases.xlsx" 
+                            download="Plantilla_Telepases_Prueba.xlsx"
+                            className={styles.sendBtn}
+                            style={{ backgroundColor: '#4caf50', marginLeft: '10px', textDecoration: 'none', display: 'inline-block' }}
+                        >
+                            Descargar Plantilla
+                        </a>
                     </div>
                 </div>
 

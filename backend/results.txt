@@ -1,0 +1,2 @@
+tbl	col	nombre
+conceptos_costos	nombre	Excedentes Pasadas Telepase
