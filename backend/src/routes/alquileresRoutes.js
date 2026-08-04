@@ -31,7 +31,7 @@ alquileresRouter.use((req, res, next) => {
 alquileresRouter.post(
   "/contrato",
   auth,
-  authorizeRoles("3"),
+  authorizeRoles("2"),
   postContratoAlquiler
 );
 alquileresRouter.post("/postAlquiler", auth, authorizeRoles("2"), postAlquiler);
@@ -72,8 +72,8 @@ alquileresRouter.post(
   getContratosAVencer
 );
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
-alquileresRouter.post("/contrato/anulacion", auth, authorizeRoles("3"), anulacionContrato);
+alquileresRouter.post("/contrato/anulacion", auth, authorizeRoles("2"), anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
-alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeRoles("3"), cambioVehiculo);
-alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("3"), renovacionContratoFlota);
+alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeRoles("2"), cambioVehiculo);
+alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("2"), renovacionContratoFlota);
 export default alquileresRouter;
