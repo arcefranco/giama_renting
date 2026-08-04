@@ -244,11 +244,9 @@ const ReporteContratos = () => {
               fechaDesde = `${d.getFullYear()}-${m}-${dDay}`;
             }
 
-            // Buscar todos los contratos de la misma flota (mismo cliente + mismas fechas de contrato)
+            // Buscar todos los contratos de la misma flota (mismo cliente) para permitir unificar contratos viejos con distintas fechas
             const contratosFlota = (esAVencer ? contratosAVencer : contratos)?.filter(
               c => c.id_cliente === row.id_cliente
-                && c.fecha_desde === row.fecha_desde
-                && c.fecha_hasta === row.fecha_hasta
             ) || [];
 
             const vehiculosFlota = contratosFlota.map(c => {
@@ -256,6 +254,7 @@ const ReporteContratos = () => {
               const m = modelos?.find(mod => mod.id === v?.modelo);
               return {
                 id: c.id_vehiculo,
+                id_alquiler: c.ultimo_alquiler_id,
                 dominio: v?.dominio || v?.dominio_provisorio || 'SIN DOMINIO',
                 modelo: m?.nombre || ''
               };
@@ -268,6 +267,7 @@ const ReporteContratos = () => {
               fecha_hasta: '',
               importe_total_nuevo: '',
               vehiculos_flota: vehiculosFlota,
+              alquileres_ids: contratosFlota.map(c => c.ultimo_alquiler_id),
             });
           }}
           style={{
@@ -360,14 +360,19 @@ const ReporteContratos = () => {
       toast.error("Ingresá el importe total de la renovación");
       return;
     }
+    if (!modalFlota.alquileres_ids || modalFlota.alquileres_ids.length === 0) {
+      toast.error("Tenés que incluir al menos un vehículo en la renovación");
+      return;
+    }
     dispatch(renovacionFlota({
       id_alquiler: modalFlota.id_alquiler,
+      alquileres_ids: modalFlota.alquileres_ids,
       fecha_desde_nuevo: modalFlota.fecha_desde,
       fecha_hasta_nuevo: modalFlota.fecha_hasta,
       importe_total_nuevo: parseFloat(modalFlota.importe_total_nuevo),
       usuario: username,
     }));
-    setModalFlota({ visible: false, id_alquiler: null, fecha_desde: '', fecha_hasta: '', importe_total_nuevo: '', vehiculos_flota: [] });
+    setModalFlota({ visible: false, id_alquiler: null, alquileres_ids: [], fecha_desde: '', fecha_hasta: '', importe_total_nuevo: '', vehiculos_flota: [] });
   };
 
   return (
@@ -390,18 +395,37 @@ const ReporteContratos = () => {
             {modalFlota.vehiculos_flota?.length > 0 && (
               <div style={{ marginBottom: '1rem', background: '#f5f5f5', borderRadius: '8px', padding: '10px 12px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '6px' }}>
-                  Vehículos incluidos ({modalFlota.vehiculos_flota.length})
+                  Vehículos incluidos ({modalFlota.alquileres_ids.length} de {modalFlota.vehiculos_flota.length}) - Clickeá para excluir/incluir
                 </span>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {modalFlota.vehiculos_flota.map(v => (
-                    <li key={v.id} style={{
-                      background: '#1a1a2e', color: '#fff',
-                      borderRadius: '4px', padding: '3px 8px',
-                      fontSize: '11px', fontWeight: 'bold'
-                    }}>
-                      {v.dominio} <span style={{ fontWeight: 'normal', opacity: 0.8 }}>{v.modelo}</span>
-                    </li>
-                  ))}
+                  {modalFlota.vehiculos_flota.map(v => {
+                    const isSelected = modalFlota.alquileres_ids.includes(v.id_alquiler);
+                    return (
+                      <li 
+                        key={v.id} 
+                        onClick={() => {
+                          setModalFlota(prev => {
+                            const newIds = isSelected 
+                              ? prev.alquileres_ids.filter(id => id !== v.id_alquiler)
+                              : [...prev.alquileres_ids, v.id_alquiler];
+                            return { ...prev, alquileres_ids: newIds };
+                          });
+                        }}
+                        style={{
+                          background: isSelected ? '#1a1a2e' : '#e0e0e0', 
+                          color: isSelected ? '#fff' : '#666',
+                          borderRadius: '4px', padding: '3px 8px',
+                          fontSize: '11px', fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          border: isSelected ? '1px solid #1a1a2e' : '1px solid #ccc'
+                        }}
+                        title={isSelected ? "Clic para quitar de la renovación" : "Clic para incluir en la renovación"}
+                      >
+                        {v.dominio} <span style={{ fontWeight: 'normal', opacity: isSelected ? 0.8 : 1 }}>{v.modelo}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
