@@ -74,7 +74,7 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["3", "4"]} />}>
             <Route path='/vehiculos/imagenes/:id' element={<ImagenesVehiculo />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["1"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["2", "4"]} />}>
             <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["5"]} />}>

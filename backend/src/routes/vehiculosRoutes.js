@@ -74,7 +74,7 @@ vehiculosRouter.post("/eliminarImagenes", auth, eliminarImagenes);
 vehiculosRouter.post(
   "/updateVehiculo",
   auth,
-  authorizeAdmin(),
+  authorizeRoles("2", "4"),
   updateVehiculo
 );
 vehiculosRouter.post("/getCostosPeriodo", auth, getCostosPeriodo);
