@@ -3357,6 +3357,7 @@ export const renovacionContratoFlota = async (req, res) => {
   let transaction_pa7_giama_renting;
   const {
     id_alquiler,
+    alquileres_ids,
     fecha_desde_nuevo,
     fecha_hasta_nuevo,
     importe_total_nuevo,
@@ -3391,36 +3392,58 @@ export const renovacionContratoFlota = async (req, res) => {
       "SELECT nro_asiento, id_cliente FROM alquileres WHERE id = ?",
       {
         type: QueryTypes.SELECT,
-        replacements: [id_alquiler],
+        replacements: [alquileres_ids && alquileres_ids.length > 0 ? alquileres_ids[0] : id_alquiler],
         transaction: transaction_giama_renting,
       },
     );
     if (!resultAlquilerRef.length)
       throw new Error("No se encontró el alquiler de referencia");
 
-    const nro_asiento_flota = resultAlquilerRef[0].nro_asiento;
     const id_cliente = resultAlquilerRef[0].id_cliente;
-    if (!nro_asiento_flota)
-      throw new Error(
-        "Este alquiler no pertenece a una flota (sin nro_asiento)",
-      );
 
-    // 2. Traer TODOS los alquileres vigentes de esta flota (mismo nro_asiento, no anulados)
-    const alquileresFlota = await giama_renting.query(
-      `SELECT a.id, a.id_vehiculo, a.id_contrato,
-              v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre,
-              c.fecha_hasta AS contrato_fecha_hasta
-       FROM alquileres a
-       LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
-       LEFT JOIN modelos m ON m.id = v.modelo
-       LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
-       WHERE a.nro_asiento = ? AND a.anulado = 0`,
-      {
-        type: QueryTypes.SELECT,
-        replacements: [nro_asiento_flota],
-        transaction: transaction_giama_renting,
-      },
-    );
+    let alquileresFlota;
+
+    if (alquileres_ids && alquileres_ids.length > 0) {
+      // 2. Traer TODOS los alquileres especificados desde el frontend (ideal para contratos viejos sin mismo nro_asiento)
+      alquileresFlota = await giama_renting.query(
+        `SELECT a.id, a.id_vehiculo, a.id_contrato,
+                v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre,
+                c.fecha_hasta AS contrato_fecha_hasta
+         FROM alquileres a
+         LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
+         LEFT JOIN modelos m ON m.id = v.modelo
+         LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
+         WHERE a.id IN (?) AND a.anulado = 0`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [alquileres_ids],
+          transaction: transaction_giama_renting,
+        },
+      );
+    } else {
+      // Fallback a lógica anterior (por nro_asiento)
+      const nro_asiento_flota = resultAlquilerRef[0].nro_asiento;
+      if (!nro_asiento_flota)
+        throw new Error(
+          "Este alquiler no pertenece a una flota (sin nro_asiento)",
+        );
+
+      alquileresFlota = await giama_renting.query(
+        `SELECT a.id, a.id_vehiculo, a.id_contrato,
+                v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre,
+                c.fecha_hasta AS contrato_fecha_hasta
+         FROM alquileres a
+         LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
+         LEFT JOIN modelos m ON m.id = v.modelo
+         LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
+         WHERE a.nro_asiento = ? AND a.anulado = 0`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [nro_asiento_flota],
+          transaction: transaction_giama_renting,
+        },
+      );
+    }
     if (!alquileresFlota.length)
       throw new Error("No se encontraron alquileres vigentes para esta flota");
 
