@@ -73,14 +73,14 @@ costosRouter.post(
 costosRouter.post(
   "/importacionMultas",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("2", "3", "4"),
   upload.single("file"),
   importacionesMultas 
 );
 costosRouter.post(
   "/importacionTelepases",
   auth,
-  authorizeRoles("2"),
+  authorizeRoles("2", "3", "4"),
   upload.single("file"),
   importacionesTelepases 
 );

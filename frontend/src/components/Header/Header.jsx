@@ -13,44 +13,27 @@ const menuItems = [
     title: "Vehículos",
     items: [
       { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["1"] },
-      { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["4", "5"] },
+      { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["2", "3", "4", "5"] },
       { label: "Listado fichas", to: "/vehiculos/ficha/reporte", roles: ["4", "5"] },
       { label: "Situación de la flota", to: "/vehiculos/situacionFlota", roles: ["4", "5"] },
       { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["1"] }
     ],
-    /*     submenus: [
-          {
-            title: "Logística",
-            items: [
-              { label: "Formulario de ingreso", to: "/vehiculos" },
-              { label: "Reporte vehículos", to: "/vehiculosReporte" },
-              { label: "Reporte fichas de vehículos", to: "/vehiculos/ficha/reporte" }
-            ]
-          }, */
-    /*       {
-            title: "Por marca",
-            items: [
-              { label: "Ford", to: "/vehiculos/ford" },
-              { label: "Chevrolet", to: "/vehiculos/chevrolet" }
-            ]
-          } */
-    /*   ] */
   },
   {
     title: "Clientes",
     items: [
-      { label: "Ingreso de clientes", to: "/clientes", roles: ["3"] },
-      { label: "Listado de clientes", to: "/clientesReporte", roles: ["3", "4", "5"] },
-      { label: "Cta cte clientes", to: "/pagosClientes", roles: ["2"] },
-      { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["2"] },
+      { label: "Ingreso de clientes", to: "/clientes", roles: ["2", "3"] },
+      { label: "Listado de clientes", to: "/clientesReporte", roles: ["2", "3", "4"] },
+      { label: "Cta cte clientes", to: "/pagosClientes", roles: ["2", "3", "4", "5"] },
+      { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["2", "3", "4", "5"] },
     ]
   },
   {
     title: "Alquileres",
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["2"] },
-      { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3"] },
-      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3"] },
+      { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3", "5"] },
+      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5"] },
     ]
   },
   {
@@ -72,8 +55,8 @@ const menuItems = [
       { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateo", roles: ["2"] },
       { label: "Listado de recibos", to: "/recibos/reporte" },
-      { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "4"] },
-      { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2", "4"] },
+      { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "3", "4"] },
+      { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2", "3", "4"] },
     ]
   },
   ,

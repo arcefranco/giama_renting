@@ -12,10 +12,10 @@ ctacteRouter.use((req, res, next) => {
 });
 
 ctacteRouter.post("/pago", auth, authorizeRoles("2"), postPago);
-ctacteRouter.post("/ctacteCliente", auth, authorizeRoles("2"), ctaCteCliente);
-ctacteRouter.post("/exportarCtacteCliente", auth, authorizeRoles("2"), exportarCtacteCliente);
-ctacteRouter.post("/fichaCtaCte", auth, authorizeRoles("2"), fichaCtaCte);
-ctacteRouter.post("/getEstadoDeuda", auth, authorizeRoles("2"), getEstadoDeuda);
+ctacteRouter.post("/ctacteCliente", auth, authorizeRoles("2", "3", "4", "5"), ctaCteCliente);
+ctacteRouter.post("/exportarCtacteCliente", auth, authorizeRoles("2", "3", "4", "5"), exportarCtacteCliente);
+ctacteRouter.post("/fichaCtaCte", auth, authorizeRoles("2", "3", "4", "5"), fichaCtaCte);
+ctacteRouter.post("/getEstadoDeuda", auth, authorizeRoles("2", "3", "4", "5"), getEstadoDeuda);
 ctacteRouter.post("/anulacionFactura", auth, authorizeRoles("2"), anulacionFactura);
 ctacteRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo);
 ctacteRouter.post("/anulacionDeuda", auth, authorizeRoles("2"), anulacionDeuda);

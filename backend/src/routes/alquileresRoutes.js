@@ -61,14 +61,14 @@ alquileresRouter.post("/", auth, authorizeRoles("2", "3"), getAlquileres);
 alquileresRouter.post(
   "/contratos",
   auth,
-  authorizeRoles("2", "3"),
+  authorizeRoles("2", "3", "5"),
   getContratos
 );
 
 alquileresRouter.post(
   "/contratosAVencer",
   auth,
-  authorizeRoles("2", "3"),
+  authorizeRoles("2", "3", "5"),
   getContratosAVencer
 );
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
