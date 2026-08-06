@@ -1,6 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { padWithZeros } from "../../helpers/padWithZeros.js";
 import { esAnteriorAHoy } from "../../helpers/esAnteriorAHoy.js";
 import {
   formatearFechaISO,
@@ -83,8 +84,7 @@ const insertAlquiler = async (body) => {
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar alquiler${
-        error.message ? `${" :"}${error.message}` : ""
+      `Error al insertar alquiler${error.message ? `${" :"}${error.message}` : ""
       }`,
     );
   }
@@ -336,7 +336,7 @@ export const getContratos = async (req, res) => {
     if (vigentes) {
       result = await giama_renting.query(
         baseQuery +
-          `
+        `
         WHERE (a.fecha_hasta <= c.fecha_hasta OR a.id IS NULL)
         ORDER BY a.id;`,
         { type: QueryTypes.SELECT },
@@ -344,7 +344,7 @@ export const getContratos = async (req, res) => {
     } else {
       result = await giama_renting.query(
         baseQuery +
-          `
+        `
         ORDER BY c.id;`,
         { type: QueryTypes.SELECT },
       );
@@ -3413,7 +3413,7 @@ export const renovacionContratoFlota = async (req, res) => {
          LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
          LEFT JOIN modelos m ON m.id = v.modelo
          LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
-         WHERE a.id IN (?) AND a.anulado = 0`,
+         WHERE a.id IN (?)`,
         {
           type: QueryTypes.SELECT,
           replacements: [alquileres_ids],
@@ -3597,6 +3597,7 @@ export const renovacionContratoFlota = async (req, res) => {
     );
 
     // 7. Generar asiento contable de la deuda
+    const nro_comprobante_deuda = padWithZeros(`${NroAsiento_deuda}`, 13);
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
@@ -3605,10 +3606,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importeTotal,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       NroAsientoSecundario_deuda,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c_movimientos",
@@ -3618,10 +3619,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_neto_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       NroAsientoSecundario_deuda,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c_movimientos",
@@ -3631,10 +3632,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_iva_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       NroAsientoSecundario_deuda,
-      null,
+      "ASD",
     );
     // Movimientos secundarios
     await asientoContable(
@@ -3645,10 +3646,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importeTotal,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       null,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c2_movimientos",
@@ -3658,10 +3659,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_neto_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       null,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c2_movimientos",
@@ -3671,10 +3672,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_iva_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       null,
-      null,
+      "ASD",
     );
 
     await transaction_giama_renting.commit();
