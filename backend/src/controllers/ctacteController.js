@@ -1615,7 +1615,7 @@ export const postDevolucionGarantia = async (req, res) => {
         message: "No se encontró el contrato de la garantía original.",
       });
     }
-
+//COMENTARIO
     const depositoTotal = Number(contrato.deposito_garantia) || 0;
     const devueltoHastaAhora = Number(contrato.garantia_devuelta) || 0;
     const montoADevolver = Number(importe) || 0;
