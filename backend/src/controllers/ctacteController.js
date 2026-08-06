@@ -1377,7 +1377,11 @@ export const anulacionDeuda = async (req, res) => {
   let nro_asiento_original;
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
-  if (tipo == 2) {
+  if (tipo == 1) {
+    tabla = "alquileres";
+    campo = "anulado";
+    campo_fecha_anulacion = "fecha_anulacion";
+  } else if (tipo == 2) {
     tabla = "contratos_alquiler";
     campo = "anulado_deposito";
     campo_fecha_anulacion = "fecha_anulacion_deposito";
@@ -1424,7 +1428,7 @@ export const anulacionDeuda = async (req, res) => {
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   try {
     const nro_comprobante = padWithZeros(`${NroAsiento_nuevo}`, 13);
-    await giama_renting.query(
+    await pa7_giama_renting.query(
       `INSERT INTO c_movimientos (
     Fecha,
     NroAsiento,
@@ -1462,7 +1466,7 @@ export const anulacionDeuda = async (req, res) => {
       },
     );
 
-    await giama_renting.query(
+    await pa7_giama_renting.query(
       `INSERT INTO c2_movimientos (
     Fecha,
     NroAsiento,
@@ -1496,13 +1500,23 @@ export const anulacionDeuda = async (req, res) => {
         transaction: transaction_pa7_giama_renting,
       },
     );
-    await giama_renting.query(
-      `UPDATE ${tabla} SET ${campo} = 1, ${campo_fecha_anulacion} = ? WHERE id = ?`,
-      {
-        type: QueryTypes.UPDATE,
-        replacements: [fecha, id_registro],
-      },
-    );
+    if (tabla === "alquileres" && nro_asiento_original) {
+      await giama_renting.query(
+        `UPDATE alquileres SET anulado = 1, fecha_anulacion = ? WHERE nro_asiento = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [fecha, nro_asiento_original],
+        },
+      );
+    } else {
+      await giama_renting.query(
+        `UPDATE ${tabla} SET ${campo} = 1, ${campo_fecha_anulacion} = ? WHERE id = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [fecha, id_registro],
+        },
+      );
+    }
     await transaction_pa7_giama_renting.commit();
     return res.send({
       status: true,
