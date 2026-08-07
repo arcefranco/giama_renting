@@ -61,7 +61,6 @@ const UpdateVehiculo = () => {
     }
     if (userRoles.includes("2")) {
       setDisabledFin(false)
-      setDisabledAdm(false)
     }
     if (userRoles.includes("1")) {
       setDisabledAdm(false)

@@ -56,7 +56,7 @@ const menuItems = [
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateo", roles: ["2"] },
       { label: "Listado de recibos", to: "/recibos/reporte" },
       { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "3", "4"] },
-      { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2", "3", "4"] },
+      { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2"] },
     ]
   },
   ,

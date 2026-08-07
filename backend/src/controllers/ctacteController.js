@@ -1238,8 +1238,8 @@ export const anulacionFactura = async (req, res) => {
         `INSERT INTO facturas 
              (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${Object.keys(otrosCampos).join(", ")})
              VALUES (?,?,?,?,?,?,?,?, ${Object.keys(otrosCampos)
-               .map(() => "?")
-               .join(", ")})`,
+          .map(() => "?")
+          .join(", ")})`,
         {
           type: QueryTypes.INSERT,
           replacements: [
@@ -1676,9 +1676,9 @@ export const postDevolucionGarantia = async (req, res) => {
             id_concepto_devolucion,
             importe * -1,
             "Devolución de Garantía" +
-              sufijoDominio +
-              " - " +
-              (observacion || ""),
+            sufijoDominio +
+            " - " +
+            (observacion || ""),
             NroAsiento_nuevo,
           ],
           type: QueryTypes.INSERT,
@@ -1703,9 +1703,9 @@ export const postDevolucionGarantia = async (req, res) => {
           id_forma_pago,
           importe * -1,
           "Devolución de Garantía" +
-            sufijoDominio +
-            " - " +
-            (observacion || ""),
+          sufijoDominio +
+          " - " +
+          (observacion || ""),
           NroAsiento_nuevo,
         ],
         type: QueryTypes.INSERT,
@@ -1894,8 +1894,8 @@ ORDER BY m.fecha, m.tipo;`,
     });
 
     const worksheet = xlsx.utils.json_to_sheet(formattedData);
-    
-    const objectMaxLength = []; 
+
+    const objectMaxLength = [];
     formattedData.forEach((row) => {
       Object.entries(row).forEach(([key, value], idx) => {
         let columnValue = value ? value.toString().length : 0;

@@ -80,7 +80,7 @@ costosRouter.post(
 costosRouter.post(
   "/importacionTelepases",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2"),
   upload.single("file"),
   importacionesTelepases 
 );
