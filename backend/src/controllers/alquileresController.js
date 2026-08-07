@@ -3465,15 +3465,24 @@ export const renovacionContratoFlota = async (req, res) => {
     let restanteTotal = importeTotal;
     let restanteNeto = parseFloat((importeTotal / 1.21).toFixed(2));
 
+    // 5. Formateo de fechas para el detalle
+    const fechaDesdeSplit = fecha_desde_nuevo.split("-");
+    const fechaHastaSplit = fecha_hasta_nuevo.split("-");
+    const fechaDesdeStr = `${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]}`;
+    const fechaHastaStr = `${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]}`;
+
     // Detección de empresa y mapeo contable
     const resultClienteRenov = await giama_renting.query(
-      "SELECT razon_social FROM clientes WHERE id = ?",
+      "SELECT razon_social, nro_documento FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
         transaction: transaction_giama_renting,
       },
     );
+    const CUIT = resultClienteRenov.length
+      ? resultClienteRenov[0]["nro_documento"] || ""
+      : "";
     const esEmpresaRenov = !!(
       resultClienteRenov.length && resultClienteRenov[0]["razon_social"]
     );
@@ -3552,7 +3561,7 @@ export const renovacionContratoFlota = async (req, res) => {
       );
 
       facturaItems.push({
-        descripcion: `Renovación Alquiler ${dominio} ${modeloStr}`,
+        descripcion: `Renovación Alquiler - desde: ${fechaDesdeStr} hasta: ${fechaHastaStr} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`,
         cantidad: 1,
         precioUnitario: itemNeto,
         porcentaje: 21,
@@ -3561,10 +3570,8 @@ export const renovacionContratoFlota = async (req, res) => {
     }
 
     // 5. Emitir una única factura consolidada en BA6
-    const fechaDesdeSplit = fecha_desde_nuevo.split("-");
-    const fechaHastaSplit = fecha_hasta_nuevo.split("-");
     const dominiosJuntos = patentesFlota.join(", ");
-    const concepto_factura = `Renovación Flota - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominios: ${dominiosJuntos}`;
+    const concepto_factura = `Renovación Flota - desde: ${fechaDesdeStr} hasta: ${fechaHastaStr} Dominios: ${dominiosJuntos}`;
 
     const importe_neto_total = (importeTotal / 1.21).toFixed(2);
     const importe_iva_total = (
