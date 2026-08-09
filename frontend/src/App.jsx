@@ -92,7 +92,7 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["1"]} />}>
             <Route path="/vehiculos/importacionMasiva" element={<ImportacionMasiva />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["2", "3"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["3"]} />}>
             <Route path="/clientes" element={<ClientesForm />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2", "3", "4"]} />}>
@@ -101,7 +101,7 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["3", "4"]} />}>
             <Route path='/clientes/imagenes/:id' element={<ImagenesClientes />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["2"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["3"]} />}>
             <Route path='/clientes/actualizar/:id' element={<UpdateCliente />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>

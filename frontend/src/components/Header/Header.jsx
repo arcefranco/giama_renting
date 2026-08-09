@@ -22,7 +22,7 @@ const menuItems = [
   {
     title: "Clientes",
     items: [
-      { label: "Ingreso de clientes", to: "/clientes", roles: ["2", "3"] },
+      { label: "Ingreso de clientes", to: "/clientes", roles: ["3"] },
       { label: "Listado de clientes", to: "/clientesReporte", roles: ["2", "3", "4"] },
       { label: "Cta cte clientes", to: "/pagosClientes", roles: ["2", "3", "4", "5"] },
       { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["2", "3", "4", "5"] },

@@ -26,14 +26,14 @@ clientesRouter.post(
   "/postCliente",
   upload.array("images"),
   auth,
-  authorizeRoles("2", "3"),
+  authorizeRoles("3"),
   postCliente
 );
 clientesRouter.post(
   "/postImagenesCliente",
   upload.array("images"),
   auth,
-  authorizeRoles("2", "3"),
+  authorizeRoles("3"),
   postImagenesCliente
 );
 clientesRouter.get(
@@ -46,8 +46,8 @@ clientesRouter.post("/getclientesById", auth,   authorizeRoles("2", "3", "4"), g
 clientesRouter.post("/getDateroByIdCliente", auth,   authorizeRoles("2", "3", "4"), getDateroByIdCliente);
 clientesRouter.post("/getEstadoCliente", auth,   authorizeRoles("2", "3", "4"), getEstadoCliente);
 clientesRouter.post("/getImagenesclientes", auth,   authorizeRoles("2", "3", "4"), getImagenesClientes);
-clientesRouter.post("/eliminarImagenes", auth, authorizeRoles("2"), eliminarImagenes);
-clientesRouter.post("/updateCliente", auth, authorizeRoles("2"), updateCliente);
+clientesRouter.post("/eliminarImagenes", auth, authorizeRoles("3"), eliminarImagenes);
+clientesRouter.post("/updateCliente", auth, authorizeRoles("3"), updateCliente);
 /* clientesRouter.post(
   "/postClientesMasivo",
   upload.single("file"),
