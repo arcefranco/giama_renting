@@ -270,7 +270,6 @@ const UpdateContrato = () => {
                             disabled={vehiculo ? true : false}
                             selected={formContrato.fecha_desde_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_desde_contrato: date }))}
-                            minDate={formContrato.fecha_desde_contrato}
                             maxDate={formContrato.fecha_hasta_contrato}
                             placeholderText="Seleccione una fecha"
 /*                             excludeDateIntervals={rangosOcupados} */
