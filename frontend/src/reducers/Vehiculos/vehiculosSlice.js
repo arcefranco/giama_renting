@@ -6,6 +6,7 @@ import axios from "axios";
 const initialState = {
   vehiculos: [],
   imagenes: [],
+  observacionesVehiculo: [],
   situacionFlota: {},
   fichas: [],
   fichaByIdVehiculo: [],
@@ -178,6 +179,26 @@ export const postActualizarKilometraje = createAsyncThunk(
   async (file, { rejectWithValue }) =>
     handleAsyncThunk(
       () => vehiculosService.postActualizarKilometraje(file),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const getObservacionesVehiculo = createAsyncThunk(
+  "getObservacionesVehiculo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.getObservacionesVehiculo(data),
+      responses.array,
+      rejectWithValue
+    )
+);
+
+export const postObservacionVehiculo = createAsyncThunk(
+  "postObservacionVehiculo",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.postObservacionVehiculo(data),
       responses.successObject,
       rejectWithValue
     )
@@ -438,6 +459,31 @@ export const vehiculosSlice = createSlice({
       state.isError = action.payload.status;
       state.message = action.payload.message;
       state.amortizacion = null;
+    });
+    builder.addCase(getObservacionesVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getObservacionesVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.observacionesVehiculo = action.payload;
+    });
+    builder.addCase(getObservacionesVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al obtener observaciones";
+    });
+    builder.addCase(postObservacionVehiculo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postObservacionVehiculo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.message = action.payload?.message || "Observación agregada con éxito";
+    });
+    builder.addCase(postObservacionVehiculo.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al agregar observación";
     });
   },
 });

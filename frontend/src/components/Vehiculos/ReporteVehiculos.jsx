@@ -13,8 +13,12 @@ import { ClipLoader } from "react-spinners";
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { ToastContainer } from 'react-toastify';
+import ObservacionesModal from './ObservacionesModal/ObservacionesModal';
+
 const ReporteVehiculos = () => {
   const dispatch = useDispatch();
+  const [modalObservacionesOpen, setModalObservacionesOpen] = useState(false);
+  const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState(null);
   useEffect(() => {
     Promise.all([
       dispatch(getVehiculos()),
@@ -78,6 +82,20 @@ const ReporteVehiculos = () => {
     const modelo = modelos.find((m) => m.id === id);
     return modelo ? modelo.nombre : id;
   };
+
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
+  const [vehiculosFiltrados, setVehiculosFiltrados] = useState([]);
+
+  useEffect(() => {
+    if (vehiculosConEstado) {
+      setVehiculosFiltrados(
+        vehiculosConEstado.filter(v => 
+          mostrarInactivos ? true : (v.activo === 1 && !v.fecha_venta)
+        )
+      );
+    }
+  }, [vehiculosConEstado, mostrarInactivos]);
+
   const handleActualizar = () => {
     dispatch(getVehiculos())
   };
@@ -129,6 +147,28 @@ const ReporteVehiculos = () => {
       </button>
     );
   };
+  const handleOpenObservaciones = (vehiculoData) => {
+    setVehiculoSeleccionado(vehiculoData);
+    setModalObservacionesOpen(true);
+  };
+  const renderObservacionesCell = (data) => {
+    return (
+      <button
+        onClick={() => handleOpenObservaciones(data.data)}
+        style={{
+          color: '#1976d2',
+          fontSize: '11px',
+          textDecoration: 'underline',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontWeight: '500',
+        }}
+      >
+        Observaciones
+      </button>
+    );
+  };
   const renderFichaCell = (data) => {
     return (
       <button
@@ -172,13 +212,22 @@ const ReporteVehiculos = () => {
         </div>
       )}
       <h2>Reporte de vehículos ingresados</h2>
-      <button onClick={handleActualizar} className={styles.refreshButton}>
-        🔄 Actualizar reporte
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <button onClick={handleActualizar} className={styles.refreshButton}>
+          🔄 Actualizar reporte
+        </button>
+        <button 
+          onClick={() => setMostrarInactivos(!mostrarInactivos)} 
+          className={styles.refreshButton}
+          style={{ backgroundColor: mostrarInactivos ? '#f44336' : '#2196f3' }}
+        >
+          {mostrarInactivos ? 'Ocultar Inactivos / Vendidos' : 'Ver Inactivos / Vendidos'}
+        </button>
+      </div>
       <DataGrid
         className={styles.dataGrid}
         style={{ fontFamily: "IBM", fontSize: "12px" }}
-        dataSource={vehiculosConEstado || []}
+        dataSource={vehiculosFiltrados}
         showBorders={true}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
@@ -254,13 +303,18 @@ const ReporteVehiculos = () => {
             }
           }} />
         <Column dataField="fecha_inicio_amortizacion" caption="Fecha amortización" alignment="center" cellRender={renderFecha} />
-        <Column dataField="observaciones" caption="Observaciones" width={200} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderIngresosCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEgresosCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderFichaCell} />
+        <Column name="observacionesBtn" width={110} caption="" alignment="center" cellRender={renderObservacionesCell} />
+        <Column name="imagenesBtn" width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
+        <Column name="modificarBtn" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
+        <Column name="ingresosBtn" width={100} caption="" alignment="center" cellRender={renderIngresosCell} />
+        <Column name="egresosBtn" width={100} caption="" alignment="center" cellRender={renderEgresosCell} />
+        <Column name="fichaBtn" width={100} caption="" alignment="center" cellRender={renderFichaCell} />
       </DataGrid>
+      <ObservacionesModal
+        isOpen={modalObservacionesOpen}
+        onClose={() => setModalObservacionesOpen(false)}
+        vehiculo={vehiculoSeleccionado}
+      />
     </div>
   )
 }

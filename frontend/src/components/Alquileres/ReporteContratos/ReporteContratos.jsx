@@ -87,7 +87,7 @@ const ReporteContratos = () => {
   const opcionesVehiculosLibres = useMemo(() => {
     if (!vehiculos) return [];
     return vehiculos
-      .filter(v => !v.fecha_venta && v.estado_actual === 2 && v.vehiculo_alquilado === 0 && v.vehiculo_reservado === 0)
+      .filter(v => !v.fecha_venta && v.activo === 1 && v.estado_actual === 2 && v.vehiculo_alquilado === 0 && v.vehiculo_reservado === 0)
       .map(e => {
         const dominio = e.dominio || e.dominio_provisorio || "SIN DOMINIO";
         const modeloNombre = modelos?.find(m => m.id == e.modelo)?.nombre || "";

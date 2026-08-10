@@ -1155,6 +1155,17 @@ export const updateVehiculo = async (req, res) => {
     fechaDeAmortizacion = null;
   }
 
+  let activo = 1;
+  if (vehiculoAnterior[0]["fecha_venta"]) {
+    activo = 0;
+  }
+  if (estado) {
+    const [estadoNuevoInfo] = await giama_renting.query("SELECT nombre FROM estados_vehiculos WHERE id = ?", { replacements: [estado], type: QueryTypes.SELECT });
+    if (estadoNuevoInfo && estadoNuevoInfo.nombre === 'Cobrado DT') {
+      activo = 0;
+    }
+  }
+
   try {
     await giama_renting.query(
       `UPDATE vehiculos SET  dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
@@ -1162,7 +1173,7 @@ export const updateVehiculo = async (req, res) => {
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
         calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
         fecha_inicio_amortizacion = :fechaDeAmortizacion, sucursal = :sucursal, ubicacion = :ubicacion, estado_actual = :estado,
-        polarizado = :polarizado, cubre_asiento = :cubre_asiento,
+        polarizado = :polarizado, cubre_asiento = :cubre_asiento, activo = :activo,
         usuario_ultima_modificacion = :usuario, observaciones = :observaciones
         WHERE id = :id`,
       {
@@ -1188,12 +1199,16 @@ export const updateVehiculo = async (req, res) => {
           estado,
           polarizado,
           cubre_asiento,
+          activo,
           usuario,
           observaciones: observaciones ? observaciones : null,
           id,
         },
       }
     );
+
+
+
   } catch (error) {
     const { body } = handleError(error, "vehículo", acciones.update);
     return res.send(body);
@@ -2034,3 +2049,108 @@ export const postActualizarKilometraje = async (req, res) => {
     });
   }
 };
+
+const ensureObservacionesTableExists = async () => {
+  await giama_renting.query(`
+    CREATE TABLE IF NOT EXISTS vehiculos_observaciones (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      vehiculo_id INT NOT NULL,
+      observacion TEXT NOT NULL,
+      usuario VARCHAR(100) NULL,
+      fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_vehiculo_id (vehiculo_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+};
+
+export const getObservacionesVehiculo = async (req, res) => {
+  const { vehiculo_id } = req.body;
+  if (!vehiculo_id) {
+    return res.send({ status: false, message: "El ID del vehículo es obligatorio" });
+  }
+  try {
+    await ensureObservacionesTableExists();
+    let observaciones = await giama_renting.query(
+      `SELECT id, vehiculo_id, observacion, usuario, fecha 
+       FROM vehiculos_observaciones 
+       WHERE vehiculo_id = :vehiculo_id 
+       ORDER BY fecha DESC, id DESC`,
+      {
+        replacements: { vehiculo_id },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!observaciones || observaciones.length === 0) {
+      const vehiculo = await giama_renting.query(
+        `SELECT id, observaciones, usuario_ultima_modificacion FROM vehiculos WHERE id = :vehiculo_id`,
+        { replacements: { vehiculo_id }, type: QueryTypes.SELECT }
+      );
+      if (vehiculo && vehiculo[0] && vehiculo[0].observaciones && vehiculo[0].observaciones.trim()) {
+        const obsTexto = vehiculo[0].observaciones.trim();
+        const usuarioObs = vehiculo[0].usuario_ultima_modificacion || "Sistema";
+        const fechaObs = new Date();
+        await giama_renting.query(
+          `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
+           VALUES (:vehiculo_id, :observacion, :usuario, :fecha)`,
+          {
+            replacements: { vehiculo_id, observacion: obsTexto, usuario: usuarioObs, fecha: fechaObs },
+            type: QueryTypes.INSERT,
+          }
+        );
+        observaciones = await giama_renting.query(
+          `SELECT id, vehiculo_id, observacion, usuario, fecha 
+           FROM vehiculos_observaciones 
+           WHERE vehiculo_id = :vehiculo_id 
+           ORDER BY fecha DESC, id DESC`,
+          { replacements: { vehiculo_id }, type: QueryTypes.SELECT }
+        );
+      }
+    }
+
+    return res.send({ status: true, data: observaciones });
+  } catch (error) {
+    const { body } = handleError(error, "observaciones de vehículo", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const postObservacionVehiculo = async (req, res) => {
+  const { vehiculo_id, observacion, usuario } = req.body;
+  if (!vehiculo_id || !observacion || !observacion.trim()) {
+    return res.send({ status: false, message: "Campos requeridos incompletos" });
+  }
+  try {
+    await ensureObservacionesTableExists();
+    await giama_renting.query(
+      `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
+       VALUES (:vehiculo_id, :observacion, :usuario, NOW())`,
+      {
+        replacements: {
+          vehiculo_id,
+          observacion: observacion.trim(),
+          usuario: usuario || "Sistema",
+        },
+        type: QueryTypes.INSERT,
+      }
+    );
+
+    await giama_renting.query(
+      `UPDATE vehiculos SET observaciones = :observacion WHERE id = :vehiculo_id`,
+      {
+        replacements: {
+          observacion: observacion.trim(),
+          vehiculo_id,
+        },
+        type: QueryTypes.UPDATE,
+      }
+    );
+
+    return res.send({ status: true, message: "Observación agregada correctamente" });
+  } catch (error) {
+    const { body } = handleError(error, "observación de vehículo", acciones.create);
+    return res.send(body);
+  }
+};
+
+

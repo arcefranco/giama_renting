@@ -114,6 +114,15 @@ const postActualizarKilometraje = async (file) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+const getObservacionesVehiculo = async (data) => {
+  return postFunction("vehiculos/getObservacionesVehiculo", data);
+};
+
+const postObservacionVehiculo = async (data) => {
+  return postFunction("vehiculos/postObservacionVehiculo", data);
+};
+
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,
@@ -133,5 +142,7 @@ const vehiculosService = {
   /*   getAllAmortizaciones, */
   getFichas,
   postActualizarKilometraje,
+  getObservacionesVehiculo,
+  postObservacionVehiculo,
 };
 export default vehiculosService;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getModelos, getProveedoresGPS, getSucursales, getEstados } from '../../../reducers/Generales/generalesSlice';
-import { getVehiculosById, updateVehiculo, reset } from '../../../reducers/Vehiculos/vehiculosSlice';
+import { getVehiculosById, updateVehiculo, reset, postObservacionVehiculo } from '../../../reducers/Vehiculos/vehiculosSlice';
 import styles from './UpdateVehiculo.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { ClipLoader } from "react-spinners";
@@ -120,6 +120,21 @@ const UpdateVehiculo = () => {
     e.preventDefault();
     const body = { ...form, id: id };
     dispatch(updateVehiculo(body));
+
+    if (vehiculo && vehiculo[0] && form.estado && vehiculo[0].estado_actual != form.estado) {
+      const estadoViejoId = vehiculo[0].estado_actual;
+      const estadoNuevoId = form.estado;
+      const estadoViejoStr = estados?.find(est => est.id == estadoViejoId)?.nombre || "desconocido";
+      const estadoNuevoStr = estados?.find(est => est.id == estadoNuevoId)?.nombre || "desconocido";
+      
+      const obsCambio = `El estado del vehículo cambió de ${estadoViejoStr} a ${estadoNuevoStr}`;
+      
+      dispatch(postObservacionVehiculo({
+        vehiculo_id: id,
+        observacion: obsCambio,
+        usuario: username || "Sistema"
+      }));
+    }
   };
 
   const customStyles = {
