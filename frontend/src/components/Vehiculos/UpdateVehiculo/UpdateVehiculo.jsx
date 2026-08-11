@@ -175,7 +175,7 @@ const UpdateVehiculo = () => {
               vehiculo?.length && !vehiculo[0]["dominio"] &&
               <div className={styles.inputContainer}>
                 <span>Dominio</span>
-                <input type="text" name="dominio" value={form.dominio} onChange={handleChange} />
+                <input disabled={disabledFin} type="text" name="dominio" value={form.dominio} onChange={handleChange} />
               </div>
 
             }
@@ -183,7 +183,7 @@ const UpdateVehiculo = () => {
               vehiculo?.length && !vehiculo[0]["dominio"] && !vehiculo[0]["dominio_provisorio"] &&
               <div className={styles.inputContainer}>
                 <span>Dominio provisorio</span>
-                <input type="text" name="dominio_provisorio" value={form.dominio_provisorio} onChange={handleChange} />
+                <input disabled={disabledFin} type="text" name="dominio_provisorio" value={form.dominio_provisorio} onChange={handleChange} />
               </div>
 
             }
@@ -191,12 +191,12 @@ const UpdateVehiculo = () => {
 
             <div className={styles.inputContainer}>
               <span>Nro. Chasis</span>
-              <input type="text" name="nro_chasis" value={form.nro_chasis} onChange={handleChange} />
+              <input disabled={disabledFin} type="text" name="nro_chasis" value={form.nro_chasis} onChange={handleChange} />
             </div>
 
             <div className={styles.inputContainer}>
               <span>Nro. Motor</span>
-              <input type="text" name="nro_motor" value={form.nro_motor} onChange={handleChange} />
+              <input disabled={disabledFin} type="text" name="nro_motor" value={form.nro_motor} onChange={handleChange} />
             </div>
 
 
@@ -204,7 +204,7 @@ const UpdateVehiculo = () => {
             <div className={styles.inputContainer}>
               <span>Fecha inicio de amortización</span>
               <input type="date" name="fecha_inicio_amortizacion" value={form.fecha_inicio_amortizacion}
-                disabled={vehiculo?.length && vehiculo[0]["fecha_inicio_amortizacion"] ? true : false} onChange={handleChange} />
+                disabled={vehiculo?.length && vehiculo[0]["fecha_inicio_amortizacion"] ? true : disabledFin} onChange={handleChange} />
             </div>
 
             <div className={styles.inputContainer}>
@@ -214,12 +214,12 @@ const UpdateVehiculo = () => {
 
             <div className={styles.inputContainer}>
               <span>Color</span>
-              <input type="text" name="color" value={form.color} onChange={handleChange} />
+              <input disabled={disabledFin} type="text" name="color" value={form.color} onChange={handleChange} />
             </div>
 
             <div className={styles.inputContainer}>
               <span>Observaciones</span>
-              <textarea type="text" name='observaciones' value={form["observaciones"]} maxLength={100}
+              <textarea disabled={disabledFin} type="text" name='observaciones' value={form["observaciones"]} maxLength={100}
                 onChange={handleChange} />
             </div>
 
@@ -242,12 +242,12 @@ const UpdateVehiculo = () => {
             </div>
             <div className={styles.inputContainer}>
               <span>Kilómetros actuales</span>
-              <input type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
+              <input disabled={disabledAdm} type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
             </div>
 
             <div className={styles.inputContainer}>
               <span>Fecha medición km</span>
-              <input type="date" name="fecha_medicion_km" value={form.fecha_medicion_km}
+              <input disabled={disabledAdm} type="date" name="fecha_medicion_km" value={form.fecha_medicion_km}
                 onChange={handleChange} />
             </div>
 
@@ -266,7 +266,7 @@ const UpdateVehiculo = () => {
             </div>
             <div className={styles.inputContainer}>
               <span>Ubicación</span>
-              <input /* disabled={disabledAdm}  */ type="text" name="ubicacion" value={form.ubicacion} onChange={handleChange} />
+              <input disabled={disabledAdm} type="text" name="ubicacion" value={form.ubicacion} onChange={handleChange} />
             </div>
             <div className={styles.inputContainer}>
               <span>Proveedor GPS</span>

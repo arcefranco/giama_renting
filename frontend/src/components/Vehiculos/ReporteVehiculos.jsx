@@ -38,6 +38,8 @@ const ReporteVehiculos = () => {
     isLoading
   } = useSelector((state) => state.vehiculosReducer)
   const { modelos, proveedoresGPS, sucursales, estados } = useSelector(state => state.generalesReducer)
+  const { roles } = useSelector(state => state.loginReducer)
+  const userRoles = roles ? roles.split(",") : []
   const [vehiculosConEstado, setVehiculosConEstado] = useState(null)
   useToastFeedback({
     isError,
@@ -118,6 +120,7 @@ const ReporteVehiculos = () => {
     );
   };
   const renderModificarCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2") && !userRoles.includes("4")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}vehiculos/actualizar/${data.data.id}`, '_blank')}
@@ -128,6 +131,7 @@ const ReporteVehiculos = () => {
     );
   };
   const renderEgresosCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}costos/egresos/${data.data.id}`, '_blank')}
@@ -138,6 +142,7 @@ const ReporteVehiculos = () => {
     );
   };
   const renderIngresosCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}costos/ingresos/${data.data.id}`, '_blank')}
