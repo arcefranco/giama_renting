@@ -238,6 +238,13 @@ export const movimientosProveedoresEgresos = async ({
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
 
+  // Para Notas de Crédito, las percepciones deben guardarse en negativo
+  if (tipo_comprobante == 4 || tipo_comprobante == 6) {
+    if (importe_tasa_IIBB) importe_tasa_IIBB = Math.abs(importe_tasa_IIBB) * -1;
+    if (importe_tasa_IIBB_CABA) importe_tasa_IIBB_CABA = Math.abs(importe_tasa_IIBB_CABA) * -1;
+    if (importe_tasa_IVA) importe_tasa_IVA = Math.abs(importe_tasa_IVA) * -1;
+  }
+
 
 
   // Consolidamos todos los netos e IVAs recorriendo los conceptos dinámicamente
@@ -286,12 +293,12 @@ export const movimientosProveedoresEgresos = async ({
           totales.iva_21,
           totales.iva_27,
           totales.iva_10,
-          tasa_IIBB,
-          importe_tasa_IIBB,
-          tasa_IVA,
-          importe_tasa_IVA,
-          tasa_IIBB_CABA,
-          importe_tasa_IIBB_CABA,
+          tasa_IIBB || 0,
+          importe_tasa_IIBB || 0,
+          tasa_IVA || 0,
+          importe_tasa_IVA || 0,
+          tasa_IIBB_CABA || 0,
+          importe_tasa_IIBB_CABA || 0,
           importe_total,
         ],
         transaction: transaction_asientos,
@@ -332,12 +339,12 @@ export const movimientosProveedoresEgresos = async ({
           totales.iva_21,
           totales.iva_27,
           totales.iva_10,
-          tasa_IIBB,
-          importe_tasa_IIBB,
-          tasa_IVA,
-          importe_tasa_IVA,
-          tasa_IIBB_CABA,
-          importe_tasa_IIBB_CABA,
+          tasa_IIBB || 0,
+          importe_tasa_IIBB || 0,
+          tasa_IVA || 0,
+          importe_tasa_IVA || 0,
+          tasa_IIBB_CABA || 0,
+          importe_tasa_IIBB_CABA || 0,
           importe_total,
         ],
         transaction: transaction_asientos,
@@ -380,7 +387,7 @@ export const movimientosProveedoresEgresos = async ({
   //c_movprovctacte
   try {
     let A_C = (tipo_comprobante == 1 || tipo_comprobante == 2 || tipo_comprobante == 4) ? "A" : (tipo_comprobante == 3 || tipo_comprobante == 5 || tipo_comprobante == 6) ? "C" : null;
-    let DenomComprobante = tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : tipo_comprobante == 2 ? "NDA" : tipo_comprobante == 4 ? "NCA" : tipo_comprobante == 5 ? "NDC" : tipo_comprobante == 6 ? "NCC" : null;
+    let DenomComprobante = tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : tipo_comprobante == 2 ? "NDA" : tipo_comprobante == 4 ? "NCA" : tipo_comprobante == 5 ? "NDC" : tipo_comprobante == 6 ? "NCC" : null;
     let tipo_nombre = (tipo_comprobante == 1 || tipo_comprobante == 3) ? "Factura" : (tipo_comprobante == 2 || tipo_comprobante == 5) ? "Nota de Débito" : (tipo_comprobante == 4 || tipo_comprobante == 6) ? "Nota de Crédito" : "Comprobante";
     let ConceptoComprobante = `${tipo_nombre} "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
     await pa7_giama_renting.query(
