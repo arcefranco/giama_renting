@@ -1508,6 +1508,7 @@ export const getSituacionFlota = async (req, res) => {
   COALESCE(
     CASE 
       WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
+      WHEN est.nombre = 'Cobrado DT' THEN est.nombre
       WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
       WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
       ELSE est.nombre
@@ -2117,15 +2118,18 @@ export const getObservacionesVehiculo = async (req, res) => {
       }
     );
 
-    if (!observaciones || observaciones.length === 0) {
-      const vehiculo = await giama_renting.query(
-        `SELECT id, observaciones, usuario_ultima_modificacion FROM vehiculos WHERE id = :vehiculo_id`,
-        { replacements: { vehiculo_id }, type: QueryTypes.SELECT }
-      );
-      if (vehiculo && vehiculo[0] && vehiculo[0].observaciones && vehiculo[0].observaciones.trim()) {
-        const obsTexto = vehiculo[0].observaciones.trim();
+    const vehiculo = await giama_renting.query(
+      `SELECT id, observaciones, usuario_ultima_modificacion FROM vehiculos WHERE id = :vehiculo_id`,
+      { replacements: { vehiculo_id }, type: QueryTypes.SELECT }
+    );
+
+    if (vehiculo && vehiculo[0] && vehiculo[0].observaciones && vehiculo[0].observaciones.trim()) {
+      const obsTexto = vehiculo[0].observaciones.trim();
+      const yaExiste = observaciones.some(o => o.observacion.trim() === obsTexto);
+      
+      if (!yaExiste) {
         const usuarioObs = vehiculo[0].usuario_ultima_modificacion || "Sistema";
-        const fechaObs = new Date();
+        const fechaObs = null; // Queda vacía (NULL) como pidieron
         await giama_renting.query(
           `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
            VALUES (:vehiculo_id, :observacion, :usuario, :fecha)`,
@@ -2134,6 +2138,7 @@ export const getObservacionesVehiculo = async (req, res) => {
             type: QueryTypes.INSERT,
           }
         );
+        // Volver a consultar para devolver la lista completa y ordenada por fecha
         observaciones = await giama_renting.query(
           `SELECT id, vehiculo_id, observacion, usuario, fecha 
            FROM vehiculos_observaciones 

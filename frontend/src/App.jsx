@@ -77,16 +77,16 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["2", "4"]} />}>
             <Route path='/vehiculos/actualizar/:id' element={<UpdateVehiculo />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["4", "5"]} />}>
             <Route path='/vehiculos/ficha/:id' element={<FichaVehiculo />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["4", "5"]} />}>
             <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["4", "5"]} />}>
             <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos />} />
           </Route>
-          <Route element={<PrivateRoute allowedRoles={["5"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["4", "5"]} />}>
             <Route path="/vehiculos/situacionFlota" element={<SituacionFlota />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["1"]} />}>

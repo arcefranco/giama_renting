@@ -61,6 +61,8 @@ const ReporteVehiculos = () => {
 
           if (v.fecha_venta) {
             estado_nombre = "Vendido";
+          } else if (v.estado_actual === 8) {
+            estado_nombre = "Cobrado DT";
           } else if (v.vehiculo_alquilado === 1) {
             estado_nombre = "Alquilado";
           } else if (v.vehiculo_reservado === 1) {
@@ -85,18 +87,7 @@ const ReporteVehiculos = () => {
     return modelo ? modelo.nombre : id;
   };
 
-  const [mostrarInactivos, setMostrarInactivos] = useState(false);
-  const [vehiculosFiltrados, setVehiculosFiltrados] = useState([]);
 
-  useEffect(() => {
-    if (vehiculosConEstado) {
-      setVehiculosFiltrados(
-        vehiculosConEstado.filter(v => 
-          mostrarInactivos ? true : (v.activo === 1 && !v.fecha_venta)
-        )
-      );
-    }
-  }, [vehiculosConEstado, mostrarInactivos]);
 
   const handleActualizar = () => {
     dispatch(getVehiculos())
@@ -221,18 +212,12 @@ const ReporteVehiculos = () => {
         <button onClick={handleActualizar} className={styles.refreshButton}>
           🔄 Actualizar reporte
         </button>
-        <button 
-          onClick={() => setMostrarInactivos(!mostrarInactivos)} 
-          className={styles.refreshButton}
-          style={{ backgroundColor: mostrarInactivos ? '#f44336' : '#2196f3' }}
-        >
-          {mostrarInactivos ? 'Ocultar Inactivos / Vendidos' : 'Ver Inactivos / Vendidos'}
-        </button>
+
       </div>
       <DataGrid
         className={styles.dataGrid}
         style={{ fontFamily: "IBM", fontSize: "12px" }}
-        dataSource={vehiculosFiltrados}
+        dataSource={vehiculosConEstado}
         showBorders={true}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
@@ -249,6 +234,7 @@ const ReporteVehiculos = () => {
           caption="Estado"
           calculateDisplayValue={(rowData) => {
             if (rowData.fecha_venta) return "Vendido";
+            if (rowData.estado_actual === 8) return "Cobrado DT";
             if (rowData.vehiculo_alquilado === 1) return "Alquilado";
             if (rowData.vehiculo_reservado === 1) return "Reservado";
 

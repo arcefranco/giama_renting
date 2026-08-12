@@ -9,7 +9,7 @@ async function run() {
     SELECT ca.fecha_contrato AS fecha, 'deposito' AS concepto, 2 AS tipo FROM contratos_alquiler ca WHERE ca.id_cliente = ?
     UNION ALL
     SELECT ci.fecha AS fecha, 'costo' AS concepto, 3 AS tipo FROM costos_ingresos ci WHERE ci.id_cliente = ?
-  ) m ORDER BY m.fecha, m.tipo`, {replacements:[id_cliente,id_cliente,id_cliente,id_cliente], type: giama_renting.QueryTypes.SELECT});
+  ) m ORDER BY m.fecha, m.tipo`, { replacements: [id_cliente, id_cliente, id_cliente, id_cliente], type: giama_renting.QueryTypes.SELECT });
   console.log("Count for 219:", res.length);
   process.exit(0);
 }

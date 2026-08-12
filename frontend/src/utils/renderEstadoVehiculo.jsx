@@ -18,6 +18,11 @@ export const renderEstadoVehiculo = (vehiculo) => {
     return <span style={{ ...baseStyle, background: "#6fd66ab0" }}>Vendido</span>;
   }
 
+  // Cobrado DT tiene prioridad sobre Alquilado (porque si se destruyó, ya no importa si quedó el contrato colgado)
+  if (vehiculo?.estado_actual === 8) {
+    return <span style={{ ...baseStyle, background: "#555555" }}>Cobrado DT</span>;
+  }
+
   if (vehiculo?.vehiculo_alquilado === 1) {
     return <span style={{ ...baseStyle, background: "#6f8babb0" }}>Alquilado</span>;
   }

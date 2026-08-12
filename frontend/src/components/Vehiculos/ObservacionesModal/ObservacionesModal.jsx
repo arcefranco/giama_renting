@@ -51,6 +51,10 @@ const ObservacionesModal = ({ isOpen, onClose, vehiculo }) => {
     if (!fechaRaw) return '';
     try {
       const d = new Date(fechaRaw);
+      // Ocultamos la fecha "falsa" de anclaje (1 de Enero de 2000) para la observación legacy
+      if (d.getFullYear() === 2000 && d.getMonth() === 0 && d.getDate() === 1) {
+        return '';
+      }
       return d.toLocaleString('es-AR', {
         day: '2-digit',
         month: '2-digit',
