@@ -577,7 +577,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       </form>
       <button
         className={styles.sendBtn} onClick={handleSubmit}
-        disabled={sendBtnDisabled}>
+        disabled={sendBtnDisabled || isLoading}>
         Enviar
       </button>
     </div>
