@@ -19,7 +19,7 @@ import {
   renovacionContratoFlota,
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
-import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
+
 const alquileresRouter = Router();
 alquileresRouter.use((req, res, next) => {
   res.header(
@@ -31,20 +31,17 @@ alquileresRouter.use((req, res, next) => {
 alquileresRouter.post(
   "/contrato",
   auth,
-  authorizeRoles("2"),
   postContratoAlquiler
 );
-alquileresRouter.post("/postAlquiler", auth, authorizeRoles("2"), postAlquiler);
+alquileresRouter.post("/postAlquiler", auth, postAlquiler);
 alquileresRouter.post(
   "/formaDeCobro",
   auth,
-  authorizeRoles("2"),
   postFormaCobro
 );
 alquileresRouter.get(
   "/formaDeCobro",
   auth,
-  authorizeRoles("2", "3"),
   getFormasCobro
 );
 alquileresRouter.post("/idVehiculo", auth, getAlquileresByIdVehiculo);
@@ -54,26 +51,23 @@ alquileresRouter.post("/id", getAlquilerByIdContrato);
 alquileresRouter.post(
   "/contrato/id",
   auth,
-  authorizeRoles("2", "3"),
   getContratoById
 );
-alquileresRouter.post("/", auth, authorizeRoles("2", "3"), getAlquileres);
+alquileresRouter.post("/", auth, getAlquileres);
 alquileresRouter.post(
   "/contratos",
   auth,
-  authorizeRoles("2", "3", "5"),
   getContratos
 );
 
 alquileresRouter.post(
   "/contratosAVencer",
   auth,
-  authorizeRoles("2", "3", "5"),
   getContratosAVencer
 );
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
-alquileresRouter.post("/contrato/anulacion", auth, authorizeRoles("2"), anulacionContrato);
+alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
-alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeRoles("2"), cambioVehiculo);
-alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("2"), renovacionContratoFlota);
+alquileresRouter.post("/contrato/cambioVehiculo", auth, cambioVehiculo);
+alquileresRouter.post("/flota/renovacion", auth, renovacionContratoFlota);
 export default alquileresRouter;

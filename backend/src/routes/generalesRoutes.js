@@ -18,7 +18,7 @@ import {
   getUsuarios,
 } from "../controllers/generalesController.js";
 import { auth } from "../middlewares/auth.js";
-import { authorizeAdmin, authorizeRoles } from "../middlewares/roles.js";
+
 
 const generalesRouter = Router();
 
@@ -44,11 +44,10 @@ generalesRouter.get("/proveedores", auth, getProveedores);
 generalesRouter.get("/AMRT", auth, getParametroAMRT);
 generalesRouter.get("/usuarios", auth, getUsuarios);
 generalesRouter.get("/proveedores_vehiculo", auth, getProveedoresVehiculo);
-generalesRouter.get("/roles", auth, authorizeAdmin(), getRoles);
+generalesRouter.get("/roles", auth, getRoles);
 generalesRouter.get(
   "/formas_cobro",
   auth,
-  authorizeRoles("2", "3"),
   getFormasCobro
 );
 export default generalesRouter;

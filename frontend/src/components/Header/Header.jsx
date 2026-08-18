@@ -12,17 +12,17 @@ const menuItems = [
   {
     title: "Vehículos",
     items: [
-      { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["1"] },
+      { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["1", "2"] },
       { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["2", "3", "4", "5"] },
-      { label: "Listado fichas", to: "/vehiculos/ficha/reporte", roles: ["4", "5"] },
-      { label: "Situación de la flota", to: "/vehiculos/situacionFlota", roles: ["4", "5"] },
+      { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
+      { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
       { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["1"] }
     ],
   },
   {
     title: "Clientes",
     items: [
-      { label: "Ingreso de clientes", to: "/clientes", roles: ["3"] },
+      { label: "Ingreso de clientes", to: "/clientes", roles: ["3", "4"] },
       { label: "Listado de clientes", to: "/clientesReporte", roles: ["2", "3", "4"] },
       { label: "Cta cte clientes", to: "/pagosClientes", roles: ["2", "3", "4", "5"] },
       { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["2", "3", "4", "5"] },
@@ -40,11 +40,11 @@ const menuItems = [
     title: "Parámetros",
     items: [
       { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["1"] },
-      { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["1"] },
-      { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["1"] },
-      { label: "Modelos", to: "/parametros/modelos", roles: ["1"] },
+      { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["1", "2"] },
+      { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["1", "2"] },
+      { label: "Modelos", to: "/parametros/modelos", roles: ["1", "2"] },
       { label: "Proveedores GPS", to: "/parametros/proveedoresGPS", roles: ["1"] },
-      { label: "Sucursales", to: "/parametros/sucursales", roles: ["1"] }
+      { label: "Sucursales", to: "/parametros/sucursales", roles: ["1", "4"] }
     ]
   },
   {
@@ -55,7 +55,7 @@ const menuItems = [
       { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateo", roles: ["2"] },
       { label: "Listado de recibos", to: "/recibos/reporte" },
-      { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "3", "4"] },
+      { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "4"] },
       { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2"] },
     ]
   },

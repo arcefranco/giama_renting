@@ -56,11 +56,11 @@ const UpdateVehiculo = () => {
     setUserRoles(roles.split(","))
   }, [roles])
   useEffect(() => {
-    if (userRoles.includes("4")) {
-      setDisabledAdm(false)
-    }
     if (userRoles.includes("2")) {
       setDisabledFin(false)
+    }
+    if (userRoles.includes("4")) {
+      setDisabledAdm(false)
     }
     if (userRoles.includes("1")) {
       setDisabledAdm(false)
