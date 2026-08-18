@@ -6,7 +6,8 @@ export const ESTADOS_ESTATICOS = [
   { id: 5, nombre: "A la venta", color: "#64ff61ff" },
   { id: 6, nombre: "Unidades 0km a recibir", color: "#ff9800" },
   { id: 7, nombre: "En préstamo", color: "#9c27b0" },
-  { id: 8, nombre: "Cobrado DT", color: "#555555" }
+  { id: 8, nombre: "Cobrado DT", color: "#555555" },
+  { id: 9, nombre: "Reservado venta", color: "#009688" }
 ];
 
 export const getColorByEstadoId = (id) =>

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
 import { postImportacionesMultas, reset } from '../../reducers/Costos/costosSlice';
 import { ClipLoader } from "react-spinners";
+import * as XLSX from 'xlsx';
 import downloadicon from "../../assets/downloadicon.svg";
 import styles from '../Vehiculos/VehiculosForm.module.css';
 const parseError = (err) => {
@@ -27,6 +28,22 @@ const getFormattedDate = () => {
     return `${dd}_${mm}_${yyyy}`;
 };
 
+const downloadErrorsExcel = (errors) => {
+    const data = errors.map(err => {
+        const parsed = parseError(err);
+        return {
+            Fila: parsed.fila || '-',
+            Dominio: parsed.dominio || '-',
+            Acta: parsed.acta || '-',
+            Error: parsed.message
+        };
+    });
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Errores");
+    XLSX.writeFile(workbook, `Errores_Importacion_Multas_${getFormattedDate()}.xlsx`);
+};
+
 const ImportacionesMultas = () => {
     const dispatch = useDispatch();
     const { isLoading, isError, isSuccess, message, errores_importacion } = useSelector((state) => state.costosReducer);
@@ -41,6 +58,7 @@ const ImportacionesMultas = () => {
             toast.error(message || "Ocurrió un error al importar.");
             if (errores_importacion && errores_importacion.length > 0) {
                 setLocalErrors(errores_importacion);
+                downloadErrorsExcel(errores_importacion);
             }
         }
         if (isSuccess) {
@@ -48,6 +66,7 @@ const ImportacionesMultas = () => {
             setFile(null);
             if (errores_importacion && errores_importacion.length > 0) {
                 setLocalErrors(errores_importacion);
+                downloadErrorsExcel(errores_importacion);
             } else {
                 setLocalErrors([]);
             }
