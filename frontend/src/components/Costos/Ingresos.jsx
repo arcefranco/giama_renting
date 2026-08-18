@@ -992,7 +992,7 @@ const Ingresos = () => {
         <button
           className={styles.sendBtn}
           onClick={handleSubmit}
-          disabled={!form["fecha_deuda"] || !form["id_concepto"] || !form["id_vehiculo"]}
+          disabled={!form["fecha_deuda"] || !form["id_concepto"] || !form["id_vehiculo"] || isLoading || isLoadingCostos}
         >
           Enviar
         </button>

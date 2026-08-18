@@ -2355,6 +2355,8 @@ export const prorrateo = async (req, res) => {
     NroAsiento = await getNumeroAsiento();
     NroAsientoSecundario = await getNumeroAsientoSecundario();
   } catch (error) {
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
     return res.send({ status: false, message: error.message });
   }
 
@@ -2371,6 +2373,8 @@ export const prorrateo = async (req, res) => {
     try {
       conceptosParseados = JSON.parse(conceptos);
     } catch (error) {
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
       return res.send({
         status: false,
         message: "El formato de los conceptos no es válido",
@@ -2395,8 +2399,8 @@ export const prorrateo = async (req, res) => {
   const conceptosValidos = conceptosParseados.filter((c) => c.id_concepto);
   const total_conceptos = conceptosValidos.length;
   if (importe_total <= 0 || !importe_total) {
-    transaction_asientos.rollback();
-    transaction_costos_ingresos.rollback();
+    await transaction_asientos.rollback();
+    await transaction_costos_ingresos.rollback();
     return res.send({
       status: false,
       message: "No se puede ingresar con importes vacíos",
@@ -2738,7 +2742,8 @@ export const prorrateo = async (req, res) => {
       });
     } catch (error) {
       console.log(error);
-      transaction_costos_ingresos.rollback();
+      await transaction_asientos.rollback();
+      await transaction_costos_ingresos.rollback();
       const { body } = handleError(
         error,
         "Movimientos proveedores",

@@ -649,41 +649,43 @@ export const anulacionContrato = async (req, res) => {
     console.log(formatearFechaISO(nuevaHasta));
 
     //inserto en historial el contrato anterior
-    if (
-      formatearFechaISO(fechaDesdeHistorial).startsWith("19") ||
-      formatearFechaISO(fechaHastaHistorial).startsWith("19")
-    ) {
-      return res.send({ status: false, message: "Fechas inválidas" });
-    }
-    try {
-      await giama_renting.query(
-        `INSERT INTO historial_anulaciones_contratos
-         (id_contrato, id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia, 
-         id_forma_cobro, nro_asiento) VALUES (?,?,?,?,?,?,?,?)`,
-        {
-          replacements: [
-            id_contrato,
-            contratoAnterior["id_vehiculo"],
-            contratoAnterior["id_cliente"],
-            formatearFechaISO(fechaDesdeHistorial),
-            formatearFechaISO(fechaHastaHistorial),
-            contratoAnterior["deposito_garantia"],
-            contratoAnterior["id_forma_cobro"],
-            contratoAnterior["nro_asiento"],
-          ],
-          type: QueryTypes.INSERT,
-          transaction: transaction_giama_renting,
-        },
-      );
-    } catch (error) {
-      console.log(error);
-      transaction_giama_renting.rollback();
-      const { body } = handleError(
-        error,
-        "Historial de anulaciones",
-        acciones.post,
-      );
-      return res.send(body);
+    if (fechaDesdeHistorial && fechaHastaHistorial) {
+      if (
+        formatearFechaISO(fechaDesdeHistorial).startsWith("19") ||
+        formatearFechaISO(fechaHastaHistorial).startsWith("19")
+      ) {
+        return res.send({ status: false, message: "Fechas inválidas" });
+      }
+      try {
+        await giama_renting.query(
+          `INSERT INTO historial_anulaciones_contratos
+           (id_contrato, id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia, 
+           id_forma_cobro, nro_asiento) VALUES (?,?,?,?,?,?,?,?)`,
+          {
+            replacements: [
+              id_contrato,
+              contratoAnterior["id_vehiculo"],
+              contratoAnterior["id_cliente"],
+              formatearFechaISO(fechaDesdeHistorial),
+              formatearFechaISO(fechaHastaHistorial),
+              contratoAnterior["deposito_garantia"],
+              contratoAnterior["id_forma_cobro"],
+              contratoAnterior["nro_asiento"],
+            ],
+            type: QueryTypes.INSERT,
+            transaction: transaction_giama_renting,
+          },
+        );
+      } catch (error) {
+        console.log(error);
+        transaction_giama_renting.rollback();
+        const { body } = handleError(
+          error,
+          "Historial de anulaciones",
+          acciones.post,
+        );
+        return res.send(body);
+      }
     }
     //actualizo el contrato en tabla contratos_alquiler
     if (
