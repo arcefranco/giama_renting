@@ -173,7 +173,7 @@ useEffect(() => {
 
 }, [isError, isSuccess]) 
 
-const opcionesVehiculos = vehiculos?.filter(v => {return !v.fecha_venta}).map(e => {
+const opcionesVehiculos = vehiculos?.filter(v => {return !v.fecha_venta && v.activo === 1}).map(e => {
   const preparado = e.proveedor_gps && e.nro_serie_gps && e.calcomania && e.gnc;
   const alquiladoHoy = e.vehiculo_alquilado
 

@@ -54,26 +54,26 @@ alquileresRouter.post("/id", getAlquilerByIdContrato);
 alquileresRouter.post(
   "/contrato/id",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2", "3"),
   getContratoById
 );
-alquileresRouter.post("/", auth, authorizeRoles("2", "3", "4"), getAlquileres);
+alquileresRouter.post("/", auth, authorizeRoles("2", "3"), getAlquileres);
 alquileresRouter.post(
   "/contratos",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2", "3", "5"),
   getContratos
 );
 
 alquileresRouter.post(
   "/contratosAVencer",
   auth,
-  authorizeRoles("2", "3", "4"),
+  authorizeRoles("2", "3", "5"),
   getContratosAVencer
 );
 alquileresRouter.post("/anulacion", auth, anulacionAlquiler);
-alquileresRouter.post("/contrato/anulacion", auth, anulacionContrato);
+alquileresRouter.post("/contrato/anulacion", auth, authorizeRoles("2"), anulacionContrato);
 alquileresRouter.post("/getAnulaciones", auth, getAnulaciones);
-alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeAdmin(), cambioVehiculo);
+alquileresRouter.post("/contrato/cambioVehiculo", auth, authorizeRoles("2"), cambioVehiculo);
 alquileresRouter.post("/flota/renovacion", auth, authorizeRoles("2"), renovacionContratoFlota);
 export default alquileresRouter;

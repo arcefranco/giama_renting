@@ -235,7 +235,7 @@ const Prorrateo = () => {
       /*   v["id"]?.toString().includes(busquedaGeneral) || DOMINIO PROVISORIO PROX */
       modelos.find(e => e.id === v["modelo"])?.nombre.toLowerCase().includes(busquedaGeneral.toLowerCase())
     );
-    const restantes = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 0 && !v.fecha_venta);
+    const restantes = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 0 && !v.fecha_venta && v.activo === 1);
     const alquilados = vehiculosFiltrados.filter(v => v.vehiculo_alquilado === 1);
     const vendidos = vehiculosFiltrados.filter(v => v.fecha_venta);
     return { restantes, alquilados, vendidos };

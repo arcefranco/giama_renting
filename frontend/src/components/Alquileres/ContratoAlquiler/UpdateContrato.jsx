@@ -156,7 +156,7 @@ const UpdateContrato = () => {
         };
         return opciones[valor] || sinResolucionIcon;
     };
-    const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta).map((e) => {
+    const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta && v.activo === 1).map((e) => {
         const dominio = e.dominio || e.dominio_provisorio || "";
         const modeloNombre = modelos.find((m) => m.id == e.modelo)?.nombre || "";
 

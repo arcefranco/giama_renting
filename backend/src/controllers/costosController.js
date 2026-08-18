@@ -251,7 +251,9 @@ const asientos_costos_ingresos = async (
 
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
-  let is_nc = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
+  let is_nc = 
+    (comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"))) ||
+    (TipoComprobante && ["NCA", "NCC", "CA", "CC", "CPA", "CPC"].includes(TipoComprobante));
   let dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   let dhTotal = ingreso_egreso === "I" ? "D" : "H";
   

@@ -3,7 +3,24 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
 import { postImportacionesTelepases, reset } from '../../reducers/Costos/costosSlice';
 import { ClipLoader } from "react-spinners";
+import * as XLSX from 'xlsx';
 import styles from '../Vehiculos/VehiculosForm.module.css';
+
+const getFormattedDate = () => {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    return `${dd}_${mm}_${yyyy}`;
+};
+
+const downloadErrorsExcel = (errors) => {
+    const data = errors.map(err => ({ Error: typeof err === 'string' ? err : String(err) }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Errores");
+    XLSX.writeFile(workbook, `Errores_Importacion_Telepases_${getFormattedDate()}.xlsx`);
+};
 
 const ImportacionesTelepases = () => {
     const dispatch = useDispatch();
@@ -20,6 +37,7 @@ const ImportacionesTelepases = () => {
             toast.error(message || "Ocurrió un error al importar.");
             if (errores_importacion && errores_importacion.length > 0) {
                 setLocalErrors(errores_importacion);
+                downloadErrorsExcel(errores_importacion);
             }
         }
         if (isSuccess) {
@@ -30,6 +48,7 @@ const ImportacionesTelepases = () => {
             }
             if (errores_importacion && errores_importacion.length > 0) {
                 setLocalErrors(errores_importacion);
+                downloadErrorsExcel(errores_importacion);
             } else {
                 setLocalErrors([]);
             }

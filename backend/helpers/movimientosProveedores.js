@@ -25,6 +25,15 @@ export const movimientosProveedores = async ({
   importe_tasa_IIBB,
   importe_tasa_IVA,
 }) => {
+  const signo = (tipo_comprobante == 4 || tipo_comprobante == 6) ? -1 : 1;
+  importe_neto *= signo;
+  importe_iva *= signo;
+  importe_iva_10_5 *= signo;
+  importe_total *= signo;
+  if (importe_tasa_IIBB) importe_tasa_IIBB *= signo;
+  if (importe_tasa_IVA) importe_tasa_IVA *= signo;
+  if (importe_tasa_IIBB_CABA) importe_tasa_IIBB_CABA *= signo;
+
   let FA_FC =
     tipo_comprobante == 1 ? "FA" : 
     tipo_comprobante == 3 ? "FC" : 
@@ -138,7 +147,7 @@ export const movimientosProveedores = async ({
   //c_movprovctacte
   try {
     let A_C = (tipo_comprobante == 1 || tipo_comprobante == 2 || tipo_comprobante == 4) ? "A" : (tipo_comprobante == 3 || tipo_comprobante == 5 || tipo_comprobante == 6) ? "C" : null;
-    let DenomComprobante = tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : tipo_comprobante == 2 ? "NDA" : tipo_comprobante == 4 ? "NCA" : tipo_comprobante == 5 ? "NDC" : tipo_comprobante == 6 ? "NCC" : null;
+    let DenomComprobante = tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : tipo_comprobante == 2 ? "DPA" : tipo_comprobante == 4 ? "CPA" : tipo_comprobante == 5 ? "DPC" : tipo_comprobante == 6 ? "CPC" : null;
     let tipo_nombre = (tipo_comprobante == 1 || tipo_comprobante == 3) ? "Factura" : (tipo_comprobante == 2 || tipo_comprobante == 5) ? "Nota de Débito" : (tipo_comprobante == 4 || tipo_comprobante == 6) ? "Nota de Crédito" : "Comprobante";
     let ConceptoComprobante = `${tipo_nombre} "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
     await pa7_giama_renting.query(
@@ -230,33 +239,30 @@ export const movimientosProveedoresEgresos = async ({
   let FA_FC =
     tipo_comprobante == 1 ? "FA" : 
     tipo_comprobante == 3 ? "FC" : 
-    tipo_comprobante == 2 ? "NDA" :
-    tipo_comprobante == 4 ? "NCA" :
-    tipo_comprobante == 5 ? "NDC" :
-    tipo_comprobante == 6 ? "NCC" : null;
+    tipo_comprobante == 2 ? "DA" :
+    tipo_comprobante == 4 ? "CA" :
+    tipo_comprobante == 5 ? "DC" :
+    tipo_comprobante == 6 ? "CC" : null;
   let numero_comprobante_1_formateado = padWithZeros(numero_comprobante_1, 5);
   let numero_comprobante_2_formateado = padWithZeros(numero_comprobante_2, 8);
   let NroComprobante = `${numero_comprobante_1_formateado}${numero_comprobante_2_formateado}`;
 
-  // Para Notas de Crédito, las percepciones deben guardarse en negativo
-  if (tipo_comprobante == 4 || tipo_comprobante == 6) {
-    if (importe_tasa_IIBB) importe_tasa_IIBB = Math.abs(importe_tasa_IIBB) * -1;
-    if (importe_tasa_IIBB_CABA) importe_tasa_IIBB_CABA = Math.abs(importe_tasa_IIBB_CABA) * -1;
-    if (importe_tasa_IVA) importe_tasa_IVA = Math.abs(importe_tasa_IVA) * -1;
-  }
-
-
+  const signo = (tipo_comprobante == 4 || tipo_comprobante == 6) ? -1 : 1;
+  importe_total *= signo;
+  if (importe_tasa_IIBB) importe_tasa_IIBB *= signo;
+  if (importe_tasa_IVA) importe_tasa_IVA *= signo;
+  if (importe_tasa_IIBB_CABA) importe_tasa_IIBB_CABA *= signo;
 
   // Consolidamos todos los netos e IVAs recorriendo los conceptos dinámicamente
   const totales = conceptos.reduce((acc, c) => {
-    acc.neto_no_gravado += parseFloat(c.neto_no_gravado || 0);
-    acc.neto_21 += parseFloat(c.neto_21 || 0);
-    acc.neto_10 += parseFloat(c.neto_10 || 0);
-    acc.neto_27 += parseFloat(c.neto_27 || 0);
+    acc.neto_no_gravado += parseFloat(c.neto_no_gravado || 0) * signo;
+    acc.neto_21 += parseFloat(c.neto_21 || 0) * signo;
+    acc.neto_10 += parseFloat(c.neto_10 || 0) * signo;
+    acc.neto_27 += parseFloat(c.neto_27 || 0) * signo;
 
-    acc.iva_21 += parseFloat(c.neto_21 || 0) * 0.21;
-    acc.iva_10 += parseFloat(c.neto_10 || 0) * 0.105;
-    acc.iva_27 += parseFloat(c.neto_27 || 0) * 0.27;
+    acc.iva_21 += (parseFloat(c.neto_21 || 0) * 0.21) * signo;
+    acc.iva_10 += (parseFloat(c.neto_10 || 0) * 0.105) * signo;
+    acc.iva_27 += (parseFloat(c.neto_27 || 0) * 0.27) * signo;
 
     return acc;
   }, {
@@ -362,9 +368,9 @@ export const movimientosProveedoresEgresos = async ({
     if (!concepto.id_concepto) continue;
 
     const cuentaContable = cuentasPorConcepto[concepto.id_concepto]?.cuenta_contable;
-    const netoConcepto = Number(concepto.neto_no_gravado || 0) + Number(concepto.neto_21 || 0) + Number(concepto.neto_27 || 0) + Number(concepto.neto_10 || 0);
+    const netoConcepto = (Number(concepto.neto_no_gravado || 0) + Number(concepto.neto_21 || 0) + Number(concepto.neto_27 || 0) + Number(concepto.neto_10 || 0)) * signo;
 
-    if (netoConcepto > 0 && cuentaContable) {
+    if (Math.abs(netoConcepto) > 0 && cuentaContable) {
       try {
         await pa7_giama_renting.query(
           `INSERT INTO c_movprovdetalles (IdMovProveedor, IdTipoImporteComprobante, CtaContable, Importe) 
@@ -387,7 +393,7 @@ export const movimientosProveedoresEgresos = async ({
   //c_movprovctacte
   try {
     let A_C = (tipo_comprobante == 1 || tipo_comprobante == 2 || tipo_comprobante == 4) ? "A" : (tipo_comprobante == 3 || tipo_comprobante == 5 || tipo_comprobante == 6) ? "C" : null;
-    let DenomComprobante = tipo_comprobante == 1 ? "FA" : tipo_comprobante == 3 ? "FC" : tipo_comprobante == 2 ? "NDA" : tipo_comprobante == 4 ? "NCA" : tipo_comprobante == 5 ? "NDC" : tipo_comprobante == 6 ? "NCC" : null;
+    let DenomComprobante = tipo_comprobante == 1 ? "FPA" : tipo_comprobante == 3 ? "FPC" : tipo_comprobante == 2 ? "DPA" : tipo_comprobante == 4 ? "CPA" : tipo_comprobante == 5 ? "DPC" : tipo_comprobante == 6 ? "CPC" : null;
     let tipo_nombre = (tipo_comprobante == 1 || tipo_comprobante == 3) ? "Factura" : (tipo_comprobante == 2 || tipo_comprobante == 5) ? "Nota de Débito" : (tipo_comprobante == 4 || tipo_comprobante == 6) ? "Nota de Crédito" : "Comprobante";
     let ConceptoComprobante = `${tipo_nombre} "${A_C}" N° ${numero_comprobante_1_formateado}-${numero_comprobante_2_formateado}`;
     await pa7_giama_renting.query(

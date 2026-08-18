@@ -13,8 +13,12 @@ import { ClipLoader } from "react-spinners";
 import { renderEstadoVehiculo } from '../../utils/renderEstadoVehiculo';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { ToastContainer } from 'react-toastify';
+import ObservacionesModal from './ObservacionesModal/ObservacionesModal';
+
 const ReporteVehiculos = () => {
   const dispatch = useDispatch();
+  const [modalObservacionesOpen, setModalObservacionesOpen] = useState(false);
+  const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState(null);
   useEffect(() => {
     Promise.all([
       dispatch(getVehiculos()),
@@ -34,6 +38,8 @@ const ReporteVehiculos = () => {
     isLoading
   } = useSelector((state) => state.vehiculosReducer)
   const { modelos, proveedoresGPS, sucursales, estados } = useSelector(state => state.generalesReducer)
+  const { roles } = useSelector(state => state.loginReducer)
+  const userRoles = roles ? roles.split(",") : []
   const [vehiculosConEstado, setVehiculosConEstado] = useState(null)
   useToastFeedback({
     isError,
@@ -55,6 +61,8 @@ const ReporteVehiculos = () => {
 
           if (v.fecha_venta) {
             estado_nombre = "Vendido";
+          } else if (v.estado_actual === 8) {
+            estado_nombre = "Cobrado DT";
           } else if (v.vehiculo_alquilado === 1) {
             estado_nombre = "Alquilado";
           } else if (v.vehiculo_reservado === 1) {
@@ -78,6 +86,9 @@ const ReporteVehiculos = () => {
     const modelo = modelos.find((m) => m.id === id);
     return modelo ? modelo.nombre : id;
   };
+
+
+
   const handleActualizar = () => {
     dispatch(getVehiculos())
   };
@@ -100,6 +111,7 @@ const ReporteVehiculos = () => {
     );
   };
   const renderModificarCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2") && !userRoles.includes("4")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}vehiculos/actualizar/${data.data.id}`, '_blank')}
@@ -110,6 +122,7 @@ const ReporteVehiculos = () => {
     );
   };
   const renderEgresosCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}costos/egresos/${data.data.id}`, '_blank')}
@@ -120,12 +133,35 @@ const ReporteVehiculos = () => {
     );
   };
   const renderIngresosCell = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}costos/ingresos/${data.data.id}`, '_blank')}
         style={{ color: '#1976d2', fontSize: "11px", textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         Ingresos
+      </button>
+    );
+  };
+  const handleOpenObservaciones = (vehiculoData) => {
+    setVehiculoSeleccionado(vehiculoData);
+    setModalObservacionesOpen(true);
+  };
+  const renderObservacionesCell = (data) => {
+    return (
+      <button
+        onClick={() => handleOpenObservaciones(data.data)}
+        style={{
+          color: '#1976d2',
+          fontSize: '11px',
+          textDecoration: 'underline',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontWeight: '500',
+        }}
+      >
+        Observaciones
       </button>
     );
   };
@@ -172,13 +208,16 @@ const ReporteVehiculos = () => {
         </div>
       )}
       <h2>Reporte de vehículos ingresados</h2>
-      <button onClick={handleActualizar} className={styles.refreshButton}>
-        🔄 Actualizar reporte
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <button onClick={handleActualizar} className={styles.refreshButton}>
+          🔄 Actualizar reporte
+        </button>
+
+      </div>
       <DataGrid
         className={styles.dataGrid}
         style={{ fontFamily: "IBM", fontSize: "12px" }}
-        dataSource={vehiculosConEstado || []}
+        dataSource={vehiculosConEstado}
         showBorders={true}
         rowAlternationEnabled={true}
         allowColumnResizing={true}
@@ -195,6 +234,7 @@ const ReporteVehiculos = () => {
           caption="Estado"
           calculateDisplayValue={(rowData) => {
             if (rowData.fecha_venta) return "Vendido";
+            if (rowData.estado_actual === 8) return "Cobrado DT";
             if (rowData.vehiculo_alquilado === 1) return "Alquilado";
             if (rowData.vehiculo_reservado === 1) return "Reservado";
 
@@ -254,13 +294,18 @@ const ReporteVehiculos = () => {
             }
           }} />
         <Column dataField="fecha_inicio_amortizacion" caption="Fecha amortización" alignment="center" cellRender={renderFecha} />
-        <Column dataField="observaciones" caption="Observaciones" width={200} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderIngresosCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderEgresosCell} />
-        <Column dataField="id" width={100} caption="" alignment="center" cellRender={renderFichaCell} />
+        <Column name="observacionesBtn" width={110} caption="" alignment="center" cellRender={renderObservacionesCell} />
+        <Column name="imagenesBtn" width={100} caption="" alignment="center" cellRender={renderImagenesCell} />
+        <Column name="modificarBtn" width={100} caption="" alignment="center" cellRender={renderModificarCell} />
+        <Column name="ingresosBtn" width={100} caption="" alignment="center" cellRender={renderIngresosCell} />
+        <Column name="egresosBtn" width={100} caption="" alignment="center" cellRender={renderEgresosCell} />
+        <Column name="fichaBtn" width={100} caption="" alignment="center" cellRender={renderFichaCell} />
       </DataGrid>
+      <ObservacionesModal
+        isOpen={modalObservacionesOpen}
+        onClose={() => setModalObservacionesOpen(false)}
+        vehiculo={vehiculoSeleccionado}
+      />
     </div>
   )
 }
