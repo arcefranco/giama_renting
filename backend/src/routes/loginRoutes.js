@@ -10,7 +10,7 @@ import {
 } from "../controllers/loginController.js";
 const loginRouter = Router();
 import { auth } from "../middlewares/auth.js";
-import { authorizeAdmin } from "../middlewares/roles.js";
+
 
 loginRouter.use((req, res, next) => {
   res.header(
@@ -21,11 +21,11 @@ loginRouter.use((req, res, next) => {
 });
 
 loginRouter.post("/createPass", createPass);
-loginRouter.post("/createUsuario", auth, authorizeAdmin(), createUsuario);
+loginRouter.post("/createUsuario", auth, createUsuario);
 loginRouter.post("/recovery", recoveryPass);
 loginRouter.post("/login", logIn);
 loginRouter.get("/validar-token", validarToken);
-loginRouter.post("/postAlerta", auth, authorizeAdmin(), postAlerta);
+loginRouter.post("/postAlerta", auth, postAlerta);
 loginRouter.post("/logout", logOut);
 
 export default loginRouter;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
-import { authorizeRoles } from "../middlewares/roles.js";
+
 import {postPago, ctaCteCliente, fichaCtaCte, getEstadoDeuda, anulacionFactura, anulacionRecibo, anulacionDeuda, postDevolucionGarantia, exportarCtacteCliente} from "../controllers/ctacteController.js";
 const ctacteRouter = Router();
 ctacteRouter.use((req, res, next) => {
@@ -11,13 +11,13 @@ ctacteRouter.use((req, res, next) => {
   next();
 });
 
-ctacteRouter.post("/pago", auth, authorizeRoles("2"), postPago);
-ctacteRouter.post("/ctacteCliente", auth, authorizeRoles("2", "3", "4", "5"), ctaCteCliente);
-ctacteRouter.post("/exportarCtacteCliente", auth, authorizeRoles("2", "3", "4", "5"), exportarCtacteCliente);
-ctacteRouter.post("/fichaCtaCte", auth, authorizeRoles("2", "3", "4", "5"), fichaCtaCte);
-ctacteRouter.post("/getEstadoDeuda", auth, authorizeRoles("2", "3", "4", "5"), getEstadoDeuda);
-ctacteRouter.post("/anulacionFactura", auth, authorizeRoles("2"), anulacionFactura);
-ctacteRouter.post("/anulacionRecibo", auth, authorizeRoles("2"), anulacionRecibo);
-ctacteRouter.post("/anulacionDeuda", auth, authorizeRoles("2"), anulacionDeuda);
-ctacteRouter.post("/devolucionGarantia", auth, authorizeRoles("2"), postDevolucionGarantia);
+ctacteRouter.post("/pago", auth, postPago);
+ctacteRouter.post("/ctacteCliente", auth, ctaCteCliente);
+ctacteRouter.post("/exportarCtacteCliente", auth, exportarCtacteCliente);
+ctacteRouter.post("/fichaCtaCte", auth, fichaCtaCte);
+ctacteRouter.post("/getEstadoDeuda", auth, getEstadoDeuda);
+ctacteRouter.post("/anulacionFactura", auth, anulacionFactura);
+ctacteRouter.post("/anulacionRecibo", auth, anulacionRecibo);
+ctacteRouter.post("/anulacionDeuda", auth, anulacionDeuda);
+ctacteRouter.post("/devolucionGarantia", auth, postDevolucionGarantia);
 export default ctacteRouter;

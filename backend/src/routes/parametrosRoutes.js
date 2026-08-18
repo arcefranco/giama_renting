@@ -15,7 +15,7 @@ import {
   getProveedorGPSById,
 } from "../controllers/parametrosController.js";
 import { auth } from "../middlewares/auth.js";
-import { authorizeRoles } from "../middlewares/roles.js";
+
 const parametrosRouter = Router();
 
 parametrosRouter.use((req, res, next) => {

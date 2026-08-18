@@ -187,7 +187,7 @@ const ReporteContratos = () => {
   }, [vehiculos]);
 
   const renderModificar = (data) => {
-    if (!userRoles.includes("1") && !userRoles.includes("3")) return null;
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         onClick={() => window.open(`${import.meta.env.VITE_BASENAME}contrato/actualizar/${data.data.id}`, '_blank')}
@@ -203,6 +203,7 @@ const ReporteContratos = () => {
   }
 
   const renderModificarVehiculo = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
       <button
         style={{
@@ -225,7 +226,7 @@ const ReporteContratos = () => {
   }
 
   const renderRenovarAlquiler = (data) => {
-    if (!userRoles.includes("1") && !userRoles.includes("3")) return null;
+    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     const row = data.data;
     const cliente = clientes?.find(c => c.id == row.id_cliente);
     const esEmpresa = !!(cliente?.razon_social);
