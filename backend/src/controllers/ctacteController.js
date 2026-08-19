@@ -1238,8 +1238,8 @@ export const anulacionFactura = async (req, res) => {
         `INSERT INTO facturas 
              (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${Object.keys(otrosCampos).join(", ")})
              VALUES (?,?,?,?,?,?,?,?, ${Object.keys(otrosCampos)
-               .map(() => "?")
-               .join(", ")})`,
+          .map(() => "?")
+          .join(", ")})`,
         {
           type: QueryTypes.INSERT,
           replacements: [
@@ -1377,7 +1377,11 @@ export const anulacionDeuda = async (req, res) => {
   let nro_asiento_original;
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
-  if (tipo == 2) {
+  if (tipo == 1) {
+    tabla = "alquileres";
+    campo = "anulado";
+    campo_fecha_anulacion = "fecha_anulacion";
+  } else if (tipo == 2) {
     tabla = "contratos_alquiler";
     campo = "anulado_deposito";
     campo_fecha_anulacion = "fecha_anulacion_deposito";
@@ -1424,7 +1428,7 @@ export const anulacionDeuda = async (req, res) => {
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   try {
     const nro_comprobante = padWithZeros(`${NroAsiento_nuevo}`, 13);
-    await giama_renting.query(
+    await pa7_giama_renting.query(
       `INSERT INTO c_movimientos (
     Fecha,
     NroAsiento,
@@ -1462,7 +1466,7 @@ export const anulacionDeuda = async (req, res) => {
       },
     );
 
-    await giama_renting.query(
+    await pa7_giama_renting.query(
       `INSERT INTO c2_movimientos (
     Fecha,
     NroAsiento,
@@ -1496,13 +1500,23 @@ export const anulacionDeuda = async (req, res) => {
         transaction: transaction_pa7_giama_renting,
       },
     );
-    await giama_renting.query(
-      `UPDATE ${tabla} SET ${campo} = 1, ${campo_fecha_anulacion} = ? WHERE id = ?`,
-      {
-        type: QueryTypes.UPDATE,
-        replacements: [fecha, id_registro],
-      },
-    );
+    if (tabla === "alquileres" && nro_asiento_original) {
+      await giama_renting.query(
+        `UPDATE alquileres SET anulado = 1, fecha_anulacion = ? WHERE nro_asiento = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [fecha, nro_asiento_original],
+        },
+      );
+    } else {
+      await giama_renting.query(
+        `UPDATE ${tabla} SET ${campo} = 1, ${campo_fecha_anulacion} = ? WHERE id = ?`,
+        {
+          type: QueryTypes.UPDATE,
+          replacements: [fecha, id_registro],
+        },
+      );
+    }
     await transaction_pa7_giama_renting.commit();
     return res.send({
       status: true,
@@ -1601,7 +1615,7 @@ export const postDevolucionGarantia = async (req, res) => {
         message: "No se encontró el contrato de la garantía original.",
       });
     }
-
+//COMENTARIO
     const depositoTotal = Number(contrato.deposito_garantia) || 0;
     const devueltoHastaAhora = Number(contrato.garantia_devuelta) || 0;
     const montoADevolver = Number(importe) || 0;
@@ -1676,9 +1690,9 @@ export const postDevolucionGarantia = async (req, res) => {
             id_concepto_devolucion,
             importe * -1,
             "Devolución de Garantía" +
-              sufijoDominio +
-              " - " +
-              (observacion || ""),
+            sufijoDominio +
+            " - " +
+            (observacion || ""),
             NroAsiento_nuevo,
           ],
           type: QueryTypes.INSERT,
@@ -1703,9 +1717,9 @@ export const postDevolucionGarantia = async (req, res) => {
           id_forma_pago,
           importe * -1,
           "Devolución de Garantía" +
-            sufijoDominio +
-            " - " +
-            (observacion || ""),
+          sufijoDominio +
+          " - " +
+          (observacion || ""),
           NroAsiento_nuevo,
         ],
         type: QueryTypes.INSERT,
@@ -1894,8 +1908,8 @@ ORDER BY m.fecha, m.tipo;`,
     });
 
     const worksheet = xlsx.utils.json_to_sheet(formattedData);
-    
-    const objectMaxLength = []; 
+
+    const objectMaxLength = [];
     formattedData.forEach((row) => {
       Object.entries(row).forEach(([key, value], idx) => {
         let columnValue = value ? value.toString().length : 0;

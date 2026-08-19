@@ -12,57 +12,39 @@ const menuItems = [
   {
     title: "Vehículos",
     items: [
-      { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["2"] },
-      { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["5"] },
-      { label: "Listado fichas", to: "/vehiculos/ficha/reporte", roles: ["5"] },
-      { label: "Situación de la flota", to: "/vehiculos/situacionFlota", roles: ["5"] },
-      { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["2"] }
+      { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["1", "2"] },
+      { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["2", "3", "4", "5"] },
+      { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
+      { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
+      { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["1"] }
     ],
-    /*     submenus: [
-          {
-            title: "Logística",
-            items: [
-              { label: "Formulario de ingreso", to: "/vehiculos" },
-              { label: "Reporte vehículos", to: "/vehiculosReporte" },
-              { label: "Reporte fichas de vehículos", to: "/vehiculos/ficha/reporte" }
-            ]
-          }, */
-    /*       {
-            title: "Por marca",
-            items: [
-              { label: "Ford", to: "/vehiculos/ford" },
-              { label: "Chevrolet", to: "/vehiculos/chevrolet" }
-            ]
-          } */
-    /*   ] */
   },
   {
     title: "Clientes",
     items: [
-      { label: "Ingreso de clientes", to: "/clientes", roles: ["3"] },
-      { label: "Listado de clientes", to: "/clientesReporte", roles: ["5"] },
-      { label: "Cta cte clientes", to: "/pagosClientes", roles: ["5"] },
-      { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["5"] },
+      { label: "Ingreso de clientes", to: "/clientes", roles: ["3", "4"] },
+      { label: "Listado de clientes", to: "/clientesReporte", roles: ["2", "3", "4"] },
+      { label: "Cta cte clientes", to: "/pagosClientes", roles: ["2", "3", "4", "5"] },
+      { label: "Ficha cta cte", to: "/fichaCtaCte", roles: ["2", "3", "4", "5"] },
     ]
   },
   {
     title: "Alquileres",
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["2"] },
-      { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["5"] },
-      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["5"] },
-
+      { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3", "5"] },
+      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5"] },
     ]
   },
   {
     title: "Parámetros",
     items: [
-      { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["2"] },
-      { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["2"] },
-      { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["2"] },
-      { label: "Modelos", to: "/parametros/modelos" },
-      { label: "Proveedores GPS", to: "/parametros/proveedoresGPS" },
-      { label: "Sucursales", to: "/parametros/sucursales" }
+      { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["1", "2"] },
+      { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["1", "2"] },
+      { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["1", "2"] },
+      { label: "Modelos", to: "/parametros/modelos", roles: ["1", "2"] },
+      { label: "Proveedores GPS", to: "/parametros/proveedoresGPS", roles: ["1"] },
+      { label: "Sucursales", to: "/parametros/sucursales", roles: ["1", "4"] }
     ]
   },
   {
@@ -73,7 +55,7 @@ const menuItems = [
       { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateo", roles: ["2"] },
       { label: "Listado de recibos", to: "/recibos/reporte" },
-      { label: "Importación de multas", to: "/costos/importaciones", roles: ["2"] },
+      { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "4"] },
       { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2"] },
     ]
   },
@@ -146,7 +128,7 @@ const Header = () => {
 
       <div className={styles.userSection}>
         {
-          (roles.includes("1") || roles.includes("2") || roles.includes("3") || roles.includes("4")) &&
+          (roles.includes("1") || roles.includes("2") || roles.includes("3")) &&
           <div className={styles.notifItem}>
             <img style={{ width: "32px" }} src={notification} alt="" />
             <div className={styles.dropdownNotif}>

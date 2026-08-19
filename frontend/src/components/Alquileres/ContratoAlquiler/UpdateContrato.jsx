@@ -156,7 +156,7 @@ const UpdateContrato = () => {
         };
         return opciones[valor] || sinResolucionIcon;
     };
-    const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta).map((e) => {
+    const opcionesVehiculos = vehiculos?.filter((v) => !v.fecha_venta && v.activo === 1).map((e) => {
         const dominio = e.dominio || e.dominio_provisorio || "";
         const modeloNombre = modelos.find((m) => m.id == e.modelo)?.nombre || "";
 
@@ -270,7 +270,6 @@ const UpdateContrato = () => {
                             disabled={vehiculo ? true : false}
                             selected={formContrato.fecha_desde_contrato}
                             onChange={(date) => setFormContrato(prev => ({ ...prev, fecha_desde_contrato: date }))}
-                            minDate={formContrato.fecha_desde_contrato}
                             maxDate={formContrato.fecha_hasta_contrato}
                             placeholderText="Seleccione una fecha"
 /*                             excludeDateIntervals={rangosOcupados} */

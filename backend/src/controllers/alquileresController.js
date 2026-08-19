@@ -1,6 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import { padWithZeros } from "../../helpers/padWithZeros.js";
 import { esAnteriorAHoy } from "../../helpers/esAnteriorAHoy.js";
 import {
   formatearFechaISO,
@@ -83,8 +84,7 @@ const insertAlquiler = async (body) => {
   } catch (error) {
     console.log(error);
     throw new Error(
-      `Error al insertar alquiler${
-        error.message ? `${" :"}${error.message}` : ""
+      `Error al insertar alquiler${error.message ? `${" :"}${error.message}` : ""
       }`,
     );
   }
@@ -336,7 +336,7 @@ export const getContratos = async (req, res) => {
     if (vigentes) {
       result = await giama_renting.query(
         baseQuery +
-          `
+        `
         WHERE (a.fecha_hasta <= c.fecha_hasta OR a.id IS NULL)
         ORDER BY a.id;`,
         { type: QueryTypes.SELECT },
@@ -344,7 +344,7 @@ export const getContratos = async (req, res) => {
     } else {
       result = await giama_renting.query(
         baseQuery +
-          `
+        `
         ORDER BY c.id;`,
         { type: QueryTypes.SELECT },
       );
@@ -649,41 +649,43 @@ export const anulacionContrato = async (req, res) => {
     console.log(formatearFechaISO(nuevaHasta));
 
     //inserto en historial el contrato anterior
-    if (
-      formatearFechaISO(fechaDesdeHistorial).startsWith("19") ||
-      formatearFechaISO(fechaHastaHistorial).startsWith("19")
-    ) {
-      return res.send({ status: false, message: "Fechas inválidas" });
-    }
-    try {
-      await giama_renting.query(
-        `INSERT INTO historial_anulaciones_contratos
-         (id_contrato, id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia, 
-         id_forma_cobro, nro_asiento) VALUES (?,?,?,?,?,?,?,?)`,
-        {
-          replacements: [
-            id_contrato,
-            contratoAnterior["id_vehiculo"],
-            contratoAnterior["id_cliente"],
-            formatearFechaISO(fechaDesdeHistorial),
-            formatearFechaISO(fechaHastaHistorial),
-            contratoAnterior["deposito_garantia"],
-            contratoAnterior["id_forma_cobro"],
-            contratoAnterior["nro_asiento"],
-          ],
-          type: QueryTypes.INSERT,
-          transaction: transaction_giama_renting,
-        },
-      );
-    } catch (error) {
-      console.log(error);
-      transaction_giama_renting.rollback();
-      const { body } = handleError(
-        error,
-        "Historial de anulaciones",
-        acciones.post,
-      );
-      return res.send(body);
+    if (fechaDesdeHistorial && fechaHastaHistorial) {
+      if (
+        formatearFechaISO(fechaDesdeHistorial).startsWith("19") ||
+        formatearFechaISO(fechaHastaHistorial).startsWith("19")
+      ) {
+        return res.send({ status: false, message: "Fechas inválidas" });
+      }
+      try {
+        await giama_renting.query(
+          `INSERT INTO historial_anulaciones_contratos
+           (id_contrato, id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia, 
+           id_forma_cobro, nro_asiento) VALUES (?,?,?,?,?,?,?,?)`,
+          {
+            replacements: [
+              id_contrato,
+              contratoAnterior["id_vehiculo"],
+              contratoAnterior["id_cliente"],
+              formatearFechaISO(fechaDesdeHistorial),
+              formatearFechaISO(fechaHastaHistorial),
+              contratoAnterior["deposito_garantia"],
+              contratoAnterior["id_forma_cobro"],
+              contratoAnterior["nro_asiento"],
+            ],
+            type: QueryTypes.INSERT,
+            transaction: transaction_giama_renting,
+          },
+        );
+      } catch (error) {
+        console.log(error);
+        transaction_giama_renting.rollback();
+        const { body } = handleError(
+          error,
+          "Historial de anulaciones",
+          acciones.post,
+        );
+        return res.send(body);
+      }
     }
     //actualizo el contrato en tabla contratos_alquiler
     if (
@@ -3357,6 +3359,7 @@ export const renovacionContratoFlota = async (req, res) => {
   let transaction_pa7_giama_renting;
   const {
     id_alquiler,
+    alquileres_ids,
     fecha_desde_nuevo,
     fecha_hasta_nuevo,
     importe_total_nuevo,
@@ -3391,36 +3394,58 @@ export const renovacionContratoFlota = async (req, res) => {
       "SELECT nro_asiento, id_cliente FROM alquileres WHERE id = ?",
       {
         type: QueryTypes.SELECT,
-        replacements: [id_alquiler],
+        replacements: [alquileres_ids && alquileres_ids.length > 0 ? alquileres_ids[0] : id_alquiler],
         transaction: transaction_giama_renting,
       },
     );
     if (!resultAlquilerRef.length)
       throw new Error("No se encontró el alquiler de referencia");
 
-    const nro_asiento_flota = resultAlquilerRef[0].nro_asiento;
     const id_cliente = resultAlquilerRef[0].id_cliente;
-    if (!nro_asiento_flota)
-      throw new Error(
-        "Este alquiler no pertenece a una flota (sin nro_asiento)",
-      );
 
-    // 2. Traer TODOS los alquileres vigentes de esta flota (mismo nro_asiento, no anulados)
-    const alquileresFlota = await giama_renting.query(
-      `SELECT a.id, a.id_vehiculo, a.id_contrato,
-              v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre,
-              c.fecha_hasta AS contrato_fecha_hasta
-       FROM alquileres a
-       LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
-       LEFT JOIN modelos m ON m.id = v.modelo
-       LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
-       WHERE a.nro_asiento = ? AND a.anulado = 0`,
-      {
-        type: QueryTypes.SELECT,
-        replacements: [nro_asiento_flota],
-        transaction: transaction_giama_renting,
-      },
-    );
+    let alquileresFlota;
+
+    if (alquileres_ids && alquileres_ids.length > 0) {
+      // 2. Traer TODOS los alquileres especificados desde el frontend (ideal para contratos viejos sin mismo nro_asiento)
+      alquileresFlota = await giama_renting.query(
+        `SELECT a.id, a.id_vehiculo, a.id_contrato,
+                v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre,
+                c.fecha_hasta AS contrato_fecha_hasta
+         FROM alquileres a
+         LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
+         LEFT JOIN modelos m ON m.id = v.modelo
+         LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
+         WHERE a.id IN (?)`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [alquileres_ids],
+          transaction: transaction_giama_renting,
+        },
+      );
+    } else {
+      // Fallback a lógica anterior (por nro_asiento)
+      const nro_asiento_flota = resultAlquilerRef[0].nro_asiento;
+      if (!nro_asiento_flota)
+        throw new Error(
+          "Este alquiler no pertenece a una flota (sin nro_asiento)",
+        );
+
+      alquileresFlota = await giama_renting.query(
+        `SELECT a.id, a.id_vehiculo, a.id_contrato,
+                v.dominio, v.dominio_provisorio, m.nombre as modelo_nombre,
+                c.fecha_hasta AS contrato_fecha_hasta
+         FROM alquileres a
+         LEFT JOIN vehiculos v ON v.id = a.id_vehiculo
+         LEFT JOIN modelos m ON m.id = v.modelo
+         LEFT JOIN contratos_alquiler c ON c.id = a.id_contrato
+         WHERE a.nro_asiento = ? AND a.anulado = 0`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [nro_asiento_flota],
+          transaction: transaction_giama_renting,
+        },
+      );
+    }
     if (!alquileresFlota.length)
       throw new Error("No se encontraron alquileres vigentes para esta flota");
 
@@ -3442,15 +3467,24 @@ export const renovacionContratoFlota = async (req, res) => {
     let restanteTotal = importeTotal;
     let restanteNeto = parseFloat((importeTotal / 1.21).toFixed(2));
 
+    // 5. Formateo de fechas para el detalle
+    const fechaDesdeSplit = fecha_desde_nuevo.split("-");
+    const fechaHastaSplit = fecha_hasta_nuevo.split("-");
+    const fechaDesdeStr = `${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]}`;
+    const fechaHastaStr = `${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]}`;
+
     // Detección de empresa y mapeo contable
     const resultClienteRenov = await giama_renting.query(
-      "SELECT razon_social FROM clientes WHERE id = ?",
+      "SELECT razon_social, nro_documento FROM clientes WHERE id = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [id_cliente],
         transaction: transaction_giama_renting,
       },
     );
+    const CUIT = resultClienteRenov.length
+      ? resultClienteRenov[0]["nro_documento"] || ""
+      : "";
     const esEmpresaRenov = !!(
       resultClienteRenov.length && resultClienteRenov[0]["razon_social"]
     );
@@ -3529,7 +3563,7 @@ export const renovacionContratoFlota = async (req, res) => {
       );
 
       facturaItems.push({
-        descripcion: `Renovación Alquiler ${dominio} ${modeloStr}`,
+        descripcion: `Renovación Alquiler - desde: ${fechaDesdeStr} hasta: ${fechaHastaStr} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`,
         cantidad: 1,
         precioUnitario: itemNeto,
         porcentaje: 21,
@@ -3538,10 +3572,8 @@ export const renovacionContratoFlota = async (req, res) => {
     }
 
     // 5. Emitir una única factura consolidada en BA6
-    const fechaDesdeSplit = fecha_desde_nuevo.split("-");
-    const fechaHastaSplit = fecha_hasta_nuevo.split("-");
     const dominiosJuntos = patentesFlota.join(", ");
-    const concepto_factura = `Renovación Flota - desde: ${fechaDesdeSplit[2]}/${fechaDesdeSplit[1]}/${fechaDesdeSplit[0]} hasta: ${fechaHastaSplit[2]}/${fechaHastaSplit[1]}/${fechaHastaSplit[0]} Dominios: ${dominiosJuntos}`;
+    const concepto_factura = `Renovación Flota - desde: ${fechaDesdeStr} hasta: ${fechaHastaStr} Dominios: ${dominiosJuntos}`;
 
     const importe_neto_total = (importeTotal / 1.21).toFixed(2);
     const importe_iva_total = (
@@ -3574,6 +3606,7 @@ export const renovacionContratoFlota = async (req, res) => {
     );
 
     // 7. Generar asiento contable de la deuda
+    const nro_comprobante_deuda = padWithZeros(`${NroAsiento_deuda}`, 13);
     await asientoContable(
       "c_movimientos",
       NroAsiento_deuda,
@@ -3582,10 +3615,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importeTotal,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       NroAsientoSecundario_deuda,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c_movimientos",
@@ -3595,10 +3628,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_neto_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       NroAsientoSecundario_deuda,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c_movimientos",
@@ -3608,10 +3641,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_iva_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       NroAsientoSecundario_deuda,
-      null,
+      "ASD",
     );
     // Movimientos secundarios
     await asientoContable(
@@ -3622,10 +3655,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importeTotal,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       null,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c2_movimientos",
@@ -3635,10 +3668,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_neto_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       null,
-      null,
+      "ASD",
     );
     await asientoContable(
       "c2_movimientos",
@@ -3648,10 +3681,10 @@ export const renovacionContratoFlota = async (req, res) => {
       importe_iva_total,
       concepto_factura,
       transaction_pa7_giama_renting,
-      null,
+      nro_comprobante_deuda,
       fecha_desde_nuevo,
       null,
-      null,
+      "ASD",
     );
 
     await transaction_giama_renting.commit();

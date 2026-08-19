@@ -116,7 +116,7 @@ const Ingresos = () => {
 
   useEffect(() => { /**OPCIONES DE VEHICULOS PARA EL SELECT */
     if (vehiculos?.length) {
-      setOpcionesVehiculos(vehiculos?.filter(v => { return !v.fecha_venta })?.map(e => {
+      setOpcionesVehiculos(vehiculos?.filter(v => { return !v.fecha_venta && v.activo === 1 })?.map(e => {
         let modeloNombre = modelos?.find(m => m.id == e.modelo)?.nombre
         let dominio = e.dominio ? e.dominio :
           e.dominio_provisorio ? e.dominio_provisorio : ""
@@ -992,7 +992,7 @@ const Ingresos = () => {
         <button
           className={styles.sendBtn}
           onClick={handleSubmit}
-          disabled={!form["fecha_deuda"] || !form["id_concepto"] || !form["id_vehiculo"]}
+          disabled={!form["fecha_deuda"] || !form["id_concepto"] || !form["id_vehiculo"] || isLoading || isLoadingCostos}
         >
           Enviar
         </button>

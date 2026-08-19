@@ -12,7 +12,7 @@ import {
   ingresos_seguros
 } from "../controllers/costosController.js";
 import { auth } from "../middlewares/auth.js";
-import { authorizeRoles } from "../middlewares/roles.js";
+
 import { upload } from "../middlewares/upload.js";
 import { importacionesMultas, importacionesTelepases } from "../controllers/importacionesController.js";
 
@@ -29,61 +29,52 @@ costosRouter.use((req, res, next) => {
 costosRouter.get(
   "/cuentasContables",
   auth,
-  authorizeRoles("2"),
   getCuentasContables
 );
-costosRouter.post("/concepto", auth, authorizeRoles("2"), postConceptoCostos);
-costosRouter.get("/concepto", auth, authorizeRoles("2"), getConceptosCostos);
+costosRouter.post("/concepto", auth, postConceptoCostos);
+costosRouter.get("/concepto", auth, getConceptosCostos);
 costosRouter.post(
   "/getConceptosCostosById",
   auth,
-  authorizeRoles("2"),
   getConceptosCostosById
 );
 costosRouter.post(
   "/updateConcepto",
   auth,
-  authorizeRoles("2"),
   updateConceptoCostos
 );
 costosRouter.post(
   "/deleteConcepto",
   auth,
-  authorizeRoles("2"),
   deleteConceptosCostos
 );
 costosRouter.post(
   "/costos_ingresos",
   auth,
-  authorizeRoles("2"),
   postCostos_Ingresos
 );
 costosRouter.post(
   "/ingresos_seguros",
   auth,
-  authorizeRoles("2"),
   ingresos_seguros
 );
 costosRouter.post(
   "/costos_ingresos_id_vehiculo",
   auth,
-  authorizeRoles("2"),
   getCostosIngresosByIdVehiculo
 );
 costosRouter.post(
   "/importacionMultas",
   auth,
-  authorizeRoles("2", "4"),
   upload.single("file"),
   importacionesMultas 
 );
 costosRouter.post(
   "/importacionTelepases",
   auth,
-  authorizeRoles("2", "4"),
   upload.single("file"),
   importacionesTelepases 
 );
 
-costosRouter.post("/prorrateo", auth, authorizeRoles("2"), prorrateo);
+costosRouter.post("/prorrateo", auth, prorrateo);
 export default costosRouter;

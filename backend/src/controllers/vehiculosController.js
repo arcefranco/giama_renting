@@ -1095,41 +1095,77 @@ export const updateVehiculo = async (req, res) => {
     return res.send({ status: false, message: "Se requiere permiso de finanzas para poder realizar cambio de los meses amortización" })
   }
 
+  const checkPermisoFinanzas = (campoReq, campoAnt, nombre) => {
+    // Si viene en el body y es distinto al que estaba, validamos
+    if (campoReq !== undefined && campoReq !== null && String(campoReq) !== String(campoAnt || "")) {
+      if (!userRoles.includes("2") && !userRoles.includes("1")) {
+        return { status: false, message: `Se requiere permiso de finanzas para poder realizar cambio de ${nombre}` };
+      }
+    }
+    return null;
+  }
+
+  let errGen = 
+    checkPermisoFinanzas(nro_chasis, vehiculoAnterior[0]["nro_chasis"], "número de chasis") ||
+    checkPermisoFinanzas(nro_motor, vehiculoAnterior[0]["nro_motor"], "número de motor") ||
+    checkPermisoFinanzas(color, vehiculoAnterior[0]["color"], "color") ||
+    checkPermisoFinanzas(observaciones, vehiculoAnterior[0]["observaciones"], "observaciones") ||
+    checkPermisoFinanzas(dominio, vehiculoAnterior[0]["dominio"], "dominio") ||
+    checkPermisoFinanzas(dominio_provisorio, vehiculoAnterior[0]["dominio_provisorio"], "dominio provisorio");
+    
+  if (errGen) return res.send(errGen);
+
   //ADMINISTRACION
 
-  if (dispositivo && vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  const checkPermisoAdmin = (campoReq, campoAnt, nombre) => {
+    if (campoReq !== undefined && campoReq !== null && String(campoReq) !== String(campoAnt || "")) {
+      if (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1")) {
+        return { status: false, message: `Se requiere permiso de administración/finanzas para poder realizar cambio de ${nombre}` };
+      }
+    }
+    return null;
+  }
+
+  let errPrep = 
+    checkPermisoAdmin(kilometros, vehiculoAnterior[0]["kilometros_actuales"], "kilómetros") ||
+    checkPermisoAdmin(fecha_medicion_km, vehiculoAnterior[0]["fecha_medicion_km"], "fecha de medición") ||
+    checkPermisoAdmin(ubicacion, vehiculoAnterior[0]["ubicacion"], "ubicación");
+    
+  if (errPrep) return res.send(errPrep);
+
+  if (dispositivo && vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje" })
   }
 
-  if (estado && vehiculoAnterior[0]["estado_actual"] !== estado && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo" })
   }
 
-  if (sucursal && vehiculoAnterior[0]["sucursal"] !== sucursal && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (sucursal && String(vehiculoAnterior[0]["sucursal"]) !== String(sucursal) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de sucursal" })
   }
 
-  if (proveedor_gps && vehiculoAnterior[0]["proveedor_gps"] !== proveedor_gps && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (proveedor_gps && String(vehiculoAnterior[0]["proveedor_gps"]) !== String(proveedor_gps) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio del proveedor GPS" })
   }
 
-  if (nro_serie_gps && vehiculoAnterior[0]["nro_serie_gps"] !== nro_serie_gps && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (nro_serie_gps && String(vehiculoAnterior[0]["nro_serie_gps"]) !== String(nro_serie_gps) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio del número serie GPS" })
   }
 
-  if (calcomania && vehiculoAnterior[0]["calcomania"] !== calcomania && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (calcomania !== undefined && String(vehiculoAnterior[0]["calcomania"]) !== String(calcomania) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de calcomania" })
   }
 
-  if (gnc && vehiculoAnterior[0]["gnc"] !== gnc && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (gnc !== undefined && String(vehiculoAnterior[0]["gnc"]) !== String(gnc) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de GNC" })
   }
 
-  if (polarizado && vehiculoAnterior[0]["polarizado"] !== polarizado && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (polarizado !== undefined && String(vehiculoAnterior[0]["polarizado"]) !== String(polarizado) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de polarizado" })
   }
 
-  if (cubre_asiento && vehiculoAnterior[0]["cubre_asiento"] !== cubre_asiento && (!userRoles.includes("4") && !userRoles.includes("1"))) {
+  if (cubre_asiento !== undefined && String(vehiculoAnterior[0]["cubre_asiento"]) !== String(cubre_asiento) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de cubre asiento" })
   }
 
@@ -1155,6 +1191,17 @@ export const updateVehiculo = async (req, res) => {
     fechaDeAmortizacion = null;
   }
 
+  let activo = 1;
+  if (vehiculoAnterior[0]["fecha_venta"]) {
+    activo = 0;
+  }
+  if (estado) {
+    const [estadoNuevoInfo] = await giama_renting.query("SELECT nombre FROM estados_vehiculos WHERE id = ?", { replacements: [estado], type: QueryTypes.SELECT });
+    if (estadoNuevoInfo && (estadoNuevoInfo.nombre === 'Cobrado DT' || estadoNuevoInfo.nombre === 'Reservado venta')) {
+      activo = 0;
+    }
+  }
+
   try {
     await giama_renting.query(
       `UPDATE vehiculos SET  dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
@@ -1162,7 +1209,7 @@ export const updateVehiculo = async (req, res) => {
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
         calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
         fecha_inicio_amortizacion = :fechaDeAmortizacion, sucursal = :sucursal, ubicacion = :ubicacion, estado_actual = :estado,
-        polarizado = :polarizado, cubre_asiento = :cubre_asiento,
+        polarizado = :polarizado, cubre_asiento = :cubre_asiento, activo = :activo,
         usuario_ultima_modificacion = :usuario, observaciones = :observaciones
         WHERE id = :id`,
       {
@@ -1188,12 +1235,16 @@ export const updateVehiculo = async (req, res) => {
           estado,
           polarizado,
           cubre_asiento,
+          activo,
           usuario,
           observaciones: observaciones ? observaciones : null,
           id,
         },
       }
     );
+
+
+
   } catch (error) {
     const { body } = handleError(error, "vehículo", acciones.update);
     return res.send(body);
@@ -1457,6 +1508,7 @@ export const getSituacionFlota = async (req, res) => {
   COALESCE(
     CASE 
       WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
+      WHEN est.nombre = 'Cobrado DT' OR est.nombre = 'Reservado venta' THEN est.nombre
       WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
       WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
       ELSE est.nombre
@@ -2034,3 +2086,112 @@ export const postActualizarKilometraje = async (req, res) => {
     });
   }
 };
+
+const ensureObservacionesTableExists = async () => {
+  await giama_renting.query(`
+    CREATE TABLE IF NOT EXISTS vehiculos_observaciones (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      vehiculo_id INT NOT NULL,
+      observacion TEXT NOT NULL,
+      usuario VARCHAR(100) NULL,
+      fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_vehiculo_id (vehiculo_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+};
+
+export const getObservacionesVehiculo = async (req, res) => {
+  const { vehiculo_id } = req.body;
+  if (!vehiculo_id) {
+    return res.send({ status: false, message: "El ID del vehículo es obligatorio" });
+  }
+  try {
+    await ensureObservacionesTableExists();
+    let observaciones = await giama_renting.query(
+      `SELECT id, vehiculo_id, observacion, usuario, fecha 
+       FROM vehiculos_observaciones 
+       WHERE vehiculo_id = :vehiculo_id 
+       ORDER BY fecha DESC, id DESC`,
+      {
+        replacements: { vehiculo_id },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const vehiculo = await giama_renting.query(
+      `SELECT id, observaciones, usuario_ultima_modificacion FROM vehiculos WHERE id = :vehiculo_id`,
+      { replacements: { vehiculo_id }, type: QueryTypes.SELECT }
+    );
+
+    if (vehiculo && vehiculo[0] && vehiculo[0].observaciones && vehiculo[0].observaciones.trim()) {
+      const obsTexto = vehiculo[0].observaciones.trim();
+      const yaExiste = observaciones.some(o => o.observacion.trim() === obsTexto);
+      
+      if (!yaExiste) {
+        const usuarioObs = vehiculo[0].usuario_ultima_modificacion || "Sistema";
+        const fechaObs = null; // Queda vacía (NULL) como pidieron
+        await giama_renting.query(
+          `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
+           VALUES (:vehiculo_id, :observacion, :usuario, :fecha)`,
+          {
+            replacements: { vehiculo_id, observacion: obsTexto, usuario: usuarioObs, fecha: fechaObs },
+            type: QueryTypes.INSERT,
+          }
+        );
+        // Volver a consultar para devolver la lista completa y ordenada por fecha
+        observaciones = await giama_renting.query(
+          `SELECT id, vehiculo_id, observacion, usuario, fecha 
+           FROM vehiculos_observaciones 
+           WHERE vehiculo_id = :vehiculo_id 
+           ORDER BY fecha DESC, id DESC`,
+          { replacements: { vehiculo_id }, type: QueryTypes.SELECT }
+        );
+      }
+    }
+
+    return res.send({ status: true, data: observaciones });
+  } catch (error) {
+    const { body } = handleError(error, "observaciones de vehículo", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const postObservacionVehiculo = async (req, res) => {
+  const { vehiculo_id, observacion, usuario } = req.body;
+  if (!vehiculo_id || !observacion || !observacion.trim()) {
+    return res.send({ status: false, message: "Campos requeridos incompletos" });
+  }
+  try {
+    await ensureObservacionesTableExists();
+    await giama_renting.query(
+      `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
+       VALUES (:vehiculo_id, :observacion, :usuario, NOW())`,
+      {
+        replacements: {
+          vehiculo_id,
+          observacion: observacion.trim(),
+          usuario: usuario || "Sistema",
+        },
+        type: QueryTypes.INSERT,
+      }
+    );
+
+    await giama_renting.query(
+      `UPDATE vehiculos SET observaciones = :observacion WHERE id = :vehiculo_id`,
+      {
+        replacements: {
+          observacion: observacion.trim(),
+          vehiculo_id,
+        },
+        type: QueryTypes.UPDATE,
+      }
+    );
+
+    return res.send({ status: true, message: "Observación agregada correctamente" });
+  } catch (error) {
+    const { body } = handleError(error, "observación de vehículo", acciones.create);
+    return res.send(body);
+  }
+};
+
+
