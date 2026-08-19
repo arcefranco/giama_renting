@@ -63,6 +63,8 @@ const ReporteVehiculos = () => {
             estado_nombre = "Vendido";
           } else if (v.estado_actual === 8) {
             estado_nombre = "Cobrado DT";
+          } else if (v.estado_actual === 9) {
+            estado_nombre = "Reservado venta";
           } else if (v.vehiculo_alquilado === 1) {
             estado_nombre = "Alquilado";
           } else if (v.vehiculo_reservado === 1) {
@@ -235,6 +237,7 @@ const ReporteVehiculos = () => {
           calculateDisplayValue={(rowData) => {
             if (rowData.fecha_venta) return "Vendido";
             if (rowData.estado_actual === 8) return "Cobrado DT";
+            if (rowData.estado_actual === 9) return "Reservado venta";
             if (rowData.vehiculo_alquilado === 1) return "Alquilado";
             if (rowData.vehiculo_reservado === 1) return "Reservado";
 

@@ -39,7 +39,7 @@ const menuItems = [
   {
     title: "Parámetros",
     items: [
-      { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["1"] },
+      { label: "Formas de cobro", to: "/alquileres/formasDeCobro", roles: ["1", "2"] },
       { label: "Conceptos de ingresos", to: "/costos/alta/ingresos", roles: ["1", "2"] },
       { label: "Conceptos de egresos", to: "/costos/alta/egresos", roles: ["1", "2"] },
       { label: "Modelos", to: "/parametros/modelos", roles: ["1", "2"] },
