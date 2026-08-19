@@ -1197,7 +1197,7 @@ export const updateVehiculo = async (req, res) => {
   }
   if (estado) {
     const [estadoNuevoInfo] = await giama_renting.query("SELECT nombre FROM estados_vehiculos WHERE id = ?", { replacements: [estado], type: QueryTypes.SELECT });
-    if (estadoNuevoInfo && estadoNuevoInfo.nombre === 'Cobrado DT') {
+    if (estadoNuevoInfo && (estadoNuevoInfo.nombre === 'Cobrado DT' || estadoNuevoInfo.nombre === 'Reservado venta')) {
       activo = 0;
     }
   }
@@ -1508,7 +1508,7 @@ export const getSituacionFlota = async (req, res) => {
   COALESCE(
     CASE 
       WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
-      WHEN est.nombre = 'Cobrado DT' THEN est.nombre
+      WHEN est.nombre = 'Cobrado DT' OR est.nombre = 'Reservado venta' THEN est.nombre
       WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
       WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
       ELSE est.nombre
