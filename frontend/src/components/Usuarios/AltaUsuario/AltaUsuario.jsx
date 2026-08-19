@@ -122,9 +122,29 @@ const handleSubmit = async (e) => {
         />
       </div>
      </form>
+
+     {selectedRoles.length > 0 && (
+       <div className={styles.permisosBox}>
+         <h3 className={styles.permisosTitle}>Permisos Asignados</h3>
+         <div className={styles.permisosList}>
+           {selectedRoles.map((selectedOpt) => {
+             const roleData = roles.find((r) => r.id === selectedOpt.value);
+             return (
+               <div key={selectedOpt.value} className={styles.permisoCard}>
+                 <span className={styles.roleTag}>{selectedOpt.label}</span>
+                 <p className={styles.permisoDesc}>
+                   {roleData?.permisos || "Sin permisos detallados especificados."}
+                 </p>
+               </div>
+             );
+           })}
+         </div>
+       </div>
+     )}
+
     <button 
     className={styles.sendBtn} onClick={handleSubmit} 
-    disabled={!form["email"] || !form["nombre"] }>
+    disabled={!form["email"] || !form["nombre"] || !form["roles"]}>
       Enviar
     </button>
     </div>

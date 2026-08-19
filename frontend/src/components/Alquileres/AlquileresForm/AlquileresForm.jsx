@@ -293,7 +293,7 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
       end: addDays(new Date(a.fecha_hasta), 1),
     }));
 
-  const opcionesVehiculos = vehiculos.filter(v => { return !v.fecha_venta }).map(e => {
+  const opcionesVehiculos = vehiculos.filter(v => { return !v.fecha_venta && v.activo === 1 }).map(e => {
     return {
       value: e.id,
       label: (

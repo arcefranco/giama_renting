@@ -251,7 +251,9 @@ const asientos_costos_ingresos = async (
 
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
-  let is_nc = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
+  let is_nc = 
+    (comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"))) ||
+    (TipoComprobante && ["NCA", "NCC", "CA", "CC", "CPA", "CPC"].includes(TipoComprobante));
   let dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   let dhTotal = ingreso_egreso === "I" ? "D" : "H";
   
@@ -382,7 +384,7 @@ const asientos_costos_ingresos = async (
           "c_movimientos",
           NroAsiento,
           cuenta_percepcion_IIBB,
-          "D",
+          dhNetoEIva,
           importe_tasa_IIBB,
           observacion,
           transaction,
@@ -397,7 +399,7 @@ const asientos_costos_ingresos = async (
           "c_movimientos",
           NroAsiento,
           cuenta_percepcion_IIBB_CABA,
-          "D",
+          dhNetoEIva,
           importe_tasa_IIBB_CABA,
           observacion,
           transaction,
@@ -412,7 +414,7 @@ const asientos_costos_ingresos = async (
           "c_movimientos",
           NroAsiento,
           cuenta_percepcion_IVA,
-          "D",
+          dhNetoEIva,
           importe_tasa_IVA,
           observacion,
           transaction,
@@ -532,7 +534,7 @@ const asientos_costos_ingresos = async (
             "c2_movimientos",
             NroAsientoSecundario,
             cuenta_secundaria_percepcion_IIBB,
-            "D",
+            dhNetoEIva,
             importe_tasa_IIBB,
             observacion,
             transaction,
@@ -547,7 +549,7 @@ const asientos_costos_ingresos = async (
             "c2_movimientos",
             NroAsientoSecundario,
             cuenta_secundaria_percepcion_IIBB_CABA,
-            "D",
+            dhNetoEIva,
             importe_tasa_IIBB_CABA,
             observacion,
             transaction,
@@ -562,7 +564,7 @@ const asientos_costos_ingresos = async (
             "c2_movimientos",
             NroAsientoSecundario,
             cuenta_secundaria_percepcion_IVA,
-            "D",
+            dhNetoEIva,
             importe_tasa_IVA,
             observacion,
             transaction,
@@ -2423,6 +2425,16 @@ export const prorrateo = async (req, res) => {
     5,
   )}-${padWithZeros(numero_comprobante_2, 8)}`;
 
+  let is_nc_prorrateo = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
+  let dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
+  let dhTotal = ingreso_egreso === "I" ? "D" : "H";
+  
+  if (is_nc_prorrateo) {
+    dhNetoEIva = dhNetoEIva === "D" ? "H" : "D";
+    dhTotal = dhTotal === "D" ? "H" : "D";
+  }
+
+
   if (!arrayVehiculos?.length) {
     await transaction_asientos.rollback();
     await transaction_costos_ingresos.rollback();
@@ -2573,7 +2585,7 @@ export const prorrateo = async (req, res) => {
         "c_movimientos",
         NroAsiento,
         cuentaIVA,
-        "D",
+        dhNetoEIva,
         importe_iva,
         observacion,
         transaction_asientos,
@@ -2588,7 +2600,7 @@ export const prorrateo = async (req, res) => {
         "c2_movimientos",
         NroAsientoSecundario,
         cuentaSecundariaIVA,
-        "D",
+        dhNetoEIva,
         importe_iva,
         observacion,
         transaction_asientos,
@@ -2603,7 +2615,7 @@ export const prorrateo = async (req, res) => {
         "c_movimientos",
         NroAsiento,
         cuenta_percepcion_IIBB_CABA,
-        "D",
+        dhNetoEIva,
         importe_tasa_IIBB_CABA,
         observacion,
         transaction_asientos,
@@ -2616,7 +2628,7 @@ export const prorrateo = async (req, res) => {
         "c2_movimientos",
         NroAsientoSecundario,
         cuenta_secundaria_percepcion_IIBB_CABA,
-        "D",
+        dhNetoEIva,
         importe_tasa_IIBB_CABA,
         observacion,
         transaction_asientos,
@@ -2631,7 +2643,7 @@ export const prorrateo = async (req, res) => {
         "c_movimientos",
         NroAsiento,
         cuenta_percepcion_IIBB,
-        "D",
+        dhNetoEIva,
         importe_tasa_IIBB,
         observacion,
         transaction_asientos,
@@ -2644,7 +2656,7 @@ export const prorrateo = async (req, res) => {
         "c2_movimientos",
         NroAsientoSecundario,
         cuenta_secundaria_percepcion_IIBB,
-        "D",
+        dhNetoEIva,
         importe_tasa_IIBB,
         observacion,
         transaction_asientos,
@@ -2659,7 +2671,7 @@ export const prorrateo = async (req, res) => {
         "c_movimientos",
         NroAsiento,
         cuenta_percepcion_IVA,
-        "D",
+        dhNetoEIva,
         importe_tasa_IVA,
         observacion,
         transaction_asientos,
@@ -2672,7 +2684,7 @@ export const prorrateo = async (req, res) => {
         "c2_movimientos",
         NroAsientoSecundario,
         cuenta_secundaria_percepcion_IVA,
-        "D",
+        dhNetoEIva,
         importe_tasa_IVA,
         observacion,
         transaction_asientos,
@@ -2686,7 +2698,7 @@ export const prorrateo = async (req, res) => {
       "c_movimientos",
       NroAsiento,
       cuenta_forma_cobro,
-      "H",
+      dhTotal,
       importe_total,
       observacion,
       transaction_asientos,
@@ -2699,7 +2711,7 @@ export const prorrateo = async (req, res) => {
       "c2_movimientos",
       NroAsientoSecundario,
       cuenta_secundaria_forma_cobro,
-      "H",
+      dhTotal,
       importe_total,
       observacion,
       transaction_asientos,
@@ -2830,7 +2842,7 @@ export const prorrateo = async (req, res) => {
           "c_movimientos",
           NroAsiento,
           datosCuenta.cuenta_contable,
-          "D",
+          dhNetoEIva,
           importeAUsar,
           observacion + ` ${datosCuenta.nombre} (${dominio})`,
           transaction_asientos,
@@ -2845,7 +2857,7 @@ export const prorrateo = async (req, res) => {
             "c2_movimientos",
             NroAsientoSecundario,
             datosCuenta.cuenta_secundaria,
-            "D",
+            dhNetoEIva,
             importeAUsar,
             observacion + ` ${datosCuenta.nombre} (${dominio})`,
             transaction_asientos,
