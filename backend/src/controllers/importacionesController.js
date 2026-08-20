@@ -539,20 +539,35 @@ export const importacionesTelepases = async (req, res) => {
     }
 };
 
-/**
- * Convierte un array de fechas en formato DD/MM/YYYY y devuelve
- * la más reciente en formato SQL (YYYY-MM-DD).
- */
 function obtenerFechaMasReciente(fechas) {
     let max = null;
 
     for (const f of fechas) {
-        const parts = f.split("/");
-        if (parts.length !== 3) continue;
-        const [dia, mes, anio] = parts;
-        const dateObj = new Date(`${anio}-${mes}-${dia}`);
-        if (!max || dateObj > max) {
-            max = dateObj;
+        let dateObj = null;
+
+        if (f.includes("/")) {
+            const parts = f.split("/");
+            if (parts.length === 3) {
+                const [dia, mes, anio] = parts;
+                dateObj = new Date(`${anio}-${mes}-${dia}T00:00:00`);
+            }
+        } else if (f.includes("-")) {
+            const parts = f.split("-");
+            if (parts.length === 3) {
+                // Si viene como YYYY-MM-DD
+                if (parts[0].length === 4) {
+                    dateObj = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00`);
+                } else {
+                    // Por si viene como DD-MM-YYYY
+                    dateObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+                }
+            }
+        }
+
+        if (dateObj && !isNaN(dateObj.getTime())) {
+            if (!max || dateObj > max) {
+                max = dateObj;
+            }
         }
     }
 
