@@ -465,8 +465,12 @@ const ClientesForm = () => {
             <legend>Datos adicionales</legend>
             <div className={styles.inputContainer}>
               <span>Condición</span>
-              <input type="number" name='diasctacte' value={form["diasctacte"]}
-                onChange={handleChange} />
+              <select name='diasctacte' value={form["diasctacte"]} onChange={handleChange}>
+                <option value="">Seleccione...</option>
+                <option value="0">0 DIAS</option>
+                <option value="15">15 DIAS</option>
+                <option value="30">30 DIAS</option>
+              </select>
             </div>
             <div className={styles.inputContainer}>
               <span>Composición familiar</span>
