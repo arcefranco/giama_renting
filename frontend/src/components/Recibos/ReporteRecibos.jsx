@@ -38,6 +38,8 @@ const ReporteRecibos = () => {
         isSuccess,
         html_recibo
     } = useSelector((state) => state.recibosReducer)
+    const { roles } = useSelector((state) => state.loginReducer);
+    const userRoles = roles ? roles.split(",") : [];
     const {
         clientes
     } = useSelector((state) => state.clientesReducer)
@@ -401,8 +403,10 @@ const ReporteRecibos = () => {
 
                 <Column dataField="id" name="imprimir_recibo" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
                     cellRender={renderImprimirRecibo} />
-                <Column dataField="id" name="anular_recibo" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
-                    cellRender={renderAnularRecibo} />
+                {(userRoles.includes("1") || userRoles.includes("2")) && (
+                    <Column dataField="id" name="anular_recibo" allowSearch={false} allowExporting={false} allowFiltering={false} allowHeaderFiltering={false} alignment="center" caption=""
+                        cellRender={renderAnularRecibo} />
+                )}
             </DataGrid>
         </div>
     )
