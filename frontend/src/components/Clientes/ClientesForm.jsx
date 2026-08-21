@@ -49,6 +49,7 @@ const ClientesForm = () => {
     usuario: username,
     usuario_resolucion_datero: username,
     no_es_chofer: 0,
+    diasctacte: '',
     //datero
     composicion_familiar: "",
     tiene_o_tuvo_vehiculo: "",
@@ -138,6 +139,7 @@ const ClientesForm = () => {
         mail: '',
         notas: '',
         no_es_chofer: 0,
+        diasctacte: '',
         composicion_familiar: "",
         tiene_o_tuvo_vehiculo: "",
         tipo_servicio: "",
@@ -461,6 +463,11 @@ const ClientesForm = () => {
           </fieldset>
           <fieldset className={styles.fieldSet}>
             <legend>Datos adicionales</legend>
+            <div className={styles.inputContainer}>
+              <span>Condición</span>
+              <input type="number" name='diasctacte' value={form["diasctacte"]}
+                onChange={handleChange} />
+            </div>
             <div className={styles.inputContainer}>
               <span>Composición familiar</span>
               <input type="text" name='composicion_familiar' value={form["composicion_familiar"]}

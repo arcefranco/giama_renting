@@ -46,6 +46,7 @@ const UpdateCliente = () => {
     resolucion_datero: 0,
     usuario_resolucion_datero: username ? username : "",
     no_es_chofer: 0,
+    diasctacte: '',
     //datero
     composicion_familiar: "",
     tiene_o_tuvo_vehiculo: "",
@@ -117,6 +118,7 @@ const UpdateCliente = () => {
         notas: cliente[0]?.notas || '',
         resolucion_datero: cliente[0]?.resolucion_datero || '',
         no_es_chofer: cliente[0]?.no_es_chofer || 0,
+        diasctacte: cliente[0]?.diasctacte || '',
         usuario_resolucion_datero: username ? username : "",
         composicion_familiar: datero[0]?.composicion_familiar || '',
         tiene_o_tuvo_vehiculo: datero[0]?.tiene_o_tuvo_vehiculo || '',
@@ -524,6 +526,11 @@ const UpdateCliente = () => {
             </div>
           </fieldset>
           <fieldset className={styles.fieldSet}>
+            <div className={styles.inputContainer}>
+              <span>Condición</span>
+              <input type="number" name='diasctacte' value={form["diasctacte"]}
+                onChange={handleChange} />
+            </div>
             <div className={styles.inputContainer}>
               <span>Composición familiar</span>
               <input type="text" name='composicion_familiar' value={form["composicion_familiar"]}

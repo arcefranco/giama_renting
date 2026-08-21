@@ -42,14 +42,13 @@ export const insertFactura = async (
     clienteObtenido = result[0];
   } catch (error) {
     throw new Error(
-      `Error al buscar el cliente para la facturación ${
-        error.message && error.message
+      `Error al buscar el cliente para la facturación ${error.message && error.message
       }`
     );
   }
   if (!clienteObtenido.tipo_contribuyente)
     throw new Error("El cliente debe aclarar su tipo responsable");
-  if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA"; 
+  if (clienteObtenido.tipo_contribuyente == 1 || clienteObtenido.tipo_contribuyente == 4) tipo_factura = "FA";
   else tipo_factura = "FB";
 
   // Determinar Punto de Venta: si tiene razón social asume PV 4 (Empresa), sino PV 2 (Chofer)
@@ -72,8 +71,7 @@ export const insertFactura = async (
     else nombre_provincia = result[0]["nombre"];
   } catch (error) {
     throw Error(
-      `Error al obtener la provincia del cliente ${
-        error.message && error.message
+      `Error al obtener la provincia del cliente ${error.message && error.message
       }`
     );
   }
@@ -111,7 +109,7 @@ export const insertFactura = async (
     const result = await pa7_giama_renting.query(
       `
         INSERT INTO clientesfacturacion (RazonSocial, CUIT, TipoDocumento, TipoResponsable,
-        Domicilio, Localidad, Provincia, Activo) VALUES (?,?,?,?,?,?,?,?)`,
+        Domicilio, Localidad, Provincia, Activo, DiasCtaCte, Email) VALUES (?,?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -122,7 +120,9 @@ export const insertFactura = async (
           domicilio,
           clienteObtenido.ciudad,
           nombre_provincia ? nombre_provincia : null,
-          1
+          1,
+          clienteObtenido.diasctacte ? clienteObtenido.diasctacte : null,
+          clienteObtenido.mail ? clienteObtenido.mail : null
         ],
         transaction: transaction_pa7_giama_renting,
       }
@@ -149,7 +149,7 @@ export const insertFactura = async (
           tipo_factura,
           importe_neto,
           importe_total,
-          fecha  ? fecha : `${getTodayDate()} 00:00:00`,
+          fecha ? fecha : `${getTodayDate()} 00:00:00`,
           CodigoCliente,
           "MANUALES",
           NroAsiento,
@@ -214,7 +214,7 @@ export const insertFactura = async (
       `Error al insertar los items de la factura ${error.message && error.message}`
     );
   }
-  if(parseFloat(importe_total) !== parseFloat(importe_total_preliminar)){
+  if (parseFloat(importe_total) !== parseFloat(importe_total_preliminar)) {
     sendEmailImportes(id_factura)
   }
   return id_factura;
