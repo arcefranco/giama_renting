@@ -12,10 +12,20 @@ const recoveryPass = async (data) => {
   return postFunction("login/recovery", data);
 };
 
+const getUsuarios = async () => {
+  return getFunction("usuarios");
+};
+
+const toggleAcceso = async (id) => {
+  return postFunction(`usuarios/toggleAcceso/${id}`, {});
+};
+
 const usuariosService = {
   createUsuario,
   createPass,
   recoveryPass,
+  getUsuarios,
+  toggleAcceso
 };
 
 export default usuariosService;
