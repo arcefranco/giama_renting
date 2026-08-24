@@ -3,11 +3,12 @@ import { pa7_giama_renting } from "../../helpers/connection.js";
 const checkNC = async () => {
   try {
     const [result] = await pa7_giama_renting.query(
-      `DESCRIBE c_movprov`
+      `SELECT * FROM c_movimientos WHERE NroComprobante = '0005200017397'`
     );
-    console.log(result);
+    console.log("Datos del asiento en c_movimientos:");
+    console.table(result);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error al consultar:", error);
   } finally {
     await pa7_giama_renting.close();
   }
