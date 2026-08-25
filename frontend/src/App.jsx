@@ -62,7 +62,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/home" element={<Home />} />
-          <Route element={<AdminRoute />}>
+          <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
             <Route path='/usuarios/alta' element={<AltaUsuario />} />
           </Route>
           <Route element={<AdminRoute />}>
@@ -171,8 +171,7 @@ function App() {
             <Route path='/parametros/sucursales' element={<Sucursales />} />
             <Route path='/parametros/sucursales/:id' element={<UpdateSucursal />} />
           </Route>
-          
-          <Route element={<PrivateRoute allowedRoles={["1"]} />}>
+          <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
             <Route path='/usuarios/reporte' element={<ReporteUsuarios />} />
           </Route>
 

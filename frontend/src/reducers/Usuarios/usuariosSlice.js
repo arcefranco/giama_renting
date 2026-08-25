@@ -70,6 +70,30 @@ export const toggleAcceso = createAsyncThunk(
   }
 );
 
+export const updateRoles = createAsyncThunk(
+  "updateRoles",
+  async (data, { rejectWithValue }) => {
+    const result = await usuariosService.updateRoles(data);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
+export const deleteUsuario = createAsyncThunk(
+  "deleteUsuario",
+  async (id, { rejectWithValue }) => {
+    const result = await usuariosService.deleteUsuario(id);
+    if (result.hasOwnProperty("status") && result.status) {
+      return result;
+    } else {
+      return rejectWithValue(result);
+    }
+  }
+);
+
 export const usuariosSlice = createSlice({
   name: "usuarios",
   initialState,
@@ -150,6 +174,32 @@ export const usuariosSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(toggleAcceso.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateRoles.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(updateRoles.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(updateRoles.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(deleteUsuario.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(deleteUsuario.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.message = action.payload.message;
+    });
+    builder.addCase(deleteUsuario.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.message = action.payload.message;

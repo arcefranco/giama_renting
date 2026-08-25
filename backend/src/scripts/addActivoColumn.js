@@ -1,51 +1,24 @@
 import { giama_renting } from "../../helpers/connection.js";
-import { QueryTypes } from "sequelize";
 
-const runMigration = async () => {
+async function run() {
   try {
-    console.log("Iniciando migración...");
+    console.log("Adding 'activo' column to 'usuarios' table if not exists...");
+    
+    await giama_renting.query(`
+      ALTER TABLE usuarios 
+      ADD COLUMN activo TINYINT(1) DEFAULT 1;
+    `);
 
-    // 1. Agregar columna activo si no existe
-    try {
-      await giama_renting.query(
-        "ALTER TABLE vehiculos ADD COLUMN activo TINYINT(1) DEFAULT 1;"
-      );
-      console.log("Columna 'activo' agregada exitosamente.");
-    } catch (err) {
-      if (err.message.includes("Duplicate column name")) {
-        console.log("La columna 'activo' ya existe, omitiendo...");
-      } else {
-        throw err;
-      }
-    }
-
-    // 2. Actualizar autos vendidos a activo = 0
-    await giama_renting.query(
-      "UPDATE vehiculos SET activo = 0 WHERE fecha_venta IS NOT NULL;"
-    );
-    console.log("Autos vendidos actualizados a activo = 0.");
-
-    // 3. Crear el estado Cobrado DT si no existe
-    const estados = await giama_renting.query(
-      "SELECT id FROM estados_vehiculos WHERE nombre = 'Cobrado DT'",
-      { type: QueryTypes.SELECT }
-    );
-
-    if (estados.length === 0) {
-      await giama_renting.query(
-        "INSERT INTO estados_vehiculos (nombre) VALUES ('Cobrado DT')"
-      );
-      console.log("Estado 'Cobrado DT' insertado.");
-    } else {
-      console.log("El estado 'Cobrado DT' ya existe.");
-    }
-
-    console.log("Migración finalizada con éxito.");
+    console.log("Column 'activo' added successfully.");
   } catch (error) {
-    console.error("Error durante la migración:", error);
+    if (error.original && error.original.code === 'ER_DUP_FIELDNAME') {
+      console.log("Column 'activo' already exists.");
+    } else {
+      console.error("Error adding column:", error);
+    }
   } finally {
-    await giama_renting.close();
+    process.exit(0);
   }
-};
+}
 
-runMigration();
+run();

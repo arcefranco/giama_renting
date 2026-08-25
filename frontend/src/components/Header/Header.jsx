@@ -63,8 +63,8 @@ const menuItems = [
   {
     title: "Usuarios",
     items: [
-      { label: "Crear usuario", to: "/usuarios/alta", roles: ["1"] },
-      { label: "Listado de usuarios", to: "/usuarios/reporte", roles: ["1"] },
+      { label: "Crear usuario", to: "/usuarios/alta", roles: ["1", "2"] },
+      { label: "Listado de usuarios", to: "/usuarios/reporte", roles: ["1", "2"] },
       { label: "Alta de alertas", to: "/usuarios/alertas" }
     ]
   }

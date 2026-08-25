@@ -1,4 +1,4 @@
-import { getFunction, postFunction } from "../axios/axiosFunctions";
+import { getFunction, postFunction, putFunction, deleteFunction } from "../axios/axiosFunctions";
 
 const createUsuario = async (data) => {
   return postFunction("login/createUsuario", data);
@@ -20,12 +20,22 @@ const toggleAcceso = async (id) => {
   return postFunction(`usuarios/toggleAcceso/${id}`, {});
 };
 
+const updateRoles = async (data) => {
+  return putFunction(`usuarios/roles/${data.id}`, { roles: data.roles });
+};
+
+const deleteUsuario = async (id) => {
+  return deleteFunction(`usuarios/${id}`);
+};
+
 const usuariosService = {
   createUsuario,
   createPass,
   recoveryPass,
   getUsuarios,
-  toggleAcceso
+  toggleAcceso,
+  updateRoles,
+  deleteUsuario
 };
 
 export default usuariosService;

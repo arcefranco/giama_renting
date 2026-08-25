@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getUsuarios, toggleAcceso } from "../controllers/usuariosController.js";
+import { getUsuarios, toggleAcceso, updateRoles, softDeleteUsuario } from "../controllers/usuariosController.js";
 import { auth } from "../middlewares/auth.js";
 
 const usuariosRouter = Router();
@@ -14,5 +14,7 @@ usuariosRouter.use((req, res, next) => {
 
 usuariosRouter.get("/", auth, getUsuarios);
 usuariosRouter.post("/toggleAcceso/:id", auth, toggleAcceso);
+usuariosRouter.put("/roles/:id", auth, updateRoles);
+usuariosRouter.delete("/:id", auth, softDeleteUsuario);
 
 export default usuariosRouter;
