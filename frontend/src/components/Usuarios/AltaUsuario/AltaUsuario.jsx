@@ -113,7 +113,9 @@ const handleSubmit = async (e) => {
         <label>Roles</label>
         <Select
           isMulti
-          options={roles.map((r) => ({
+          options={roles
+            .filter((r) => r.concepto?.trim().toLowerCase() !== "verificador")
+            .map((r) => ({
             value: r.id,
             label: r.concepto,
           }))}

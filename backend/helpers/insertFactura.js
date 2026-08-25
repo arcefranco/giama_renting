@@ -78,7 +78,7 @@ export const insertFactura = async (
   //buscar en clientesfacturacion si el cliente ya existe. si existe se captura el id.
   try {
     const result = await pa7_giama_renting.query(
-      "SELECT Id, CUIT FROM clientesfacturacion WHERE CUIT = ?",
+      "SELECT Id, CUIT, DiasCtaCte, Email FROM clientesfacturacion WHERE CUIT = ?",
       {
         type: QueryTypes.SELECT,
         replacements: [clienteObtenido["nro_documento"]],
@@ -90,6 +90,22 @@ export const insertFactura = async (
     } else if (result.length) {
       existeClienteFacturacion = true;
       CodigoCliente = result[0]["Id"];
+
+      const dbDiasCtaCte = result[0]["DiasCtaCte"];
+      const dbEmail = result[0]["Email"];
+      const localDiasCtaCte = clienteObtenido.diasctacte ? clienteObtenido.diasctacte : null;
+      const localEmail = clienteObtenido.mail ? clienteObtenido.mail : null;
+
+      if (dbDiasCtaCte !== localDiasCtaCte || dbEmail !== localEmail) {
+        await pa7_giama_renting.query(
+          "UPDATE clientesfacturacion SET DiasCtaCte = ?, Email = ? WHERE Id = ?",
+          {
+            type: QueryTypes.UPDATE,
+            replacements: [localDiasCtaCte, localEmail, CodigoCliente],
+            transaction: transaction_pa7_giama_renting,
+          }
+        );
+      }
     }
   } catch (error) {
     throw new Error(

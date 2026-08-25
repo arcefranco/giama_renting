@@ -7,7 +7,8 @@ const nrosComprobantes = [
   '0005200009056',
   '0005200009057',
   '0005200009061',
-  '0005200009062'
+  '0005200009062',
+  '0005200017397'
 ];
 
 const fixNotasDeCredito = async () => {
@@ -70,7 +71,7 @@ const fixNotasDeCredito = async () => {
     // 4. Corregir c_movprovdetalles (vinculados por IdMovProveedor)
     const [result4] = await pa7_giama_renting.query(
       `UPDATE c_movprovdetalles d
-       JOIN c_movprov m ON d.IdMovProveedor = m.Id
+       JOIN c_movprov m ON d.IdMovProveedor = m.IdMovProv
        SET d.Importe = d.Importe * -1
        WHERE m.NroComprobante IN (:nros) AND m.TipoComprobante = 'CA' AND d.Importe > 0`,
       { replacements: { nros: nrosComprobantes } }
