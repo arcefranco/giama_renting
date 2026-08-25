@@ -117,3 +117,48 @@ export const postObjectFunction = async (route, form) => {
     return ServiceErrorHandler(error, route); // devuelve {status:false,message}
   }
 };
+
+export const putFunction = async (route, form, header = {}) => {
+  try {
+    const response = await axios.put(
+      import.meta.env.VITE_REACT_APP_HOST + route,
+      form,
+      {
+        ...header,
+        withCredentials: true,
+      }
+    );
+    const data = response.data;
+
+    if (data?.status === true) {
+      return data;
+    }
+    return data?.status === false
+      ? data
+      : { status: false, message: "Formato inesperado en la respuesta." };
+  } catch (error) {
+    return ServiceErrorHandler(error, route);
+  }
+};
+
+export const deleteFunction = async (route, header = {}) => {
+  try {
+    const response = await axios.delete(
+      import.meta.env.VITE_REACT_APP_HOST + route,
+      {
+        ...header,
+        withCredentials: true,
+      }
+    );
+    const data = response.data;
+
+    if (data?.status === true) {
+      return data;
+    }
+    return data?.status === false
+      ? data
+      : { status: false, message: "Formato inesperado en la respuesta." };
+  } catch (error) {
+    return ServiceErrorHandler(error, route);
+  }
+};

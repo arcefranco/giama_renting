@@ -148,6 +148,10 @@ export const logIn = async (req, res) => {
   if (user.length === 0){
     return res.send({ status: false, message: "Email no registrado" });
   }
+
+  if (user[0].puede_acceder === 0) {
+    return res.send({ status: false, message: "Su cuenta ha sido bloqueada. Contacte al administrador." });
+  }
     
   try {
     let result = await bcrypt.compare(password, user[0].password);
