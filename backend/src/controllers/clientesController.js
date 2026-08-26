@@ -70,6 +70,7 @@ export const postCliente = async (req, res) => {
     trabajos_anteriores,
     observacion_perfil,
     usuario,
+    diasctacte,
   } = req.body;
   const hoy = getTodayDate();
   const camposObligatorios = [
@@ -110,11 +111,11 @@ const result = await giama_renting.query(
     `INSERT INTO clientes (nombre, apellido, razon_social, fecha_nacimiento, nacionalidad, tipo_contribuyente,
       tipo_documento, nro_documento, doc_expedido_por, licencia, lic_expedida_por, fecha_vencimiento_licencia, direccion,
       nro_direccion, piso, depto, codigo_postal, provincia, ciudad, celular, telefono_alternativo, mail, notas, resolucion_datero, fecha_resolucion_datero,
-      usuario_resolucion_datero, usuario_alta, no_es_chofer)
+      usuario_resolucion_datero, usuario_alta, no_es_chofer, diasctacte)
       VALUES (:nombre, :apellido, :razon_social, :fecha_nacimiento, :nacionalidad, :tipo_contribuyente,
       :tipo_documento, :nro_documento, :doc_expedido_por, :licencia, :lic_expedida_por, :fecha_vencimiento_licencia, :direccion,
       :nro_direccion, :piso, :depto, :codigo_postal, :provincia, :ciudad, :celular, :telefono_alternativo, :mail, :notas, :resolucion_datero, :fecha_resolucion_datero,
-      :usuario_resolucion_datero, :usuario_alta, :no_es_chofer)`,
+      :usuario_resolucion_datero, :usuario_alta, :no_es_chofer, :diasctacte)`,
     {
         type: QueryTypes.INSERT,
         // 2. Transforma el array 'replacements' en un objeto
@@ -146,7 +147,8 @@ const result = await giama_renting.query(
             fecha_resolucion_datero: hoy, 
             usuario_resolucion_datero: usuario_resolucion_datero,
             usuario_alta: usuario, 
-            no_es_chofer: no_es_chofer
+            no_es_chofer: no_es_chofer,
+            diasctacte: diasctacte ? diasctacte : null
         },
         transaction: transaction,
     }
@@ -287,6 +289,7 @@ export const updateCliente = async (req, res) => {
     antiguedad_didi,
     trabajos_anteriores,
     observacion_perfil,
+    diasctacte,
   } = req.body;
   let existeCliente;
   let existeDatero;
@@ -366,7 +369,7 @@ export const updateCliente = async (req, res) => {
         direccion = ?,
         nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, 
         celular = ?, telefono_alternativo = ?, mail = ?, notas = ?, 
-        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?, no_es_chofer = ?
+        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?, no_es_chofer = ?, diasctacte = ?
         WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
@@ -398,6 +401,7 @@ export const updateCliente = async (req, res) => {
           fecha_resolucion_datero_final,
           usuario_resolucion_datero_final,
           no_es_chofer,
+          diasctacte ? diasctacte : null,
           id,
         ],
         transaction: transaction,

@@ -23,6 +23,7 @@ import ReporteAlquileres from './components/Alquileres/ReporteAlquileres/Reporte
 import AltaUsuario from './components/Usuarios/AltaUsuario/AltaUsuario';
 import AltaPassword from './components/Usuarios/Password/AltaPassword';
 import RecoveryPass from './components/Usuarios/Password/RecoveryPass';
+import ReporteUsuarios from './components/Usuarios/ReporteUsuarios';
 import ContratoAlquiler from './components/Alquileres/ContratoAlquiler/ContratoAlquiler';
 import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteContratos';
 import SituacionFlota from './components/Vehiculos/SituacionFlota/SituacionFlota';
@@ -61,7 +62,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/home" element={<Home />} />
-          <Route element={<AdminRoute />}>
+          <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
             <Route path='/usuarios/alta' element={<AltaUsuario />} />
           </Route>
           <Route element={<AdminRoute />}>
@@ -169,6 +170,9 @@ function App() {
           <Route element={<PrivateRoute allowedRoles={["1", "4"]} />}>
             <Route path='/parametros/sucursales' element={<Sucursales />} />
             <Route path='/parametros/sucursales/:id' element={<UpdateSucursal />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
+            <Route path='/usuarios/reporte' element={<ReporteUsuarios />} />
           </Route>
 
         </Route>

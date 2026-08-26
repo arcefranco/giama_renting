@@ -142,7 +142,7 @@ const Egresos = () => {
 
   useEffect(() => { /**OPCIONES DE VEHICULOS PARA EL SELECT */
     if (vehiculos?.length) {
-      setOpcionesVehiculos(vehiculos?.filter(v => { return !v.fecha_venta && v.activo === 1 })?.map(e => {
+      setOpcionesVehiculos(vehiculos?.filter(v => { return (!v.fecha_venta && v.activo === 1) || v.estado_actual === 9 })?.map(e => {
         let modeloNombre = modelos?.find(m => m.id == e.modelo)?.nombre
         let dominio = e.dominio ? e.dominio :
           e.dominio_provisorio ? e.dominio_provisorio : ""
