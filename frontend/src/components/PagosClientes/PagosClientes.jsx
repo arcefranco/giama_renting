@@ -22,7 +22,8 @@ import axios from 'axios';
 export const PagosClientes = () => {
     const { id } = useParams();
     const [opcionesClientes, setOpcionesClientes] = useState([])
-    const { username } = useSelector((state) => state.loginReducer)
+    const { username, roles } = useSelector((state) => state.loginReducer)
+    const userRoles = roles ? roles.split(",") : [];
     const { formasDeCobro } = useSelector((state) => state.generalesReducer)
     const [form, setForm] = useState({
         id_cliente: id ? id : '',
@@ -357,34 +358,37 @@ export const PagosClientes = () => {
             )
         }
 
-        if (row.tipo == 4) {
-            return (
-                <button
-                    onClick={() => handleAnulacionRecibo(row.nro_comprobante)}
-                    style={{
-                        color: '#1976d2', fontSize: "11px",
-                        textDecoration: 'underline', background: 'none', border: 'none',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Anular
-                </button>
-            );
+        if (userRoles.includes("1") || userRoles.includes("2")) {
+            if (row.tipo == 4) {
+                return (
+                    <button
+                        onClick={() => handleAnulacionRecibo(row.nro_comprobante)}
+                        style={{
+                            color: '#1976d2', fontSize: "11px",
+                            textDecoration: 'underline', background: 'none', border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Anular
+                    </button>
+                );
+            }
+            else {
+                return (
+                    <button
+                        onClick={() => handleEstadoDeuda(row.id_registro, row.tipo)}
+                        style={{
+                            color: '#1976d2', fontSize: "11px",
+                            textDecoration: 'underline', background: 'none', border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Anular
+                    </button>
+                );
+            }
         }
-        else {
-            return (
-                <button
-                    onClick={() => handleEstadoDeuda(row.id_registro, row.tipo)}
-                    style={{
-                        color: '#1976d2', fontSize: "11px",
-                        textDecoration: 'underline', background: 'none', border: 'none',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Anular
-                </button>
-            );
-        }
+        return null;
     }
     const handleProcesarDevolucion = async () => {
         if (!formDevolucion.id_forma_pago || !formDevolucion.importe || formDevolucion.importe <= 0) {
