@@ -20,6 +20,7 @@ import {
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { normalizarFecha } from "../../helpers/normalizarFecha.js";
 import { diferenciaDias } from "../../helpers/diferenciaDias.js";
+import { insertFactura } from "../../helpers/insertFactura.js";
 import { getParametro } from "../../helpers/getParametro.js";
 import {
   getNumeroAsiento,
@@ -1056,7 +1057,8 @@ export const updateVehiculo = async (req, res) => {
     polarizado,
     cubre_asiento,
     usuario,
-    observaciones
+    observaciones,
+    facturaVentaData
   } = req.body;
   let vehiculoAnterior;
   let fechaDePreparacion;
@@ -1137,7 +1139,9 @@ export const updateVehiculo = async (req, res) => {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje" })
   }
 
-  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
+  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) && 
+      String(estado) !== "10" && String(estado) !== "11" &&
+      (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo" })
   }
 
@@ -1203,6 +1207,62 @@ export const updateVehiculo = async (req, res) => {
   }
 
   try {
+    let transaction_giama_renting = await giama_renting.transaction();
+    let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+    let nro_factura = null;
+
+    if (estado && String(estado) === "11" && facturaVentaData) {
+      try {
+        let finalClientId = facturaVentaData.id_cliente;
+
+        if (facturaVentaData.nuevoCliente) {
+           const resultCliente = await giama_renting.query(
+               `INSERT INTO clientes (nombre, apellido, razon_social, tipo_documento, nro_documento, tipo_contribuyente, direccion, nro_direccion, ciudad, mail, usuario_alta)
+                VALUES (:nombre, :apellido, :razon_social, :tipo_documento, :nro_documento, :tipo_contribuyente, :direccion, :nro_direccion, :ciudad, :mail, :usuario_alta)`,
+               {
+                 type: QueryTypes.INSERT,
+                 replacements: {
+                   nombre: facturaVentaData.nombre || null,
+                   apellido: facturaVentaData.apellido || null,
+                   razon_social: facturaVentaData.razon_social || null,
+                   tipo_documento: 6, // 6 = CUIT
+                   nro_documento: facturaVentaData.nro_documento,
+                   tipo_contribuyente: facturaVentaData.tipo_contribuyente,
+                   direccion: facturaVentaData.direccion || null,
+                   nro_direccion: facturaVentaData.nro_direccion || null,
+                   ciudad: facturaVentaData.ciudad || null,
+                   mail: facturaVentaData.mail || null,
+                   usuario_alta: usuario
+                 },
+                 transaction: transaction_giama_renting
+               }
+           );
+           finalClientId = resultCliente[0];
+        }
+
+        const dominioVehiculo = dominio || dominio_provisorio || vehiculoAnterior[0].dominio || vehiculoAnterior[0].dominio_provisorio || "Sin Dominio";
+        const concepto_factura = `Venta de Vehículo Usado - Dominio: ${dominioVehiculo}`;
+        nro_factura = await insertFactura(
+          finalClientId,
+          facturaVentaData.importe_neto,
+          facturaVentaData.importe_iva,
+          facturaVentaData.importe_total,
+          usuario,
+          null, // NroAsiento (no provisto por ahora)
+          null, // NroAsientoSecundario
+          concepto_factura,
+          transaction_giama_renting,
+          transaction_pa7_giama_renting,
+          getTodayDate()
+        );
+      } catch (error) {
+        await transaction_giama_renting.rollback();
+        await transaction_pa7_giama_renting.rollback();
+        const { body } = handleError(error, "Factura de venta", acciones.post);
+        return res.send(body);
+      }
+    }
+
     await giama_renting.query(
       `UPDATE vehiculos SET  dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
         kilometros_actuales = :kilometros, fecha_medicion_km = :fecha_medicion_km, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
@@ -1240,10 +1300,12 @@ export const updateVehiculo = async (req, res) => {
           observaciones: observaciones ? observaciones : null,
           id,
         },
+        transaction: transaction_giama_renting
       }
     );
 
-
+    await transaction_giama_renting.commit();
+    await transaction_pa7_giama_renting.commit();
 
   } catch (error) {
     const { body } = handleError(error, "vehículo", acciones.update);

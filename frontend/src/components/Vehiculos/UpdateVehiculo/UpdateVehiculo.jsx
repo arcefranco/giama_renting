@@ -9,6 +9,7 @@ import { ClipLoader } from "react-spinners";
 import SelectEstados from '../../../utils/SelectEstados';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
 import { useToastFeedback } from '../../../customHooks/useToastFeedback';
+import FacturaVentaModal from './FacturaVentaModal';
 
 const UpdateVehiculo = () => {
   const { id } = useParams();
@@ -44,6 +45,9 @@ const UpdateVehiculo = () => {
     cubre_asiento: '',
     observaciones: ''
   });
+
+  const [modalFacturaVentaOpen, setModalFacturaVentaOpen] = useState(false);
+  const [facturaVentaData, setFacturaVentaData] = useState(null);
 
   useEffect(() => {
     dispatch(getModelos());
@@ -118,7 +122,13 @@ const UpdateVehiculo = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const body = { ...form, id: id };
+
+    if (form.estado == 11 && !facturaVentaData) {
+      setModalFacturaVentaOpen(true);
+      return;
+    }
+
+    const body = { ...form, id: id, facturaVentaData: facturaVentaData };
     dispatch(updateVehiculo(body));
 
     if (vehiculo && vehiculo[0] && form.estado && vehiculo[0].estado_actual != form.estado) {
@@ -232,12 +242,15 @@ const UpdateVehiculo = () => {
                 disabled={disabledAdm}
                 estados={estados}
                 value={form.estado}
-                onChange={(value) =>
+                onChange={(value) => {
+                  if (value != 11) {
+                    setFacturaVentaData(null);
+                  }
                   setForm((prev) => ({
                     ...prev,
                     estado: value
-                  }))
-                }
+                  }));
+                }}
               />
             </div>
             <div className={styles.inputContainer}>
@@ -337,6 +350,20 @@ const UpdateVehiculo = () => {
           Guardar Cambios
         </button>
       </div>
+
+      <FacturaVentaModal
+        isOpen={modalFacturaVentaOpen}
+        onClose={() => {
+          setModalFacturaVentaOpen(false);
+        }}
+        onSubmit={(data) => {
+          setFacturaVentaData(data);
+          setModalFacturaVentaOpen(false);
+          // Auto-submit form
+          const body = { ...form, id: id, facturaVentaData: data };
+          dispatch(updateVehiculo(body));
+        }}
+      />
     </div>
   );
 };
