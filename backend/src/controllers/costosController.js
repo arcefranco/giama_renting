@@ -251,12 +251,12 @@ const asientos_costos_ingresos = async (
 
   if (!ingreso_egreso)
     throw new Error("Error al decodificar si es ingreso o egreso");
-  let is_nc = 
+  let is_nc =
     (comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"))) ||
     (TipoComprobante && ["NCA", "NCC", "CA", "CC", "CPA", "CPC"].includes(TipoComprobante));
   let dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   let dhTotal = ingreso_egreso === "I" ? "D" : "H";
-  
+
   if (is_nc) {
     dhNetoEIva = dhNetoEIva === "D" ? "H" : "D";
     dhTotal = dhTotal === "D" ? "H" : "D";
@@ -1202,12 +1202,12 @@ export async function registrarCostoIngresoIndividual({
   }
   if (ingreso_egreso === "E") {
     FA_FC =
-      tipo_comprobante == 1 ? "FA" : 
-      tipo_comprobante == 3 ? "FC" : 
-      tipo_comprobante == 2 ? "NDA" :
-      tipo_comprobante == 4 ? "NCA" :
-      tipo_comprobante == 5 ? "NDC" :
-      tipo_comprobante == 6 ? "NCC" : null;
+      tipo_comprobante == 1 ? "FA" :
+        tipo_comprobante == 3 ? "FC" :
+          tipo_comprobante == 2 ? "NDA" :
+            tipo_comprobante == 4 ? "NCA" :
+              tipo_comprobante == 5 ? "NDC" :
+                tipo_comprobante == 6 ? "NCC" : null;
     comprobante = `${FA_FC}-${padWithZeros(
       numero_comprobante_1,
       5,
@@ -2408,12 +2408,12 @@ export const prorrateo = async (req, res) => {
   }
 
   let FA_FC =
-    tipo_comprobante == 1 ? "FA" : 
-    tipo_comprobante == 3 ? "FC" : 
-    tipo_comprobante == 2 ? "NDA" :
-    tipo_comprobante == 4 ? "NCA" :
-    tipo_comprobante == 5 ? "NDC" :
-    tipo_comprobante == 6 ? "NCC" : null;
+    tipo_comprobante == 1 ? "FA" :
+      tipo_comprobante == 3 ? "FC" :
+        tipo_comprobante == 2 ? "NDA" :
+          tipo_comprobante == 4 ? "NCA" :
+            tipo_comprobante == 5 ? "NDC" :
+              tipo_comprobante == 6 ? "NCC" : null;
 
   let numero_comprobante = `${padWithZeros(
     numero_comprobante_1,
@@ -2428,7 +2428,7 @@ export const prorrateo = async (req, res) => {
   let is_nc_prorrateo = comprobante && (comprobante.startsWith("NCA") || comprobante.startsWith("NCC"));
   let dhNetoEIva = ingreso_egreso === "I" ? "H" : "D";
   let dhTotal = ingreso_egreso === "I" ? "D" : "H";
-  
+
   if (is_nc_prorrateo) {
     dhNetoEIva = dhNetoEIva === "D" ? "H" : "D";
     dhTotal = dhTotal === "D" ? "H" : "D";
@@ -3064,3 +3064,168 @@ export const postIngresosMasivos = async (req, res) => {
     });
   }
 };
+
+export async function registrarIngresoMasivoConsolidado({
+  id_cliente,
+  es_empresa,
+  detalles, // Array of { patente, id_vehiculo, importe, observacion }
+  fecha_deuda,
+  usuario,
+  transaction_costos_ingresos,
+  transaction_asientos,
+}) {
+  try {
+    let NroAsiento_deuda = null;
+    let NroAsientoSecundario_deuda = null;
+    let nro_factura = null;
+
+    const importe_total = detalles.reduce((sum, d) => sum + parseFloat(d.importe), 0);
+    const importe_neto = parseFloat((importe_total / 1.21).toFixed(2));
+    const importe_iva = parseFloat((importe_total - importe_neto).toFixed(2));
+
+    const [clienteResult] = await giama_renting.query(
+      `SELECT c.id, c.nombre, c.apellido, c.nro_documento, c.razon_social 
+       FROM clientes c WHERE c.id = :id_cliente LIMIT 1`,
+      {
+        replacements: { id_cliente },
+        type: QueryTypes.SELECT,
+        transaction: transaction_costos_ingresos,
+      }
+    );
+
+    if (!clienteResult) throw new Error("Cliente no encontrado en giama_renting");
+
+    const nombre_completo_cliente = clienteResult.razon_social || `${clienteResult.nombre} ${clienteResult.apellido}`;
+    const CUIT = clienteResult.nro_documento;
+    const id_concepto = es_empresa ? 74 : 61; // Telepase
+
+    const [conceptoResult] = await giama_renting.query(
+      `SELECT nombre, cuenta_contable, cuenta_secundaria FROM conceptos_costos WHERE id = :id_concepto LIMIT 1`,
+      {
+        replacements: { id_concepto },
+        type: QueryTypes.SELECT,
+        transaction: transaction_costos_ingresos,
+      }
+    );
+
+    if (!conceptoResult) throw new Error("Concepto no encontrado");
+    const cuenta_concepto = conceptoResult.cuenta_contable;
+    const cuenta_secundaria_concepto = conceptoResult.cuenta_secundaria;
+
+    const cuentaIVA = await getParametro("IV21");
+
+    const itemsArray = detalles.map(d => {
+      const netoDetalle = parseFloat((parseFloat(d.importe) / 1.21).toFixed(2));
+      return {
+        descripcion: d.observacion,
+        cantidad: 1,
+        precioUnitario: netoDetalle,
+        porcentaje: 21,
+        subtotal: netoDetalle
+      };
+    });
+
+    NroAsiento_deuda = await getNumeroAsiento(transaction_asientos);
+    NroAsientoSecundario_deuda = await getNumeroAsientoSecundario(transaction_asientos);
+
+    const detalle_factura_general = `Telepases - ${detalles.length} vehículos`;
+    nro_factura = await insertFactura(
+      id_cliente,
+      importe_neto,
+      importe_iva,
+      importe_total,
+      usuario,
+      NroAsiento_deuda,
+      NroAsientoSecundario_deuda,
+      detalle_factura_general,
+      transaction_costos_ingresos,
+      transaction_asientos,
+      fecha_deuda,
+      itemsArray
+    );
+
+    const cuenta_deudores = 110310;
+    const cuenta_sec_deudores = null;
+
+    const observacion_asiento_general = `Telepases (${detalles.length} vehículos) Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} FACTURA: ${nro_factura}`;
+
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento_deuda,
+      cuenta_deudores,
+      'D',
+      importe_total,
+      observacion_asiento_general,
+      transaction_asientos,
+      nro_factura,
+      fecha_deuda,
+      NroAsientoSecundario_deuda,
+      "FA"
+    );
+
+    for (const d of detalles) {
+      const netoDetalle = parseFloat((parseFloat(d.importe) / 1.21).toFixed(2));
+      const ivaDetalle = parseFloat((parseFloat(d.importe) - netoDetalle).toFixed(2));
+      
+      const obs_haber = `Telepase ${d.patente} Nombre: ${nombre_completo_cliente} CUIT/CUIL: ${CUIT} FACTURA: ${nro_factura}`;
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento_deuda,
+        cuenta_concepto,
+        'H',
+        netoDetalle,
+        obs_haber,
+        transaction_asientos,
+        nro_factura,
+        fecha_deuda,
+        NroAsientoSecundario_deuda,
+        "FA"
+      );
+
+      await giama_renting.query(
+        `INSERT INTO costos_ingresos 
+            (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
+            importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo, id_factura_pa6) 
+            VALUES (:id_vehiculo, :fecha_deuda, :id_concepto, null, :importe_neto, :importe_iva, null, 
+            :importe_total, :observacion, :NroAsiento_deuda, null, :id_cliente, null, :nro_factura)`,
+        {
+          replacements: {
+            id_vehiculo: d.id_vehiculo,
+            fecha_deuda,
+            id_concepto,
+            importe_neto: netoDetalle,
+            importe_iva: ivaDetalle,
+            importe_total: d.importe,
+            observacion: d.observacion,
+            NroAsiento_deuda,
+            id_cliente,
+            nro_factura
+          },
+          type: QueryTypes.INSERT,
+          transaction: transaction_costos_ingresos,
+        }
+      );
+    }
+
+    if (importe_iva > 0) {
+      await asientoContable(
+        "c_movimientos",
+        NroAsiento_deuda,
+        cuentaIVA,
+        'H',
+        importe_iva,
+        observacion_asiento_general,
+        transaction_asientos,
+        nro_factura,
+        fecha_deuda,
+        NroAsientoSecundario_deuda,
+        "FA"
+      );
+    }
+
+    return { nro_factura };
+  } catch (error) {
+    console.error("Error en registrarIngresoMasivoConsolidado:", error);
+    throw error;
+  }
+}

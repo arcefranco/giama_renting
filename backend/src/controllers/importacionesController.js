@@ -2,7 +2,10 @@ import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { QueryTypes } from "sequelize";
 import xlsx from "xlsx";
 import { validarArchivo } from "../../helpers/validarArchivo.js";
-import { registrarIngresoIndividual } from "./costosController.js";
+import {
+    registrarIngresoIndividual,
+    registrarIngresoMasivoConsolidado
+} from "./costosController.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 
 export const importacionesMultas = async (req, res) => {
@@ -448,7 +451,7 @@ export const importacionesTelepases = async (req, res) => {
         }
 
         // ──────────────────────────────────────────────────────────────
-        // PASO 3: Registrar un solo ingreso consolidado por cliente
+        // PASO 3: Registrar ingresos individuales por cada vehículo del cliente
         // ──────────────────────────────────────────────────────────────
         const guardados = [];
         const erroresRegistro = [];
@@ -458,39 +461,24 @@ export const importacionesTelepases = async (req, res) => {
             const transaction_asientos = await pa7_giama_renting.transaction();
 
             try {
-                const autopistasStr = Array.from(clienteConsolidado.autopistas).join(", ");
-                const patentesStr = clienteConsolidado.patentes.join(", ");
                 const rangoFechas = clienteConsolidado.fechaMin && clienteConsolidado.fechaMax
                     ? `${clienteConsolidado.fechaMin} al ${clienteConsolidado.fechaMax}`
                     : "S/D";
 
-                // Usamos el primer vehículo del cliente para el registro base
-                const primerDetalle = clienteConsolidado.detallePatentes[0];
-                const importeTotal = parseFloat(clienteConsolidado.totalNeto.toFixed(2));
+                // Registramos un cargo consolidado para todas las patentes del cliente
+                const detallesMasivos = clienteConsolidado.detallePatentes.map(detalle => ({
+                    patente: detalle.patente,
+                    id_vehiculo: detalle.id_vehiculo,
+                    importe: parseFloat(detalle.totalNeto.toFixed(2)),
+                    observacion: `Telepase - Dominio: ${detalle.patente} - Período: ${rangoFechas}`
+                }));
 
-                const lineasObservacion = clienteConsolidado.detallePatentes.map((d, index) => {
-                    if (index === 0) {
-                        return `Dominio(s): ${patentesStr} - Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
-                    }
-                    return `Telepase - Dominio: ${d.patente} - OBS: Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
-                });
-                const observacion = lineasObservacion.join('\n');
-
-                await registrarIngresoIndividual({
-                    debe_ingreso: importeTotal,
-                    id_vehiculo: primerDetalle.id_vehiculo,
-                    fecha_deuda: `${getTodayDate()} 00:00:00`,
-                    fecha_pago: null,
-                    id_forma_cobro_1: null,
-                    total_cobro_1: 0,
+                await registrarIngresoMasivoConsolidado({
                     id_cliente: clienteConsolidado.id_cliente,
-                    observacion: observacion,
-                    observacion_pago: "",
+                    es_empresa: clienteConsolidado.es_empresa,
+                    detalles: detallesMasivos,
+                    fecha_deuda: `${getTodayDate()} 00:00:00`,
                     usuario: req.user?.user || "sistema",
-                    id_concepto: clienteConsolidado.es_empresa ? 74 : 61,
-                    importe_neto: importeTotal,
-                    importe_iva: 0,
-                    importe_total: importeTotal,
                     transaction_costos_ingresos: transaction,
                     transaction_asientos: transaction_asientos,
                 });
@@ -503,7 +491,7 @@ export const importacionesTelepases = async (req, res) => {
                     chofer: clienteConsolidado.chofer,
                     patentes: clienteConsolidado.patentes,
                     cantidadPasadas: clienteConsolidado.cantidadPasadas,
-                    importeTotal,
+                    importeTotal: parseFloat(clienteConsolidado.totalNeto.toFixed(2)),
                     rangoFechas,
                 });
 
