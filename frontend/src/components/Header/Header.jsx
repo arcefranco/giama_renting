@@ -67,6 +67,13 @@ const menuItems = [
       { label: "Listado de usuarios", to: "/usuarios/reporte", roles: ["1", "2"] },
       { label: "Alta de alertas", to: "/usuarios/alertas" }
     ]
+  },
+  {
+    title: "Auditoría Interna",
+    items: [
+      { label: "Asientos PA7", to: "/auditoria/asientos", roles: ["1"] },
+      { label: "Facturas Giama", to: "/auditoria/facturas", roles: ["1"] }
+    ]
   }
 ];
 
@@ -100,6 +107,9 @@ const Header = () => {
       <nav className={styles.nav}>
         <ul className={styles.menu}>
           {menuItems.map((item, idx) => {
+            if (item.title === "Auditoría Interna" && username !== "gaston1234567@gmail.com") {
+              return null;
+            }
             return (
               <li className={styles.menuItem} key={idx}>
                 {item.title}

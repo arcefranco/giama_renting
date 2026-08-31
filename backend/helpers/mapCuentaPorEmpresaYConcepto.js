@@ -6,6 +6,7 @@ const mapCuentasEmpresaPorId = {
   41: "410505", // Recargo Medio de Pago (penalidad empresa)
   42: "410505", // Recargo Pago Atrasado (penalidad empresa)
   46: "410401", // Indemnizaciones por seguros
+  74: "410506", // Telepases Empresas
 };
 
 const mapCuentasEmpresaPorNombre = {
