@@ -2,18 +2,23 @@ import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { useSelector, useDispatch } from 'react-redux';
 import { getClientes } from '../../../reducers/Clientes/clientesSlice';
+import { getProvincias } from '../../../reducers/Generales/generalesSlice';
 
 const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
   const dispatch = useDispatch();
   const { clientes } = useSelector(state => state.clientesReducer);
+  const { provincias } = useSelector(state => state.generalesReducer);
   
   const [esNuevoCliente, setEsNuevoCliente] = useState(false);
   
   const [formData, setFormData] = useState({
     id_cliente: '',
     importe_neto: '',
+    porcentaje_iva: '21',
     importe_iva: '',
+    percepcion_iibb: '',
     importe_total: '',
+    estado_cobro: 'cobrado', // Nuevo estado
     nuevoCliente: false,
     nombre: '',
     apellido: '',
@@ -21,6 +26,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
     tipo_documento: 'CUIT',
     nro_documento: '',
     tipo_contribuyente: '',
+    provincia: '',
     direccion: '',
     nro_direccion: '',
     ciudad: '',
@@ -30,12 +36,16 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
   useEffect(() => {
     if (isOpen) {
       dispatch(getClientes());
+      dispatch(getProvincias());
       setEsNuevoCliente(false);
       setFormData({
         id_cliente: '',
         importe_neto: '',
+        porcentaje_iva: '21',
         importe_iva: '',
+        percepcion_iibb: '',
         importe_total: '',
+        estado_cobro: 'cobrado',
         nuevoCliente: false,
         nombre: '',
         apellido: '',
@@ -43,6 +53,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
         tipo_documento: 'CUIT',
         nro_documento: '',
         tipo_contribuyente: '',
+        provincia: '',
         direccion: '',
         nro_direccion: '',
         ciudad: '',
@@ -56,13 +67,25 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
       
-      // Auto calcular IVA y total si cambia el neto
-      if (name === 'importe_neto' && value) {
-        const neto = parseFloat(value);
-        const iva = (neto * 0.21).toFixed(2);
-        const total = (neto + parseFloat(iva)).toFixed(2);
+      const porcIva = parseFloat(newData.porcentaje_iva || 0) / 100;
+      const perc = parseFloat(newData.percepcion_iibb || 0);
+
+      if (name === 'importe_total' && value) {
+        const total = parseFloat(value);
+        const totalSinPerc = total - perc;
+        const neto = (totalSinPerc / (1 + porcIva)).toFixed(2);
+        const iva = (neto * porcIva).toFixed(2);
+        newData.importe_neto = neto;
         newData.importe_iva = iva;
-        newData.importe_total = total;
+      } 
+      else if ((name === 'importe_neto' || name === 'porcentaje_iva' || name === 'percepcion_iibb')) {
+        const neto = parseFloat(newData.importe_neto || 0);
+        const iva = (neto * porcIva).toFixed(2);
+        const total = (neto + parseFloat(iva) + perc).toFixed(2);
+        if (newData.importe_neto) {
+            newData.importe_iva = iva;
+            newData.importe_total = total;
+        }
       }
       
       return newData;
@@ -200,7 +223,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                         <input type="text" name="razon_social" value={formData.razon_social} onChange={handleChange} style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        <label>CUIT / DNI:</label>
+                        <label>CUIT/CUIL:</label>
                         <input type="text" name="nro_documento" value={formData.nro_documento} onChange={handleChange} required={esNuevoCliente} style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -210,6 +233,15 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                             <option value="1">Responsable Inscripto</option>
                             <option value="5">Consumidor Final</option>
                             <option value="4">Monotributista</option>
+                        </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <label>Provincia:</label>
+                        <select name="provincia" value={formData.provincia} onChange={handleChange} required={esNuevoCliente} style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', height: '35px' }}>
+                            <option value="">Seleccionar...</option>
+                            {provincias?.length > 0 && provincias.map(prov => (
+                                <option key={prov.id} value={prov.id}>{prov.nombre}</option>
+                            ))}
                         </select>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -233,8 +265,25 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
             
             <hr style={{ width: '100%', borderColor: '#eee', margin: '5px 0' }} />
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label>Estado de la Venta:</label>
+                    <select 
+                        name="estado_cobro" 
+                        value={formData.estado_cobro} 
+                        onChange={handleChange} 
+                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', height: '35px', backgroundColor: '#eef2f5' }}
+                    >
+                        <option value="cobrado">Vehículo Cobrado</option>
+                        <option value="a_cobrar">A Cobrar</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr style={{ width: '100%', borderColor: '#eee', margin: '5px 0' }} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <label>Importe Neto:</label>
                 <input 
                     type="number" 
@@ -246,8 +295,23 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-                <label>Importe IVA (21%):</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label>Alícuota IVA:</label>
+                <select 
+                    name="porcentaje_iva" 
+                    value={formData.porcentaje_iva} 
+                    onChange={handleChange} 
+                    required 
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', height: '35px' }}
+                >
+                    <option value="21">21%</option>
+                    <option value="10.5">10.5%</option>
+                    <option value="0">Exento (0%)</option>
+                </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label>Importe IVA:</label>
                 <input 
                     type="number" 
                     name="importe_iva" 
@@ -258,7 +322,18 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label>Percepción IIBB:</label>
+                <input 
+                    type="number" 
+                    name="percepcion_iibb" 
+                    value={formData.percepcion_iibb} 
+                    onChange={handleChange} 
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <label>Importe Total:</label>
                 <input 
                     type="number" 
