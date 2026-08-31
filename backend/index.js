@@ -12,6 +12,7 @@ import recibosRouter from "./src/routes/recibosRoutes.js";
 import parametrosRouter from "./src/routes/parametrosRoutes.js";
 import ctacteRouter from "./src/routes/ctacteRoutes.js";
 import usuariosRouter from "./src/routes/usuariosRoutes.js";
+import auditoriaRouter from "./src/routes/auditoriaRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -52,3 +53,4 @@ app.use("/recibos", recibosRouter);
 app.use("/parametros", parametrosRouter);
 app.use("/ctacte", ctacteRouter);
 app.use("/usuarios", usuariosRouter);
+app.use("/auditoria", auditoriaRouter);

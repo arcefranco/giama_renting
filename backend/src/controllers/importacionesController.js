@@ -2,7 +2,10 @@ import { giama_renting, pa7_giama_renting } from "../../helpers/connection.js";
 import { QueryTypes } from "sequelize";
 import xlsx from "xlsx";
 import { validarArchivo } from "../../helpers/validarArchivo.js";
-import { registrarIngresoIndividual } from "./costosController.js";
+import {
+    registrarIngresoIndividual,
+    registrarIngresoMasivoConsolidado
+} from "./costosController.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 
 export const importacionesMultas = async (req, res) => {
@@ -159,7 +162,7 @@ export const importacionesMultas = async (req, res) => {
                     id_cliente: cliente.id_cliente,
                     observacion: `Dominio: ${fila.Dominio} - MULTA - Acta: ${fila.Acta_Nro} - Motivo: ${fila.Motivo_Infraccion}`,
                     observacion_pago: '',
-                    usuario: req.user ? req.user.email : 'sistema',
+                    usuario: req.user?.user || "sistema",
                     id_concepto: ID_CONCEPTO_MULTAS,
                     importe_neto: fila.Importe,
                     importe_iva: 0,
@@ -375,11 +378,12 @@ export const importacionesTelepases = async (req, res) => {
                 : getTodayDate();
 
             const [cliente] = await giama_renting.query(
-                `SELECT id_cliente 
-                 FROM contratos_alquiler 
-                 WHERE id_vehiculo = :id_vehiculo 
-                   AND fecha_desde <= :fecha_referencia 
-                   AND (fecha_hasta IS NULL OR fecha_hasta >= :fecha_referencia)`,
+                `SELECT c.id_cliente, cl.razon_social 
+                 FROM contratos_alquiler c
+                 INNER JOIN clientes cl ON c.id_cliente = cl.id
+                 WHERE c.id_vehiculo = :id_vehiculo 
+                   AND c.fecha_desde <= :fecha_referencia 
+                   AND (c.fecha_hasta IS NULL OR c.fecha_hasta >= :fecha_referencia)`,
                 {
                     type: QueryTypes.SELECT,
                     replacements: {
@@ -399,6 +403,7 @@ export const importacionesTelepases = async (req, res) => {
             if (!consolidadoPorCliente[idCliente]) {
                 consolidadoPorCliente[idCliente] = {
                     id_cliente: idCliente,
+                    es_empresa: !!cliente.razon_social,
                     totalNeto: 0,
                     cantidadPasadas: 0,
                     patentes: [],
@@ -446,9 +451,8 @@ export const importacionesTelepases = async (req, res) => {
         }
 
         // ──────────────────────────────────────────────────────────────
-        // PASO 3: Registrar un solo ingreso consolidado por cliente
+        // PASO 3: Registrar ingresos individuales por cada vehículo del cliente
         // ──────────────────────────────────────────────────────────────
-        const ID_CONCEPTO_TELEPASES = 35; // 35 = "Telepase"
         const guardados = [];
         const erroresRegistro = [];
 
@@ -457,39 +461,24 @@ export const importacionesTelepases = async (req, res) => {
             const transaction_asientos = await pa7_giama_renting.transaction();
 
             try {
-                const autopistasStr = Array.from(clienteConsolidado.autopistas).join(", ");
-                const patentesStr = clienteConsolidado.patentes.join(", ");
                 const rangoFechas = clienteConsolidado.fechaMin && clienteConsolidado.fechaMax
                     ? `${clienteConsolidado.fechaMin} al ${clienteConsolidado.fechaMax}`
                     : "S/D";
 
-                // Usamos el primer vehículo del cliente para el registro base
-                const primerDetalle = clienteConsolidado.detallePatentes[0];
-                const importeTotal = parseFloat(clienteConsolidado.totalNeto.toFixed(2));
+                // Registramos un cargo consolidado para todas las patentes del cliente
+                const detallesMasivos = clienteConsolidado.detallePatentes.map(detalle => ({
+                    patente: detalle.patente,
+                    id_vehiculo: detalle.id_vehiculo,
+                    importe: parseFloat(detalle.totalNeto.toFixed(2)),
+                    observacion: `Telepase - Dominio: ${detalle.patente} - Período: ${rangoFechas}`
+                }));
 
-                const lineasObservacion = clienteConsolidado.detallePatentes.map((d, index) => {
-                    if (index === 0) {
-                        return `Dominio(s): ${patentesStr} - Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
-                    }
-                    return `Telepase - Dominio: ${d.patente} - OBS: Período: ${rangoFechas} ($${d.totalNeto.toFixed(2)})`;
-                });
-                const observacion = lineasObservacion.join('\n');
-
-                await registrarIngresoIndividual({
-                    debe_ingreso: importeTotal,
-                    id_vehiculo: primerDetalle.id_vehiculo,
-                    fecha_deuda: `${getTodayDate()} 00:00:00`,
-                    fecha_pago: null,
-                    id_forma_cobro_1: null,
-                    total_cobro_1: 0,
+                await registrarIngresoMasivoConsolidado({
                     id_cliente: clienteConsolidado.id_cliente,
-                    observacion: observacion,
-                    observacion_pago: "",
-                    usuario: req.user ? req.user.email : "sistema",
-                    id_concepto: ID_CONCEPTO_TELEPASES,
-                    importe_neto: importeTotal,
-                    importe_iva: 0,
-                    importe_total: importeTotal,
+                    es_empresa: clienteConsolidado.es_empresa,
+                    detalles: detallesMasivos,
+                    fecha_deuda: `${getTodayDate()} 00:00:00`,
+                    usuario: req.user?.user || "sistema",
                     transaction_costos_ingresos: transaction,
                     transaction_asientos: transaction_asientos,
                 });
@@ -502,7 +491,7 @@ export const importacionesTelepases = async (req, res) => {
                     chofer: clienteConsolidado.chofer,
                     patentes: clienteConsolidado.patentes,
                     cantidadPasadas: clienteConsolidado.cantidadPasadas,
-                    importeTotal,
+                    importeTotal: parseFloat(clienteConsolidado.totalNeto.toFixed(2)),
                     rangoFechas,
                 });
 
@@ -538,20 +527,35 @@ export const importacionesTelepases = async (req, res) => {
     }
 };
 
-/**
- * Convierte un array de fechas en formato DD/MM/YYYY y devuelve
- * la más reciente en formato SQL (YYYY-MM-DD).
- */
 function obtenerFechaMasReciente(fechas) {
     let max = null;
 
     for (const f of fechas) {
-        const parts = f.split("/");
-        if (parts.length !== 3) continue;
-        const [dia, mes, anio] = parts;
-        const dateObj = new Date(`${anio}-${mes}-${dia}`);
-        if (!max || dateObj > max) {
-            max = dateObj;
+        let dateObj = null;
+
+        if (f.includes("/")) {
+            const parts = f.split("/");
+            if (parts.length === 3) {
+                const [dia, mes, anio] = parts;
+                dateObj = new Date(`${anio}-${mes}-${dia}T00:00:00`);
+            }
+        } else if (f.includes("-")) {
+            const parts = f.split("-");
+            if (parts.length === 3) {
+                // Si viene como YYYY-MM-DD
+                if (parts[0].length === 4) {
+                    dateObj = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00`);
+                } else {
+                    // Por si viene como DD-MM-YYYY
+                    dateObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+                }
+            }
+        }
+
+        if (dateObj && !isNaN(dateObj.getTime())) {
+            if (!max || dateObj > max) {
+                max = dateObj;
+            }
         }
     }
 
