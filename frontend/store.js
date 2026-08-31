@@ -23,6 +23,7 @@ import ingresosReducer from "./src/reducers/Costos/ingresosSlice";
 import egresosReducer from "./src/reducers/Costos/egresosSlice";
 import parametrosReducer from "./src/reducers/Parametros/parametrosSlice";
 import pagosClientesReducer from "./src/reducers/PagosClientes/pagosClientesSlice"
+import auditoriaReducer from "./src/reducers/Auditoria/auditoriaSlice";
 
 const loginPersistConfig = {
   key: "login",
@@ -49,6 +50,7 @@ const reducer = combineReducers({
   recibosReducer,
   parametrosReducer,
   pagosClientesReducer,
+  auditoriaReducer,
 });
 
 export const store = configureStore({

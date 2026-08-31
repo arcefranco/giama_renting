@@ -25,12 +25,17 @@ const downloadErrorsExcel = (errors) => {
 const ImportacionesTelepases = () => {
     const dispatch = useDispatch();
     const { isLoading, isError, isSuccess, message, errores_importacion, guardados_importacion } = useSelector((state) => state.costosReducer);
-    
+
     const excelFile = useRef(null);
     const [file, setFile] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const [localErrors, setLocalErrors] = useState([]);
     const [localGuardados, setLocalGuardados] = useState([]);
+
+    // Limpiar estado al entrar a la pantalla para evitar bugs de alertas residuales
+    useEffect(() => {
+        dispatch(reset());
+    }, [dispatch]);
 
     useEffect(() => {
         if (isError) {
@@ -63,7 +68,7 @@ const ImportacionesTelepases = () => {
         setIsDragging(false);
         const droppedFile = e.dataTransfer.files?.[0];
         if (!droppedFile) return;
-        
+
         const ext = droppedFile.name.split('.').pop().toLowerCase();
         if (!['xls', 'xlsx'].includes(ext)) {
             toast.error('Solo se permiten archivos Excel (.xls, .xlsx)');
@@ -108,10 +113,10 @@ const ImportacionesTelepases = () => {
                     <p className={styles.loadingText}>Procesando telepases consolidados...</p>
                 </div>
             )}
-            
+
             <div>
                 <div className={styles.sectionHeader} style={{ marginTop: "20px", marginLeft: "20px", marginRight: "20px" }}>
-                    <h2>Importación masiva de telepases (consolidado)</h2>
+                    <h2>Importación masiva de telepases</h2>
                 </div>
 
                 <p style={{ marginLeft: "20px", marginRight: "20px", color: "#666", fontSize: "14px" }}>
@@ -151,9 +156,11 @@ const ImportacionesTelepases = () => {
                             className={styles.sendBtn}
                             onClick={handleSubmit}
                             disabled={!file || isLoading}
+                            style={{ width: "auto", minWidth: "160px", padding: "10px 20px", marginTop: "15px", height: "auto" }}
                         >
                             Subir Telepases
                         </button>
+
                     </div>
                 </div>
 
@@ -194,7 +201,7 @@ const ImportacionesTelepases = () => {
                 {/* Errores / Observaciones */}
                 <div className={styles.infoContainer}>
                     <h3 className={styles.infoTitle}>
-                         Info - Reporte de la última importación
+                        Info - Reporte de la última importación
                     </h3>
                     {localErrors && localErrors.length > 0 ? (
                         <div className={styles.errorList}>

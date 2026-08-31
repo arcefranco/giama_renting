@@ -48,6 +48,8 @@ import IngresosSeguros from "./components/Costos/IngresosSeguros";
 import Alertas from "./components/Usuarios/Alertas/Alertas";
 import ImportacionesMultas from "./components/Costos/ImportacionesMultas";
 import ImportacionesTelepases from "./components/Costos/ImportacionesTelepases";
+import ReporteAsientos from "./components/Auditoria/ReporteAsientos";
+import ReporteFacturas from "./components/Auditoria/ReporteFacturas";
 function App() {
 
   return (
@@ -67,6 +69,8 @@ function App() {
           </Route>
           <Route element={<AdminRoute />}>
             <Route path='/usuarios/alertas' element={<Alertas />} />
+            <Route path='/auditoria/asientos' element={<ReporteAsientos />} />
+            <Route path='/auditoria/facturas' element={<ReporteFacturas />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
             <Route path="/vehiculos" element={<VehiculosForm />} />
