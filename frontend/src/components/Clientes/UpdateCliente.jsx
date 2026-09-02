@@ -331,7 +331,7 @@ const UpdateCliente = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const body = { ...form, id: id };
+    const body = { ...form, id: id, usuario: username };
     dispatch(updateCliente(body));
   };
   const handlePrint = () => {

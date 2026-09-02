@@ -2311,12 +2311,13 @@ const facturaVentaVehiculo = async (
   );
 
   // Actualizar la cabecera de la factura en PA7 ya que insertFactura hardcodea el IVA en 21 y omite percepciones
+  // Nota: Dado que PA7 facturas solo tiene la columna PercepcionIIBB, guardamos allí cualquier importe de percepción ingresado
   await pa7_giama_renting.query(
     `UPDATE facturas SET PorcentajeIva = ?, PercepcionIIBB = ?, PuntoVenta = 3 WHERE Id = ?`,
     {
       replacements: [
         facturaVentaData.porcentaje_iva || 21,
-        facturaVentaData.percepcion_iibb || 0,
+        facturaVentaData.importe_percepcion || 0,
         nro_factura,
       ],
       type: QueryTypes.UPDATE,
@@ -2331,8 +2332,22 @@ const facturaVentaVehiculo = async (
   let cuentaHaberVenta = "410201";
   let cuentaIva = facturaVentaData.porcentaje_iva == 10.5 ? "210202" : "210201";
 
-  // 1. DEBE (Neto + IVA) - Omitimos percepciones para que el asiento cuadre si no hay cuenta de percepción.
-  let importeDebe = parseFloat(facturaVentaData.importe_neto) + parseFloat(facturaVentaData.importe_iva);
+  // Obtenemos la cuenta para la Percepción dinámica
+  let cuenta_percepcion = null;
+  if (facturaVentaData.tipo_percepcion && facturaVentaData.tipo_percepcion !== 'ninguna' && parseFloat(facturaVentaData.importe_percepcion) > 0) {
+    let codigoParam = 'PIBB'; // default
+    if (facturaVentaData.tipo_percepcion === 'iibb_caba') codigoParam = 'PIBC';
+    if (facturaVentaData.tipo_percepcion === 'iva') codigoParam = 'PIVA';
+
+    const resultParams = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = ?`,
+      { replacements: [codigoParam], type: QueryTypes.SELECT, transaction: transaction_giama_renting }
+    );
+    cuenta_percepcion = resultParams.length ? resultParams[0].valor_str : null;
+  }
+
+  // 1. DEBE (Neto + IVA + Percepción)
+  let importeDebe = parseFloat(facturaVentaData.importe_neto) + parseFloat(facturaVentaData.importe_iva) + parseFloat(facturaVentaData.importe_percepcion || 0);
   
   await asientoContable(
     "c_movimientos",
@@ -2371,6 +2386,23 @@ const facturaVentaVehiculo = async (
       cuentaIva,
       "H",
       facturaVentaData.importe_iva,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      nro_factura.toString(), 
+      getTodayDate(),
+      NroAsientoSecundario,
+      tipo_factura 
+    );
+  }
+
+  // 4. HABER Percepción
+  if (parseFloat(facturaVentaData.importe_percepcion) > 0 && cuenta_percepcion) {
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_percepcion,
+      "H",
+      facturaVentaData.importe_percepcion,
       concepto_factura,
       transaction_pa7_giama_renting,
       nro_factura.toString(), 

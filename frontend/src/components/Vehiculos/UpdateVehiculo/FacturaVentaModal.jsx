@@ -16,7 +16,9 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
     importe_neto: '',
     porcentaje_iva: '21',
     importe_iva: '',
-    percepcion_iibb: '',
+    tipo_percepcion: 'ninguna',
+    tasa_percepcion: '',
+    importe_percepcion: '',
     importe_total: '',
     estado_cobro: 'cobrado', // Nuevo estado
     nuevoCliente: false,
@@ -43,7 +45,9 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
         importe_neto: '',
         porcentaje_iva: '21',
         importe_iva: '',
-        percepcion_iibb: '',
+        tipo_percepcion: 'ninguna',
+        tasa_percepcion: '',
+        importe_percepcion: '',
         importe_total: '',
         estado_cobro: 'cobrado',
         nuevoCliente: false,
@@ -68,17 +72,32 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
       const newData = { ...prev, [name]: value };
       
       const porcIva = parseFloat(newData.porcentaje_iva || 0) / 100;
-      const perc = parseFloat(newData.percepcion_iibb || 0);
+      const tasaPerc = parseFloat(newData.tasa_percepcion || 0) / 100;
+      
+      if (name === 'tipo_percepcion' && value === 'ninguna') {
+          newData.tasa_percepcion = '';
+          newData.importe_percepcion = '';
+      }
+
+      const percAmount = name === 'importe_percepcion' ? parseFloat(value || 0) : 
+                        (newData.tasa_percepcion ? parseFloat(newData.importe_neto || 0) * tasaPerc : 0);
+                        
+      if (name !== 'importe_percepcion') {
+          newData.importe_percepcion = percAmount > 0 ? percAmount.toFixed(2) : '';
+      }
+
+      const perc = parseFloat(newData.importe_percepcion || 0);
 
       if (name === 'importe_total' && value) {
         const total = parseFloat(value);
-        const totalSinPerc = total - perc;
-        const neto = (totalSinPerc / (1 + porcIva)).toFixed(2);
+        const neto = (total / (1 + porcIva + tasaPerc)).toFixed(2);
         const iva = (neto * porcIva).toFixed(2);
+        const calcPerc = (neto * tasaPerc).toFixed(2);
         newData.importe_neto = neto;
         newData.importe_iva = iva;
+        newData.importe_percepcion = calcPerc > 0 ? calcPerc : '';
       } 
-      else if ((name === 'importe_neto' || name === 'porcentaje_iva' || name === 'percepcion_iibb')) {
+      else if ((name === 'importe_neto' || name === 'porcentaje_iva' || name === 'tasa_percepcion' || name === 'importe_percepcion')) {
         const neto = parseFloat(newData.importe_neto || 0);
         const iva = (neto * porcIva).toFixed(2);
         const total = (neto + parseFloat(iva) + perc).toFixed(2);
@@ -146,21 +165,20 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
           backgroundColor: "#fff",
           borderRadius: "12px",
           boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-          width: "650px",
+          width: "700px",
           maxWidth: "95vw",
           maxHeight: "90vh",
-          overflowY: "auto",
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
+          overflow: "hidden"
       }}>
         <div style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             padding: "20px 24px",
-            borderBottom: "1px solid #f0f0f0",
             backgroundColor: "#800000",
-            borderRadius: "12px 12px 0 0"
+            flexShrink: 0
         }}>
             <h3 style={{ margin: 0, color: "#fff", fontSize: "17px", fontWeight: 600 }}>
                 Facturar Venta de Vehículo
@@ -185,8 +203,8 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
             </button>
         </div>
 
-        <div style={{ padding: "20px" }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flexGrow: 1 }}>
+          <div style={{ padding: "20px", overflowY: "auto", overflowX: "hidden", flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <input 
@@ -323,13 +341,41 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <label>Percepción IIBB:</label>
+                <label>Tipo Percepción:</label>
+                <select 
+                    name="tipo_percepcion" 
+                    value={formData.tipo_percepcion} 
+                    onChange={handleChange} 
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', height: '35px', backgroundColor: '#eef2f5' }}
+                >
+                    <option value="ninguna">Ninguna</option>
+                    <option value="iibb">IIBB</option>
+                    <option value="iibb_caba">IIBB CABA</option>
+                    <option value="iva">IVA</option>
+                </select>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label>Tasa Perc. (%):</label>
                 <input 
                     type="number" 
-                    name="percepcion_iibb" 
-                    value={formData.percepcion_iibb} 
+                    name="tasa_percepcion" 
+                    value={formData.tasa_percepcion} 
                     onChange={handleChange} 
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} 
+                    disabled={formData.tipo_percepcion === 'ninguna'}
+                />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label>Imp. Percepción:</label>
+                <input 
+                    type="number" 
+                    name="importe_percepcion" 
+                    value={formData.importe_percepcion} 
+                    onChange={handleChange} 
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} 
+                    disabled={formData.tipo_percepcion === 'ninguna'}
                 />
                 </div>
 
@@ -345,13 +391,13 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 />
                 </div>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-              <button type="button" onClick={onClose} style={{ padding: '8px 15px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}>Cancelar</button>
-              <button type="submit" style={{ padding: '8px 15px', backgroundColor: '#800020', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>Confirmar y Facturar</button>
-            </div>
-          </form>
-        </div>
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '15px 20px', borderTop: '1px solid #eee', backgroundColor: '#fafafa', flexShrink: 0 }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 15px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff', fontWeight: '500' }}>Cancelar</button>
+            <button type="submit" style={{ padding: '8px 15px', backgroundColor: '#800020', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: '500' }}>Confirmar y Facturar</button>
+          </div>
+        </form>
       </div>
     </div>
   );
