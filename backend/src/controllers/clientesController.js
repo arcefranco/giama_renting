@@ -290,6 +290,7 @@ export const updateCliente = async (req, res) => {
     trabajos_anteriores,
     observacion_perfil,
     diasctacte,
+    usuario,
   } = req.body;
   let existeCliente;
   let existeDatero;
@@ -369,7 +370,7 @@ export const updateCliente = async (req, res) => {
         direccion = ?,
         nro_direccion = ?, piso = ?, depto = ?, codigo_postal = ?, provincia = ?, ciudad = ?, 
         celular = ?, telefono_alternativo = ?, mail = ?, notas = ?, 
-        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?, no_es_chofer = ?, diasctacte = ?
+        resolucion_datero = ?, fecha_resolucion_datero = ?, usuario_resolucion_datero = ?, no_es_chofer = ?, diasctacte = ?, usuario_ultima_modificacion = ?
         WHERE id = ?`,
       {
         type: QueryTypes.INSERT,
@@ -402,6 +403,7 @@ export const updateCliente = async (req, res) => {
           usuario_resolucion_datero_final,
           no_es_chofer,
           diasctacte ? diasctacte : null,
+          usuario ? usuario : null,
           id,
         ],
         transaction: transaction,

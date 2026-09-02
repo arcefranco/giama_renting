@@ -20,6 +20,7 @@ import {
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { normalizarFecha } from "../../helpers/normalizarFecha.js";
 import { diferenciaDias } from "../../helpers/diferenciaDias.js";
+import { insertFactura } from "../../helpers/insertFactura.js";
 import { getParametro } from "../../helpers/getParametro.js";
 import {
   getNumeroAsiento,
@@ -1056,7 +1057,8 @@ export const updateVehiculo = async (req, res) => {
     polarizado,
     cubre_asiento,
     usuario,
-    observaciones
+    observaciones,
+    facturaVentaData
   } = req.body;
   let vehiculoAnterior;
   let fechaDePreparacion;
@@ -1137,7 +1139,9 @@ export const updateVehiculo = async (req, res) => {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje" })
   }
 
-  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
+  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) && 
+      String(estado) !== "10" && String(estado) !== "11" &&
+      (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo" })
   }
 
@@ -1203,6 +1207,29 @@ export const updateVehiculo = async (req, res) => {
   }
 
   try {
+    let transaction_giama_renting = await giama_renting.transaction();
+    let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+    let nro_factura = null;
+
+    if (estado && String(estado) === "11" && facturaVentaData) {
+      try {
+        nro_factura = await facturaVentaVehiculo(
+          facturaVentaData,
+          usuario,
+          dominio,
+          dominio_provisorio,
+          vehiculoAnterior,
+          transaction_giama_renting,
+          transaction_pa7_giama_renting
+        );
+      } catch (error) {
+        await transaction_giama_renting.rollback();
+        await transaction_pa7_giama_renting.rollback();
+        const { body } = handleError(error, "Factura de venta", acciones.post);
+        return res.send(body);
+      }
+    }
+
     await giama_renting.query(
       `UPDATE vehiculos SET  dominio = :dominio, dominio_provisorio = :dominio_provisorio, nro_chasis = :nro_chasis, nro_motor = :nro_motor,
         kilometros_actuales = :kilometros, fecha_medicion_km = :fecha_medicion_km, proveedor_gps = :proveedor_gps, nro_serie_gps = :nro_serie_gps,
@@ -1240,10 +1267,12 @@ export const updateVehiculo = async (req, res) => {
           observaciones: observaciones ? observaciones : null,
           id,
         },
+        transaction: transaction_giama_renting
       }
     );
 
-
+    await transaction_giama_renting.commit();
+    await transaction_pa7_giama_renting.commit();
 
   } catch (error) {
     const { body } = handleError(error, "vehículo", acciones.update);
@@ -1507,8 +1536,8 @@ export const getSituacionFlota = async (req, res) => {
       `SELECT 
   COALESCE(
     CASE 
+      WHEN est.nombre IN ('Cobrado DT', 'Reservado venta', 'Vendido sin facturar', 'Vendido Facturado') THEN est.nombre
       WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
-      WHEN est.nombre = 'Cobrado DT' OR est.nombre = 'Reservado venta' THEN est.nombre
       WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
       WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
       ELSE est.nombre
@@ -2194,4 +2223,194 @@ export const postObservacionVehiculo = async (req, res) => {
   }
 };
 
+const facturaVentaVehiculo = async (
+  facturaVentaData,
+  usuario,
+  dominio,
+  dominio_provisorio,
+  vehiculoAnterior,
+  transaction_giama_renting,
+  transaction_pa7_giama_renting
+) => {
+  let finalClientId = facturaVentaData.id_cliente;
 
+  if (facturaVentaData.nuevoCliente) {
+    const [clienteExistente] = await giama_renting.query(
+      `SELECT id FROM clientes WHERE nro_documento = :nro_documento LIMIT 1`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          nro_documento: facturaVentaData.nro_documento,
+        },
+        transaction: transaction_giama_renting,
+      }
+    );
+
+    if (clienteExistente) {
+      finalClientId = clienteExistente.id;
+    } else {
+      const resultCliente = await giama_renting.query(
+        `INSERT INTO clientes (nombre, apellido, razon_social, tipo_documento, nro_documento, tipo_contribuyente, direccion, nro_direccion, ciudad, provincia, mail, usuario_alta)
+                  VALUES (:nombre, :apellido, :razon_social, :tipo_documento, :nro_documento, :tipo_contribuyente, :direccion, :nro_direccion, :ciudad, :provincia, :mail, :usuario_alta)`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: {
+            nombre: facturaVentaData.nombre || null,
+            apellido: facturaVentaData.apellido || null,
+            razon_social: facturaVentaData.razon_social || null,
+            tipo_documento: 6, // 6 = CUIT
+            nro_documento: facturaVentaData.nro_documento,
+            tipo_contribuyente: facturaVentaData.tipo_contribuyente,
+            direccion: facturaVentaData.direccion || null,
+            nro_direccion: facturaVentaData.nro_direccion || null,
+            ciudad: facturaVentaData.ciudad || null,
+            provincia: facturaVentaData.provincia || null,
+            mail: facturaVentaData.mail || null,
+            usuario_alta: usuario,
+          },
+          transaction: transaction_giama_renting,
+        }
+      );
+      finalClientId = resultCliente[0];
+    }
+  }
+
+  const dominioVehiculo =
+    dominio ||
+    dominio_provisorio ||
+    vehiculoAnterior[0].dominio ||
+    vehiculoAnterior[0].dominio_provisorio ||
+    "Sin Dominio";
+  const concepto_factura = `Venta de Vehículo Usado - Dominio: ${dominioVehiculo}`;
+  const itemsArray = [
+    {
+      descripcion: concepto_factura,
+      cantidad: 1,
+      precioUnitario: facturaVentaData.importe_neto,
+      porcentaje: facturaVentaData.porcentaje_iva || 21,
+      subtotal: facturaVentaData.importe_total,
+    },
+  ];
+
+  let NroAsiento = await getNumeroAsiento();
+  let NroAsientoSecundario = await getNumeroAsientoSecundario();
+
+  const nro_factura = await insertFactura(
+    finalClientId,
+    facturaVentaData.importe_neto,
+    facturaVentaData.importe_iva,
+    facturaVentaData.importe_total,
+    usuario,
+    NroAsiento, 
+    NroAsientoSecundario, 
+    concepto_factura,
+    transaction_giama_renting,
+    transaction_pa7_giama_renting,
+    getTodayDate(),
+    itemsArray
+  );
+
+  // Actualizar la cabecera de la factura en PA7 ya que insertFactura hardcodea el IVA en 21 y omite percepciones
+  // Nota: Dado que PA7 facturas solo tiene la columna PercepcionIIBB, guardamos allí cualquier importe de percepción ingresado
+  await pa7_giama_renting.query(
+    `UPDATE facturas SET PorcentajeIva = ?, PercepcionIIBB = ?, PuntoVenta = 3 WHERE Id = ?`,
+    {
+      replacements: [
+        facturaVentaData.porcentaje_iva || 21,
+        facturaVentaData.importe_percepcion || 0,
+        nro_factura,
+      ],
+      type: QueryTypes.UPDATE,
+      transaction: transaction_pa7_giama_renting,
+    }
+  );
+
+  // Generar Asientos Contables
+  const tipo_factura = (facturaVentaData.tipo_contribuyente == 1 || facturaVentaData.tipo_contribuyente == 4) ? "FA" : "FB";
+  
+  let cuentaDebe = facturaVentaData.estado_cobro === 'a_cobrar' ? "110308" : "210105";
+  let cuentaHaberVenta = "410201";
+  let cuentaIva = facturaVentaData.porcentaje_iva == 10.5 ? "210202" : "210201";
+
+  // Obtenemos la cuenta para la Percepción dinámica
+  let cuenta_percepcion = null;
+  if (facturaVentaData.tipo_percepcion && facturaVentaData.tipo_percepcion !== 'ninguna' && parseFloat(facturaVentaData.importe_percepcion) > 0) {
+    let codigoParam = 'PIBB'; // default
+    if (facturaVentaData.tipo_percepcion === 'iibb_caba') codigoParam = 'PIBC';
+    if (facturaVentaData.tipo_percepcion === 'iva') codigoParam = 'PIVA';
+
+    const resultParams = await giama_renting.query(
+      `SELECT valor_str FROM parametros WHERE codigo = ?`,
+      { replacements: [codigoParam], type: QueryTypes.SELECT, transaction: transaction_giama_renting }
+    );
+    cuenta_percepcion = resultParams.length ? resultParams[0].valor_str : null;
+  }
+
+  // 1. DEBE (Neto + IVA + Percepción)
+  let importeDebe = parseFloat(facturaVentaData.importe_neto) + parseFloat(facturaVentaData.importe_iva) + parseFloat(facturaVentaData.importe_percepcion || 0);
+  
+  await asientoContable(
+    "c_movimientos",
+    NroAsiento,
+    cuentaDebe,
+    "D",
+    importeDebe.toFixed(2),
+    concepto_factura,
+    transaction_pa7_giama_renting,
+    nro_factura.toString(), 
+    getTodayDate(),
+    NroAsientoSecundario,
+    tipo_factura 
+  );
+
+  // 2. HABER Venta (Neto)
+  await asientoContable(
+    "c_movimientos",
+    NroAsiento,
+    cuentaHaberVenta,
+    "H",
+    facturaVentaData.importe_neto,
+    concepto_factura,
+    transaction_pa7_giama_renting,
+    nro_factura.toString(), 
+    getTodayDate(),
+    NroAsientoSecundario,
+    tipo_factura 
+  );
+
+  // 3. HABER IVA
+  if (parseFloat(facturaVentaData.importe_iva) > 0) {
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuentaIva,
+      "H",
+      facturaVentaData.importe_iva,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      nro_factura.toString(), 
+      getTodayDate(),
+      NroAsientoSecundario,
+      tipo_factura 
+    );
+  }
+
+  // 4. HABER Percepción
+  if (parseFloat(facturaVentaData.importe_percepcion) > 0 && cuenta_percepcion) {
+    await asientoContable(
+      "c_movimientos",
+      NroAsiento,
+      cuenta_percepcion,
+      "H",
+      facturaVentaData.importe_percepcion,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      nro_factura.toString(), 
+      getTodayDate(),
+      NroAsientoSecundario,
+      tipo_factura 
+    );
+  }
+
+  return nro_factura;
+};

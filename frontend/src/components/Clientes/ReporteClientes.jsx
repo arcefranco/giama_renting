@@ -73,6 +73,22 @@ const ReporteClientes = () => {
 
     }
   }
+  const renderFechaHora = (data) => {
+    const valor = data.value;
+    if (valor) {
+      const fecha = new Date(valor);
+      if (!isNaN(fecha)) {
+        return fecha.toLocaleString("es-AR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      }
+      return valor;
+    }
+  }
   const renderCtaCteCell = (data) => {
     if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
     return (
@@ -201,6 +217,8 @@ const ReporteClientes = () => {
         <Column dataField="notas" caption="Notas" width={200} />
         <Column dataField="resolucion_datero" caption="Res. datero" width={200} cellRender={renderResolucion} />
         <Column dataField="usuario_alta" caption="Usuario alta" width={200} />
+        <Column dataField="usuario_ultima_modificacion" caption="Últ. mod. por" width={150} />
+        <Column dataField="fecha_ultima_modificacion" cellRender={renderFechaHora} alignment="center" caption="Fecha últ. mod." width={150} />
         <Column dataField="id" caption="" name="btn1" width={100} alignment="center" cellRender={renderCtaCteCell} />
         <Column dataField="id" caption="" name="btn2" width={100} alignment="center" cellRender={renderImagenesCell} />
         <Column dataField="id" width={100} name="btn3" caption="" alignment="center" cellRender={renderModificarCell} />

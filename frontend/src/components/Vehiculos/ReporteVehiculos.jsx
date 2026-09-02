@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import DataGrid, {
   Column, Scrolling, Export, SearchPanel,
-  FilterRow, HeaderFilter, Paging
+  FilterRow, HeaderFilter, Paging, Lookup
 } from "devextreme-react/data-grid"
 import { getVehiculos, reset } from '../../reducers/Vehiculos/vehiculosSlice';
 import { getModelos, getProveedoresGPS, getSucursales, getEstados } from '../../reducers/Generales/generalesSlice';
@@ -59,12 +59,16 @@ const ReporteVehiculos = () => {
 
           let estado_nombre = "";
 
-          if (v.fecha_venta) {
-            estado_nombre = "Vendido";
-          } else if (v.estado_actual === 8) {
+          if (v.estado_actual === 8) {
             estado_nombre = "Cobrado DT";
           } else if (v.estado_actual === 9) {
             estado_nombre = "Reservado venta";
+          } else if (v.estado_actual === 10) {
+            estado_nombre = "Vendido sin facturar";
+          } else if (v.estado_actual === 11) {
+            estado_nombre = "Vendido Facturado";
+          } else if (v.fecha_venta) {
+            estado_nombre = "Vendido";
           } else if (v.vehiculo_alquilado === 1) {
             estado_nombre = "Alquilado";
           } else if (v.vehiculo_reservado === 1) {
@@ -234,28 +238,18 @@ const ReporteVehiculos = () => {
         <Column
           dataField="estado_nombre"
           caption="Estado"
-          calculateDisplayValue={(rowData) => {
-            if (rowData.fecha_venta) return "Vendido";
-            if (rowData.estado_actual === 8) return "Cobrado DT";
-            if (rowData.estado_actual === 9) return "Reservado venta";
-            if (rowData.vehiculo_alquilado === 1) return "Alquilado";
-            if (rowData.vehiculo_reservado === 1) return "Reservado";
-
-            const estado = estados?.find((e) => e.id === rowData.estado_actual);
-            return estado?.nombre || "Sin estado";
-          }}
           cellRender={({ data }) => renderEstadoVehiculo(data)}
         />
         <Column dataField="chofer_actual" caption="Chofer actual" />
         <Column dataField="razon_social" caption="Razon social" />
         <Column dataField="id" caption="ID" width={50} />
-        <Column dataField="modelo" width={75} caption="Modelo"
-          cellRender={({ data }) => getNombreModelo(data.modelo)}
-          lookup={{
-            dataSource: modelos,
-            valueExpr: "id",
-            displayExpr: "nombre",
-          }} />
+        <Column dataField="modelo" width={75} caption="Modelo">
+          <Lookup
+            dataSource={modelos || []}
+            valueExpr="id"
+            displayExpr="nombre"
+          />
+        </Column>
         <Column dataField="fecha_ingreso" width={85} caption="Ingreso" dataType="date" alignment="center" />
         <Column dataField="precio_inicial" caption="Precio Inicial" alignment="right" width={100} format="currency" />
         <Column
