@@ -686,10 +686,19 @@ export const fichaCtaCte = async (req, res) => {
   const { fecha } = req.body;
   const query = `SELECT
     m.id_cliente,
-        COALESCE(
+    COALESCE(
         NULLIF(CONCAT(c.nombre, ' ', c.apellido), ' '),
         c.razon_social
     ) AS nombre_cliente,
+    c.razon_social,
+    c.nombre,
+    c.apellido,
+    (
+        SELECT COUNT(*) 
+        FROM contratos_alquiler ca 
+        WHERE ca.id_cliente = c.id 
+          AND (ca.fecha_hasta IS NULL OR ca.fecha_hasta >= CURDATE())
+    ) AS contratos_vigentes,
     m.fecha,
     m.concepto,
     m.nro_comprobante,
@@ -799,6 +808,15 @@ ORDER BY m.id_cliente, m.fecha, m.tipo;
         NULLIF(CONCAT(c.nombre, ' ', c.apellido), ' '),
         c.razon_social
     ) AS nombre_cliente,
+    c.razon_social,
+    c.nombre,
+    c.apellido,
+    (
+        SELECT COUNT(*) 
+        FROM contratos_alquiler ca 
+        WHERE ca.id_cliente = c.id 
+          AND (ca.fecha_hasta IS NULL OR ca.fecha_hasta >= CURDATE())
+    ) AS contratos_vigentes,
     m.fecha,
     m.concepto,
     m.nro_comprobante,
@@ -917,6 +935,8 @@ ORDER BY m.id_cliente, m.fecha, m.tipo;
           cuentas[nombre] = {
             id_cliente: r.id_cliente,
             nombre_cliente: nombre,
+            es_empresa: Boolean(r.razon_social && r.razon_social.trim() !== ''),
+            tiene_contrato_vigente: (Number(r.contratos_vigentes) > 0),
             saldo: 0,
             detalle: [],
           };
@@ -945,6 +965,8 @@ ORDER BY m.id_cliente, m.fecha, m.tipo;
           cuentas[nombre] = {
             id_cliente: r.id_cliente,
             nombre_cliente: nombre,
+            es_empresa: Boolean(r.razon_social && r.razon_social.trim() !== ''),
+            tiene_contrato_vigente: (Number(r.contratos_vigentes) > 0),
             saldo: 0,
             detalle: [],
           };

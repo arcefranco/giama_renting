@@ -26,6 +26,8 @@ const FichaCtaCte = () => {
     const [clientes, setClientes] = useState([]);
     const [clientesBase, setClientesBase] = useState([]);
     const [filtro, setFiltro] = useState("");
+    const [tipoCliente, setTipoCliente] = useState("todos");
+    const [estadoContrato, setEstadoContrato] = useState("todos");
 
     useEffect(() => {
         const arr = Object.values(ficha || {});
@@ -38,30 +40,46 @@ const FichaCtaCte = () => {
     const [saldoTotal, setSaldoTotal] = useState(0);
 
     useEffect(() => {
-        const total = clientesBase.reduce(
+        const total = clientes.reduce(
             (acc, c) => acc + (Number(c.saldo) || 0),
             0
         );
         setSaldoTotal(Math.abs(total).toLocaleString("es-AR"));
-    }, [clientesBase]);
+    }, [clientes]);
 
     useEffect(() => {
         setClientes(
-            clientesBase.filter(c =>
-                c.nombre_cliente
+            clientesBase.filter(c => {
+                const matchTexto = c.nombre_cliente
                     ?.toLowerCase()
-                    .includes(filtro.toLowerCase())
-            )
+                    .includes(filtro.toLowerCase());
+
+                let matchTipo = true;
+                if (tipoCliente === "choferes") {
+                    matchTipo = !c.es_empresa;
+                } else if (tipoCliente === "empresas") {
+                    matchTipo = c.es_empresa;
+                }
+
+                let matchContrato = true;
+                if (estadoContrato === "vigente") {
+                    matchContrato = c.tiene_contrato_vigente;
+                } else if (estadoContrato === "no_vigente") {
+                    matchContrato = !c.tiene_contrato_vigente;
+                }
+
+                return matchTexto && matchTipo && matchContrato;
+            })
         );
-    }, [filtro, clientesBase]);
+    }, [filtro, tipoCliente, estadoContrato, clientesBase]);
 
     useEffect(() => {
         dispatch(getFichaCtaCte({ fecha: fecha }))
     }, [fecha])
 
-    const exportToExcel = async () => {
+    const exportToExcelPlano = async () => {
         const wb = new ExcelJS.Workbook();
-        const ws = wb.addWorksheet("Cuentas Corrientes");
+        const ws = wb.addWorksheet("Cuentas Corrientes Plana");
 
         // 1. Single header row
         const headerRow = ws.getRow(1);
@@ -80,7 +98,7 @@ const FichaCtaCte = () => {
 
         let rowIndex = 2;
 
-        clientesBase.forEach((cliente) => {
+        clientes.forEach((cliente) => {
             let saldoCorriente = 0;
             const chofer = cliente.nombre_cliente;
 
@@ -121,10 +139,6 @@ const FichaCtaCte = () => {
             });
         });
 
-        // =========================
-        // CONFIGURACIONES
-        // =========================
-
         ws.columns = [
             { width: 35 }, // CHOFER
             { width: 15 }, // DOMINIO
@@ -135,39 +149,177 @@ const FichaCtaCte = () => {
             { width: 15 }, // SALDO
         ];
 
-        // =========================
-        // EXPORT
-        // =========================
         const buffer = await wb.xlsx.writeBuffer();
-        
         const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g, '-');
 
         saveAs(
             new Blob([buffer]),
-            `Ficha_Cta_Cte_${dateStr}.xlsx`
+            `Ficha_Cta_Cte_Plana_${dateStr}.xlsx`
+        );
+    };
+
+    const exportToExcelAgrupado = async () => {
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet("Cuentas Corrientes");
+
+        let rowIndex = 1;
+
+        clientes.forEach((cliente) => {
+            const saldo = Math.trunc(cliente.saldo || 0).toLocaleString("es-AR");
+
+            // =========================
+            // TITULO CLIENTE / CHOFER
+            // =========================
+            const titleRow = ws.getRow(rowIndex);
+            const text = `${cliente.nombre_cliente} - Saldo: ${saldo}`;
+
+            titleRow.getCell(1).value = text;
+
+            // Merge columnas A-D
+            ws.mergeCells(rowIndex, 1, rowIndex, 4);
+
+            [1, 2, 3, 4].forEach((col) => {
+                const cell = titleRow.getCell(col);
+                cell.font = { bold: true };
+                cell.fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFF4B084" }, // Canela oscuro
+                };
+            });
+
+            rowIndex++;
+
+            // =========================
+            // ENCABEZADOS
+            // =========================
+            const headerRow = ws.getRow(rowIndex);
+            const headers = ["Fecha", "Concepto", "Debe", "Haber"];
+
+            headers.forEach((h, i) => {
+                const cell = headerRow.getCell(i + 1);
+                cell.value = h;
+                cell.font = { bold: true };
+                cell.fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFF8CBAD" }, // Canela claro
+                };
+            });
+
+            rowIndex++;
+
+            // =========================
+            // DETALLE (AGRUPADO)
+            // =========================
+            cliente.detalle?.forEach((mov) => {
+                const row = ws.getRow(rowIndex);
+
+                if (mov.fecha) {
+                    const date = new Date(mov.fecha);
+                    const cell = row.getCell(1);
+                    cell.value = date;
+                    cell.numFmt = "dd/mm/yyyy";
+                } else {
+                    row.getCell(1).value = "";
+                }
+
+                row.getCell(2).value = mov.concepto || "";
+                row.getCell(3).value = mov.debe ? Math.trunc(mov.debe) : "";
+                row.getCell(4).value = mov.haber ? Math.trunc(mov.haber) : "";
+
+                row.outlineLevel = 1; // Plegable en Excel
+
+                rowIndex++;
+            });
+
+            // Espacio entre clientes
+            rowIndex += 2;
+        });
+
+        ws.columns = [
+            { width: 15 }, // FECHA
+            { width: 50 }, // CONCEPTO
+            { width: 15 }, // DEBE
+            { width: 15 }, // HABER
+        ];
+
+        ws.properties.outlineProperties = {
+            summaryBelow: false,
+        };
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g, '-');
+
+        saveAs(
+            new Blob([buffer]),
+            `Ficha_Cta_Cte_Agrupada_${dateStr}.xlsx`
         );
     };
 
     return (
         <div className={styles.container}>
             <h2>Ficha cuentas corrientes</h2>
-            <div className={styles.inputContainer}>
-                <span>Buscar cliente</span>
-                <input type="text" name='filtro' value={filtro} onChange={(e) => {
-                    console.log(e)
-                    setFiltro(e.target.value)
-                }} />
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '15px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '13rem' }}>
+                    <span style={{ fontSize: '13px', marginBottom: '4px', color: '#333' }}>Buscar cliente</span>
+                    <input 
+                        type="text" 
+                        name='filtro' 
+                        value={filtro} 
+                        onChange={(e) => setFiltro(e.target.value)} 
+                        style={{ height: '34px', border: 'none', borderBottom: '2px solid #800000', padding: '0 8px', outline: 'none', background: 'transparent' }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', width: '13rem' }}>
+                    <span style={{ fontSize: '13px', marginBottom: '4px', color: '#333' }}>Tipo de cliente</span>
+                    <select 
+                        value={tipoCliente} 
+                        onChange={(e) => setTipoCliente(e.target.value)}
+                        style={{ height: '34px', border: 'none', borderBottom: '2px solid #800000', padding: '0 8px', outline: 'none', background: 'transparent', fontSize: '12px', cursor: 'pointer' }}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="choferes">Choferes (Personas)</option>
+                        <option value="empresas">Empresas (Razón Social)</option>
+                    </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', width: '13rem' }}>
+                    <span style={{ fontSize: '13px', marginBottom: '4px', color: '#333' }}>Estado de Contrato</span>
+                    <select 
+                        value={estadoContrato} 
+                        onChange={(e) => setEstadoContrato(e.target.value)}
+                        style={{ height: '34px', border: 'none', borderBottom: '2px solid #800000', padding: '0 8px', outline: 'none', background: 'transparent', fontSize: '12px', cursor: 'pointer' }}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="vigente">Con contrato vigente</option>
+                        <option value="no_vigente">Sin contrato vigente</option>
+                    </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', width: '11rem' }}>
+                    <span style={{ fontSize: '13px', marginBottom: '4px', color: '#333' }}>Fecha corte</span>
+                    <input 
+                        type="date" 
+                        name='fecha' 
+                        value={fecha} 
+                        onChange={(e) => setFecha(e.target.value)} 
+                        style={{ height: '34px', border: 'none', borderBottom: '2px solid #800000', padding: '0 8px', outline: 'none', background: 'transparent' }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className={styles.exportBtn} onClick={exportToExcelPlano}>
+                        <i className="fa-solid fa-file-excel"></i> Exportar Plano
+                    </button>
+                    <button className={styles.exportBtn} onClick={exportToExcelAgrupado}>
+                        <i className="fa-solid fa-file-excel"></i> Exportar Agrupado
+                    </button>
+                </div>
             </div>
-            <div className={styles.inputContainer}>
-                <span>Fecha</span>
-                <input type="date" name='fecha' value={fecha} onChange={(e) => {
-                    console.log(e)
-                    setFecha(e.target.value)
-                }} />
-            </div>
-            <button className={styles.sendBtn} onClick={exportToExcel}>
-                Exportar
-            </button>
+
             <div>
                 <p>Saldo total: {saldoTotal}</p>
             </div>
