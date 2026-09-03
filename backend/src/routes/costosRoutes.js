@@ -14,7 +14,7 @@ import {
 import { auth } from "../middlewares/auth.js";
 
 import { upload } from "../middlewares/upload.js";
-import { importacionesMultas, importacionesTelepases } from "../controllers/importacionesController.js";
+import { importacionesMultas, importacionesTelepases, preprocesarMultas, confirmarImportacionMultas } from "../controllers/importacionesController.js";
 
 const costosRouter = Router();
 
@@ -62,6 +62,17 @@ costosRouter.post(
   "/costos_ingresos_id_vehiculo",
   auth,
   getCostosIngresosByIdVehiculo
+);
+costosRouter.post(
+  "/preprocesarMultas",
+  auth,
+  upload.single("file"),
+  preprocesarMultas
+);
+costosRouter.post(
+  "/confirmarImportacionMultas",
+  auth,
+  confirmarImportacionMultas
 );
 costosRouter.post(
   "/importacionMultas",

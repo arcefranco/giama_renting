@@ -43,6 +43,16 @@ const postImportacionesMultas = async (form) => {
   });
 };
 
+const preprocesarMultas = async (form) => {
+  return postFunction("costos/preprocesarMultas", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+const confirmarImportacionMultas = async (data) => {
+  return postFunction("costos/confirmarImportacionMultas", data);
+};
+
 const postImportacionesTelepases = async (form) => {
   return postFunction("costos/importacionTelepases", form, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -61,6 +71,8 @@ const costosService = {
   prorrateo,
   ingresos_seguros,
   postImportacionesMultas,
+  preprocesarMultas,
+  confirmarImportacionMultas,
   postImportacionesTelepases
 };
 export default costosService;
