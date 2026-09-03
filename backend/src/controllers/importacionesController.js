@@ -8,12 +8,12 @@ import {
 } from "./costosController.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
 
-export const importacionesMultas = async (req, res) => {
+export const preprocesarMultas = async (req, res) => {
     const COLUMNAS_REQUERIDAS = ["Dominio", "Fecha_Infraccion", "Hora", "Motivo_Infraccion", "Importe", "Acta_Nro"];
 
     try {
         if (!req.file) {
-            return res.send({ status: false, message: "No se envío ningún archivo" });
+            return res.send({ status: false, message: "No se envió ningún archivo" });
         }
 
         const validacion = validarArchivo(req.file, ["xls", "xlsx"], [
@@ -44,129 +44,337 @@ export const importacionesMultas = async (req, res) => {
             });
         }
 
+        // Asegurar existencia de la tabla multas para la verificación
+        await giama_renting.query(`
+          CREATE TABLE IF NOT EXISTS multas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dominio VARCHAR(20) NOT NULL,
+            fecha_infraccion DATE NOT NULL,
+            hora TIME NULL,
+            motivo_infraccion TEXT NULL,
+            importe DECIMAL(12, 2) NOT NULL,
+            acta_nro VARCHAR(100) NULL,
+            id_vehiculo INT NULL,
+            id_cliente INT NOT NULL,
+            cuit_cliente VARCHAR(50) NULL,
+            usuario VARCHAR(100) NULL,
+            usuario_alta VARCHAR(100) NULL,
+            fecha_alta DATETIME DEFAULT CURRENT_TIMESTAMP,
+            se_proceso TINYINT(1) DEFAULT 0,
+            fecha_proceso DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_dominio (dominio),
+            INDEX idx_acta_nro (acta_nro),
+            INDEX idx_id_cliente (id_cliente),
+            INDEX idx_id_vehiculo (id_vehiculo)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `, { type: QueryTypes.RAW });
+
+        // Obtener lista completa de clientes para selección/edición en frontend
+        const clientes = await giama_renting.query(
+            `SELECT id, nro_documento, nombre, apellido, razon_social FROM clientes ORDER BY razon_social ASC, apellido ASC`,
+            { type: QueryTypes.SELECT }
+        );
+
         const errores = [];
-        const guardados = [];
+        const filasPreprocesadas = [];
 
         for (const [index, fila] of data.entries()) {
             const numeroFilaExcel = index + 2;
-            const transaction = await giama_renting.transaction();
-            const transaction_asientos = await pa7_giama_renting.transaction();
+            let advertencia = null;
+            let yaExiste = false;
+            let idVehiculo = null;
+            let idCliente = null;
+            let cuitCliente = '';
+            let nombreCliente = 'Sin cliente asignado';
+            let fechaString = fila.Fecha_Infraccion ? String(fila.Fecha_Infraccion) : '';
+            let horaStr = "00:00:00";
+            let fechaSql = null;
+            let fechaSoloDate = null;
 
             try {
+                // 1. Validar vehículo por Dominio (normalizando espacios y mayúsculas)
+                const dominioLimpio = String(fila.Dominio || '').trim().toUpperCase();
                 const [vehiculo] = await giama_renting.query(
-                    `SELECT ID FROM vehiculos WHERE Dominio = :dominio LIMIT 1`,
+                    `SELECT ID FROM vehiculos WHERE UPPER(TRIM(Dominio)) = :dominio LIMIT 1`,
                     {
-                        replacements: { dominio: fila.Dominio },
-                        type: QueryTypes.SELECT,
-                        transaction
+                        replacements: { dominio: dominioLimpio },
+                        type: QueryTypes.SELECT
                     }
                 );
 
                 if (!vehiculo) {
-                    errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): El dominio "${fila.Dominio}" no existe en el sistema.`);
-                    await transaction.rollback();
-                    await transaction_asientos.rollback();
-                    continue;
+                    advertencia = "El vehículo no existe";
+                } else {
+                    idVehiculo = vehiculo.ID;
                 }
 
+                // 2. Parsear Fecha y Hora
                 if (!fila.Fecha_Infraccion || !fila.Hora) {
-                    errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): La fecha o la hora de la infracción están vacías.`);
-                    await transaction.rollback();
-                    await transaction_asientos.rollback();
-                    continue;
-                }
-
-                let rawFecha = fila.Fecha_Infraccion;
-                let fechaString = "";
-
-                // Si Excel mandó la fecha como número de serie (ej: 46194 para 21/06/2026)
-                if (typeof rawFecha === 'number') {
-                    // 25569 es la diferencia en días entre 01/01/1900 (Excel) y 01/01/1970 (Unix)
-                    const fechaJS = new Date(Math.round((rawFecha - 25569) * 86400 * 1000));
-                    const d = String(fechaJS.getUTCDate()).padStart(2, '0');
-                    const m = String(fechaJS.getUTCMonth() + 1).padStart(2, '0');
-                    const y = fechaJS.getUTCFullYear();
-                    fechaString = `${d}/${m}/${y}`;
-                } else if (rawFecha instanceof Date) {
-                    const d = String(rawFecha.getUTCDate()).padStart(2, '0');
-                    const m = String(rawFecha.getUTCMonth() + 1).padStart(2, '0');
-                    const y = rawFecha.getUTCFullYear();
-                    fechaString = `${d}/${m}/${y}`;
+                    if (!advertencia) advertencia = "La fecha o la hora de la infracción están vacías.";
                 } else {
-                    fechaString = rawFecha.toString().trim();
-                }
+                    let rawFecha = fila.Fecha_Infraccion;
 
-                const parts = fechaString.split("/");
-                if (parts.length !== 3) {
-                    errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): El formato de fecha "${rawFecha}" no es válido. Debe ser DD/MM/YYYY.`);
-                    await transaction.rollback();
-                    await transaction_asientos.rollback();
-                    continue;
-                }
-                const [dia, mes, anio] = parts;
+                    if (typeof rawFecha === 'number') {
+                        const fechaJS = new Date(Math.round((rawFecha - 25569) * 86400 * 1000));
+                        const d = String(fechaJS.getUTCDate()).padStart(2, '0');
+                        const m = String(fechaJS.getUTCMonth() + 1).padStart(2, '0');
+                        const y = fechaJS.getUTCFullYear();
+                        fechaString = `${d}/${m}/${y}`;
+                    } else if (rawFecha instanceof Date) {
+                        const d = String(rawFecha.getUTCDate()).padStart(2, '0');
+                        const m = String(rawFecha.getUTCMonth() + 1).padStart(2, '0');
+                        const y = rawFecha.getUTCFullYear();
+                        fechaString = `${d}/${m}/${y}`;
+                    } else {
+                        fechaString = rawFecha.toString().trim();
+                    }
 
-                let rawHora = fila.Hora;
-                let horaStr = "00:00:00";
-                if (typeof rawHora === 'number') {
-                    // Excel time (fracción de un día)
-                    const decimalTime = rawHora % 1;
-                    const totalSeconds = Math.round(decimalTime * 86400);
-                    const hours = Math.floor(totalSeconds / 3600);
-                    const minutes = Math.floor((totalSeconds % 3600) / 60);
-                    const seconds = totalSeconds % 60;
-                    horaStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                } else {
-                    horaStr = rawHora.toString().trim();
-                    const tParts = horaStr.split(":");
-                    if (tParts.length === 2) {
-                        horaStr = `${tParts[0].padStart(2, '0')}:${tParts[1].padStart(2, '0')}:00`;
-                    } else if (tParts.length === 1) {
-                        horaStr = `${tParts[0].padStart(2, '0')}:00:00`;
+                    const parts = fechaString.split("/");
+                    if (parts.length !== 3) {
+                        if (!advertencia) advertencia = `El formato de fecha "${fechaString}" no es válido (debe ser DD/MM/YYYY).`;
+                    } else {
+                        let [dia, mes, anio] = parts;
+                        dia = String(dia).padStart(2, '0');
+                        mes = String(mes).padStart(2, '0');
+                        if (anio.length === 2) anio = `20${anio}`;
+                        fechaString = `${dia}/${mes}/${anio}`;
+                        fechaSoloDate = `${anio}-${mes}-${dia}`;
+
+                        let rawHora = fila.Hora;
+                        if (typeof rawHora === 'number') {
+                            const decimalTime = rawHora % 1;
+                            const totalSeconds = Math.round(decimalTime * 86400);
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const seconds = totalSeconds % 60;
+                            horaStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                        } else {
+                            horaStr = rawHora.toString().trim();
+                            const tParts = horaStr.split(":");
+                            if (tParts.length === 2) {
+                                horaStr = `${tParts[0].padStart(2, '0')}:${tParts[1].padStart(2, '0')}:00`;
+                            } else if (tParts.length === 1) {
+                                horaStr = `${tParts[0].padStart(2, '0')}:00:00`;
+                            }
+                        }
+
+                        fechaSql = `${fechaSoloDate} ${horaStr}`;
                     }
                 }
 
-                const fechaSql = `${anio}-${mes}-${dia} ${horaStr}`;
+                // 3. Verificar si la multa ya fue procesada previamente (por Acta N° o Dominio + Fecha + Hora)
+                const actaNroStr = String(fila.Acta_Nro || '').trim();
+                if (actaNroStr || (fila.Dominio && fechaSoloDate)) {
+                    const [multaExistente] = await giama_renting.query(
+                        `SELECT id, acta_nro, fecha_infraccion, hora, se_proceso, fecha_proceso 
+                         FROM multas 
+                         WHERE ((acta_nro = :acta AND :acta != '') 
+                            OR (dominio = :dominio AND fecha_infraccion = :fecha_solo_date AND hora = :hora))
+                           AND se_proceso = 1
+                         LIMIT 1`,
+                        {
+                            type: QueryTypes.SELECT,
+                            replacements: {
+                                acta: actaNroStr,
+                                dominio: fila.Dominio || '',
+                                fecha_solo_date: fechaSoloDate,
+                                hora: horaStr
+                            }
+                        }
+                    );
 
-                const [cliente] = await giama_renting.query(
-                    `SELECT id_cliente 
-                     FROM contratos_alquiler 
-                     WHERE id_vehiculo = :id_vehiculo 
-                       AND fecha_desde <= :fecha_infraccion 
-                       AND (fecha_hasta IS NULL OR fecha_hasta >= :fecha_infraccion)`,
+                    if (multaExistente) {
+                        yaExiste = true;
+                        const detalleDuplicado = (actaNroStr && String(multaExistente.acta_nro) === actaNroStr)
+                            ? `Esta multa ya fue procesada anteriormente (Acta N° ${actaNroStr})`
+                            : `Esta multa ya fue procesada anteriormente (${fechaString} ${horaStr})`;
+                        if (!advertencia) {
+                            advertencia = detalleDuplicado;
+                        }
+                    }
+                }
+
+                // 4. Buscar contrato activo si existe vehículo y fecha válida
+                if (idVehiculo && fechaSql && !advertencia) {
+                    const [clienteContrato] = await giama_renting.query(
+                        `SELECT c.id, c.nro_documento, c.nombre, c.apellido, c.razon_social 
+                         FROM contratos_alquiler ca
+                         JOIN clientes c ON ca.id_cliente = c.id
+                         WHERE ca.id_vehiculo = :id_vehiculo 
+                           AND ca.fecha_desde <= :fecha_infraccion 
+                           AND (ca.fecha_hasta IS NULL OR ca.fecha_hasta >= :fecha_infraccion)
+                         LIMIT 1`,
+                        {
+                            type: QueryTypes.SELECT,
+                            replacements: {
+                                id_vehiculo: idVehiculo,
+                                fecha_infraccion: fechaSql
+                            }
+                        }
+                    );
+
+                    if (clienteContrato) {
+                        idCliente = clienteContrato.id;
+                        cuitCliente = clienteContrato.nro_documento || '';
+                        nombreCliente = clienteContrato.razon_social || `${clienteContrato.nombre || ''} ${clienteContrato.apellido || ''}`.trim();
+                    } else {
+                        advertencia = "No se encontró un contrato de alquiler activo para este vehículo en la fecha u hora de la infracción.";
+                    }
+                }
+
+                filasPreprocesadas.push({
+                    id_temp: index + 1,
+                    numero_fila_excel: numeroFilaExcel,
+                    dominio: dominioLimpio || 'S/D',
+                    fecha_infraccion: fechaString,
+                    hora: horaStr,
+                    fecha_sql: fechaSql,
+                    fecha_solo_date: fechaSoloDate,
+                    motivo_infraccion: fila.Motivo_Infraccion || '',
+                    importe: Number(fila.Importe) || 0,
+                    acta_nro: String(fila.Acta_Nro || ''),
+                    id_vehiculo: idVehiculo,
+                    id_cliente: idCliente,
+                    cuit_cliente: cuitCliente,
+                    nombre_cliente: nombreCliente,
+                    advertencia: advertencia,
+                    duplicada: yaExiste,
+                    incluir: Boolean(idVehiculo) && !advertencia && !yaExiste
+                });
+
+            } catch (errorFila) {
+                filasPreprocesadas.push({
+                    id_temp: index + 1,
+                    numero_fila_excel: numeroFilaExcel,
+                    dominio: dominioLimpio || 'S/D',
+                    fecha_infraccion: fechaString,
+                    hora: horaStr,
+                    fecha_sql: fechaSql,
+                    fecha_solo_date: fechaSoloDate,
+                    motivo_infraccion: fila.Motivo_Infraccion || '',
+                    importe: Number(fila.Importe) || 0,
+                    acta_nro: String(fila.Acta_Nro || ''),
+                    id_vehiculo: idVehiculo,
+                    id_cliente: null,
+                    cuit_cliente: '',
+                    nombre_cliente: 'Error inesperado',
+                    advertencia: `Error al procesar fila: ${errorFila.message || errorFila}`,
+                    incluir: false
+                });
+            }
+        }
+
+        if (filasPreprocesadas.length === 0 && errores.length > 0) {
+            return res.send({
+                status: false,
+                message: "No se pudo procesar ninguna multa del archivo debido a errores en todas las filas.",
+                errores
+            });
+        }
+
+        return res.send({
+            status: true,
+            message: `Preprocesamiento completado. Se procesaron ${filasPreprocesadas.length} filas.${errores.length > 0 ? ` Se omitieron ${errores.length} por errores.` : ""}`,
+            filas: filasPreprocesadas,
+            clientes,
+            errores
+        });
+
+    } catch (error) {
+        console.error("Error en preprocesarMultas:", error);
+        return res.send({ status: false, message: "Ocurrió un error en el servidor al preprocesar el archivo" });
+    }
+};
+
+export const confirmarImportacionMultas = async (req, res) => {
+    const { multas } = req.body;
+
+    if (!multas || !Array.isArray(multas) || multas.length === 0) {
+        return res.send({ status: false, message: "No se enviaron multas para confirmar" });
+    }
+
+    try {
+        await giama_renting.query(`
+          CREATE TABLE IF NOT EXISTS multas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dominio VARCHAR(20) NOT NULL,
+            fecha_infraccion DATE NOT NULL,
+            hora TIME NULL,
+            motivo_infraccion TEXT NULL,
+            importe DECIMAL(12, 2) NOT NULL,
+            acta_nro VARCHAR(100) NULL,
+            id_vehiculo INT NULL,
+            id_cliente INT NOT NULL,
+            cuit_cliente VARCHAR(50) NULL,
+            usuario VARCHAR(100) NULL,
+            usuario_alta VARCHAR(100) NULL,
+            fecha_alta DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_dominio (dominio),
+            INDEX idx_id_cliente (id_cliente),
+            INDEX idx_id_vehiculo (id_vehiculo)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `, { type: QueryTypes.RAW });
+
+        const guardados = [];
+        const errores = [];
+
+        for (const [index, item] of multas.entries()) {
+            const numeroFila = index + 1;
+            const transaction = await giama_renting.transaction();
+            const transaction_asientos = await pa7_giama_renting.transaction();
+
+            try {
+                if (!item.id_cliente) {
+                    errores.push(`Fila ${numeroFila} (Dominio: ${item.dominio}): No se asignó ningún cliente a la multa.`);
+                    await transaction.rollback();
+                    await transaction_asientos.rollback();
+                    continue;
+                }
+
+                const usuarioAuditoria = req.user?.user || req.user?.email || req.body?.usuario || "sistema";
+
+                // Guardar en tabla multas marcando se_proceso = 1 y fecha_proceso = NOW()
+                await giama_renting.query(
+                    `INSERT INTO multas (dominio, fecha_infraccion, hora, motivo_infraccion, importe, acta_nro, id_vehiculo, id_cliente, cuit_cliente, usuario, usuario_alta, fecha_alta, se_proceso, fecha_proceso)
+                     VALUES (:dominio, :fecha_infraccion, :hora, :motivo_infraccion, :importe, :acta_nro, :id_vehiculo, :id_cliente, :cuit_cliente, :usuario, :usuario_alta, NOW(), 1, NOW())`,
                     {
-                        type: QueryTypes.SELECT,
                         replacements: {
-                            id_vehiculo: vehiculo.ID,
-                            fecha_infraccion: fechaSql
+                            dominio: item.dominio,
+                            fecha_infraccion: item.fecha_solo_date || (item.fecha_sql ? item.fecha_sql.split(" ")[0] : getTodayDate()),
+                            hora: item.hora || "00:00:00",
+                            motivo_infraccion: item.motivo_infraccion || "",
+                            importe: item.importe,
+                            acta_nro: item.acta_nro || "",
+                            id_vehiculo: item.id_vehiculo || null,
+                            id_cliente: item.id_cliente,
+                            cuit_cliente: item.cuit_cliente || null,
+                            usuario: usuarioAuditoria,
+                            usuario_alta: usuarioAuditoria
                         },
+                        type: QueryTypes.INSERT,
                         transaction
                     }
                 );
 
-                if (!cliente) {
-                    errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): El vehículo no estaba alquilado en la fecha y hora indicadas (${fila.Fecha_Infraccion} ${fila.Hora}).`);
-                    await transaction.rollback();
-                    await transaction_asientos.rollback();
-                    continue;
-                }
-
                 const ID_CONCEPTO_MULTAS = 36; // 36 = "Infracción de Tránsito"
 
                 await registrarIngresoIndividual({
-                    debe_ingreso: fila.Importe,
-                    id_vehiculo: vehiculo.ID,
+                    debe_ingreso: item.importe,
+                    id_vehiculo: item.id_vehiculo,
                     fecha_deuda: `${getTodayDate()} 00:00:00`,
                     fecha_pago: null,
                     id_forma_cobro_1: null,
                     total_cobro_1: 0,
-                    id_cliente: cliente.id_cliente,
-                    observacion: `Dominio: ${fila.Dominio} - MULTA - Acta: ${fila.Acta_Nro} - Motivo: ${fila.Motivo_Infraccion}`,
+                    id_cliente: item.id_cliente,
+                    observacion: `Dominio: ${item.dominio} - MULTA - Acta: ${item.acta_nro} - Motivo: ${item.motivo_infraccion}`,
                     observacion_pago: '',
                     usuario: req.user?.user || "sistema",
                     id_concepto: ID_CONCEPTO_MULTAS,
-                    importe_neto: fila.Importe,
+                    importe_neto: item.importe,
                     importe_iva: 0,
-                    importe_total: fila.Importe,
+                    importe_total: item.importe,
                     transaction_costos_ingresos: transaction,
                     transaction_asientos: transaction_asientos
                 });
@@ -174,41 +382,39 @@ export const importacionesMultas = async (req, res) => {
                 await transaction.commit();
                 await transaction_asientos.commit();
 
-                guardados.push({
-                    fila: numeroFilaExcel,
-                    dominio: fila.Dominio,
-                    acta: fila.Acta_Nro,
-                    importe: fila.Importe,
-                    id_vehiculo: vehiculo.ID,
-                    id_cliente: cliente.id_cliente
-                });
+                guardados.push(item);
 
-            } catch (errorFila) {
+            } catch (errFila) {
                 await transaction.rollback();
                 await transaction_asientos.rollback();
-                errores.push(`Fila ${numeroFilaExcel} (Dominio: ${fila.Dominio || "S/D"}, Acta: ${fila.Acta_Nro || "S/D"}): Error inesperado: ${errorFila.message || errorFila}`);
+                errores.push(`Fila ${numeroFila} (Dominio: ${item.dominio}): Error al imputar: ${errFila.message || errFila}`);
             }
         }
 
         if (guardados.length === 0 && errores.length > 0) {
             return res.send({
                 status: false,
-                message: "No se pudo importar ninguna multa del archivo debido a errores en todas las filas.",
+                message: "No se pudo importar ninguna multa debido a errores.",
                 errores
             });
         }
 
         return res.send({
             status: true,
-            message: `Proceso completado. Se importaron ${guardados.length} multas correctamente.${errores.length > 0 ? ` Se omitieron ${errores.length} filas por presentar errores.` : ""}`,
+            message: `Proceso completado. Se guardaron e imputaron ${guardados.length} multas correctamente.${errores.length > 0 ? ` Se omitieron ${errores.length} por errores.` : ""}`,
             guardados,
             errores
         });
 
     } catch (error) {
-        console.error("Error en importacionMultas:", error);
-        return res.send({ status: false, message: "Ocurrió un error en el servidor al procesar el archivo" });
+        console.error("Error en confirmarImportacionMultas:", error);
+        return res.send({ status: false, message: "Ocurrió un error al procesar las multas en el servidor." });
     }
+};
+
+export const importacionesMultas = async (req, res) => {
+    // Redirige al nuevo flujo de preprocesarMultas si se llama directamente
+    return preprocesarMultas(req, res);
 };
 
 export const importacionesTelepases = async (req, res) => {
