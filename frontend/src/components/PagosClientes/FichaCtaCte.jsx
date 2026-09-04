@@ -165,20 +165,18 @@ const FichaCtaCte = () => {
         let rowIndex = 1;
 
         clientes.forEach((cliente) => {
-            const saldo = Math.trunc(cliente.saldo || 0).toLocaleString("es-AR");
+            const saldoNum = Math.trunc(cliente.saldo || 0);
 
             // =========================
             // TITULO CLIENTE / CHOFER
             // =========================
             const titleRow = ws.getRow(rowIndex);
-            const text = `${cliente.nombre_cliente} - Saldo: ${saldo}`;
+            titleRow.getCell(1).value = cliente.nombre_cliente;
 
-            titleRow.getCell(1).value = text;
+            // Merge columnas A-E para el nombre (sin saldo en la primera línea)
+            ws.mergeCells(rowIndex, 1, rowIndex, 5);
 
-            // Merge columnas A-D
-            ws.mergeCells(rowIndex, 1, rowIndex, 4);
-
-            [1, 2, 3, 4].forEach((col) => {
+            [1, 2, 3, 4, 5].forEach((col) => {
                 const cell = titleRow.getCell(col);
                 cell.font = { bold: true };
                 cell.fill = {
@@ -194,7 +192,7 @@ const FichaCtaCte = () => {
             // ENCABEZADOS
             // =========================
             const headerRow = ws.getRow(rowIndex);
-            const headers = ["Fecha", "Concepto", "Debe", "Haber"];
+            const headers = ["Fecha", "Concepto", "Debe", "Haber", "Saldo Total"];
 
             headers.forEach((h, i) => {
                 const cell = headerRow.getCell(i + 1);
@@ -212,6 +210,9 @@ const FichaCtaCte = () => {
             // =========================
             // DETALLE (AGRUPADO)
             // =========================
+            let totalDebe = 0;
+            let totalHaber = 0;
+
             cliente.detalle?.forEach((mov) => {
                 const row = ws.getRow(rowIndex);
 
@@ -224,16 +225,63 @@ const FichaCtaCte = () => {
                     row.getCell(1).value = "";
                 }
 
+                const debeVal = mov.debe ? Math.trunc(mov.debe) : 0;
+                const haberVal = mov.haber ? Math.trunc(mov.haber) : 0;
+                totalDebe += debeVal;
+                totalHaber += haberVal;
+
                 row.getCell(2).value = mov.concepto || "";
-                row.getCell(3).value = mov.debe ? Math.trunc(mov.debe) : "";
-                row.getCell(4).value = mov.haber ? Math.trunc(mov.haber) : "";
+
+                if (debeVal) {
+                    const cellDebe = row.getCell(3);
+                    cellDebe.value = debeVal;
+                    cellDebe.numFmt = '#,##0';
+                }
+
+                if (haberVal) {
+                    const cellHaber = row.getCell(4);
+                    cellHaber.value = haberVal;
+                    cellHaber.numFmt = '#,##0';
+                }
 
                 row.outlineLevel = 1; // Plegable en Excel
 
                 rowIndex++;
             });
 
-            // Espacio entre clientes
+            // =========================
+            // FILA DE SUBTOTAL DE LA CUENTA
+            // =========================
+            const totalRow = ws.getRow(rowIndex);
+
+            if (totalDebe > 0) {
+                const cellTDebe = totalRow.getCell(3);
+                cellTDebe.value = totalDebe;
+                cellTDebe.numFmt = '#,##0';
+                cellTDebe.font = { bold: true };
+            }
+
+            if (totalHaber > 0) {
+                const cellTHaber = totalRow.getCell(4);
+                cellTHaber.value = totalHaber;
+                cellTHaber.numFmt = '#,##0';
+                cellTHaber.font = { bold: true };
+            }
+
+            const cellTSaldo = totalRow.getCell(5);
+            cellTSaldo.value = saldoNum;
+            cellTSaldo.numFmt = '#,##0;[Red]-#,##0';
+            cellTSaldo.font = { bold: true };
+
+            [1, 2, 3, 4, 5].forEach((col) => {
+                const cell = totalRow.getCell(col);
+                cell.fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFFCE4D6" }, // Canela suave para fila total
+                };
+            });
+
             rowIndex += 2;
         });
 
@@ -242,6 +290,7 @@ const FichaCtaCte = () => {
             { width: 50 }, // CONCEPTO
             { width: 15 }, // DEBE
             { width: 15 }, // HABER
+            { width: 18 }, // SALDO TOTAL
         ];
 
         ws.properties.outlineProperties = {
@@ -259,9 +308,9 @@ const FichaCtaCte = () => {
 
     return (
         <div className={styles.container}>
-            <h2>Ficha cuentas corrientes</h2>
+            <h2 style={{ marginBottom: '16px', color: '#1f2937' }}>Ficha cuentas corrientes</h2>
             
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '15px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '15px', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', width: '13rem' }}>
                     <span style={{ fontSize: '13px', marginBottom: '4px', color: '#333' }}>Buscar cliente</span>
                     <input 
@@ -320,8 +369,10 @@ const FichaCtaCte = () => {
                 </div>
             </div>
 
-            <div>
-                <p>Saldo total: {saldoTotal}</p>
+            <div style={{ marginBottom: '16px' }}>
+                <p style={{ margin: 0, fontWeight: '500', color: '#374151' }}>
+                    Saldo total: <span style={{ fontWeight: 'bold', color: '#800000' }}>{saldoTotal}</span>
+                </p>
             </div>
             {isLoading && <ClipLoader />}
             <div className={styles.containerFicha}>
