@@ -245,16 +245,26 @@ const ReporteRecibos = () => {
     const swalAnulacion = (id) => {
         Swal.fire({
             title: '¿Desea anular el recibo?',
+            input: 'textarea',
+            inputLabel: 'Motivo de la anulación',
+            inputPlaceholder: 'Ingrese el motivo...',
+            inputAttributes: { 'aria-label': 'Motivo de la anulación' },
             showCancelButton: true,
-            confirmButtonText: 'Sí',
+            confirmButtonText: 'Sí, anular',
             cancelButtonText: 'Cancelar',
             icon: 'warning',
+            preConfirm: (motivo) => {
+                if (!motivo || !motivo.trim()) {
+                    Swal.showValidationMessage('El motivo es obligatorio')
+                }
+                return motivo
+            },
             didOpen: () => {
                 document.body.classList.remove('swal2-height-auto');
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                dispatch(anulacionRecibo({ nro_recibo: id }))
+                dispatch(anulacionRecibo({ nro_recibo: id, motivo: result.value }))
             }
         })
     }

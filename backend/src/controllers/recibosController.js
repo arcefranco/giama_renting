@@ -12,6 +12,7 @@ import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
+import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
 const imageBase64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+gAAAPoBAMAAAC/jcnXAAAACXBIWXMAAAsSAAALEgHS3X78AAAAG1BMVEVHcE
 yPkJWZmZknMnCZmZknMnCZmZmZmZknMnDN6xkDAAAAB3RSTlMAPXt/tMvYMo+dkAAAGAZJREFUeNrswYEAAAAAgKD9qRepAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -494,7 +495,10 @@ const eliminarPago = async (nro_recibo) => {
 }
 
 export const anulacionRecibo = async (req, res) => {
-  const { id } = req.body;
+  const { id, motivo } = req.body;
+  if (!motivo || !motivo.trim()) {
+    return res.send({ status: false, message: "Debe ingresar un motivo para la anulación" });
+  }
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -515,7 +519,15 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-
+      await registrarAnulacion({
+        tipo: "recibo",
+        id_registro: id,
+        id_movimiento: id,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        motivo,
+        req,
+        transaction: transaction_giama_renting,
+      });
       await transaction_giama_renting.commit(); 
       await transaction_pa7_giama_renting.commit();  
 

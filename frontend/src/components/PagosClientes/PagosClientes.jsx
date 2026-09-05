@@ -155,10 +155,20 @@ export const PagosClientes = () => {
         if (codigo && codigo !== 4) {
             Swal.fire({
                 title: message,
+                input: 'textarea',
+                inputLabel: 'Motivo de la anulación',
+                inputPlaceholder: 'Ingrese el motivo...',
+                inputAttributes: { 'aria-label': 'Motivo de la anulación' },
                 showCancelButton: true,
-                confirmButtonText: 'Sí',
+                confirmButtonText: 'Sí, anular',
                 cancelButtonText: 'Cancelar',
                 icon: 'warning',
+                preConfirm: (motivo) => {
+                    if (!motivo || !motivo.trim()) {
+                        Swal.showValidationMessage('El motivo es obligatorio')
+                    }
+                    return motivo
+                },
                 didOpen: () => {
                     document.body.classList.remove('swal2-height-auto');
                 }
@@ -167,7 +177,8 @@ export const PagosClientes = () => {
                     dispatch(reset())
                     dispatch(anulacionFactura({
                         id_registro: id_registro, id_factura: id_factura,
-                        tipo_factura: tipo_factura, cliente: cliente_factura, tipo: tipo_deuda
+                        tipo_factura: tipo_factura, cliente: cliente_factura, tipo: tipo_deuda,
+                        motivo: result.value
                     }))
                 }
 
@@ -179,10 +190,20 @@ export const PagosClientes = () => {
         if (codigo == 4) {
             Swal.fire({
                 title: message,
+                input: 'textarea',
+                inputLabel: 'Motivo de la anulación',
+                inputPlaceholder: 'Ingrese el motivo...',
+                inputAttributes: { 'aria-label': 'Motivo de la anulación' },
                 showCancelButton: true,
-                confirmButtonText: 'Sí',
+                confirmButtonText: 'Sí, anular',
                 cancelButtonText: 'Cancelar',
                 icon: 'warning',
+                preConfirm: (motivo) => {
+                    if (!motivo || !motivo.trim()) {
+                        Swal.showValidationMessage('El motivo es obligatorio')
+                    }
+                    return motivo
+                },
                 didOpen: () => {
                     document.body.classList.remove('swal2-height-auto');
                 }
@@ -190,7 +211,7 @@ export const PagosClientes = () => {
                 if (result.isConfirmed) {
                     dispatch(reset())
                     dispatch(anulacionDeuda({
-                        id_registro: id_registro, tipo: tipo_deuda
+                        id_registro: id_registro, tipo: tipo_deuda, motivo: result.value
                     }))
                 }
 
@@ -303,10 +324,20 @@ export const PagosClientes = () => {
     const handleAnulacionRecibo = (nro_comprobante) => {
         Swal.fire({
             title: '¿Desea anular el recibo?',
+            input: 'textarea',
+            inputLabel: 'Motivo de la anulación',
+            inputPlaceholder: 'Ingrese el motivo...',
+            inputAttributes: { 'aria-label': 'Motivo de la anulación' },
             showCancelButton: true,
-            confirmButtonText: 'Sí',
+            confirmButtonText: 'Sí, anular',
             cancelButtonText: 'Cancelar',
             icon: 'warning',
+            preConfirm: (motivo) => {
+                if (!motivo || !motivo.trim()) {
+                    Swal.showValidationMessage('El motivo es obligatorio')
+                }
+                return motivo
+            },
             didOpen: () => {
                 document.body.classList.remove('swal2-height-auto');
             }
@@ -314,7 +345,7 @@ export const PagosClientes = () => {
             if (result.isConfirmed) {
                 dispatch(reset())
                 dispatch(anulacionRecibo({
-                    nro_recibo: nro_comprobante
+                    nro_recibo: nro_comprobante, motivo: result.value
                 }))
             }
 

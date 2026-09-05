@@ -18,6 +18,7 @@ import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
 import { getProveedorPA6 } from "../../helpers/getProveedorPA6.js";
 import { insertOdp } from "../../helpers/insertOdp.js";
+import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
 
 const contra_asiento_factura = async (
   id_factura,
@@ -1121,11 +1122,17 @@ export const getEstadoDeuda = async (req, res) => {
 };
 
 export const anulacionFactura = async (req, res) => {
-  const { id_registro, id_factura, tipo_factura, cliente, tipo } = req.body;
+  const { id_registro, id_factura, tipo_factura, cliente, tipo, motivo } = req.body;
   if (!id_factura || !id_registro || !tipo_factura || !cliente || !tipo) {
     return res.send({
       status: false,
       message: "Faltan datos para completar la operación",
+    });
+  }
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
     });
   }
   let tipo_NC;
@@ -1223,6 +1230,15 @@ export const anulacionFactura = async (req, res) => {
           transaction: transaction_giama_renting,
         },
       );
+      await registrarAnulacion({
+        tipo: "factura",
+        id_registro,
+        id_movimiento: id_factura,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        motivo,
+        req,
+        transaction: transaction_giama_renting,
+      });
       await transaction_giama_renting.commit();
       await transaction_pa7_giama_renting.commit();
 
@@ -1327,7 +1343,15 @@ export const anulacionFactura = async (req, res) => {
           transaction: transaction_giama_renting,
         },
       );
-
+      await registrarAnulacion({
+        tipo: "factura",
+        id_registro,
+        id_movimiento: id_factura,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        motivo,
+        req,
+        transaction: transaction_giama_renting,
+      });
       await transaction_giama_renting.commit();
       await transaction_pa7_giama_renting.commit();
       return res.send({
@@ -1345,7 +1369,13 @@ export const anulacionFactura = async (req, res) => {
 };
 
 export const anulacionRecibo = async (req, res) => {
-  const { nro_recibo } = req.body;
+  const { nro_recibo, motivo } = req.body;
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
+    });
+  }
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -1377,7 +1407,15 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_giama_renting,
       },
     );
-
+    await registrarAnulacion({
+      tipo: "recibo",
+      id_registro: nro_recibo,
+      id_movimiento: nro_recibo,
+      nro_asiento_anulacion: NroAsiento_nuevo,
+      motivo,
+      req,
+      transaction: transaction_giama_renting,
+    });
     await transaction_giama_renting.commit();
     await transaction_pa7_giama_renting.commit();
 
@@ -1392,7 +1430,13 @@ export const anulacionRecibo = async (req, res) => {
 };
 
 export const anulacionDeuda = async (req, res) => {
-  const { tipo, id_registro } = req.body;
+  const { tipo, id_registro, motivo } = req.body;
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
+    });
+  }
   let tabla;
   let campo;
   let campo_fecha_anulacion;
@@ -1539,6 +1583,13 @@ export const anulacionDeuda = async (req, res) => {
         },
       );
     }
+    await registrarAnulacion({
+      tipo: "deuda",
+      id_registro,
+      nro_asiento_anulacion: NroAsiento_nuevo,
+      motivo,
+      req,
+    });
     await transaction_pa7_giama_renting.commit();
     return res.send({
       status: true,
