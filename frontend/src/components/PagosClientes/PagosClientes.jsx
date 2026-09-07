@@ -710,6 +710,7 @@ export const PagosClientes = () => {
                 style={{ fontFamily: "IBM" }}
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
+                wordWrapEnabled={true}
                 onRowPrepared={(e) => {
                     if (e.rowType === "data" && e.data && e.data.anulado) {
                         e.rowElement.style.backgroundColor = "#ededed";
@@ -719,8 +720,8 @@ export const PagosClientes = () => {
                 height={600}
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
-                <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={120} />
-                <Column dataField="concepto" caption="Concepto" />
+                <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={110} />
+                <Column dataField="concepto" caption="Concepto" width={320} />
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
