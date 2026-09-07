@@ -602,7 +602,7 @@ FROM (
         1 AS tipo,
         a.id AS id_registro,
         NULL AS garantia_devuelta,
-        a.anulado AS anulado
+        IF(a.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, 1, 0) AS anulado
     FROM alquileres a
     INNER JOIN vehiculos v 
         ON v.id = a.id_vehiculo
@@ -627,7 +627,7 @@ FROM (
         2 AS tipo,
         ca.id AS id_registro,
         ca.garantia_devuelta AS garantia_devuelta,
-        ca.anulado_deposito AS anulado
+        IF(ca.anulado_deposito = 1 OR IFNULL(recibos.anulado, 0) = 1, 1, 0) AS anulado
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
@@ -656,7 +656,7 @@ FROM (
         3 AS tipo,
         ci.id AS id_registro,
         NULL AS garantia_devuelta,
-        ci.anulado AS anulado
+        IF(ci.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, 1, 0) AS anulado
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc 
         ON cc.id = ci.id_concepto
