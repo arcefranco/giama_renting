@@ -8,6 +8,7 @@ const SelectEstados = ({
   value,
   onChange,
   disabled,
+  disabledOptions = [], // IDs que aparecen pero no son seleccionables
   placeholder = "Seleccione un estado",
 }) => {
   const options = estados.map((e) => ({
@@ -69,6 +70,7 @@ const SelectEstados = ({
       options={options}
       value={selectedOption}
       onChange={(option) => onChange(option?.value)}
+      isOptionDisabled={(option) => disabledOptions.includes(option.value)}
       placeholder={placeholder}
       styles={customStyles}
     />
