@@ -710,9 +710,13 @@ export const PagosClientes = () => {
                 style={{ fontFamily: "IBM" }}
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
-
+                onRowPrepared={(e) => {
+                    if (e.rowType === "data" && e.data && e.data.anulado) {
+                        e.rowElement.style.backgroundColor = "#ededed";
+                        e.rowElement.style.color = "#777777";
+                    }
+                }}
                 height={600}
-
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
                 <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={120} />
