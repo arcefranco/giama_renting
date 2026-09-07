@@ -554,7 +554,8 @@ export const ctaCteCliente = async (req, res) => {
     @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
     m.tipo,
     m.id_registro,
-    m.garantia_devuelta
+    m.garantia_devuelta,
+    m.anulado
 FROM (
 
     /* PAGOS */
@@ -572,12 +573,13 @@ FROM (
         pc.importe_cobro AS haber,
         4 AS tipo,
         pc.id AS id_registro,
-        NULL AS garantia_devuelta
+        NULL AS garantia_devuelta,
+        IFNULL(recibos.anulado, 0) AS anulado
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
     LEFT JOIN recibos ON pc.nro_recibo = recibos.id
-    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+    WHERE pc.id_cliente = ?
 
 
     UNION ALL
@@ -599,15 +601,15 @@ FROM (
         NULL AS haber,
         1 AS tipo,
         a.id AS id_registro,
-        NULL AS garantia_devuelta
+        NULL AS garantia_devuelta,
+        a.anulado AS anulado
     FROM alquileres a
     INNER JOIN vehiculos v 
         ON v.id = a.id_vehiculo
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
-    AND a.anulado = 0
+    WHERE a.id_cliente = ?
 
     UNION ALL
 
@@ -624,15 +626,14 @@ FROM (
         NULL AS haber,
         2 AS tipo,
         ca.id AS id_registro,
-        ca.garantia_devuelta AS garantia_devuelta
+        ca.garantia_devuelta AS garantia_devuelta,
+        ca.anulado_deposito AS anulado
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
     LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
-      AND IFNULL(recibos.anulado,0) = 0
-      AND ca.anulado_deposito = 0
 
 
     UNION ALL
@@ -654,15 +655,15 @@ FROM (
         NULL AS haber,
         3 AS tipo,
         ci.id AS id_registro,
-        NULL AS garantia_devuelta
+        NULL AS garantia_devuelta,
+        ci.anulado AS anulado
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc 
         ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
-    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
-    AND ci.anulado = 0
+    WHERE ci.id_cliente = ?
 
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
@@ -679,6 +680,33 @@ ORDER BY m.fecha, m.tipo;`,
       "cuenta corriente del cliente",
       acciones.get,
     );
+    return res.send(body);
+  }
+};
+
+export const getMotivoAnulacion = async (req, res) => {
+  const { tipo, id_registro } = req.body;
+  if (!tipo || !id_registro) {
+    return res.send({ status: false, message: "Faltan datos" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT motivo, usuario_email, fecha
+       FROM historial_anulaciones
+       WHERE tipo = ? AND id_registro = ?
+       ORDER BY fecha DESC
+       LIMIT 1`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [tipo, id_registro],
+      }
+    );
+    if (!result.length) {
+      return res.send({ status: false, message: "No se encontró el motivo de anulación" });
+    }
+    return res.send({ status: true, data: result[0] });
+  } catch (error) {
+    const { body } = handleError(error, "historial de anulaciones", acciones.get);
     return res.send(body);
   }
 };

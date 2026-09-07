@@ -361,11 +361,61 @@ export const PagosClientes = () => {
         }
 
     }
+    const tipoAnulacionMap = { 1: 'factura', 2: 'deuda', 3: 'factura', 4: 'recibo' }
+
+    const handleVerMotivo = async (tipo_num, id_registro) => {
+        const tipo = tipoAnulacionMap[tipo_num] || 'deuda'
+        try {
+            const res = await axios.post(
+                import.meta.env.VITE_REACT_APP_HOST + 'ctacte/getMotivoAnulacion',
+                { tipo, id_registro },
+                { withCredentials: true }
+            )
+            if (res.data?.status) {
+                const { motivo, usuario_email, fecha } = res.data.data
+                const fechaFormateada = fecha ? new Date(fecha).toLocaleString('es-AR') : '-'
+                Swal.fire({
+                    title: 'Motivo de anulación',
+                    html: `
+                        <div style="text-align:left; font-size:14px; line-height:1.7">
+                            <p><strong>Motivo:</strong></p>
+                            <p style="background:#f5f5f5; padding:10px; border-radius:6px; border-left:4px solid #d32f2f">${motivo}</p>
+                            <p><strong>Anulado por:</strong> ${usuario_email}</p>
+                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                        </div>`,
+                    icon: 'info',
+                    confirmButtonText: 'Cerrar',
+                    didOpen: () => { document.body.classList.remove('swal2-height-auto') }
+                })
+            } else {
+                Swal.fire({ icon: 'warning', title: 'Sin registro', text: res.data?.message || 'No se encontró el motivo de anulación.' })
+            }
+        } catch {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo obtener el motivo de anulación.' })
+        }
+    }
+
     const renderAnulacion = (data) => {
         const row = data.data
         const isDeposito = row.concepto && (row.concepto.toLowerCase().includes("deposito") || row.concepto.toLowerCase().includes("depósito") || row.concepto.toLowerCase().includes("gtia") || row.concepto.toLowerCase().includes("garantía"));
         
         const saldoGarantia = (row.debe || 0) - (row.garantia_devuelta || 0);
+
+        // Fila ya anulada → mostrar botón "Ver motivo"
+        if (row.anulado) {
+            return (
+                <button
+                    onClick={() => handleVerMotivo(row.tipo, row.id_registro)}
+                    style={{
+                        color: '#b71c1c', fontSize: "11px",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: 'pointer', fontStyle: 'italic'
+                    }}
+                >
+                    Ver motivo de anulación
+                </button>
+            )
+        }
 
         if (isDeposito && row.debe > 0 && saldoGarantia > 0) {
             return (
