@@ -102,13 +102,8 @@ export const PagosClientes = () => {
     }, [clientes])
     useEffect(() => {
         if (ctacteCliente?.length) {
-            const total = ctacteCliente.reduce((acc, mov) => {
-                const debe = Number(mov.debe) || 0;
-                const haber = Number(mov.haber) || 0;
-                return acc + debe - haber;
-            }, 0);
-
-            setSaldoActual(total);
+            const lastRow = ctacteCliente[ctacteCliente.length - 1];
+            setSaldoActual(Number(lastRow?.saldo) || 0);
         } else {
             setSaldoActual(0);
         }
@@ -721,7 +716,7 @@ export const PagosClientes = () => {
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
                 <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={110} />
-                <Column dataField="concepto" caption="Concepto" width={480} />
+                <Column dataField="concepto" caption="Concepto" width={580} />
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
