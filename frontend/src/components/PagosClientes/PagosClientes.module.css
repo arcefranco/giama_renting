@@ -318,7 +318,32 @@
 }
 
 .containerFicha {
-    padding: 3rem;
-    height: 21rem;
+    padding: 0;
+    margin-top: 15px;
+    height: calc(100vh - 270px);
+    min-height: 25rem;
     overflow-y: auto;
+}
+
+.exportBtn {
+    min-width: 11rem;
+    height: 34px;
+    padding: 0 1rem;
+    background-color: #800000;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin: 0;
+}
+
+.exportBtn:hover {
+    background-color: #a52a2a;
 }

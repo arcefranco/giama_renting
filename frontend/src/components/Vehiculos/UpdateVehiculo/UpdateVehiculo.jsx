@@ -105,6 +105,9 @@ const UpdateVehiculo = () => {
     isSuccess,
     message,
     resetAction: reset,
+    onSuccess: () => {
+      dispatch(getVehiculosById({ id }));
+    },
   });
 
   const handleChange = (e) => {
@@ -122,11 +125,6 @@ const UpdateVehiculo = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (form.estado == 11 && !facturaVentaData) {
-      setModalFacturaVentaOpen(true);
-      return;
-    }
 
     const body = { ...form, id: id, facturaVentaData: facturaVentaData };
     dispatch(updateVehiculo(body));
@@ -227,11 +225,27 @@ const UpdateVehiculo = () => {
               <input disabled={disabledFin} type="text" name="color" value={form.color} onChange={handleChange} />
             </div>
 
-            <div className={styles.inputContainer}>
-              <span>Observaciones</span>
-              <textarea disabled={disabledFin} type="text" name='observaciones' value={form["observaciones"]} maxLength={100}
-                onChange={handleChange} />
-            </div>
+            {!disabledFin && Number(vehiculo?.[0]?.estado_actual) === 10 && (
+              <div className={styles.inputContainer}>
+                <span>Factura de venta</span>
+                <button
+                  type="button"
+                  className={styles.sendBtn}
+                  style={{
+                    width: 'auto',
+                    height: 'auto',
+                    whiteSpace: 'nowrap',
+                    marginTop: 0,
+                    padding: '6px 12px',
+                    fontSize: '0.85rem',
+                    alignSelf: 'flex-start'
+                  }}
+                  onClick={() => setModalFacturaVentaOpen(true)}
+                >
+                  Facturar venta
+                </button>
+              </div>
+            )}
 
           </fieldset>
           <fieldset className={styles.fieldSet}>
@@ -240,6 +254,7 @@ const UpdateVehiculo = () => {
               <span>Estado</span>
               <SelectEstados
                 disabled={disabledAdm}
+                disabledOptions={[11]}
                 estados={estados}
                 value={form.estado}
                 onChange={(value) => {
@@ -339,6 +354,12 @@ const UpdateVehiculo = () => {
                 onChange={handleCheckChange}
               />
             </div>
+
+            <div className={styles.inputContainer}>
+              <span>Observaciones</span>
+              <textarea disabled={disabledAdm} type="text" name='observaciones' value={form["observaciones"]} maxLength={100}
+                onChange={handleChange} />
+            </div>
           </fieldset>
         </form>
 
@@ -359,8 +380,8 @@ const UpdateVehiculo = () => {
         onSubmit={(data) => {
           setFacturaVentaData(data);
           setModalFacturaVentaOpen(false);
-          // Auto-submit form
-          const body = { ...form, id: id, facturaVentaData: data };
+          // Auto-submit forzando estado 11 (Vendido Facturado)
+          const body = { ...form, id: id, estado: 11, facturaVentaData: data };
           dispatch(updateVehiculo(body));
         }}
       />

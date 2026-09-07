@@ -1195,8 +1195,20 @@ export const updateVehiculo = async (req, res) => {
     fechaDeAmortizacion = null;
   }
 
+  let fechaVenta = vehiculoAnterior[0]["fecha_venta"] || null;
+  let precioVenta = vehiculoAnterior[0]["precio_venta"] || null;
+
+  if (String(estado) === "11") {
+    if (!fechaVenta) {
+      fechaVenta = getTodayDate();
+    }
+    if (facturaVentaData && facturaVentaData.importe_neto) {
+      precioVenta = facturaVentaData.importe_neto;
+    }
+  }
+
   let activo = 1;
-  if (vehiculoAnterior[0]["fecha_venta"]) {
+  if (fechaVenta) {
     activo = 0;
   }
   if (estado) {
@@ -1236,7 +1248,7 @@ export const updateVehiculo = async (req, res) => {
         dispositivo_peaje = :dispositivo, meses_amortizacion = :meses_amortizacion, color = :color,
         calcomania = :calcomania, gnc = :gnc, fecha_preparacion = :fechaDePreparacion, 
         fecha_inicio_amortizacion = :fechaDeAmortizacion, sucursal = :sucursal, ubicacion = :ubicacion, estado_actual = :estado,
-        polarizado = :polarizado, cubre_asiento = :cubre_asiento, activo = :activo,
+        polarizado = :polarizado, cubre_asiento = :cubre_asiento, activo = :activo, fecha_venta = :fechaVenta, precio_venta = :precioVenta,
         usuario_ultima_modificacion = :usuario, observaciones = :observaciones
         WHERE id = :id`,
       {
@@ -1263,6 +1275,8 @@ export const updateVehiculo = async (req, res) => {
           polarizado,
           cubre_asiento,
           activo,
+          fechaVenta: fechaVenta ? fechaVenta : null,
+          precioVenta: precioVenta ? precioVenta : null,
           usuario,
           observaciones: observaciones ? observaciones : null,
           id,
@@ -1536,8 +1550,9 @@ export const getSituacionFlota = async (req, res) => {
       `SELECT 
   COALESCE(
     CASE 
-      WHEN est.nombre IN ('Cobrado DT', 'Reservado venta', 'Vendido sin facturar', 'Vendido Facturado') THEN est.nombre
-      WHEN v.fecha_venta IS NOT NULL THEN 'vendidos'
+      WHEN est.nombre = 'Cobrado DT' THEN est.nombre
+      WHEN est.nombre = 'Vendido Facturado' OR v.fecha_venta IS NOT NULL THEN 'Vendido Facturado'
+      WHEN est.nombre IN ('Reservado venta', 'Vendido sin facturar') THEN est.nombre
       WHEN alq.id_vehiculo IS NOT NULL THEN 'alquilados'
       WHEN con.id_vehiculo IS NOT NULL THEN 'reservados'
       ELSE est.nombre
@@ -1581,7 +1596,6 @@ GROUP BY estado;
     const resumen = {
       alquilados: 0,
       reservados: 0,
-      vendidos: 0,
     };
 
     // Agregar estados desde tabla (estáticos)
@@ -1596,7 +1610,7 @@ GROUP BY estado;
 
     // Calcular total
     resumen.total = Object.entries(resumen)
-      .filter(([estado]) => estado !== "vendidos" && estado !== "total")
+      .filter(([estado]) => estado !== "total")
       .reduce((acum, [, cantidad]) => acum + cantidad, 0);
 
     return res.send(resumen);
