@@ -721,7 +721,7 @@ export const PagosClientes = () => {
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
                 <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={110} />
-                <Column dataField="concepto" caption="Concepto" width={320} />
+                <Column dataField="concepto" caption="Concepto" width={480} />
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
