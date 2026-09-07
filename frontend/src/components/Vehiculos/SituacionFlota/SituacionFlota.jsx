@@ -12,14 +12,14 @@ const renderEtiquetaDesdeNombre = (nombreEstado) => {
   // Normalizar el nombre
   const nombre = nombreEstado?.toLowerCase();
   const vehiculoSimulado = {
-    fecha_venta: nombre === "vendidos" ? "2025-01-01" : null, //fecha falsa para pasar como 1
+    fecha_venta: null,
     vehiculo_alquilado: nombre === "alquilados" ? 1 : 0,
     vehiculo_reservado: nombre === "reservados" ? 1 : 0,
     estado_actual: null
   };
 
   // Si es uno de los estados personalizados
-  if (!["vendidos", "alquilados", "reservados"].includes(nombre)) {
+  if (!["alquilados", "reservados"].includes(nombre)) {
     // Buscar ID por nombre exacto
     const estadoEncontrado = ESTADOS_ESTATICOS.find(
       (e) => e.nombre.toLowerCase() === nombre
