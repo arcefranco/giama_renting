@@ -513,6 +513,31 @@ export const anulacionRecibo = async (req, res) => {
     return res.send({status: false, message: "Error al obtener número de asiento"})
   }
     try {
+      const pagosOrigen = await giama_renting.query(
+        `SELECT pc.observacion, fc.nombre AS forma_cobro 
+         FROM pagos_clientes pc
+         LEFT JOIN formas_cobro fc ON fc.id = pc.id_forma_cobro
+         WHERE pc.nro_recibo = ?`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id],
+          transaction: transaction_giama_renting,
+        }
+      );
+
+      let conceptoOriginal = null;
+      if (pagosOrigen && pagosOrigen.length > 0) {
+        conceptoOriginal = pagosOrigen
+          .map((p) => {
+            let txt = `Forma de cobro: ${p.forma_cobro || ""}`;
+            if (p.observacion && p.observacion.trim()) {
+              txt += ` - Observación: ${p.observacion.trim()}`;
+            }
+            return txt;
+          })
+          .join(" | ");
+      }
+
       await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
       await eliminarPago(id);
       await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
@@ -525,6 +550,7 @@ export const anulacionRecibo = async (req, res) => {
         id_registro: id,
         id_movimiento: id,
         nro_asiento_anulacion: NroAsiento_nuevo,
+        concepto: conceptoOriginal,
         motivo,
         req,
         transaction: transaction_giama_renting,

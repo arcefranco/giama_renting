@@ -670,7 +670,7 @@ FROM (
     /* RECIBOS ANULADOS (desde historial_anulaciones) */
     SELECT
         r.fecha AS fecha,
-        CONCAT('Comprobante anulado - Recibo #', ha.id_movimiento) AS concepto,
+        CONCAT('Comprobante anulado - ', IF(ha.concepto IS NOT NULL AND ha.concepto <> '', ha.concepto, CONCAT('Recibo #', ha.id_movimiento))) AS concepto,
         ha.id_movimiento AS nro_comprobante,
         NULL AS debe,
         NULL AS haber,
@@ -1438,6 +1438,32 @@ export const anulacionRecibo = async (req, res) => {
     });
   }
   try {
+    // Obtenemos los datos del pago antes de eliminarlo para registrar el concepto original
+    const pagosOrigen = await giama_renting.query(
+      `SELECT pc.observacion, fc.nombre AS forma_cobro 
+       FROM pagos_clientes pc
+       LEFT JOIN formas_cobro fc ON fc.id = pc.id_forma_cobro
+       WHERE pc.nro_recibo = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [nro_recibo],
+        transaction: transaction_giama_renting,
+      }
+    );
+
+    let conceptoOriginal = null;
+    if (pagosOrigen && pagosOrigen.length > 0) {
+      conceptoOriginal = pagosOrigen
+        .map((p) => {
+          let txt = `Forma de cobro: ${p.forma_cobro || ""}`;
+          if (p.observacion && p.observacion.trim()) {
+            txt += ` - Observación: ${p.observacion.trim()}`;
+          }
+          return txt;
+        })
+        .join(" | ");
+    }
+
     await contra_asiento_recibo(
       nro_recibo,
       transaction_pa7_giama_renting,
@@ -1458,6 +1484,7 @@ export const anulacionRecibo = async (req, res) => {
       id_registro: nro_recibo,
       id_movimiento: nro_recibo,
       nro_asiento_anulacion: NroAsiento_nuevo,
+      concepto: conceptoOriginal,
       motivo,
       req,
       transaction: transaction_giama_renting,
