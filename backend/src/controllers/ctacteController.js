@@ -1913,11 +1913,10 @@ export const exportarCtacteCliente = async (req, res) => {
     m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + CASE WHEN m.anulado = 1 THEN 0 ELSE IFNULL(m.debe, 0) - IFNULL(m.haber, 0) END AS saldo,
+    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
     m.tipo,
     m.id_registro,
-    m.garantia_devuelta,
-    m.anulado
+    m.garantia_devuelta
 FROM (
     /* PAGOS */
     SELECT
@@ -1934,13 +1933,12 @@ FROM (
         pc.importe_cobro AS haber,
         4 AS tipo,
         pc.id AS id_registro,
-        NULL AS garantia_devuelta,
-        IFNULL(recibos.anulado, 0) AS anulado
+        NULL AS garantia_devuelta
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
     LEFT JOIN recibos ON pc.nro_recibo = recibos.id
-    WHERE pc.id_cliente = ?
+    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0
 
     UNION ALL
 
@@ -1960,15 +1958,14 @@ FROM (
         NULL AS haber,
         1 AS tipo,
         a.id AS id_registro,
-        NULL AS garantia_devuelta,
-        a.anulado AS anulado
+        NULL AS garantia_devuelta
     FROM alquileres a
     INNER JOIN vehiculos v 
         ON v.id = a.id_vehiculo
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE a.id_cliente = ?
+    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0 AND a.anulado = 0
 
     UNION ALL
 
@@ -1984,14 +1981,15 @@ FROM (
         NULL AS haber,
         2 AS tipo,
         ca.id AS id_registro,
-        ca.garantia_devuelta AS garantia_devuelta,
-        ca.anulado_deposito AS anulado
+        ca.garantia_devuelta AS garantia_devuelta
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
     LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
+      AND IFNULL(recibos.anulado, 0) = 0
+      AND ca.anulado_deposito = 0
 
     UNION ALL
 
@@ -2011,39 +2009,20 @@ FROM (
         NULL AS haber,
         3 AS tipo,
         ci.id AS id_registro,
-        NULL AS garantia_devuelta,
-        ci.anulado AS anulado
+        NULL AS garantia_devuelta
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc 
         ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
-    WHERE ci.id_cliente = ?
-
-    UNION ALL
-
-    /* RECIBOS ANULADOS (desde historial_anulaciones) */
-    SELECT
-        r.fecha AS fecha,
-        CONCAT('Anulación - ', IF(ha.concepto IS NOT NULL AND ha.concepto <> '', ha.concepto, CONCAT('Recibo #', ha.id_movimiento))) AS concepto,
-        ha.id_movimiento AS nro_comprobante,
-        NULL AS debe,
-        NULL AS haber,
-        4 AS tipo,
-        ha.id_registro AS id_registro,
-        NULL AS garantia_devuelta,
-        1 AS anulado
-    FROM historial_anulaciones ha
-    INNER JOIN recibos r ON r.id = ha.id_movimiento
-    WHERE ha.tipo = 'recibo'
-      AND r.id_cliente = ?
+    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0 AND ci.anulado = 0
 
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
 ORDER BY m.fecha, m.tipo;`,
       {
-        replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
+        replacements: [id_cliente, id_cliente, id_cliente, id_cliente],
         type: QueryTypes.SELECT,
       }
     );
