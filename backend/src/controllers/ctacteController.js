@@ -551,7 +551,7 @@ export const ctaCteCliente = async (req, res) => {
     m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
+    @saldo := @saldo + CASE WHEN m.anulado = 1 THEN 0 ELSE IFNULL(m.debe, 0) - IFNULL(m.haber, 0) END AS saldo,
     m.tipo,
     m.id_registro,
     m.garantia_devuelta,
