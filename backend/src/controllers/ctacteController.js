@@ -669,7 +669,7 @@ FROM (
 
     /* RECIBOS ANULADOS (desde historial_anulaciones) */
     SELECT
-        ha.fecha AS fecha,
+        r.fecha AS fecha,
         CONCAT('Comprobante anulado - Recibo #', ha.id_movimiento) AS concepto,
         ha.id_movimiento AS nro_comprobante,
         NULL AS debe,
