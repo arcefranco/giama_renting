@@ -61,14 +61,12 @@ const ReporteVehiculos = () => {
 
           if (v.estado_actual === 8) {
             estado_nombre = "Cobrado DT";
+          } else if (v.estado_actual === 11 || v.fecha_venta) {
+            estado_nombre = "Vendido Facturado";
           } else if (v.estado_actual === 9) {
             estado_nombre = "Reservado venta";
           } else if (v.estado_actual === 10) {
             estado_nombre = "Vendido sin facturar";
-          } else if (v.estado_actual === 11) {
-            estado_nombre = "Vendido Facturado";
-          } else if (v.fecha_venta) {
-            estado_nombre = "Vendido";
           } else if (v.vehiculo_alquilado === 1) {
             estado_nombre = "Alquilado";
           } else if (v.vehiculo_reservado === 1) {
