@@ -665,12 +665,30 @@ FROM (
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
     WHERE ci.id_cliente = ?
 
+    UNION ALL
+
+    /* RECIBOS ANULADOS (desde historial_anulaciones) */
+    SELECT
+        ha.fecha AS fecha,
+        CONCAT('Comprobante anulado - Recibo #', ha.id_movimiento) AS concepto,
+        ha.id_movimiento AS nro_comprobante,
+        NULL AS debe,
+        NULL AS haber,
+        4 AS tipo,
+        ha.id_registro AS id_registro,
+        NULL AS garantia_devuelta,
+        1 AS anulado
+    FROM historial_anulaciones ha
+    INNER JOIN recibos r ON r.id = ha.id_movimiento
+    WHERE ha.tipo = 'recibo'
+      AND r.id_cliente = ?
+
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
 ORDER BY m.fecha, m.tipo;`,
       {
         type: QueryTypes.SELECT,
-        replacements: [id_cliente, id_cliente, id_cliente, id_cliente],
+        replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
       },
     );
     return res.send(resultado);
