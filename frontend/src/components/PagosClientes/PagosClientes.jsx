@@ -370,7 +370,8 @@ export const PagosClientes = () => {
                 { withCredentials: true }
             )
             if (res.data?.status) {
-                const { motivo, usuario_email, fecha } = res.data.data
+                const { motivo, usuario_nombre, usuario_email, fecha } = res.data.data
+                const nombreMostrar = usuario_nombre || usuario_email || '-'
                 const fechaFormateada = fecha ? new Date(fecha).toLocaleString('es-AR') : '-'
                 Swal.fire({
                     title: 'Motivo de anulación',
@@ -378,7 +379,7 @@ export const PagosClientes = () => {
                         <div style="text-align:left; font-size:14px; line-height:1.7">
                             <p><strong>Motivo:</strong></p>
                             <p style="background:#f5f5f5; padding:10px; border-radius:6px; border-left:4px solid #d32f2f">${motivo}</p>
-                            <p><strong>Anulado por:</strong> ${usuario_email}</p>
+                            <p><strong>Anulado por:</strong> ${nombreMostrar}</p>
                             <p><strong>Fecha:</strong> ${fechaFormateada}</p>
                         </div>`,
                     icon: 'info',

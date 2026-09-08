@@ -712,10 +712,11 @@ export const getMotivoAnulacion = async (req, res) => {
   }
   try {
     const result = await giama_renting.query(
-      `SELECT motivo, usuario_email, fecha
-       FROM historial_anulaciones
-       WHERE tipo = ? AND id_registro = ?
-       ORDER BY fecha DESC
+      `SELECT ha.motivo, ha.usuario_email, ha.fecha, COALESCE(NULLIF(TRIM(u.nombre), ''), ha.usuario_email) AS usuario_nombre
+       FROM historial_anulaciones ha
+       LEFT JOIN usuarios u ON u.id = ha.id_usuario OR u.email = ha.usuario_email
+       WHERE ha.tipo = ? AND ha.id_registro = ?
+       ORDER BY ha.fecha DESC
        LIMIT 1`,
       {
         type: QueryTypes.SELECT,
