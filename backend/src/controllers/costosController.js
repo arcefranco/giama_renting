@@ -3079,10 +3079,6 @@ export async function registrarIngresoMasivoConsolidado({
     let NroAsientoSecundario_deuda = null;
     let nro_factura = null;
 
-    const importe_total = detalles.reduce((sum, d) => sum + parseFloat(d.importe), 0);
-    const importe_neto = parseFloat((importe_total / 1.21).toFixed(2));
-    const importe_iva = parseFloat((importe_total - importe_neto).toFixed(2));
-
     const [clienteResult] = await giama_renting.query(
       `SELECT c.id, c.nombre, c.apellido, c.nro_documento, c.razon_social 
        FROM clientes c WHERE c.id = :id_cliente LIMIT 1`,
@@ -3124,6 +3120,11 @@ export async function registrarIngresoMasivoConsolidado({
         subtotal: netoDetalle
       };
     });
+
+    const importe_total = detalles.reduce((sum, d) => sum + parseFloat(d.importe), 0);
+    const sumaNetosDetalles = itemsArray.reduce((sum, item) => sum + item.subtotal, 0);
+    const importe_neto = parseFloat(sumaNetosDetalles.toFixed(2));
+    const importe_iva = parseFloat((importe_total - importe_neto).toFixed(2));
 
     NroAsiento_deuda = await getNumeroAsiento(transaction_asientos);
     NroAsientoSecundario_deuda = await getNumeroAsientoSecundario(transaction_asientos);

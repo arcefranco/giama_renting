@@ -542,9 +542,9 @@ export const postPago = async (req, res) => {
 };
 
 export const ctaCteCliente = async (req, res) => {
-  const { id_cliente } = req.body;
+  const { id_cliente, ver_anulados } = req.body;
   try {
-    const resultado = await giama_renting.query(
+    let resultado = await giama_renting.query(
       `SELECT
     m.fecha,
     m.concepto,
@@ -562,11 +562,8 @@ FROM (
     SELECT
         pc.fecha AS fecha,
         CONCAT(
-            CASE 
-                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
-                THEN CONCAT(' ', pc.observacion)
-                ELSE ''
-            END
+            IF(IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - ', _utf8mb4''),
+            CONVERT(IFNULL(pc.observacion, '') USING utf8mb4)
         ) AS concepto,
         pc.nro_recibo AS nro_comprobante,
         NULL AS debe,
@@ -589,11 +586,11 @@ FROM (
     SELECT
         a.fecha_alquiler AS fecha,
         CONCAT(
-            'Alquiler - ',
-            v.dominio,
-            ' - ',
+            IF(a.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - Alquiler - ', _utf8mb4'Alquiler - '),
+            CONVERT(v.dominio USING utf8mb4),
+            _utf8mb4' - ',
             DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
-            ' al ',
+            _utf8mb4' al ',
             DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
         ) AS concepto,
         f.numerofacturaemitida AS nro_comprobante,
@@ -618,8 +615,8 @@ FROM (
     SELECT
         ca.fecha_contrato AS fecha,
         CONCAT(
-            'Deposito gtia - ',
-            v.dominio
+            IF(ca.anulado_deposito = 1 OR IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - Deposito gtia - ', _utf8mb4'Deposito gtia - '),
+            CONVERT(v.dominio USING utf8mb4)
         ) AS concepto,
         NULL AS nro_comprobante,
         ca.deposito_garantia AS debe,
@@ -643,11 +640,12 @@ FROM (
     SELECT
         ci.fecha AS fecha,
         CONCAT(
-            cc.nombre,
+            IF(ci.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - ', _utf8mb4''),
+            CONVERT(cc.nombre USING utf8mb4),
             CASE 
                 WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
-                THEN CONCAT(' ', ci.observacion)
-                ELSE ''
+                THEN CONCAT(_utf8mb4' ', CONVERT(ci.observacion USING utf8mb4))
+                ELSE _utf8mb4''
             END
         ) AS concepto,
         f.numerofacturaemitida AS nro_comprobante,
@@ -670,7 +668,7 @@ FROM (
     /* RECIBOS ANULADOS (desde historial_anulaciones) */
     SELECT
         r.fecha AS fecha,
-        CONCAT('Anulación - ', IF(ha.concepto IS NOT NULL AND ha.concepto <> '', ha.concepto, CONCAT('Recibo #', ha.id_movimiento))) AS concepto,
+        CONCAT(_utf8mb4'Anulación - ', IF(ha.concepto IS NOT NULL AND ha.concepto <> '', CONVERT(ha.concepto USING utf8mb4), CONCAT(_utf8mb4'Recibo #', ha.id_movimiento))) AS concepto,
         ha.id_movimiento AS nro_comprobante,
         NULL AS debe,
         NULL AS haber,
@@ -691,6 +689,11 @@ ORDER BY m.fecha, m.tipo;`,
         replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
       },
     );
+
+    if (!ver_anulados) {
+      resultado = resultado.filter((row) => Number(row.anulado) === 0);
+    }
+
     return res.send(resultado);
   } catch (error) {
     const { body } = handleError(

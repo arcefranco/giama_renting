@@ -48,6 +48,7 @@ export const PagosClientes = () => {
         observacion: '',
         id_contrato: ''
     })
+    const [verAnulados, setVerAnulados] = useState(false);
     const [errorsInputs, setErrorsInputs] = useState({})
     const dispatch = useDispatch()
     useEffect(() => {
@@ -61,14 +62,16 @@ export const PagosClientes = () => {
         }
     }, [])
     useEffect(() => {
-        dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
-    }, [form.id_cliente])
+        if (form.id_cliente) {
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente, ver_anulados: verAnulados }))
+        }
+    }, [form.id_cliente, verAnulados])
     useEffect(() => {
         if (id) {
-            dispatch(getCtaCteCliente({ id_cliente: id }))
+            dispatch(getCtaCteCliente({ id_cliente: id, ver_anulados: verAnulados }))
             dispatch(getClientesById({ id: id }))
         }
-    }, [id])
+    }, [id, verAnulados])
 
 
     const { clientes, cliente } = useSelector((state) => state.clientesReducer)
@@ -221,11 +224,11 @@ export const PagosClientes = () => {
         closeModal()
 
         if (id) {
-            dispatch(getCtaCteCliente({ id_cliente: id }))
+            dispatch(getCtaCteCliente({ id_cliente: id, ver_anulados: verAnulados }))
         } else if (form.id_cliente) {
-            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente, ver_anulados: verAnulados }))
         }
-    }, [id, form.id_cliente, dispatch])
+    }, [id, form.id_cliente, verAnulados, dispatch])
     useEffect(() => {
         if (!codigo) {
             if (isError && message) {
@@ -540,10 +543,10 @@ export const PagosClientes = () => {
 
     const handleActualizar = () => {
         if (form.id_cliente) {
-            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente, ver_anulados: verAnulados }))
         }
         if (id) {
-            dispatch(getCtaCteCliente({ id_cliente: id }))
+            dispatch(getCtaCteCliente({ id_cliente: id, ver_anulados: verAnulados }))
         }
     }
     const validate = () => {
@@ -733,20 +736,31 @@ export const PagosClientes = () => {
                 <Column caption="" cellRender={renderAnulacion} />
 
             </DataGrid>
-            <div className={styles.saldoBox}>
-                Saldo actual:
-                <p style={{ color: saldoActual < 0 ? "red" : "black" }}>
-                    {saldoActual < 0
-                        ? `(${Math.abs(saldoActual).toLocaleString("es-AR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        })})`
-                        : saldoActual.toLocaleString("es-AR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        })
-                    }
-                </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <div className={styles.saldoBox}>
+                    Saldo actual:
+                    <p style={{ color: saldoActual < 0 ? "red" : "black" }}>
+                        {saldoActual < 0
+                            ? `(${Math.abs(saldoActual).toLocaleString("es-AR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })})`
+                            : saldoActual.toLocaleString("es-AR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })
+                        }
+                    </p>
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "14px", fontWeight: 500, color: "#333333", userSelect: "none", marginTop: "10px" }}>
+                    <input
+                        type="checkbox"
+                        checked={verAnulados}
+                        onChange={(e) => setVerAnulados(e.target.checked)}
+                        style={{ cursor: "pointer", width: "16px", height: "16px", accentColor: "#800020" }}
+                    />
+                    Ver comprobantes anulados
+                </label>
             </div>
 
             {isModalOpen && (
