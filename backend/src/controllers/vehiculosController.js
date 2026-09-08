@@ -1107,14 +1107,14 @@ export const updateVehiculo = async (req, res) => {
     return null;
   }
 
-  let errGen = 
+  let errGen =
     checkPermisoFinanzas(nro_chasis, vehiculoAnterior[0]["nro_chasis"], "número de chasis") ||
     checkPermisoFinanzas(nro_motor, vehiculoAnterior[0]["nro_motor"], "número de motor") ||
     checkPermisoFinanzas(color, vehiculoAnterior[0]["color"], "color") ||
     checkPermisoFinanzas(observaciones, vehiculoAnterior[0]["observaciones"], "observaciones") ||
     checkPermisoFinanzas(dominio, vehiculoAnterior[0]["dominio"], "dominio") ||
     checkPermisoFinanzas(dominio_provisorio, vehiculoAnterior[0]["dominio_provisorio"], "dominio provisorio");
-    
+
   if (errGen) return res.send(errGen);
 
   //ADMINISTRACION
@@ -1128,20 +1128,20 @@ export const updateVehiculo = async (req, res) => {
     return null;
   }
 
-  let errPrep = 
+  let errPrep =
     checkPermisoAdmin(kilometros, vehiculoAnterior[0]["kilometros_actuales"], "kilómetros") ||
     checkPermisoAdmin(fecha_medicion_km, vehiculoAnterior[0]["fecha_medicion_km"], "fecha de medición") ||
     checkPermisoAdmin(ubicacion, vehiculoAnterior[0]["ubicacion"], "ubicación");
-    
+
   if (errPrep) return res.send(errPrep);
 
   if (dispositivo && vehiculoAnterior[0]["dispositivo_peaje"] !== dispositivo && (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje" })
   }
 
-  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) && 
-      String(estado) !== "10" && String(estado) !== "11" &&
-      (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
+  if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) &&
+    String(estado) !== "10" && String(estado) !== "11" &&
+    (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de estado del vehículo" })
   }
 
@@ -2039,12 +2039,12 @@ export const postActualizarKilometraje = async (req, res) => {
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ]);
-  
+
   if (!validacion.valido) {
     return res.send({ status: false, message: validacion.message });
   }
 
-  
+
   const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
   const sheetName = workbook.SheetNames[0];
   const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -2058,7 +2058,7 @@ export const postActualizarKilometraje = async (req, res) => {
   const columnasFaltantes = COLUMNAS_REQUERIDAS.filter(
     (c) => !columnasArchivo.includes(c)
   );
-  
+
   if (columnasFaltantes.length) {
     return res.send({
       status: false,
@@ -2080,7 +2080,7 @@ export const postActualizarKilometraje = async (req, res) => {
         });
       }
 
-     
+
       const [vehiculo] = await giama_renting.query(
         `SELECT id, kilometros_actuales FROM vehiculos WHERE dominio = :dominio LIMIT 1`,
         { type: QueryTypes.SELECT, replacements: { dominio } }
@@ -2104,7 +2104,7 @@ export const postActualizarKilometraje = async (req, res) => {
         });
       }
 
-   
+
       await giama_renting.query(
         `UPDATE vehiculos SET kilometros_actuales = :kmNuevo WHERE id = :id`,
         {
@@ -2169,7 +2169,7 @@ export const getObservacionesVehiculo = async (req, res) => {
     if (vehiculo && vehiculo[0] && vehiculo[0].observaciones && vehiculo[0].observaciones.trim()) {
       const obsTexto = vehiculo[0].observaciones.trim();
       const yaExiste = observaciones.some(o => o.observacion.trim() === obsTexto);
-      
+
       if (!yaExiste) {
         const usuarioObs = vehiculo[0].usuario_ultima_modificacion || "Sistema";
         const fechaObs = null; // Queda vacía (NULL) como pidieron
@@ -2279,7 +2279,7 @@ const facturaVentaVehiculo = async (
             nro_direccion: facturaVentaData.nro_direccion || null,
             ciudad: facturaVentaData.ciudad || null,
             provincia: facturaVentaData.provincia || null,
-            mail: facturaVentaData.mail || null,
+            mail: facturaVentaData.mail || "",
             usuario_alta: usuario,
           },
           transaction: transaction_giama_renting,
@@ -2315,8 +2315,8 @@ const facturaVentaVehiculo = async (
     facturaVentaData.importe_iva,
     facturaVentaData.importe_total,
     usuario,
-    NroAsiento, 
-    NroAsientoSecundario, 
+    NroAsiento,
+    NroAsientoSecundario,
     concepto_factura,
     transaction_giama_renting,
     transaction_pa7_giama_renting,
@@ -2341,7 +2341,7 @@ const facturaVentaVehiculo = async (
 
   // Generar Asientos Contables
   const tipo_factura = (facturaVentaData.tipo_contribuyente == 1 || facturaVentaData.tipo_contribuyente == 4) ? "FA" : "FB";
-  
+
   let cuentaDebe = facturaVentaData.estado_cobro === 'a_cobrar' ? "110308" : "210105";
   let cuentaHaberVenta = "410201";
   let cuentaIva = facturaVentaData.porcentaje_iva == 10.5 ? "210202" : "210201";
@@ -2362,7 +2362,7 @@ const facturaVentaVehiculo = async (
 
   // 1. DEBE (Neto + IVA + Percepción)
   let importeDebe = parseFloat(facturaVentaData.importe_neto) + parseFloat(facturaVentaData.importe_iva) + parseFloat(facturaVentaData.importe_percepcion || 0);
-  
+
   await asientoContable(
     "c_movimientos",
     NroAsiento,
@@ -2371,10 +2371,10 @@ const facturaVentaVehiculo = async (
     importeDebe.toFixed(2),
     concepto_factura,
     transaction_pa7_giama_renting,
-    nro_factura.toString(), 
+    nro_factura.toString(),
     getTodayDate(),
     NroAsientoSecundario,
-    tipo_factura 
+    tipo_factura
   );
 
   // 2. HABER Venta (Neto)
@@ -2386,10 +2386,10 @@ const facturaVentaVehiculo = async (
     facturaVentaData.importe_neto,
     concepto_factura,
     transaction_pa7_giama_renting,
-    nro_factura.toString(), 
+    nro_factura.toString(),
     getTodayDate(),
     NroAsientoSecundario,
-    tipo_factura 
+    tipo_factura
   );
 
   // 3. HABER IVA
@@ -2402,10 +2402,10 @@ const facturaVentaVehiculo = async (
       facturaVentaData.importe_iva,
       concepto_factura,
       transaction_pa7_giama_renting,
-      nro_factura.toString(), 
+      nro_factura.toString(),
       getTodayDate(),
       NroAsientoSecundario,
-      tipo_factura 
+      tipo_factura
     );
   }
 
@@ -2419,10 +2419,10 @@ const facturaVentaVehiculo = async (
       facturaVentaData.importe_percepcion,
       concepto_factura,
       transaction_pa7_giama_renting,
-      nro_factura.toString(), 
+      nro_factura.toString(),
       getTodayDate(),
       NroAsientoSecundario,
-      tipo_factura 
+      tipo_factura
     );
   }
 

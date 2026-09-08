@@ -18,6 +18,7 @@ import { getTodayDate } from "../../helpers/getTodayDate.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
 import { getProveedorPA6 } from "../../helpers/getProveedorPA6.js";
 import { insertOdp } from "../../helpers/insertOdp.js";
+import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
 
 const contra_asiento_factura = async (
   id_factura,
@@ -541,42 +542,41 @@ export const postPago = async (req, res) => {
 };
 
 export const ctaCteCliente = async (req, res) => {
-  const { id_cliente } = req.body;
+  const { id_cliente, ver_anulados } = req.body;
   try {
-    const resultado = await giama_renting.query(
+    let resultado = await giama_renting.query(
       `SELECT
     m.fecha,
     m.concepto,
     m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
+    @saldo := @saldo + CASE WHEN m.anulado = 1 THEN 0 ELSE IFNULL(m.debe, 0) - IFNULL(m.haber, 0) END AS saldo,
     m.tipo,
     m.id_registro,
-    m.garantia_devuelta
+    m.garantia_devuelta,
+    m.anulado
 FROM (
 
     /* PAGOS */
     SELECT
         pc.fecha AS fecha,
         CONCAT(
-            CASE 
-                WHEN pc.observacion IS NOT NULL AND pc.observacion <> ''
-                THEN CONCAT(' ', pc.observacion)
-                ELSE ''
-            END
+            IF(IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - ', _utf8mb4''),
+            CONVERT(IFNULL(pc.observacion, '') USING utf8mb4)
         ) AS concepto,
         pc.nro_recibo AS nro_comprobante,
         NULL AS debe,
         pc.importe_cobro AS haber,
         4 AS tipo,
         pc.id AS id_registro,
-        NULL AS garantia_devuelta
+        NULL AS garantia_devuelta,
+        IFNULL(recibos.anulado, 0) AS anulado
     FROM pagos_clientes pc
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
     LEFT JOIN recibos ON pc.nro_recibo = recibos.id
-    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+    WHERE pc.id_cliente = ?
 
 
     UNION ALL
@@ -586,11 +586,11 @@ FROM (
     SELECT
         a.fecha_alquiler AS fecha,
         CONCAT(
-            'Alquiler - ',
-            v.dominio,
-            ' - ',
+            IF(a.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - Alquiler - ', _utf8mb4'Alquiler - '),
+            CONVERT(v.dominio USING utf8mb4),
+            _utf8mb4' - ',
             DATE_FORMAT(a.fecha_desde, '%d/%m/%Y'),
-            ' al ',
+            _utf8mb4' al ',
             DATE_FORMAT(a.fecha_hasta, '%d/%m/%Y')
         ) AS concepto,
         f.numerofacturaemitida AS nro_comprobante,
@@ -598,15 +598,15 @@ FROM (
         NULL AS haber,
         1 AS tipo,
         a.id AS id_registro,
-        NULL AS garantia_devuelta
+        NULL AS garantia_devuelta,
+        IF(a.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, 1, 0) AS anulado
     FROM alquileres a
     INNER JOIN vehiculos v 
         ON v.id = a.id_vehiculo
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
-    AND a.anulado = 0
+    WHERE a.id_cliente = ?
 
     UNION ALL
 
@@ -615,23 +615,22 @@ FROM (
     SELECT
         ca.fecha_contrato AS fecha,
         CONCAT(
-            'Deposito gtia - ',
-            v.dominio
+            IF(ca.anulado_deposito = 1 OR IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - Deposito gtia - ', _utf8mb4'Deposito gtia - '),
+            CONVERT(v.dominio USING utf8mb4)
         ) AS concepto,
         NULL AS nro_comprobante,
         ca.deposito_garantia AS debe,
         NULL AS haber,
         2 AS tipo,
         ca.id AS id_registro,
-        ca.garantia_devuelta AS garantia_devuelta
+        ca.garantia_devuelta AS garantia_devuelta,
+        IF(ca.anulado_deposito = 1 OR IFNULL(recibos.anulado, 0) = 1, 1, 0) AS anulado
     FROM contratos_alquiler ca
     INNER JOIN vehiculos v 
         ON v.id = ca.id_vehiculo
     LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
-      AND IFNULL(recibos.anulado,0) = 0
-      AND ca.anulado_deposito = 0
 
 
     UNION ALL
@@ -641,11 +640,12 @@ FROM (
     SELECT
         ci.fecha AS fecha,
         CONCAT(
-            cc.nombre,
+            IF(ci.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, _utf8mb4'Anulación - ', _utf8mb4''),
+            CONVERT(cc.nombre USING utf8mb4),
             CASE 
                 WHEN ci.observacion IS NOT NULL AND ci.observacion <> ''
-                THEN CONCAT(' ', ci.observacion)
-                ELSE ''
+                THEN CONCAT(_utf8mb4' ', CONVERT(ci.observacion USING utf8mb4))
+                ELSE _utf8mb4''
             END
         ) AS concepto,
         f.numerofacturaemitida AS nro_comprobante,
@@ -653,24 +653,47 @@ FROM (
         NULL AS haber,
         3 AS tipo,
         ci.id AS id_registro,
-        NULL AS garantia_devuelta
+        NULL AS garantia_devuelta,
+        IF(ci.anulado = 1 OR IFNULL(recibos.anulado, 0) = 1, 1, 0) AS anulado
     FROM costos_ingresos ci
     INNER JOIN conceptos_costos cc 
         ON cc.id = ci.id_concepto
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
-    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
-    AND ci.anulado = 0
+    WHERE ci.id_cliente = ?
+
+    UNION ALL
+
+    /* RECIBOS ANULADOS (desde historial_anulaciones) */
+    SELECT
+        r.fecha AS fecha,
+        CONCAT(_utf8mb4'Anulación - ', IF(ha.concepto IS NOT NULL AND ha.concepto <> '', CONVERT(ha.concepto USING utf8mb4), CONCAT(_utf8mb4'Recibo #', ha.id_movimiento))) AS concepto,
+        ha.id_movimiento AS nro_comprobante,
+        NULL AS debe,
+        NULL AS haber,
+        4 AS tipo,
+        ha.id_registro AS id_registro,
+        NULL AS garantia_devuelta,
+        1 AS anulado
+    FROM historial_anulaciones ha
+    INNER JOIN recibos r ON r.id = ha.id_movimiento
+    WHERE ha.tipo = 'recibo'
+      AND r.id_cliente = ?
 
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
 ORDER BY m.fecha, m.tipo;`,
       {
         type: QueryTypes.SELECT,
-        replacements: [id_cliente, id_cliente, id_cliente, id_cliente],
+        replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
       },
     );
+
+    if (!ver_anulados) {
+      resultado = resultado.filter((row) => Number(row.anulado) === 0);
+    }
+
     return res.send(resultado);
   } catch (error) {
     const { body } = handleError(
@@ -678,6 +701,34 @@ ORDER BY m.fecha, m.tipo;`,
       "cuenta corriente del cliente",
       acciones.get,
     );
+    return res.send(body);
+  }
+};
+
+export const getMotivoAnulacion = async (req, res) => {
+  const { tipo, id_registro } = req.body;
+  if (!tipo || !id_registro) {
+    return res.send({ status: false, message: "Faltan datos" });
+  }
+  try {
+    const result = await giama_renting.query(
+      `SELECT ha.motivo, ha.usuario_email, ha.fecha, COALESCE(NULLIF(TRIM(u.nombre), ''), ha.usuario_email) AS usuario_nombre
+       FROM historial_anulaciones ha
+       LEFT JOIN usuarios u ON u.id = ha.id_usuario OR u.email = ha.usuario_email
+       WHERE ha.tipo = ? AND ha.id_registro = ?
+       ORDER BY ha.fecha DESC
+       LIMIT 1`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [tipo, id_registro],
+      }
+    );
+    if (!result.length) {
+      return res.send({ status: false, message: "No se encontró el motivo de anulación" });
+    }
+    return res.send({ status: true, data: result[0] });
+  } catch (error) {
+    const { body } = handleError(error, "historial de anulaciones", acciones.get);
     return res.send(body);
   }
 };
@@ -1121,11 +1172,17 @@ export const getEstadoDeuda = async (req, res) => {
 };
 
 export const anulacionFactura = async (req, res) => {
-  const { id_registro, id_factura, tipo_factura, cliente, tipo } = req.body;
+  const { id_registro, id_factura, tipo_factura, cliente, tipo, motivo } = req.body;
   if (!id_factura || !id_registro || !tipo_factura || !cliente || !tipo) {
     return res.send({
       status: false,
       message: "Faltan datos para completar la operación",
+    });
+  }
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
     });
   }
   let tipo_NC;
@@ -1223,6 +1280,15 @@ export const anulacionFactura = async (req, res) => {
           transaction: transaction_giama_renting,
         },
       );
+      await registrarAnulacion({
+        tipo: "factura",
+        id_registro,
+        id_movimiento: id_factura,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        motivo,
+        req,
+        transaction: transaction_giama_renting,
+      });
       await transaction_giama_renting.commit();
       await transaction_pa7_giama_renting.commit();
 
@@ -1327,7 +1393,15 @@ export const anulacionFactura = async (req, res) => {
           transaction: transaction_giama_renting,
         },
       );
-
+      await registrarAnulacion({
+        tipo: "factura",
+        id_registro,
+        id_movimiento: id_factura,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        motivo,
+        req,
+        transaction: transaction_giama_renting,
+      });
       await transaction_giama_renting.commit();
       await transaction_pa7_giama_renting.commit();
       return res.send({
@@ -1345,7 +1419,13 @@ export const anulacionFactura = async (req, res) => {
 };
 
 export const anulacionRecibo = async (req, res) => {
-  const { nro_recibo } = req.body;
+  const { nro_recibo, motivo } = req.body;
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
+    });
+  }
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -1362,6 +1442,32 @@ export const anulacionRecibo = async (req, res) => {
     });
   }
   try {
+    // Obtenemos los datos del pago antes de eliminarlo para registrar el concepto original
+    const pagosOrigen = await giama_renting.query(
+      `SELECT pc.observacion, fc.nombre AS forma_cobro 
+       FROM pagos_clientes pc
+       LEFT JOIN formas_cobro fc ON fc.id = pc.id_forma_cobro
+       WHERE pc.nro_recibo = ?`,
+      {
+        type: QueryTypes.SELECT,
+        replacements: [nro_recibo],
+        transaction: transaction_giama_renting,
+      }
+    );
+
+    let conceptoOriginal = null;
+    if (pagosOrigen && pagosOrigen.length > 0) {
+      conceptoOriginal = pagosOrigen
+        .map((p) => {
+          let txt = `Forma de cobro: ${p.forma_cobro || ""}`;
+          if (p.observacion && p.observacion.trim()) {
+            txt += ` - Observación: ${p.observacion.trim()}`;
+          }
+          return txt;
+        })
+        .join(" | ");
+    }
+
     await contra_asiento_recibo(
       nro_recibo,
       transaction_pa7_giama_renting,
@@ -1377,7 +1483,16 @@ export const anulacionRecibo = async (req, res) => {
         transaction: transaction_giama_renting,
       },
     );
-
+    await registrarAnulacion({
+      tipo: "recibo",
+      id_registro: nro_recibo,
+      id_movimiento: nro_recibo,
+      nro_asiento_anulacion: NroAsiento_nuevo,
+      concepto: conceptoOriginal,
+      motivo,
+      req,
+      transaction: transaction_giama_renting,
+    });
     await transaction_giama_renting.commit();
     await transaction_pa7_giama_renting.commit();
 
@@ -1392,7 +1507,13 @@ export const anulacionRecibo = async (req, res) => {
 };
 
 export const anulacionDeuda = async (req, res) => {
-  const { tipo, id_registro } = req.body;
+  const { tipo, id_registro, motivo } = req.body;
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
+    });
+  }
   let tabla;
   let campo;
   let campo_fecha_anulacion;
@@ -1539,6 +1660,13 @@ export const anulacionDeuda = async (req, res) => {
         },
       );
     }
+    await registrarAnulacion({
+      tipo: "deuda",
+      id_registro,
+      nro_asiento_anulacion: NroAsiento_nuevo,
+      motivo,
+      req,
+    });
     await transaction_pa7_giama_renting.commit();
     return res.send({
       status: true,
@@ -1814,7 +1942,7 @@ FROM (
     INNER JOIN formas_cobro fc 
         ON fc.id = pc.id_forma_cobro
     LEFT JOIN recibos ON pc.nro_recibo = recibos.id
-    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
+    WHERE pc.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0
 
     UNION ALL
 
@@ -1841,8 +1969,7 @@ FROM (
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = a.id_factura_pa6
     LEFT JOIN recibos ON a.nro_recibo = recibos.id
-    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
-    AND a.anulado = 0
+    WHERE a.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0 AND a.anulado = 0
 
     UNION ALL
 
@@ -1865,7 +1992,7 @@ FROM (
     LEFT JOIN recibos ON ca.nro_recibo = recibos.id
     WHERE ca.id_cliente = ?
       AND ca.deposito_garantia > 0
-      AND IFNULL(recibos.anulado,0) = 0
+      AND IFNULL(recibos.anulado, 0) = 0
       AND ca.anulado_deposito = 0
 
     UNION ALL
@@ -1893,11 +2020,10 @@ FROM (
     LEFT JOIN pa7_giama_renting.facturas f 
         ON f.id = ci.id_factura_pa6
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
-    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado,0) = 0
-    AND ci.anulado = 0
+    WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0 AND ci.anulado = 0
 
-) AS m
-CROSS JOIN (SELECT @saldo := 0) AS vars
+) m
+CROSS JOIN (SELECT @saldo := 0) vars
 ORDER BY m.fecha, m.tipo;`,
       {
         replacements: [id_cliente, id_cliente, id_cliente, id_cliente],
