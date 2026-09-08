@@ -12,6 +12,8 @@ import {
   getNumeroAsiento,
   getNumeroAsientoSecundario,
 } from "../../helpers/getNumeroAsiento.js";
+import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
+
 const imageBase64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+gAAAPoBAMAAAC/jcnXAAAACXBIWXMAAAsSAAALEgHS3X78AAAAG1BMVEVHcE
 yPkJWZmZknMnCZmZknMnCZmZmZmZknMnDN6xkDAAAAB3RSTlMAPXt/tMvYMo+dkAAAGAZJREFUeNrswYEAAAAAgKD9qRepAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -494,7 +496,10 @@ const eliminarPago = async (nro_recibo) => {
 }
 
 export const anulacionRecibo = async (req, res) => {
-  const { id } = req.body;
+  const { id, motivo } = req.body;
+  if (!motivo || !motivo.trim()) {
+    return res.send({ status: false, message: "Debe ingresar un motivo para la anulación" });
+  }
   let NroAsiento_nuevo;
   let NroAsientoSecundario_nuevo;
   let transaction_giama_renting = await giama_renting.transaction();
@@ -508,6 +513,31 @@ export const anulacionRecibo = async (req, res) => {
     return res.send({status: false, message: "Error al obtener número de asiento"})
   }
     try {
+      const pagosOrigen = await giama_renting.query(
+        `SELECT pc.observacion, fc.nombre AS forma_cobro 
+         FROM pagos_clientes pc
+         LEFT JOIN formas_cobro fc ON fc.id = pc.id_forma_cobro
+         WHERE pc.nro_recibo = ?`,
+        {
+          type: QueryTypes.SELECT,
+          replacements: [id],
+          transaction: transaction_giama_renting,
+        }
+      );
+
+      let conceptoOriginal = null;
+      if (pagosOrigen && pagosOrigen.length > 0) {
+        conceptoOriginal = pagosOrigen
+          .map((p) => {
+            let txt = `Forma de cobro: ${p.forma_cobro || ""}`;
+            if (p.observacion && p.observacion.trim()) {
+              txt += ` - Observación: ${p.observacion.trim()}`;
+            }
+            return txt;
+          })
+          .join(" | ");
+      }
+
       await contra_asiento_recibo(id, transaction_giama_renting, transaction_pa7_giama_renting, NroAsiento_nuevo, NroAsientoSecundario_nuevo);
       await eliminarPago(id);
       await giama_renting.query("UPDATE recibos SET anulado = ?, fecha_anulacion = ? WHERE id = ?",{
@@ -515,7 +545,16 @@ export const anulacionRecibo = async (req, res) => {
         replacements: [1, getTodayDate(), id],
         transaction: transaction_giama_renting
       })
-
+      await registrarAnulacion({
+        tipo: "recibo",
+        id_registro: id,
+        id_movimiento: id,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        concepto: conceptoOriginal,
+        motivo,
+        req,
+        transaction: transaction_giama_renting,
+      });
       await transaction_giama_renting.commit(); 
       await transaction_pa7_giama_renting.commit();  
 

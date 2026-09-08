@@ -48,6 +48,7 @@ export const PagosClientes = () => {
         observacion: '',
         id_contrato: ''
     })
+    const [verAnulados, setVerAnulados] = useState(false);
     const [errorsInputs, setErrorsInputs] = useState({})
     const dispatch = useDispatch()
     useEffect(() => {
@@ -61,14 +62,16 @@ export const PagosClientes = () => {
         }
     }, [])
     useEffect(() => {
-        dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
-    }, [form.id_cliente])
+        if (form.id_cliente) {
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente, ver_anulados: verAnulados }))
+        }
+    }, [form.id_cliente, verAnulados])
     useEffect(() => {
         if (id) {
-            dispatch(getCtaCteCliente({ id_cliente: id }))
+            dispatch(getCtaCteCliente({ id_cliente: id, ver_anulados: verAnulados }))
             dispatch(getClientesById({ id: id }))
         }
-    }, [id])
+    }, [id, verAnulados])
 
 
     const { clientes, cliente } = useSelector((state) => state.clientesReducer)
@@ -102,13 +105,8 @@ export const PagosClientes = () => {
     }, [clientes])
     useEffect(() => {
         if (ctacteCliente?.length) {
-            const total = ctacteCliente.reduce((acc, mov) => {
-                const debe = Number(mov.debe) || 0;
-                const haber = Number(mov.haber) || 0;
-                return acc + debe - haber;
-            }, 0);
-
-            setSaldoActual(total);
+            const lastRow = ctacteCliente[ctacteCliente.length - 1];
+            setSaldoActual(Number(lastRow?.saldo) || 0);
         } else {
             setSaldoActual(0);
         }
@@ -155,10 +153,20 @@ export const PagosClientes = () => {
         if (codigo && codigo !== 4) {
             Swal.fire({
                 title: message,
+                input: 'textarea',
+                inputLabel: 'Motivo de la anulación',
+                inputPlaceholder: 'Ingrese el motivo...',
+                inputAttributes: { 'aria-label': 'Motivo de la anulación' },
                 showCancelButton: true,
-                confirmButtonText: 'Sí',
+                confirmButtonText: 'Sí, anular',
                 cancelButtonText: 'Cancelar',
                 icon: 'warning',
+                preConfirm: (motivo) => {
+                    if (!motivo || !motivo.trim()) {
+                        Swal.showValidationMessage('El motivo es obligatorio')
+                    }
+                    return motivo
+                },
                 didOpen: () => {
                     document.body.classList.remove('swal2-height-auto');
                 }
@@ -167,7 +175,8 @@ export const PagosClientes = () => {
                     dispatch(reset())
                     dispatch(anulacionFactura({
                         id_registro: id_registro, id_factura: id_factura,
-                        tipo_factura: tipo_factura, cliente: cliente_factura, tipo: tipo_deuda
+                        tipo_factura: tipo_factura, cliente: cliente_factura, tipo: tipo_deuda,
+                        motivo: result.value
                     }))
                 }
 
@@ -179,10 +188,20 @@ export const PagosClientes = () => {
         if (codigo == 4) {
             Swal.fire({
                 title: message,
+                input: 'textarea',
+                inputLabel: 'Motivo de la anulación',
+                inputPlaceholder: 'Ingrese el motivo...',
+                inputAttributes: { 'aria-label': 'Motivo de la anulación' },
                 showCancelButton: true,
-                confirmButtonText: 'Sí',
+                confirmButtonText: 'Sí, anular',
                 cancelButtonText: 'Cancelar',
                 icon: 'warning',
+                preConfirm: (motivo) => {
+                    if (!motivo || !motivo.trim()) {
+                        Swal.showValidationMessage('El motivo es obligatorio')
+                    }
+                    return motivo
+                },
                 didOpen: () => {
                     document.body.classList.remove('swal2-height-auto');
                 }
@@ -190,7 +209,7 @@ export const PagosClientes = () => {
                 if (result.isConfirmed) {
                     dispatch(reset())
                     dispatch(anulacionDeuda({
-                        id_registro: id_registro, tipo: tipo_deuda
+                        id_registro: id_registro, tipo: tipo_deuda, motivo: result.value
                     }))
                 }
 
@@ -205,11 +224,11 @@ export const PagosClientes = () => {
         closeModal()
 
         if (id) {
-            dispatch(getCtaCteCliente({ id_cliente: id }))
+            dispatch(getCtaCteCliente({ id_cliente: id, ver_anulados: verAnulados }))
         } else if (form.id_cliente) {
-            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente, ver_anulados: verAnulados }))
         }
-    }, [id, form.id_cliente, dispatch])
+    }, [id, form.id_cliente, verAnulados, dispatch])
     useEffect(() => {
         if (!codigo) {
             if (isError && message) {
@@ -303,10 +322,20 @@ export const PagosClientes = () => {
     const handleAnulacionRecibo = (nro_comprobante) => {
         Swal.fire({
             title: '¿Desea anular el recibo?',
+            input: 'textarea',
+            inputLabel: 'Motivo de la anulación',
+            inputPlaceholder: 'Ingrese el motivo...',
+            inputAttributes: { 'aria-label': 'Motivo de la anulación' },
             showCancelButton: true,
-            confirmButtonText: 'Sí',
+            confirmButtonText: 'Sí, anular',
             cancelButtonText: 'Cancelar',
             icon: 'warning',
+            preConfirm: (motivo) => {
+                if (!motivo || !motivo.trim()) {
+                    Swal.showValidationMessage('El motivo es obligatorio')
+                }
+                return motivo
+            },
             didOpen: () => {
                 document.body.classList.remove('swal2-height-auto');
             }
@@ -314,7 +343,7 @@ export const PagosClientes = () => {
             if (result.isConfirmed) {
                 dispatch(reset())
                 dispatch(anulacionRecibo({
-                    nro_recibo: nro_comprobante
+                    nro_recibo: nro_comprobante, motivo: result.value
                 }))
             }
 
@@ -330,11 +359,62 @@ export const PagosClientes = () => {
         }
 
     }
+    const tipoAnulacionMap = { 1: 'factura', 2: 'deuda', 3: 'factura', 4: 'recibo' }
+
+    const handleVerMotivo = async (tipo_num, id_registro) => {
+        const tipo = tipoAnulacionMap[tipo_num] || 'deuda'
+        try {
+            const res = await axios.post(
+                import.meta.env.VITE_REACT_APP_HOST + 'ctacte/getMotivoAnulacion',
+                { tipo, id_registro },
+                { withCredentials: true }
+            )
+            if (res.data?.status) {
+                const { motivo, usuario_nombre, usuario_email, fecha } = res.data.data
+                const nombreMostrar = usuario_nombre || usuario_email || '-'
+                const fechaFormateada = fecha ? new Date(fecha).toLocaleString('es-AR') : '-'
+                Swal.fire({
+                    title: 'Motivo de anulación',
+                    html: `
+                        <div style="text-align:left; font-size:14px; line-height:1.7">
+                            <p><strong>Motivo:</strong></p>
+                            <p style="background:#f5f5f5; padding:10px; border-radius:6px; border-left:4px solid #d32f2f">${motivo}</p>
+                            <p><strong>Anulado por:</strong> ${nombreMostrar}</p>
+                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                        </div>`,
+                    icon: 'info',
+                    confirmButtonText: 'Cerrar',
+                    didOpen: () => { document.body.classList.remove('swal2-height-auto') }
+                })
+            } else {
+                Swal.fire({ icon: 'warning', title: 'Sin registro', text: res.data?.message || 'No se encontró el motivo de anulación.' })
+            }
+        } catch {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo obtener el motivo de anulación.' })
+        }
+    }
+
     const renderAnulacion = (data) => {
         const row = data.data
         const isDeposito = row.concepto && (row.concepto.toLowerCase().includes("deposito") || row.concepto.toLowerCase().includes("depósito") || row.concepto.toLowerCase().includes("gtia") || row.concepto.toLowerCase().includes("garantía"));
         
         const saldoGarantia = (row.debe || 0) - (row.garantia_devuelta || 0);
+
+        // Fila ya anulada → mostrar botón "Ver motivo"
+        if (row.anulado) {
+            return (
+                <button
+                    onClick={() => handleVerMotivo(row.tipo, row.id_registro)}
+                    style={{
+                        color: '#b71c1c', fontSize: "11px",
+                        textDecoration: 'underline', background: 'none', border: 'none',
+                        cursor: 'pointer', fontStyle: 'italic'
+                    }}
+                >
+                    Ver motivo de anulación
+                </button>
+            )
+        }
 
         if (isDeposito && row.debe > 0 && saldoGarantia > 0) {
             return (
@@ -464,10 +544,10 @@ export const PagosClientes = () => {
 
     const handleActualizar = () => {
         if (form.id_cliente) {
-            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente }))
+            dispatch(getCtaCteCliente({ id_cliente: form.id_cliente, ver_anulados: verAnulados }))
         }
         if (id) {
-            dispatch(getCtaCteCliente({ id_cliente: id }))
+            dispatch(getCtaCteCliente({ id_cliente: id, ver_anulados: verAnulados }))
         }
     }
     const validate = () => {
@@ -629,13 +709,18 @@ export const PagosClientes = () => {
                 style={{ fontFamily: "IBM" }}
                 rowAlternationEnabled={true}
                 allowColumnResizing={true}
-
+                wordWrapEnabled={true}
+                onRowPrepared={(e) => {
+                    if (e.rowType === "data" && e.data && e.data.anulado) {
+                        e.rowElement.style.backgroundColor = "#ededed";
+                        e.rowElement.style.color = "#777777";
+                    }
+                }}
                 height={600}
-
                 columnAutoWidth={true}>
                 <Scrolling mode="standard" />
-                <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={120} />
-                <Column dataField="concepto" caption="Concepto" />
+                <Column dataField="fecha" cellRender={renderFecha} caption="Fecha" width={110} />
+                <Column dataField="concepto" caption="Concepto" width={580} />
                 <Column dataField="nro_comprobante" caption="Nro. recibo/factura" />
                 <Column dataField="debe" alignment="right" caption="Debe" cellRender={renderImportes} />
                 <Column dataField="haber" alignment="right" caption="Haber" cellRender={renderImportes} />
@@ -652,20 +737,31 @@ export const PagosClientes = () => {
                 <Column caption="" cellRender={renderAnulacion} />
 
             </DataGrid>
-            <div className={styles.saldoBox}>
-                Saldo actual:
-                <p style={{ color: saldoActual < 0 ? "red" : "black" }}>
-                    {saldoActual < 0
-                        ? `(${Math.abs(saldoActual).toLocaleString("es-AR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        })})`
-                        : saldoActual.toLocaleString("es-AR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        })
-                    }
-                </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <div className={styles.saldoBox}>
+                    Saldo actual:
+                    <p style={{ color: saldoActual < 0 ? "red" : "black" }}>
+                        {saldoActual < 0
+                            ? `(${Math.abs(saldoActual).toLocaleString("es-AR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })})`
+                            : saldoActual.toLocaleString("es-AR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })
+                        }
+                    </p>
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "14px", fontWeight: 500, color: "#333333", userSelect: "none", marginTop: "10px" }}>
+                    <input
+                        type="checkbox"
+                        checked={verAnulados}
+                        onChange={(e) => setVerAnulados(e.target.checked)}
+                        style={{ cursor: "pointer", width: "16px", height: "16px", accentColor: "#800020" }}
+                    />
+                    Ver comprobantes anulados
+                </label>
             </div>
 
             {isModalOpen && (
