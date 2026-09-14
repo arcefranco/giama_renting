@@ -137,6 +137,26 @@ export const confirmarImportacionMultas = createAsyncThunk(
     )
 );
 
+export const preprocesarTelepases = createAsyncThunk(
+  "preprocesarTelepases",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.preprocesarTelepases(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const confirmarImportacionTelepases = createAsyncThunk(
+  "confirmarImportacionTelepases",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.confirmarImportacionTelepases(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const postImportacionesTelepases = createAsyncThunk(
   "postImportacionesTelepases",
   async (data, { rejectWithValue }) =>

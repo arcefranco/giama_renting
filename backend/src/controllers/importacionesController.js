@@ -417,13 +417,13 @@ export const importacionesMultas = async (req, res) => {
     return preprocesarMultas(req, res);
 };
 
-export const importacionesTelepases = async (req, res) => {
+export const preprocesarTelepases = async (req, res) => {
     const COLUMNAS_REQUERIDAS = ["FECHA", "PATENTE", "CHOFER", "TARIFA"];
     const NOMBRE_PESTANA = "PASADAS";
 
     try {
         if (!req.file) {
-            return res.send({ status: false, message: "No se envío ningún archivo" });
+            return res.send({ status: false, message: "No se envió ningún archivo" });
         }
 
         const validacion = validarArchivo(req.file, ["xls", "xlsx"], [
@@ -437,7 +437,6 @@ export const importacionesTelepases = async (req, res) => {
 
         const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
 
-        // Buscar la pestaña PASADAS por nombre
         if (!workbook.SheetNames.includes(NOMBRE_PESTANA)) {
             return res.send({
                 status: false,
@@ -452,7 +451,6 @@ export const importacionesTelepases = async (req, res) => {
             return res.send({ status: false, message: `La pestaña "${NOMBRE_PESTANA}" está vacía` });
         }
 
-        // Normalizar los nombres de las columnas (sacar espacios extra y mayúsculas)
         const data = dataRaw.map(row => {
             const normalizedRow = {};
             for (const key in row) {
@@ -461,7 +459,6 @@ export const importacionesTelepases = async (req, res) => {
             return normalizedRow;
         });
 
-        // Validar columnas requeridas
         const columnasArchivo = Object.keys(data[0]);
         const columnasFaltantes = COLUMNAS_REQUERIDAS.filter(col => !columnasArchivo.includes(col));
 
@@ -472,9 +469,39 @@ export const importacionesTelepases = async (req, res) => {
             });
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // PASO 1: Agrupar por PATENTE → acumular TARIFA - BONIFICACION
-        // ──────────────────────────────────────────────────────────────
+        // Asegurar existencia de la tabla telepases
+        await giama_renting.query(`
+          CREATE TABLE IF NOT EXISTS telepases (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dominio VARCHAR(20) NOT NULL,
+            chofer VARCHAR(150) NULL,
+            cantidad_pasadas INT DEFAULT 1,
+            total_tarifa DECIMAL(12, 2) DEFAULT 0.00,
+            total_bonificacion DECIMAL(12, 2) DEFAULT 0.00,
+            importe DECIMAL(12, 2) NOT NULL,
+            rango_fechas VARCHAR(100) NULL,
+            autopistas TEXT NULL,
+            id_vehiculo INT NULL,
+            id_cliente INT NOT NULL,
+            cuit_cliente VARCHAR(50) NULL,
+            usuario VARCHAR(100) NULL,
+            usuario_alta VARCHAR(100) NULL,
+            fecha_alta DATETIME DEFAULT CURRENT_TIMESTAMP,
+            se_proceso TINYINT(1) DEFAULT 0,
+            fecha_proceso DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_dominio (dominio),
+            INDEX idx_id_cliente (id_cliente),
+            INDEX idx_id_vehiculo (id_vehiculo)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `, { type: QueryTypes.RAW });
+
+        // Obtener lista completa de clientes para el selector en frontend
+        const clientes = await giama_renting.query(
+            `SELECT id, nro_documento, nombre, apellido, razon_social FROM clientes ORDER BY razon_social ASC, apellido ASC`,
+            { type: QueryTypes.SELECT }
+        );
+
         const gruposPorPatente = {};
         const erroresLectura = [];
 
@@ -482,7 +509,6 @@ export const importacionesTelepases = async (req, res) => {
             if (typeof valor === "number") return valor;
             if (!valor) return 0;
             let str = String(valor).replace(/[^0-9,\.-]/g, '');
-            // Asumimos formato argentino: punto para miles, coma para decimales.
             if (str.includes(',')) {
                 str = str.replace(/\./g, '').replace(',', '.');
             }
@@ -500,14 +526,12 @@ export const importacionesTelepases = async (req, res) => {
 
             const tarifa = parseMonto(fila.TARIFA);
             const bonificacion = parseMonto(fila.BONIFICACION);
-            // Tomamos la tarifa bruta sin descontar la bonificación según lo solicitado
             const montoNeto = tarifa;
 
             if (montoNeto <= 0) {
-                continue; // Pasada sin costo neto, la ignoramos
+                continue;
             }
 
-            // Convertir fecha serial de Excel a string legible
             let fechaStr = "";
             const rawFecha = fila.FECHA;
             if (typeof rawFecha === "number") {
@@ -554,19 +578,21 @@ export const importacionesTelepases = async (req, res) => {
             });
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // PASO 2: Resolver PATENTE → Vehículo → Contrato → Cliente
-        //         y consolidar por id_cliente
-        // ──────────────────────────────────────────────────────────────
-        const consolidadoPorCliente = {};
-        const erroresResolucion = [];
+        const filasPreprocesadas = [];
 
-        for (const patente of patentes) {
+        for (const [index, patente] of patentes.entries()) {
             const grupo = gruposPorPatente[patente];
+            let advertencia = null;
+            let yaExiste = false;
+            let idVehiculo = null;
+            let idCliente = null;
+            let cuitCliente = '';
+            let nombreCliente = 'Sin cliente asignado';
+            let esEmpresa = false;
 
-            // Buscar vehículo por dominio
+            // 1. Buscar vehículo por dominio
             const [vehiculo] = await giama_renting.query(
-                `SELECT ID FROM vehiculos WHERE Dominio = :dominio LIMIT 1`,
+                `SELECT ID FROM vehiculos WHERE UPPER(TRIM(Dominio)) = :dominio LIMIT 1`,
                 {
                     replacements: { dominio: patente },
                     type: QueryTypes.SELECT,
@@ -574,117 +600,198 @@ export const importacionesTelepases = async (req, res) => {
             );
 
             if (!vehiculo) {
-                erroresResolucion.push(`Patente ${patente} (${grupo.cantidadPasadas} pasadas, $${grupo.totalNeto.toFixed(2)}): El dominio no existe en el sistema.`);
-                continue;
+                advertencia = "El vehículo no existe en el sistema";
+            } else {
+                idVehiculo = vehiculo.ID;
             }
 
-            // Buscar contrato vigente - usamos la fecha más reciente de las pasadas
+            // 2. Determinar rango de fechas y fecha de referencia más reciente
+            const fechasOrdenadas = grupo.fechas.sort();
+            const rangoFechas = fechasOrdenadas.length > 0
+                ? (fechasOrdenadas[0] === fechasOrdenadas[fechasOrdenadas.length - 1]
+                    ? fechasOrdenadas[0]
+                    : `${fechasOrdenadas[0]} al ${fechasOrdenadas[fechasOrdenadas.length - 1]}`)
+                : "S/D";
+
             const fechaMasReciente = grupo.fechas.length > 0
                 ? obtenerFechaMasReciente(grupo.fechas)
                 : getTodayDate();
 
-            const [cliente] = await giama_renting.query(
-                `SELECT c.id_cliente, cl.razon_social 
-                 FROM contratos_alquiler c
-                 INNER JOIN clientes cl ON c.id_cliente = cl.id
-                 WHERE c.id_vehiculo = :id_vehiculo 
-                   AND c.fecha_desde <= :fecha_referencia 
-                   AND (c.fecha_hasta IS NULL OR c.fecha_hasta >= :fecha_referencia)`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: {
-                        id_vehiculo: vehiculo.ID,
-                        fecha_referencia: fechaMasReciente,
-                    },
-                }
-            );
+            // 3. Verificar si este paquete de telepases ya fue procesado en la tabla telepases
+            if (patente && rangoFechas) {
+                const [telepaseExistente] = await giama_renting.query(
+                    `SELECT id, fecha_proceso 
+                     FROM telepases 
+                     WHERE dominio = :dominio AND rango_fechas = :rango_fechas AND se_proceso = 1 
+                     LIMIT 1`,
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: { dominio: patente, rango_fechas: rangoFechas }
+                    }
+                );
 
-            if (!cliente) {
-                erroresResolucion.push(`Patente ${patente} (${grupo.cantidadPasadas} pasadas, $${grupo.totalNeto.toFixed(2)}): No se encontró contrato vigente para este vehículo.`);
-                continue;
-            }
-
-            const idCliente = cliente.id_cliente;
-
-            if (!consolidadoPorCliente[idCliente]) {
-                consolidadoPorCliente[idCliente] = {
-                    id_cliente: idCliente,
-                    es_empresa: !!cliente.razon_social,
-                    totalNeto: 0,
-                    cantidadPasadas: 0,
-                    patentes: [],
-                    autopistas: new Set(),
-                    fechaMin: null,
-                    fechaMax: null,
-                    chofer: grupo.chofer,
-                    detallePatentes: [],
-                };
-            }
-
-            consolidadoPorCliente[idCliente].totalNeto += grupo.totalNeto;
-            consolidadoPorCliente[idCliente].cantidadPasadas += grupo.cantidadPasadas;
-            consolidadoPorCliente[idCliente].patentes.push(patente);
-            grupo.autopistas.forEach(a => consolidadoPorCliente[idCliente].autopistas.add(a));
-
-            // Rango de fechas
-            const fechasOrdenadas = grupo.fechas.sort();
-            if (fechasOrdenadas.length > 0) {
-                const min = fechasOrdenadas[0];
-                const max = fechasOrdenadas[fechasOrdenadas.length - 1];
-                if (!consolidadoPorCliente[idCliente].fechaMin || min < consolidadoPorCliente[idCliente].fechaMin) {
-                    consolidadoPorCliente[idCliente].fechaMin = min;
-                }
-                if (!consolidadoPorCliente[idCliente].fechaMax || max > consolidadoPorCliente[idCliente].fechaMax) {
-                    consolidadoPorCliente[idCliente].fechaMax = max;
+                if (telepaseExistente) {
+                    yaExiste = true;
+                    if (!advertencia) {
+                        advertencia = `Este consumo de telepase ya fue procesado anteriormente para el período ${rangoFechas}.`;
+                    }
                 }
             }
 
-            consolidadoPorCliente[idCliente].detallePatentes.push({
-                patente,
-                id_vehiculo: vehiculo.ID,
-                totalNeto: grupo.totalNeto,
-                cantidadPasadas: grupo.cantidadPasadas,
+            // 4. Buscar contrato activo
+            if (idVehiculo && !advertencia) {
+                const [clienteContrato] = await giama_renting.query(
+                    `SELECT c.id, c.nro_documento, c.nombre, c.apellido, c.razon_social 
+                     FROM contratos_alquiler ca
+                     JOIN clientes c ON ca.id_cliente = c.id
+                     WHERE ca.id_vehiculo = :id_vehiculo 
+                       AND ca.fecha_desde <= :fecha_referencia 
+                       AND (ca.fecha_hasta IS NULL OR ca.fecha_hasta >= :fecha_referencia)
+                     LIMIT 1`,
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: {
+                            id_vehiculo: idVehiculo,
+                            fecha_referencia: fechaMasReciente,
+                        }
+                    }
+                );
+
+                if (clienteContrato) {
+                    idCliente = clienteContrato.id;
+                    cuitCliente = clienteContrato.nro_documento || '';
+                    nombreCliente = clienteContrato.razon_social || `${clienteContrato.nombre || ''} ${clienteContrato.apellido || ''}`.trim();
+                    esEmpresa = !!clienteContrato.razon_social;
+                } else {
+                    advertencia = "No se encontró un contrato de alquiler activo para este vehículo en la fecha de las pasadas.";
+                }
+            }
+
+            filasPreprocesadas.push({
+                id_temp: index + 1,
+                dominio: patente,
+                chofer: grupo.chofer,
+                cantidad_pasadas: grupo.cantidadPasadas,
+                total_tarifa: parseFloat(grupo.totalTarifa.toFixed(2)),
+                total_bonificacion: parseFloat(grupo.totalBonificacion.toFixed(2)),
+                importe: parseFloat(grupo.totalNeto.toFixed(2)),
+                rango_fechas: rangoFechas,
+                autopistas: Array.from(grupo.autopistas).join(", "),
+                id_vehiculo: idVehiculo,
+                id_cliente: idCliente,
+                cuit_cliente: cuitCliente,
+                nombre_cliente: nombreCliente,
+                es_empresa: esEmpresa,
+                advertencia: advertencia,
+                duplicada: yaExiste,
+                incluir: Boolean(idVehiculo) && !advertencia && !yaExiste
             });
         }
 
-        const clientes = Object.values(consolidadoPorCliente);
-        if (clientes.length === 0) {
-            return res.send({
-                status: false,
-                message: "No se pudo vincular ninguna patente a un cliente con contrato vigente.",
-                errores: [...erroresLectura, ...erroresResolucion],
-            });
-        }
+        return res.send({
+            status: true,
+            message: `Preprocesamiento de telepases completado. Se procesaron ${filasPreprocesadas.length} patentes.`,
+            filas: filasPreprocesadas,
+            clientes,
+            errores: erroresLectura
+        });
 
-        // ──────────────────────────────────────────────────────────────
-        // PASO 3: Registrar ingresos individuales por cada vehículo del cliente
-        // ──────────────────────────────────────────────────────────────
+    } catch (error) {
+        console.error("Error en preprocesarTelepases:", error);
+        return res.send({ status: false, message: "Ocurrió un error en el servidor al preprocesar los telepases" });
+    }
+};
+
+export const confirmarImportacionTelepases = async (req, res) => {
+    const { telepases } = req.body;
+
+    if (!telepases || !Array.isArray(telepases) || telepases.length === 0) {
+        return res.send({ status: false, message: "No se enviaron telepases para confirmar" });
+    }
+
+    try {
+        await giama_renting.query(`
+          CREATE TABLE IF NOT EXISTS telepases (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dominio VARCHAR(20) NOT NULL,
+            chofer VARCHAR(150) NULL,
+            cantidad_pasadas INT DEFAULT 1,
+            total_tarifa DECIMAL(12, 2) DEFAULT 0.00,
+            total_bonificacion DECIMAL(12, 2) DEFAULT 0.00,
+            importe DECIMAL(12, 2) NOT NULL,
+            rango_fechas VARCHAR(100) NULL,
+            autopistas TEXT NULL,
+            id_vehiculo INT NULL,
+            id_cliente INT NOT NULL,
+            cuit_cliente VARCHAR(50) NULL,
+            usuario VARCHAR(100) NULL,
+            usuario_alta VARCHAR(100) NULL,
+            fecha_alta DATETIME DEFAULT CURRENT_TIMESTAMP,
+            se_proceso TINYINT(1) DEFAULT 0,
+            fecha_proceso DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_dominio (dominio),
+            INDEX idx_id_cliente (id_cliente),
+            INDEX idx_id_vehiculo (id_vehiculo)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `, { type: QueryTypes.RAW });
+
         const guardados = [];
-        const erroresRegistro = [];
+        const errores = [];
+        const usuarioAuditoria = req.user?.user || req.user?.email || req.body?.usuario || "sistema";
 
-        for (const clienteConsolidado of clientes) {
+        for (const [index, item] of telepases.entries()) {
+            const numeroFila = index + 1;
             const transaction = await giama_renting.transaction();
             const transaction_asientos = await pa7_giama_renting.transaction();
 
             try {
-                const rangoFechas = clienteConsolidado.fechaMin && clienteConsolidado.fechaMax
-                    ? `${clienteConsolidado.fechaMin} al ${clienteConsolidado.fechaMax}`
-                    : "S/D";
+                if (!item.id_cliente) {
+                    errores.push(`Item ${numeroFila} (Dominio: ${item.dominio}): No se asignó ningún cliente.`);
+                    await transaction.rollback();
+                    await transaction_asientos.rollback();
+                    continue;
+                }
 
-                // Registramos un cargo consolidado para todas las patentes del cliente
-                const detallesMasivos = clienteConsolidado.detallePatentes.map(detalle => ({
-                    patente: detalle.patente,
-                    id_vehiculo: detalle.id_vehiculo,
-                    importe: parseFloat(detalle.totalNeto.toFixed(2)),
-                    observacion: `Telepase - Dominio: ${detalle.patente} - Período: ${rangoFechas}`
-                }));
+                // 1. Guardar en la tabla telepases marcando se_proceso = 1 y fecha_proceso = NOW()
+                await giama_renting.query(
+                    `INSERT INTO telepases (dominio, chofer, cantidad_pasadas, total_tarifa, total_bonificacion, importe, rango_fechas, autopistas, id_vehiculo, id_cliente, cuit_cliente, usuario, usuario_alta, fecha_alta, se_proceso, fecha_proceso)
+                     VALUES (:dominio, :chofer, :cantidad_pasadas, :total_tarifa, :total_bonificacion, :importe, :rango_fechas, :autopistas, :id_vehiculo, :id_cliente, :cuit_cliente, :usuario, :usuario_alta, NOW(), 1, NOW())`,
+                    {
+                        replacements: {
+                            dominio: item.dominio,
+                            chofer: item.chofer || "S/D",
+                            cantidad_pasadas: item.cantidad_pasadas || 1,
+                            total_tarifa: item.total_tarifa || item.importe,
+                            total_bonificacion: item.total_bonificacion || 0,
+                            importe: item.importe,
+                            rango_fechas: item.rango_fechas || "S/D",
+                            autopistas: item.autopistas || "",
+                            id_vehiculo: item.id_vehiculo || null,
+                            id_cliente: item.id_cliente,
+                            cuit_cliente: item.cuit_cliente || null,
+                            usuario: usuarioAuditoria,
+                            usuario_alta: usuarioAuditoria
+                        },
+                        type: QueryTypes.INSERT,
+                        transaction
+                    }
+                );
+
+                // 2. Registrar cargo consolidado en cuenta corriente y asientos contables
+                const detallesMasivos = [{
+                    patente: item.dominio,
+                    id_vehiculo: item.id_vehiculo,
+                    importe: parseFloat(Number(item.importe).toFixed(2)),
+                    observacion: `Telepase - Dominio: ${item.dominio} - Período: ${item.rango_fechas || "S/D"}`
+                }];
 
                 await registrarIngresoMasivoConsolidado({
-                    id_cliente: clienteConsolidado.id_cliente,
-                    es_empresa: clienteConsolidado.es_empresa,
+                    id_cliente: item.id_cliente,
+                    es_empresa: Boolean(item.es_empresa),
                     detalles: detallesMasivos,
                     fecha_deuda: `${getTodayDate()} 00:00:00`,
-                    usuario: req.user?.user || "sistema",
+                    usuario: usuarioAuditoria,
                     transaction_costos_ingresos: transaction,
                     transaction_asientos: transaction_asientos,
                 });
@@ -692,45 +799,40 @@ export const importacionesTelepases = async (req, res) => {
                 await transaction.commit();
                 await transaction_asientos.commit();
 
-                guardados.push({
-                    id_cliente: clienteConsolidado.id_cliente,
-                    chofer: clienteConsolidado.chofer,
-                    patentes: clienteConsolidado.patentes,
-                    cantidadPasadas: clienteConsolidado.cantidadPasadas,
-                    importeTotal: parseFloat(clienteConsolidado.totalNeto.toFixed(2)),
-                    rangoFechas,
-                });
+                guardados.push(item);
 
-            } catch (errorCliente) {
+            } catch (errFila) {
                 if (!transaction.finished) await transaction.rollback();
                 if (!transaction_asientos.finished) await transaction_asientos.rollback();
-                erroresRegistro.push(`Cliente ID ${clienteConsolidado.id_cliente} (${clienteConsolidado.chofer}): Error al registrar: ${errorCliente.message || errorCliente}`);
+                errores.push(`Item ${numeroFila} (Dominio: ${item.dominio}): Error al imputar: ${errFila.message || errFila}`);
             }
         }
 
-        const todosErrores = [...erroresLectura, ...erroresResolucion, ...erroresRegistro];
-
-        if (guardados.length === 0 && todosErrores.length > 0) {
+        if (guardados.length === 0 && errores.length > 0) {
             return res.send({
                 status: false,
                 message: "No se pudo importar ningún consumo de telepase debido a errores.",
-                errores: todosErrores,
+                errores
             });
         }
 
-        const montoTotalImportado = guardados.reduce((acc, g) => acc + g.importeTotal, 0);
+        const montoTotalImportado = guardados.reduce((acc, g) => acc + (Number(g.importe) || 0), 0);
 
         return res.send({
             status: true,
-            message: `Proceso completado. Se generaron ${guardados.length} cargos consolidados por un total de $${montoTotalImportado.toFixed(2)}.${todosErrores.length > 0 ? ` Se encontraron ${todosErrores.length} observaciones.` : ""}`,
+            message: `Proceso completado. Se guardaron e imputaron ${guardados.length} consumos de telepase correctamente por $${montoTotalImportado.toFixed(2)}.${errores.length > 0 ? ` Se omitieron ${errores.length} por errores.` : ""}`,
             guardados,
-            errores: todosErrores,
+            errores
         });
 
     } catch (error) {
-        console.error("Error en importacionesTelepases:", error);
-        return res.send({ status: false, message: "Ocurrió un error en el servidor al procesar el archivo" });
+        console.error("Error en confirmarImportacionTelepases:", error);
+        return res.send({ status: false, message: "Ocurrió un error al confirmar la importación de telepases." });
     }
+};
+
+export const importacionesTelepases = async (req, res) => {
+    return preprocesarTelepases(req, res);
 };
 
 function obtenerFechaMasReciente(fechas) {
@@ -748,11 +850,9 @@ function obtenerFechaMasReciente(fechas) {
         } else if (f.includes("-")) {
             const parts = f.split("-");
             if (parts.length === 3) {
-                // Si viene como YYYY-MM-DD
                 if (parts[0].length === 4) {
                     dateObj = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00`);
                 } else {
-                    // Por si viene como DD-MM-YYYY
                     dateObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
                 }
             }
@@ -772,4 +872,5 @@ function obtenerFechaMasReciente(fechas) {
     const d = String(max.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
 }
+
 
