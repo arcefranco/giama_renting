@@ -2428,3 +2428,321 @@ const facturaVentaVehiculo = async (
 
   return nro_factura;
 };
+
+export const getRemitos = async (req, res) => {
+  try {
+    const remitos = await giama_renting.query(
+      `SELECT 
+         r.id,
+         r.numero,
+         r.punto_venta,
+         r.fecha_emision,
+         r.estado,
+         r.fecha_anulacion,
+         r.usuario_anulacion,
+         r.motivo_anulacion,
+         r.observaciones,
+         r.usuario_alta,
+         r.created_at,
+         COUNT(rd.id) AS cantidad_unidades,
+         COALESCE(MAX(um.tipo), 'egreso') AS tipo_movimiento,
+         MAX(um.destino) AS destino,
+         MAX(um.retira) AS retira,
+         MAX(um.autorizo) AS autorizo
+       FROM remitos r
+       LEFT JOIN remito_detalles rd ON r.id = rd.id_remito
+       LEFT JOIN unidad_movimientos um ON rd.id_movimiento = um.id
+       GROUP BY r.id
+       ORDER BY r.fecha_emision DESC, r.id DESC`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send(remitos);
+  } catch (error) {
+    const { body } = handleError(error, "Remitos", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const getRemitoById = async (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.send({
+      status: false,
+      message: "Se requiere el ID del remito",
+    });
+  }
+  try {
+    const [remito] = await giama_renting.query(
+      `SELECT * FROM remitos WHERE id = ?`,
+      {
+        replacements: [id],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!remito) {
+      return res.send({
+        status: false,
+        message: "Remito no encontrado",
+      });
+    }
+
+    const detalles = await giama_renting.query(
+      `SELECT 
+         rd.id AS id_detalle,
+         rd.id_unidad,
+         rd.id_movimiento,
+         v.dominio,
+         v.dominio_provisorio,
+         v.modelo,
+         m.nombre AS modelo_nombre,
+         um.fecha_movimiento,
+         um.tipo,
+         um.motivo,
+         um.destino,
+         um.retira,
+         um.autorizo,
+         um.observaciones
+       FROM remito_detalles rd
+       JOIN vehiculos v ON rd.id_unidad = v.id
+       LEFT JOIN modelos m ON v.modelo = m.id
+       LEFT JOIN unidad_movimientos um ON rd.id_movimiento = um.id
+       WHERE rd.id_remito = ?`,
+      {
+        replacements: [id],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return res.send({
+      status: true,
+      remito,
+      detalles,
+    });
+  } catch (error) {
+    const { body } = handleError(error, "Remito", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const postRemito = async (req, res) => {
+  const {
+    punto_venta = 1,
+    fecha_movimiento,
+    tipo,
+    destino,
+    retira,
+    autorizo,
+    observaciones,
+    usuario_alta,
+    unidades,
+  } = req.body;
+
+  if (!tipo || !fecha_movimiento) {
+    return res.send({
+      status: false,
+      message: "El tipo de movimiento y la fecha/hora son obligatorios",
+    });
+  }
+
+  if (!unidades || !Array.isArray(unidades) || unidades.length === 0) {
+    return res.send({
+      status: false,
+      message: "Debe seleccionar al menos una unidad para incluir en el remito",
+    });
+  }
+
+  const unidadesUnicas = [...new Set(unidades)];
+  if (unidadesUnicas.length !== unidades.length) {
+    return res.send({
+      status: false,
+      message: "No se puede incluir dos veces la misma unidad dentro del mismo remito",
+    });
+  }
+
+  const transaction = await giama_renting.transaction();
+  try {
+    const [numResult] = await giama_renting.query(
+      `SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente_numero FROM remitos WHERE punto_venta = ? FOR UPDATE`,
+      {
+        replacements: [punto_venta],
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    const numero = numResult.siguiente_numero;
+    const tipoNormalizado = tipo.toLowerCase();
+    const motivo = tipoNormalizado === "egreso" ? "egreso_remito" : "ingreso_remito";
+
+    const [id_remito] = await giama_renting.query(
+      `INSERT INTO remitos 
+       (numero, punto_venta, fecha_emision, estado, observaciones, usuario_alta, created_at)
+       VALUES (?, ?, ?, 'EMITIDO', ?, ?, NOW())`,
+      {
+        replacements: [
+          numero,
+          punto_venta,
+          fecha_movimiento,
+          observaciones || null,
+          usuario_alta || null,
+        ],
+        type: QueryTypes.INSERT,
+        transaction,
+      }
+    );
+
+    for (const id_unidad of unidadesUnicas) {
+      const [id_movimiento] = await giama_renting.query(
+        `INSERT INTO unidad_movimientos
+         (id_unidad, fecha_movimiento, tipo, motivo, destino, retira, autorizo, observaciones, usuario_alta, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        {
+          replacements: [
+            id_unidad,
+            fecha_movimiento,
+            tipoNormalizado,
+            motivo,
+            destino || null,
+            retira || null,
+            autorizo || null,
+            observaciones || null,
+            usuario_alta || null,
+          ],
+          type: QueryTypes.INSERT,
+          transaction,
+        }
+      );
+
+      await giama_renting.query(
+        `INSERT INTO remito_detalles (id_remito, id_unidad, id_movimiento, created_at)
+         VALUES (?, ?, ?, NOW())`,
+        {
+          replacements: [id_remito, id_unidad, id_movimiento],
+          type: QueryTypes.INSERT,
+          transaction,
+        }
+      );
+    }
+
+    await transaction.commit();
+    const nroFormatted = `${String(punto_venta).padStart(4, "0")}-${String(numero).padStart(8, "0")}`;
+    return res.send({
+      status: true,
+      message: `Remito N° ${nroFormatted} generado correctamente.`,
+      id_remito,
+      numero_remito: nroFormatted,
+    });
+  } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error("Error al generar remito:", error);
+    return res.send({
+      status: false,
+      message: error.message || "Error al generar el remito",
+    });
+  }
+};
+
+export const anularRemito = async (req, res) => {
+  const { id_remito, usuario_anulacion, motivo_anulacion } = req.body;
+  if (!id_remito) {
+    return res.send({
+      status: false,
+      message: "Se requiere el ID del remito a anular",
+    });
+  }
+
+  const transaction = await giama_renting.transaction();
+  try {
+    const [remito] = await giama_renting.query(
+      `SELECT * FROM remitos WHERE id = ?`,
+      {
+        replacements: [id_remito],
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    if (!remito) {
+      await transaction.rollback();
+      return res.send({
+        status: false,
+        message: "No se encontró el remito especificado",
+      });
+    }
+
+    if (remito.estado === "ANULADO") {
+      await transaction.rollback();
+      return res.send({
+        status: false,
+        message: "El remito ya se encuentra anulado",
+      });
+    }
+
+    const detalles = await giama_renting.query(
+      `SELECT id_movimiento FROM remito_detalles WHERE id_remito = ? AND id_movimiento IS NOT NULL`,
+      {
+        replacements: [id_remito],
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    const idsMovimientos = detalles.map((d) => d.id_movimiento).filter(Boolean);
+
+    if (idsMovimientos.length > 0) {
+      await giama_renting.query(
+        `DELETE FROM unidad_movimientos WHERE id IN (?)`,
+        {
+          replacements: [idsMovimientos],
+          type: QueryTypes.DELETE,
+          transaction,
+        }
+      );
+    }
+
+    await giama_renting.query(
+      `UPDATE remito_detalles SET id_movimiento = NULL WHERE id_remito = ?`,
+      {
+        replacements: [id_remito],
+        type: QueryTypes.UPDATE,
+        transaction,
+      }
+    );
+
+    await giama_renting.query(
+      `UPDATE remitos 
+       SET estado = 'ANULADO', fecha_anulacion = NOW(), usuario_anulacion = ?, motivo_anulacion = ?
+       WHERE id = ?`,
+      {
+        replacements: [
+          usuario_anulacion || null,
+          motivo_anulacion || "Anulación manual por usuario",
+          id_remito,
+        ],
+        type: QueryTypes.UPDATE,
+        transaction,
+      }
+    );
+
+    await transaction.commit();
+    return res.send({
+      status: true,
+      message: `Remito N° ${String(remito.punto_venta).padStart(4, "0")}-${String(remito.numero).padStart(8, "0")} anulado correctamente.`,
+    });
+  } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error("Error al anular remito:", error);
+    return res.send({
+      status: false,
+      message: error.message || "Error al anular el remito",
+    });
+  }
+};
+

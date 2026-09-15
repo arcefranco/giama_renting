@@ -14,6 +14,7 @@ const initialState = {
   contratosVehiculo: [],
   contratosCliente: [],
   anulaciones: [],
+  movimientosContrato: [],
   nro_recibo_alquiler: null,
   nro_recibo_deposito: null,
   isError: false,
@@ -189,6 +190,26 @@ export const renovacionFlota = createAsyncThunk(
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
       () => alquileresService.renovacionFlota(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const getMovimientosContrato = createAsyncThunk(
+  "getMovimientosContrato",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.getMovimientosContrato(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const postMovimientoContrato = createAsyncThunk(
+  "postMovimientoContrato",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.postMovimientoContrato(data),
       responses.successObject,
       rejectWithValue
     )
@@ -473,6 +494,37 @@ export const alquileresSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
+    });
+    builder.addCase(getMovimientosContrato.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getMovimientosContrato.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = "";
+      state.movimientosContrato = action.payload?.data || [];
+    });
+    builder.addCase(getMovimientosContrato.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message || "Error al obtener movimientos";
+    });
+    builder.addCase(postMovimientoContrato.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postMovimientoContrato.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload?.message || "Movimiento registrado con éxito";
+    });
+    builder.addCase(postMovimientoContrato.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message || "Error al registrar movimiento";
     });
   },
 });

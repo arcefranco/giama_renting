@@ -3711,3 +3711,135 @@ export const renovacionContratoFlota = async (req, res) => {
     });
   }
 };
+
+export const getMovimientosContrato = async (req, res) => {
+  const { id_contrato } = req.body;
+  if (!id_contrato) {
+    return res.send({
+      status: false,
+      message: "Se requiere el ID del contrato",
+    });
+  }
+  try {
+    const movimientos = await giama_renting.query(
+      `SELECT um.*
+       FROM unidad_movimientos um
+       WHERE um.id_contrato = ?
+       ORDER BY um.fecha_movimiento DESC, um.id DESC`,
+      {
+        replacements: [id_contrato],
+        type: QueryTypes.SELECT,
+      }
+    );
+    return res.send({
+      status: true,
+      data: movimientos,
+    });
+  } catch (error) {
+    const { body } = handleError(error, "Movimientos del Contrato", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const postMovimientoContrato = async (req, res) => {
+  const {
+    id_contrato,
+    fecha_movimiento,
+    tipo,
+    observaciones,
+    id_chofer,
+    retira,
+    autorizo,
+    usuario_alta,
+  } = req.body;
+
+  if (!id_contrato || !fecha_movimiento || !tipo) {
+    return res.send({
+      status: false,
+      message: "Faltan campos obligatorios (id_contrato, fecha_movimiento, tipo)",
+    });
+  }
+
+  const transaction = await giama_renting.transaction();
+  try {
+    const [contrato] = await giama_renting.query(
+      `SELECT id, id_vehiculo FROM contratos_alquiler WHERE id = ?`,
+      {
+        replacements: [id_contrato],
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    if (!contrato) {
+      await transaction.rollback();
+      return res.send({
+        status: false,
+        message: "No se encontró el contrato especificado",
+      });
+    }
+
+    const tipoNormalizado = tipo.toLowerCase();
+    const motivo = tipoNormalizado === "egreso" ? "alquiler" : "devolucion";
+    const id_unidad = contrato.id_vehiculo;
+
+    const [id_movimiento] = await giama_renting.query(
+      `INSERT INTO unidad_movimientos 
+       (id_unidad, fecha_movimiento, tipo, motivo, observaciones, id_contrato, id_chofer, retira, autorizo, usuario_alta, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      {
+        replacements: [
+          id_unidad,
+          fecha_movimiento,
+          tipoNormalizado,
+          motivo,
+          observaciones || null,
+          id_contrato,
+          id_chofer || null,
+          retira || null,
+          autorizo || null,
+          usuario_alta || null,
+        ],
+        type: QueryTypes.INSERT,
+        transaction,
+      }
+    );
+
+    if (tipoNormalizado === "egreso") {
+      await giama_renting.query(
+        `UPDATE contratos_alquiler SET id_unidad_movimiento_entrega = ? WHERE id = ?`,
+        {
+          replacements: [id_movimiento, id_contrato],
+          type: QueryTypes.UPDATE,
+          transaction,
+        }
+      );
+    } else if (tipoNormalizado === "ingreso") {
+      await giama_renting.query(
+        `UPDATE contratos_alquiler SET id_unidad_movimiento_devolucion = ? WHERE id = ?`,
+        {
+          replacements: [id_movimiento, id_contrato],
+          type: QueryTypes.UPDATE,
+          transaction,
+        }
+      );
+    }
+
+    await transaction.commit();
+    return res.send({
+      status: true,
+      message: `Movimiento de ${tipoNormalizado} registrado con éxito.`,
+      id_movimiento,
+    });
+  } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error("Error en postMovimientoContrato:", error);
+    return res.send({
+      status: false,
+      message: error.message || "Error al registrar el movimiento del contrato",
+    });
+  }
+};
+

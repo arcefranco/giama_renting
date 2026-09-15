@@ -31,6 +31,8 @@ import {
   resetAlquiler, resetDeposito
 } from "../../../reducers/Recibos/recibosSlice.js"
 import Swal from 'sweetalert2';
+import MovimientosUnidadModal from "./MovimientosUnidadModal.jsx";
+
 
 const ContratoAlquiler = () => {
 
@@ -67,6 +69,8 @@ const ContratoAlquiler = () => {
   const { username } = useSelector((state) => state.loginReducer)
   const [esEmpresa, setEsEmpresa] = useState(false);
   const [vehiculoSeleccionadoFlota, setVehiculoSeleccionadoFlota] = useState(null);
+  const [modalMovimientosOpen, setModalMovimientosOpen] = useState(false);
+
 
   const formContratoFlotaAdd = () => {
     if (!vehiculoSeleccionadoFlota) return;
@@ -435,8 +439,38 @@ const ContratoAlquiler = () => {
         </div>
       )}
       <div className={styles.container}>
-        <h2>Datos del contrato</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ margin: 0 }}>Datos del contrato {id ? `#${id}` : ''}</h2>
+          {id && (
+            <button
+              type="button"
+              onClick={() => setModalMovimientosOpen(true)}
+              style={{
+                backgroundColor: '#d97706',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              📦 Movimientos de la unidad
+            </button>
+          )}
+        </div>
+
+        <MovimientosUnidadModal
+          idContrato={id}
+          isOpen={modalMovimientosOpen}
+          onClose={() => setModalMovimientosOpen(false)}
+        />
+
         <form action="" className={styles.form} style={{
+
           gridTemplateColumns: "1fr 1fr"
         }}>
 
