@@ -514,9 +514,9 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               onChange={handleChange} id="">
               <option value={""} disabled >{"Seleccione una opción"}</option>
               {
-                formasDeCobro?.length && formasDeCobro?.map(e => {
-                  return <option key={e.id} value={e.id}>{e.nombre}</option>
-                })
+                formasDeCobro?.length ? formasDeCobro.map(e => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                )) : null
               }
             </select>
           </div>
@@ -534,9 +534,9 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               onChange={handleChange} id="">
               <option value={""} disabled >{"Seleccione una opción"}</option>
               {
-                formasDeCobro?.length && formasDeCobro?.map(e => {
-                  return <option key={e.id} value={e.id}>{e.nombre}</option>
-                })
+                formasDeCobro?.length ? formasDeCobro.map(e => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                )) : null
               }
             </select>
           </div>
@@ -554,9 +554,9 @@ const AlquileresForm = ({ modoContrato = false, onSubmitFinal,
               onChange={handleChange} id="">
               <option value={""} disabled >{"Seleccione una opción"}</option>
               {
-                formasDeCobro?.length && formasDeCobro?.map(e => {
-                  return <option key={e.id} value={e.id}>{e.nombre}</option>
-                })
+                formasDeCobro?.length ? formasDeCobro.map(e => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                )) : null
               }
             </select>
           </div>

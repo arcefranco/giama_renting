@@ -55,6 +55,8 @@ const UpdateContrato = () => {
         usuario: username,
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
         fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+        hora_desde_contrato: "00:00",
+        hora_hasta_contrato: "00:00",
     });
     useToastFeedback({
         isError,
@@ -77,6 +79,8 @@ const UpdateContrato = () => {
                 sucursal_vehiculo: "",
                 fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
                 fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+                hora_desde_contrato: "00:00",
+                hora_hasta_contrato: "00:00",
                 fecha_recibo_deposito: '',
                 cuenta_contable_forma_cobro_contrato: '',
                 cuenta_secundaria_forma_cobro_contrato: '',
@@ -97,13 +101,18 @@ const UpdateContrato = () => {
             fechaDesde.setHours(0, 0, 0, 0);
             fechaHasta.setHours(0, 0, 0, 0);
 
+            const horaDesdeStr = (contratoById[0]["hora_desde"] || "00:00:00").substring(0, 5);
+            const horaHastaStr = (contratoById[0]["hora_hasta"] || "00:00:00").substring(0, 5);
+
             setFormContrato({
                 id_vehiculo: contratoById[0]["id_vehiculo"],
                 id_cliente: contratoById[0]["id_cliente"],
                 deposito: contratoById[0]["deposito_garantia"],
                 id_forma_cobro_contrato: contratoById[0]["id_forma_cobro"],
                 fecha_desde_contrato: fechaDesde,
-                fecha_hasta_contrato: fechaHasta
+                fecha_hasta_contrato: fechaHasta,
+                hora_desde_contrato: horaDesdeStr,
+                hora_hasta_contrato: horaHastaStr,
             });
             const fechaDesdePickers = parseISO(contratoById[0]["fecha_desde"]);
             const fechaHastaPickers = parseISO(contratoById[0]["fecha_hasta"]);
@@ -137,7 +146,9 @@ const UpdateContrato = () => {
             dispatch(anulacionContrato({
                 id_contrato: id,
                 fecha_desde_contrato: formContrato["fecha_desde_contrato"],
-                fecha_hasta_contrato: formContrato["fecha_hasta_contrato"]
+                fecha_hasta_contrato: formContrato["fecha_hasta_contrato"],
+                hora_desde_contrato: formContrato["hora_desde_contrato"],
+                hora_hasta_contrato: formContrato["hora_hasta_contrato"],
             }))
         }
         else if (id && vehiculo) {
@@ -277,6 +288,16 @@ const UpdateContrato = () => {
                         />
                     </div>
                     <div className={styles.inputContainer}>
+                        <span>Hora de salida</span>
+                        <input
+                            type="time"
+                            name="hora_desde_contrato"
+                            disabled={vehiculo ? true : false}
+                            value={formContrato.hora_desde_contrato}
+                            onChange={(e) => setFormContrato(prev => ({ ...prev, hora_desde_contrato: e.target.value }))}
+                        />
+                    </div>
+                    <div className={styles.inputContainer}>
                         <span>Fecha hasta</span>
                         <DatePicker
                             dateFormat="dd/MM/yyyy"
@@ -288,6 +309,16 @@ const UpdateContrato = () => {
                             placeholderText="Seleccione una fecha"
 /*                             excludeDateIntervals={rangosOcupados} */
                             locale="es"
+                        />
+                    </div>
+                    <div className={styles.inputContainer}>
+                        <span>Hora de ingreso</span>
+                        <input
+                            type="time"
+                            name="hora_hasta_contrato"
+                            disabled={vehiculo ? true : false}
+                            value={formContrato.hora_hasta_contrato}
+                            onChange={(e) => setFormContrato(prev => ({ ...prev, hora_hasta_contrato: e.target.value }))}
                         />
                     </div>
                 </form>

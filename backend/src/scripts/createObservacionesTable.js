@@ -19,7 +19,7 @@ async function createTable() {
     // Migrar observaciones iniciales si existen en la tabla vehiculos
     console.log("Migrando observaciones iniciales de vehiculos...");
     const [vehiculosConObs] = await giama_renting.query(`
-      SELECT id, observaciones, usuario_ultima_modificacion, updatedAt
+      SELECT id, observaciones, usuario_ultima_modificacion
       FROM vehiculos
       WHERE observaciones IS NOT NULL AND TRIM(observaciones) != ''
     `);
@@ -41,7 +41,7 @@ async function createTable() {
               vehiculo_id: v.id,
               observacion: v.observaciones,
               usuario: v.usuario_ultima_modificacion || "Sistema",
-              fecha: v.updatedAt || new Date()
+              fecha: new Date()
             },
             type: QueryTypes.INSERT
           }

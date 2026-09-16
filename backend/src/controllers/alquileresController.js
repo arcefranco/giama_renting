@@ -380,7 +380,7 @@ export const getContratoById = async (req, res) => {
 };
 
 export const anulacionContrato = async (req, res) => {
-  const { id_contrato, fecha_desde_contrato, fecha_hasta_contrato } = req.body;
+  const { id_contrato, fecha_desde_contrato, fecha_hasta_contrato, hora_desde_contrato, hora_hasta_contrato } = req.body;
   if (!fecha_desde_contrato || !fecha_hasta_contrato) {
     return res.send({
       status: false,
@@ -620,12 +620,14 @@ export const anulacionContrato = async (req, res) => {
 
         await giama_renting.query(
           `UPDATE contratos_alquiler SET fecha_desde = ?, 
-        fecha_hasta = ? WHERE id = ?`,
+        fecha_hasta = ?, hora_desde = COALESCE(?, hora_desde), hora_hasta = COALESCE(?, hora_hasta) WHERE id = ?`,
           {
             type: QueryTypes.UPDATE,
             replacements: [
               formatearFechaISO(nuevaDesde),
               formatearFechaISO(nuevaHasta),
+              hora_desde_contrato || null,
+              hora_hasta_contrato || null,
               id_contrato,
             ],
             transaction: transaction_giama_renting,
@@ -697,12 +699,14 @@ export const anulacionContrato = async (req, res) => {
     try {
       await giama_renting.query(
         `UPDATE contratos_alquiler SET fecha_desde = ?, 
-        fecha_hasta = ? WHERE id = ?`,
+        fecha_hasta = ?, hora_desde = COALESCE(?, hora_desde), hora_hasta = COALESCE(?, hora_hasta) WHERE id = ?`,
         {
           type: QueryTypes.UPDATE,
           replacements: [
             formatearFechaISO(nuevaDesde),
             formatearFechaISO(nuevaHasta),
+            hora_desde_contrato || null,
+            hora_hasta_contrato || null,
             id_contrato,
           ],
           transaction: transaction_giama_renting,
@@ -1882,6 +1886,8 @@ export const postContratoAlquiler = async (req, res) => {
     id_cliente,
     fecha_desde_contrato,
     fecha_hasta_contrato,
+    hora_desde_contrato,
+    hora_hasta_contrato,
     ingresa_deposito,
     deposito,
     id_forma_cobro_contrato,
@@ -2324,8 +2330,8 @@ export const postContratoAlquiler = async (req, res) => {
   try {
     const [result] = await giama_renting.query(
       `INSERT INTO contratos_alquiler 
-        (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia,
-        nro_asiento, fecha_contrato) VALUES (?,?,?,?,?,?,?)`,
+        (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, hora_desde, hora_hasta, deposito_garantia,
+        nro_asiento, fecha_contrato) VALUES (?,?,?,?,?,?,?,?,?)`,
       {
         type: QueryTypes.INSERT,
         replacements: [
@@ -2333,6 +2339,8 @@ export const postContratoAlquiler = async (req, res) => {
           id_cliente,
           fecha_desde_contrato_parseada,
           fecha_hasta_contrato_parseada,
+          hora_desde_contrato || "00:00:00",
+          hora_hasta_contrato || "00:00:00",
           debe_deposito ? debe_deposito : null,
           NroAsiento_deposito_deuda ? NroAsiento_deposito_deuda : null,
           getTodayDate(),
@@ -3150,7 +3158,7 @@ export const postContratoFlota = async (req, res) => {
         // --- PASO 3: INSERTAR CONTRATO Y ALQUILER ---
         // Insertamos el contrato "padre" para este auto en particular
         const [insertContrato] = await giama_renting.query(
-          "INSERT INTO contratos_alquiler (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, deposito_garantia, fecha_contrato) VALUES (?,?,?,?,?,?)",
+          "INSERT INTO contratos_alquiler (id_vehiculo, id_cliente, fecha_desde, fecha_hasta, hora_desde, hora_hasta, deposito_garantia, fecha_contrato) VALUES (?,?,?,?,?,?,?,?)",
           {
             type: QueryTypes.INSERT,
             replacements: [
@@ -3158,6 +3166,8 @@ export const postContratoFlota = async (req, res) => {
               id_cliente,
               fecha_desde_contrato_parseada,
               fecha_hasta_contrato_parseada,
+              req.body.hora_desde_contrato || "00:00:00",
+              req.body.hora_hasta_contrato || "00:00:00",
               0, // deposito_garantia = 0 para flotas
               formatearFechaISO(new Date()), // fecha_contrato
             ],

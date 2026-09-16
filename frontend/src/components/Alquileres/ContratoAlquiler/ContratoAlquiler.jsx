@@ -110,6 +110,8 @@ const ContratoAlquiler = () => {
     sucursal_vehiculo: "",
     fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
     fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+    hora_desde_contrato: "00:00",
+    hora_hasta_contrato: "00:00",
   });
   const { vehiculos, vehiculo } = useSelector((state) => state.vehiculosReducer)
   const { clientes, estado_cliente } = useSelector((state) => state.clientesReducer)
@@ -138,6 +140,8 @@ const ContratoAlquiler = () => {
         sucursal_vehiculo: "",
         fecha_desde_contrato: id ? "" : fechaDesdePorDefecto,
         fecha_hasta_contrato: id ? "" : fechaHastaPorDefecto,
+        hora_desde_contrato: "00:00",
+        hora_hasta_contrato: "00:00",
         fecha_recibo_deposito: '',
         fecha_deuda_deposito: '',
       })
@@ -154,13 +158,18 @@ const ContratoAlquiler = () => {
       fechaDesde.setHours(0, 0, 0, 0);
       fechaHasta.setHours(0, 0, 0, 0);
 
+      const horaDesdeStr = (contratoById[0]["hora_desde"] || "00:00:00").substring(0, 5);
+      const horaHastaStr = (contratoById[0]["hora_hasta"] || "00:00:00").substring(0, 5);
+
       setFormContrato({
         id_vehiculo: contratoById[0]["id_vehiculo"],
         id_cliente: contratoById[0]["id_cliente"],
         deposito: contratoById[0]["deposito_garantia"],
         id_forma_cobro_contrato: contratoById[0]["id_forma_cobro"],
         fecha_desde_contrato: fechaDesde,
-        fecha_hasta_contrato: fechaHasta
+        fecha_hasta_contrato: fechaHasta,
+        hora_desde_contrato: horaDesdeStr,
+        hora_hasta_contrato: horaHastaStr,
       });
       const fechaDesdePickers = parseISO(contratoById[0]["fecha_desde"]);
       const fechaHastaPickers = parseISO(contratoById[0]["fecha_hasta"]);
@@ -185,6 +194,8 @@ const ContratoAlquiler = () => {
         sucursal_vehiculo: '',
         fecha_desde_contrato: fechaDesdePorDefecto,
         fecha_hasta_contrato: fechaHastaPorDefecto,
+        hora_desde_contrato: "00:00",
+        hora_hasta_contrato: "00:00",
         fecha_recibo_deposito: '',
         fecha_deuda_deposito: '',
       })
@@ -365,7 +376,9 @@ const ContratoAlquiler = () => {
     dispatch(anulacionContrato({
       id_contrato: id,
       fecha_desde_contrato: formContrato["fecha_desde_contrato"],
-      fecha_hasta_contrato: formContrato["fecha_hasta_contrato"]
+      fecha_hasta_contrato: formContrato["fecha_hasta_contrato"],
+      hora_desde_contrato: formContrato["hora_desde_contrato"],
+      hora_hasta_contrato: formContrato["hora_hasta_contrato"]
     }))
   }
 
@@ -587,6 +600,15 @@ const ContratoAlquiler = () => {
             />
           </div>
           <div className={styles.inputContainer}>
+            <span>Hora de salida</span>
+            <input
+              type="time"
+              name="hora_desde_contrato"
+              value={formContrato.hora_desde_contrato}
+              onChange={handleChangeContrato}
+            />
+          </div>
+          <div className={styles.inputContainer}>
             <span>Fecha hasta</span>
             <DatePicker
               dateFormat="dd/MM/yyyy"
@@ -596,6 +618,15 @@ const ContratoAlquiler = () => {
               placeholderText="Seleccione una fecha"
               excludeDateIntervals={obtenerRangosOcupados(contratosVehiculo)}
               locale="es"
+            />
+          </div>
+          <div className={styles.inputContainer}>
+            <span>Hora de ingreso</span>
+            <input
+              type="time"
+              name="hora_hasta_contrato"
+              value={formContrato.hora_hasta_contrato}
+              onChange={handleChangeContrato}
             />
           </div>
           {esEmpresa && (formContrato.vehiculos_flota || []).length > 0 && (
@@ -687,9 +718,9 @@ const ContratoAlquiler = () => {
                   onChange={handleChangeContrato} id="">
                   <option value={""} disabled>{"Seleccione una opción"}</option>
                   {
-                    formasDeCobro?.length && formasDeCobro?.map(e => {
-                      return <option key={e.id} value={e.id}>{e.nombre}</option>
-                    })
+                    formasDeCobro?.length ? formasDeCobro.map(e => (
+                      <option key={e.id} value={e.id}>{e.nombre}</option>
+                    )) : null
                   }
                 </select>
               </div>
@@ -715,9 +746,9 @@ const ContratoAlquiler = () => {
                   onChange={handleChangeContrato} id="">
                   <option value={""} disabled>{"Seleccione una opción"}</option>
                   {
-                    formasDeCobro?.length && formasDeCobro?.map(e => {
-                      return <option key={e.id} value={e.id}>{e.nombre}</option>
-                    })
+                    formasDeCobro?.length ? formasDeCobro.map(e => (
+                      <option key={e.id} value={e.id}>{e.nombre}</option>
+                    )) : null
                   }
                 </select>
               </div>
@@ -743,9 +774,9 @@ const ContratoAlquiler = () => {
                   onChange={handleChangeContrato} id="">
                   <option value={""} disabled>{"Seleccione una opción"}</option>
                   {
-                    formasDeCobro?.length && formasDeCobro?.map(e => {
-                      return <option key={e.id} value={e.id}>{e.nombre}</option>
-                    })
+                    formasDeCobro?.length ? formasDeCobro.map(e => (
+                      <option key={e.id} value={e.id}>{e.nombre}</option>
+                    )) : null
                   }
                 </select>
               </div>
