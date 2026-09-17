@@ -9,16 +9,30 @@ import styles from '../Vehiculos/VehiculosForm.module.css';
 
 const parseError = (err) => {
     if (typeof err !== 'string') return { message: String(err) };
-    const match = err.match(/^Fila (\d+) \(Dominio: ([^,]+), Acta: ([^\)]+)\): (.+)$/);
-    if (match) {
+    
+    // Intenta hacer match con Acta
+    const matchWithActa = err.match(/^Fila (\d+) \(Dominio: ([^,]+), Acta: ([^\)]+)\): (.+)$/);
+    if (matchWithActa) {
         return {
-            fila: match[1],
-            dominio: match[2],
-            acta: match[3],
-            message: match[4]
+            fila: matchWithActa[1],
+            dominio: matchWithActa[2],
+            acta: matchWithActa[3],
+            message: matchWithActa[4]
         };
     }
-    return { message: err };
+
+    // Intenta hacer match sin Acta
+    const matchWithoutActa = err.match(/^Fila (\d+) \(Dominio: ([^\)]+)\): (.+)$/);
+    if (matchWithoutActa) {
+        return {
+            fila: matchWithoutActa[1],
+            dominio: matchWithoutActa[2],
+            acta: '-',
+            message: matchWithoutActa[3]
+        };
+    }
+
+    return { message: err, fila: '-', dominio: '-', acta: '-' };
 };
 
 const getFormattedDate = () => {
@@ -36,13 +50,13 @@ const downloadErrorsExcel = (errors) => {
             Fila: parsed.fila || '-',
             Dominio: parsed.dominio || '-',
             Acta: parsed.acta || '-',
-            Error: parsed.message
+            Error: parsed.message || '-'
         };
     });
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Errores");
-    XLSX.writeFile(workbook, `Errores_Importacion_Multas_${getFormattedDate()}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Errores_Y_No_Imputados");
+    XLSX.writeFile(workbook, `Multas_No_Imputadas_${getFormattedDate()}.xlsx`);
 };
 
 const ImportacionesMultas = () => {
@@ -156,10 +170,28 @@ const ImportacionesMultas = () => {
 
     const handleConfirmarImportacion = async () => {
         const multasAImportar = multasPreprocesadas.filter(m => m.incluir);
+        const multasNoImputadas = multasPreprocesadas.filter(m => !m.incluir);
         
         if (multasAImportar.length === 0) {
-            toast.error("No hay multas seleccionadas para importar.");
-            return;
+            if (multasNoImputadas.length > 0) {
+                let finalErrors = [];
+                multasNoImputadas.forEach(m => {
+                    const actaStr = m.acta_nro ? `, Acta: ${m.acta_nro}` : '';
+                    const filaNum = m.numero_fila_excel || m.id_temp;
+                    const advertenciaStr = m.advertencia || 'Desmarcada manualmente (no se seleccionó para imputar)';
+                    finalErrors.push(`Fila ${filaNum} (Dominio: ${m.dominio}${actaStr}): No imputada - ${advertenciaStr}`);
+                });
+                setLocalErrors(finalErrors);
+                downloadErrorsExcel(finalErrors);
+                toast.info("Se generó el Excel con las multas no imputadas.");
+                setShowModal(false);
+                setFile(null);
+                setMultasPreprocesadas([]);
+                return;
+            } else {
+                toast.error("No hay multas para procesar.");
+                return;
+            }
         }
 
         const sinCliente = multasAImportar.filter(m => !m.id_cliente);
@@ -179,20 +211,35 @@ const ImportacionesMultas = () => {
             const usuarioNombre = user?.user || user?.nombre || user?.email || "sistema";
             const res = await dispatch(confirmarImportacionMultas({ multas: multasAImportar, usuario: usuarioNombre })).unwrap();
             setIsConfirming(false);
+            
+            let finalErrors = [...(res?.errores || [])];
+            
+            if (multasNoImputadas.length > 0) {
+                multasNoImputadas.forEach(m => {
+                    const actaStr = m.acta_nro ? `, Acta: ${m.acta_nro}` : '';
+                    const filaNum = m.numero_fila_excel || m.id_temp;
+                    const advertenciaStr = m.advertencia || 'Desmarcada manualmente (no se seleccionó para imputar)';
+                    finalErrors.push(`Fila ${filaNum} (Dominio: ${m.dominio}${actaStr}): No imputada - ${advertenciaStr}`);
+                });
+            }
+
             if (res?.status) {
-                toast.success(res.message || "¡Multas imputadas correctamente!");
+                toast.success(res.message || "¡Proceso finalizado!");
                 setShowModal(false);
                 setFile(null);
                 setMultasPreprocesadas([]);
-                if (res.errores && res.errores.length > 0) {
-                    setLocalErrors(res.errores);
-                    downloadErrorsExcel(res.errores);
+                if (finalErrors.length > 0) {
+                    setLocalErrors(finalErrors);
+                    downloadErrorsExcel(finalErrors);
                 } else {
                     setLocalErrors([]);
                 }
             } else {
                 toast.error(res?.message || "Ocurrió un error al imputar las multas.");
-                if (res?.errores) setLocalErrors(res.errores);
+                if (finalErrors.length > 0) {
+                    setLocalErrors(finalErrors);
+                    downloadErrorsExcel(finalErrors);
+                }
             }
         } catch (error) {
             setIsConfirming(false);
