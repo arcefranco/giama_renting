@@ -144,14 +144,18 @@ const Remitos = () => {
             color: "#fff",
             border: "none",
             borderRadius: "4px",
-            padding: "3px 8px",
+            padding: "4px 8px",
             fontSize: "11px",
-            fontWeight: "bold",
+            fontWeight: "600",
             cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.2s",
           }}
           title="Consultar detalle"
         >
-          🔍 Consultar
+          <i className="fa-solid fa-eye"></i> Consultar
         </button>
 
         <button
@@ -161,14 +165,18 @@ const Remitos = () => {
             color: "#fff",
             border: "none",
             borderRadius: "4px",
-            padding: "3px 8px",
+            padding: "4px 8px",
             fontSize: "11px",
-            fontWeight: "bold",
+            fontWeight: "600",
             cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.2s",
           }}
           title="Descargar / Imprimir"
         >
-          📄 Descargar
+          <i className="fa-solid fa-print"></i> Descargar
         </button>
 
         <button
@@ -179,14 +187,18 @@ const Remitos = () => {
             color: "#fff",
             border: "none",
             borderRadius: "4px",
-            padding: "3px 8px",
+            padding: "4px 8px",
             fontSize: "11px",
-            fontWeight: "bold",
+            fontWeight: "600",
             cursor: isAnulado ? "not-allowed" : "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.2s",
           }}
           title="Anular remito"
         >
-          ❌ Anular
+          <i className="fa-solid fa-ban"></i> Anular
         </button>
       </div>
     );
@@ -206,21 +218,31 @@ const Remitos = () => {
         <button
           onClick={() => setModalNuevoOpen(true)}
           style={{
-            backgroundColor: "#2563eb",
+            backgroundColor: "#800020",
             color: "#fff",
             border: "none",
-            padding: "10px 20px",
+            padding: "9px 20px",
             borderRadius: "6px",
-            fontWeight: "bold",
-            fontSize: "0.95rem",
+            fontWeight: "600",
+            fontSize: "14px",
             cursor: "pointer",
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
             gap: "8px",
-            boxShadow: "0 2px 4px rgba(37,99,235,0.2)",
+            boxShadow: "0 2px 5px rgba(128,0,32,0.2)",
+            transition: "all 0.2s ease-in-out",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#5c0017";
+            e.currentTarget.style.boxShadow = "0 4px 8px rgba(128,0,32,0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#800020";
+            e.currentTarget.style.boxShadow = "0 2px 5px rgba(128,0,32,0.2)";
           }}
         >
-          ➕ Nuevo remito
+          <i className="fa-solid fa-plus"></i>
+          Nuevo Remito
         </button>
       </div>
 
@@ -231,6 +253,13 @@ const Remitos = () => {
         allowColumnResizing={true}
         columnAutoWidth={true}
         height="70vh"
+        style={{
+          fontFamily: "IBM, 'Segoe UI', sans-serif",
+          fontSize: "12px",
+          borderRadius: "6px",
+          border: "1px solid #ccc",
+          boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+        }}
         onRowPrepared={(e) => {
           if (e.rowType === "data" && e.data?.estado === "ANULADO") {
             e.rowElement.style.color = "#94a3b8";
@@ -286,6 +315,7 @@ const Remitos = () => {
           alignment="center"
           allowFiltering={false}
           allowHeaderFiltering={false}
+          width={260}
         />
       </DataGrid>
 

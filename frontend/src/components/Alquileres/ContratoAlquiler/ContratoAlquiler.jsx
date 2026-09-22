@@ -31,7 +31,6 @@ import {
   resetAlquiler, resetDeposito
 } from "../../../reducers/Recibos/recibosSlice.js"
 import Swal from 'sweetalert2';
-import MovimientosUnidadModal from "./MovimientosUnidadModal.jsx";
 
 
 const ContratoAlquiler = () => {
@@ -69,8 +68,6 @@ const ContratoAlquiler = () => {
   const { username } = useSelector((state) => state.loginReducer)
   const [esEmpresa, setEsEmpresa] = useState(false);
   const [vehiculoSeleccionadoFlota, setVehiculoSeleccionadoFlota] = useState(null);
-  const [modalMovimientosOpen, setModalMovimientosOpen] = useState(false);
-
 
   const formContratoFlotaAdd = () => {
     if (!vehiculoSeleccionadoFlota) return;
@@ -452,35 +449,7 @@ const ContratoAlquiler = () => {
         </div>
       )}
       <div className={styles.container}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0 }}>Datos del contrato {id ? `#${id}` : ''}</h2>
-          {id && (
-            <button
-              type="button"
-              onClick={() => setModalMovimientosOpen(true)}
-              style={{
-                backgroundColor: '#d97706',
-                color: '#fff',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              📦 Movimientos de la unidad
-            </button>
-          )}
-        </div>
-
-        <MovimientosUnidadModal
-          idContrato={id}
-          isOpen={modalMovimientosOpen}
-          onClose={() => setModalMovimientosOpen(false)}
-        />
+        <h2>Datos del contrato</h2>
 
         <form action="" className={styles.form} style={{
 
@@ -599,7 +568,7 @@ const ContratoAlquiler = () => {
               locale="es"
             />
           </div>
-          <div className={styles.inputContainer}>
+          {/* <div className={styles.inputContainer}>
             <span>Hora de salida</span>
             <input
               type="time"
@@ -607,7 +576,7 @@ const ContratoAlquiler = () => {
               value={formContrato.hora_desde_contrato}
               onChange={handleChangeContrato}
             />
-          </div>
+          </div> */}
           <div className={styles.inputContainer}>
             <span>Fecha hasta</span>
             <DatePicker
@@ -620,7 +589,7 @@ const ContratoAlquiler = () => {
               locale="es"
             />
           </div>
-          <div className={styles.inputContainer}>
+          {/* <div className={styles.inputContainer}>
             <span>Hora de ingreso</span>
             <input
               type="time"
@@ -628,7 +597,7 @@ const ContratoAlquiler = () => {
               value={formContrato.hora_hasta_contrato}
               onChange={handleChangeContrato}
             />
-          </div>
+          </div> */}
           {esEmpresa && (formContrato.vehiculos_flota || []).length > 0 && (
             <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
               <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '5px' }}>Vehículos en la Flota:</span>

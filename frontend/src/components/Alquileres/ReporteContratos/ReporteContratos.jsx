@@ -20,7 +20,6 @@ import { Workbook } from 'devextreme-exceljs-fork';
 import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
 import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
-import MovimientosUnidadModal from '../ContratoAlquiler/MovimientosUnidadModal.jsx';
 
 
 const ReporteContratos = () => {
@@ -29,11 +28,6 @@ const ReporteContratos = () => {
   const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
 
 
-  
-  const [modalMovimientos, setModalMovimientos] = useState({
-    visible: false,
-    id_contrato: null,
-  });
 
   const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
     visible: false,
@@ -304,25 +298,6 @@ const ReporteContratos = () => {
     );
   }
 
-  const renderMovimientosModal = (data) => {
-    return (
-      <button
-        onClick={() => setModalMovimientos({ visible: true, id_contrato: data.data.id })}
-        style={{
-          color: '#d97706',
-          fontSize: "11px",
-          background: '#fffbe6',
-          border: '1px solid #d97706',
-          borderRadius: '4px',
-          padding: '2px 8px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-        }}
-      >
-        📦 Movimientos
-      </button>
-    );
-  };
 
 
   const handleCustomSummary = (e) => {
@@ -587,7 +562,6 @@ const ReporteContratos = () => {
         }
         <Column dataField="nro_asiento" caption="Asiento depósito" alignment="center" />
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />
-        <Column caption="Movimientos" cellRender={renderMovimientosModal} alignment="center" />
         <Summary calculateCustomSummary={handleCustomSummary}>
           <TotalItem
             name="countVehiculos"
@@ -598,11 +572,6 @@ const ReporteContratos = () => {
         </Summary>
       </DataGrid>
 
-      <MovimientosUnidadModal
-        idContrato={modalMovimientos.id_contrato}
-        isOpen={modalMovimientos.visible}
-        onClose={() => setModalMovimientos({ visible: false, id_contrato: null })}
-      />
 
       {modalCambioVehiculo.visible && (
         <div style={{

@@ -268,7 +268,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
                   gap: "6px",
                 }}
               >
-                🖨️ Descargar / Imprimir
+                <i className="fa-solid fa-print"></i> Descargar / Imprimir
               </button>
 
               <button

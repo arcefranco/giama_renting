@@ -18,6 +18,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
   const [form, setForm] = useState({
     punto_venta: 1,
     fecha_movimiento: new Date(),
+    hora_movimiento: "00:00",
     tipo: "egreso",
     destino: "",
     retira: "",
@@ -51,8 +52,8 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.tipo || !form.fecha_movimiento) {
-      Swal.fire("Atención", "El tipo de movimiento y la fecha/hora son obligatorios", "warning");
+    if (!form.tipo || !form.fecha_movimiento || !form.hora_movimiento) {
+      Swal.fire("Atención", "El tipo de movimiento, fecha y hora son obligatorios", "warning");
       return;
     }
 
@@ -68,9 +69,12 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
       return;
     }
 
+    const fechaStr = format(form.fecha_movimiento, "yyyy-MM-dd");
+    const fechaHora = `${fechaStr} ${form.hora_movimiento || "00:00"}:00`;
+
     const payload = {
       punto_venta: Number(form.punto_venta) || 1,
-      fecha_movimiento: format(form.fecha_movimiento, "yyyy-MM-dd HH:mm:ss"),
+      fecha_movimiento: fechaHora,
       tipo: form.tipo,
       destino: form.destino,
       retira: form.retira,
@@ -88,6 +92,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
       setForm({
         punto_venta: 1,
         fecha_movimiento: new Date(),
+        hora_movimiento: "00:00",
         tipo: "egreso",
         destino: "",
         retira: "",
@@ -98,6 +103,27 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
     } else {
       Swal.fire("Error", res.payload?.message || "No se pudo generar el remito", "error");
     }
+  };
+
+  const inputStyle = {
+    width: "100%",
+    height: "38px",
+    padding: "0 12px",
+    borderRadius: "6px",
+    border: "1px solid #cbd5e1",
+    fontSize: "14px",
+    color: "#1e293b",
+    backgroundColor: "#fff",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  const labelStyle = {
+    display: "block",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#475569",
+    marginBottom: "6px",
   };
 
   return (
@@ -118,13 +144,14 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
       <div
         style={{
           backgroundColor: "#fff",
-          borderRadius: "8px",
+          borderRadius: "10px",
           width: "90%",
-          maxWidth: "750px",
-          maxHeight: "90vh",
+          maxWidth: "760px",
+          maxHeight: "92vh",
           overflowY: "auto",
           padding: "24px",
           boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+          fontFamily: "IBM, 'Segoe UI', sans-serif",
         }}
       >
         <div
@@ -133,160 +160,211 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
             justifyContent: "space-between",
             alignItems: "center",
             borderBottom: "1px solid #e2e8f0",
-            paddingBottom: "12px",
-            marginBottom: "16px",
+            paddingBottom: "14px",
+            marginBottom: "20px",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#1e293b" }}>
-            Generación de Nuevo Remito
-          </h3>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#1e293b", fontWeight: 700 }}>
+              Generación de Nuevo Remito
+            </h3>
+            <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "#64748b" }}>
+              Registre el traslado, entrega o devolución de unidades de flota.
+            </p>
+          </div>
           <button
             onClick={onClose}
             style={{
               background: "none",
               border: "none",
-              fontSize: "1.5rem",
+              fontSize: "1.6rem",
               cursor: "pointer",
-              color: "#64748b",
+              color: "#94a3b8",
+              lineHeight: 1,
+              padding: "4px",
+              transition: "color 0.2s",
             }}
+            onMouseEnter={(e) => e.currentTarget.style.color = "#475569"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "#94a3b8"}
           >
             &times;
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "12px",
-              marginBottom: "16px",
-            }}
-          >
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <style>{`
+            .modal-datepicker-wrapper .react-datepicker-wrapper,
+            .modal-datepicker-wrapper .react-datepicker__input-container {
+              width: 100%;
+              display: block;
+            }
+          `}</style>
+
+          {/* Sección 1: Datos de Emisión y Movimiento */}
+          <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.1fr 1fr 0.8fr", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-                Tipo de Movimiento *
-              </label>
+              <label style={labelStyle}>Tipo de movimiento *</label>
               <select
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={{ ...inputStyle, cursor: "pointer" }}
               >
                 <option value="egreso">Egreso (Salida / Entrega)</option>
                 <option value="ingreso">Ingreso (Entrada / Devolución)</option>
               </select>
             </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-                Fecha y Hora del Movimiento *
-              </label>
+            <div className="modal-datepicker-wrapper">
+              <label style={labelStyle}>Fecha *</label>
               <DatePicker
                 selected={form.fecha_movimiento}
                 onChange={(date) => setForm({ ...form, fecha_movimiento: date })}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="dd/MM/yyyy HH:mm"
+                dateFormat="dd/MM/yyyy"
                 locale="es"
-                className="form-control"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                customInput={<input style={inputStyle} />}
               />
             </div>
-
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-                Punto de Venta
-              </label>
+              <label style={labelStyle}>Hora *</label>
+              <input
+                type="time"
+                value={form.hora_movimiento}
+                onChange={(e) => setForm({ ...form, hora_movimiento: e.target.value })}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Pto. Venta</label>
               <input
                 type="number"
                 min="1"
                 value={form.punto_venta}
                 onChange={(e) => setForm({ ...form, punto_venta: e.target.value })}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={inputStyle}
               />
             </div>
+          </div>
 
+          {/* Sección 2: Traslado y Responsables */}
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-                Destino
-              </label>
+              <label style={labelStyle}>Destino / Sucursal</label>
               <input
                 type="text"
                 value={form.destino}
                 onChange={(e) => setForm({ ...form, destino: e.target.value })}
-                placeholder="Lugar de destino / Sucursal"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                placeholder="Ej. Casa Central, Taller, etc."
+                style={inputStyle}
               />
             </div>
-
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-                Persona que retira
-              </label>
+              <label style={labelStyle}>Persona que retira</label>
               <input
                 type="text"
                 value={form.retira}
                 onChange={(e) => setForm({ ...form, retira: e.target.value })}
                 placeholder="Nombre y Apellido"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={inputStyle}
               />
             </div>
-
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-                Autorizó
-              </label>
+              <label style={labelStyle}>Autorizado por</label>
               <input
                 type="text"
                 value={form.autorizo}
                 onChange={(e) => setForm({ ...form, autorizo: e.target.value })}
                 placeholder="Persona que autoriza"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={inputStyle}
               />
             </div>
           </div>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-              Seleccionar Unidades a Incluir *
-            </label>
+          {/* Sección 3: Unidades */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>Unidades a incluir en el remito *</label>
+              <span style={{ fontSize: "12px", color: form.unidades.length > 0 ? "#166534" : "#64748b", fontWeight: 600 }}>
+                {form.unidades.length} seleccionada(s)
+              </span>
+            </div>
             <Select
               isMulti
               options={opcionesVehiculos}
               onChange={handleSelectUnidades}
-              placeholder="Buscar y seleccionar una o más unidades..."
+              placeholder="Buscar por dominio o modelo de vehículo..."
               filterOption={(option, inputValue) => option.data.searchKey.includes(inputValue.toLowerCase())}
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: "38px",
+                  borderColor: state.isFocused ? "#800020" : "#cbd5e1",
+                  boxShadow: state.isFocused ? "0 0 0 1px #800020" : "none",
+                  "&:hover": { borderColor: "#800020" },
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: "#f1f5f9",
+                  borderRadius: "4px",
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: "#1e293b",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                }),
+              }}
             />
-            <small style={{ color: "#64748b", marginTop: "4px", display: "block" }}>
-              {form.unidades.length} unidad(es) seleccionada(s).
-            </small>
           </div>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "4px" }}>
-              Observaciones (opcional)
-            </label>
+          {/* Sección 4: Observaciones */}
+          <div>
+            <label style={labelStyle}>Observaciones (opcional)</label>
             <textarea
               rows={2}
               value={form.observaciones}
               onChange={(e) => setForm({ ...form, observaciones: e.target.value })}
               placeholder="Detalle o aclaraciones del remito..."
-              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #cbd5e1",
+                fontSize: "14px",
+                color: "#1e293b",
+                backgroundColor: "#fff",
+                outline: "none",
+                boxSizing: "border-box",
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
             />
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          {/* Botones de acción */}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "10px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                backgroundColor: "#64748b",
-                color: "#fff",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "4px",
+                backgroundColor: "#fff",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+                padding: "0 18px",
+                height: "38px",
+                borderRadius: "6px",
+                fontWeight: "600",
+                fontSize: "14px",
                 cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f8fafc";
+                e.currentTarget.style.borderColor = "#94a3b8";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#fff";
+                e.currentTarget.style.borderColor = "#cbd5e1";
               }}
             >
               Cancelar
@@ -295,14 +373,23 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
               type="submit"
               disabled={isLoading}
               style={{
-                backgroundColor: "#2563eb",
+                backgroundColor: "#800020",
                 color: "#fff",
                 border: "none",
-                padding: "8px 18px",
-                borderRadius: "4px",
-                fontWeight: "bold",
+                padding: "0 22px",
+                height: "38px",
+                borderRadius: "6px",
+                fontWeight: "600",
+                fontSize: "14px",
                 cursor: "pointer",
+                boxShadow: "0 2px 4px rgba(128,0,32,0.2)",
+                transition: "all 0.2s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#5c0017"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#800020"}
             >
               {isLoading ? "Generando..." : "Confirmar y Generar Remito"}
             </button>
