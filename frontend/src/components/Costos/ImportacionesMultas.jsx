@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
+import Select from 'react-select';
 import { preprocesarMultas, confirmarImportacionMultas, reset } from '../../reducers/Costos/costosSlice';
 import { ClipLoader } from "react-spinners";
 import * as XLSX from 'xlsx';
@@ -75,6 +76,18 @@ const ImportacionesMultas = () => {
     const [showModal, setShowModal] = useState(false);
     const [multasPreprocesadas, setMultasPreprocesadas] = useState([]);
     const [listaClientes, setListaClientes] = useState([]);
+
+    const opcionesClientes = useMemo(() => {
+        return listaClientes.map((c) => {
+            const nombreDisplay = c.razon_social || `${c.nombre || ''} ${c.apellido || ''}`.trim();
+            const cuitDisplay = c.nro_documento || 'S/D';
+            return {
+                value: c.id,
+                label: `${nombreDisplay} (Doc: ${cuitDisplay})`,
+                searchKey: `${nombreDisplay} ${cuitDisplay}`.toLowerCase()
+            };
+        });
+    }, [listaClientes]);
 
     useEffect(() => {
         if (isError) {
@@ -485,32 +498,64 @@ const ImportacionesMultas = () => {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ padding: "10px 8px" }}>
-                                                        <select
-                                                            value={row.id_cliente || ""}
-                                                            disabled={esVehiculoInexistente}
-                                                            onChange={(e) => handleClienteChange(row.id_temp, e.target.value)}
-                                                            style={{
-                                                                width: "100%",
-                                                                padding: "6px 8px",
-                                                                borderRadius: "6px",
-                                                                border: row.id_cliente ? "1px solid #d9d9d9" : "2px solid #ff4d4f",
-                                                                backgroundColor: esVehiculoInexistente ? "#f5f5f5" : (row.id_cliente ? "#fff" : "#fff2f0"),
-                                                                cursor: esVehiculoInexistente ? "not-allowed" : "default",
-                                                                fontSize: "12px"
+                                                    <td style={{ padding: "8px", minWidth: "260px" }}>
+                                                        <Select
+                                                            value={opcionesClientes.find(opt => String(opt.value) === String(row.id_cliente)) || null}
+                                                            isDisabled={esVehiculoInexistente}
+                                                            onChange={(opt) => handleClienteChange(row.id_temp, opt ? opt.value : "")}
+                                                            options={opcionesClientes}
+                                                            placeholder="-- Buscar Cliente --"
+                                                            isClearable={false}
+                                                            noOptionsMessage={() => "No se encontraron clientes"}
+                                                            filterOption={(option, inputValue) => {
+                                                                if (!inputValue) return true;
+                                                                return option.data.searchKey.includes(inputValue.toLowerCase());
                                                             }}
-                                                        >
-                                                            <option value="" disabled>-- Seleccionar Cliente --</option>
-                                                            {listaClientes.map((c) => {
-                                                                const nombreDisplay = c.razon_social || `${c.nombre || ''} ${c.apellido || ''}`.trim();
-                                                                const cuitDisplay = c.nro_documento || 'S/D';
-                                                                return (
-                                                                    <option key={c.id} value={c.id}>
-                                                                        {nombreDisplay} (Doc: {cuitDisplay})
-                                                                    </option>
-                                                                );
-                                                            })}
-                                                        </select>
+                                                            menuPortalTarget={document.body}
+                                                            styles={{
+                                                                menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                                                control: (base, state) => ({
+                                                                    ...base,
+                                                                    minHeight: "32px",
+                                                                    height: "32px",
+                                                                    fontSize: "12px",
+                                                                    borderRadius: "6px",
+                                                                    borderColor: !row.id_cliente ? "#ff4d4f" : (state.isFocused ? "#4096ff" : "#d9d9d9"),
+                                                                    backgroundColor: esVehiculoInexistente ? "#f5f5f5" : (!row.id_cliente ? "#fff2f0" : "#fff"),
+                                                                    boxShadow: state.isFocused ? "0 0 0 2px rgba(24, 144, 255, 0.2)" : null,
+                                                                    "&:hover": {
+                                                                        borderColor: !row.id_cliente ? "#ff4d4f" : "#4096ff"
+                                                                    }
+                                                                }),
+                                                                valueContainer: (base) => ({
+                                                                    ...base,
+                                                                    height: "32px",
+                                                                    padding: "0 8px"
+                                                                }),
+                                                                input: (base) => ({
+                                                                    ...base,
+                                                                    margin: "0px",
+                                                                    fontSize: "12px"
+                                                                }),
+                                                                indicatorsContainer: (base) => ({
+                                                                    ...base,
+                                                                    height: "32px"
+                                                                }),
+                                                                option: (base, state) => ({
+                                                                    ...base,
+                                                                    fontSize: "12px",
+                                                                    padding: "6px 10px",
+                                                                    backgroundColor: state.isSelected ? "#e6f7ff" : (state.isFocused ? "#f5f5f5" : null),
+                                                                    color: state.isSelected ? "#1677ff" : "#333",
+                                                                    cursor: "pointer"
+                                                                }),
+                                                                menu: (base) => ({
+                                                                    ...base,
+                                                                    fontSize: "12px",
+                                                                    zIndex: 99999
+                                                                })
+                                                            }}
+                                                        />
                                                     </td>
                                                 </tr>
                                             );
