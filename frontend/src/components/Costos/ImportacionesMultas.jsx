@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
+import Select from 'react-select';
 import { preprocesarMultas, confirmarImportacionMultas, reset } from '../../reducers/Costos/costosSlice';
 import { ClipLoader } from "react-spinners";
 import * as XLSX from 'xlsx';
@@ -9,16 +10,30 @@ import styles from '../Vehiculos/VehiculosForm.module.css';
 
 const parseError = (err) => {
     if (typeof err !== 'string') return { message: String(err) };
-    const match = err.match(/^Fila (\d+) \(Dominio: ([^,]+), Acta: ([^\)]+)\): (.+)$/);
-    if (match) {
+    
+    // Intenta hacer match con Acta
+    const matchWithActa = err.match(/^Fila (\d+) \(Dominio: ([^,]+), Acta: ([^\)]+)\): (.+)$/);
+    if (matchWithActa) {
         return {
-            fila: match[1],
-            dominio: match[2],
-            acta: match[3],
-            message: match[4]
+            fila: matchWithActa[1],
+            dominio: matchWithActa[2],
+            acta: matchWithActa[3],
+            message: matchWithActa[4]
         };
     }
-    return { message: err };
+
+    // Intenta hacer match sin Acta
+    const matchWithoutActa = err.match(/^Fila (\d+) \(Dominio: ([^\)]+)\): (.+)$/);
+    if (matchWithoutActa) {
+        return {
+            fila: matchWithoutActa[1],
+            dominio: matchWithoutActa[2],
+            acta: '-',
+            message: matchWithoutActa[3]
+        };
+    }
+
+    return { message: err, fila: '-', dominio: '-', acta: '-' };
 };
 
 const getFormattedDate = () => {
@@ -36,13 +51,13 @@ const downloadErrorsExcel = (errors) => {
             Fila: parsed.fila || '-',
             Dominio: parsed.dominio || '-',
             Acta: parsed.acta || '-',
-            Error: parsed.message
+            Error: parsed.message || '-'
         };
     });
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Errores");
-    XLSX.writeFile(workbook, `Errores_Importacion_Multas_${getFormattedDate()}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Errores_Y_No_Imputados");
+    XLSX.writeFile(workbook, `Multas_No_Imputadas_${getFormattedDate()}.xlsx`);
 };
 
 const ImportacionesMultas = () => {
@@ -61,6 +76,18 @@ const ImportacionesMultas = () => {
     const [showModal, setShowModal] = useState(false);
     const [multasPreprocesadas, setMultasPreprocesadas] = useState([]);
     const [listaClientes, setListaClientes] = useState([]);
+
+    const opcionesClientes = useMemo(() => {
+        return listaClientes.map((c) => {
+            const nombreDisplay = c.razon_social || `${c.nombre || ''} ${c.apellido || ''}`.trim();
+            const cuitDisplay = c.nro_documento || 'S/D';
+            return {
+                value: c.id,
+                label: `${nombreDisplay} (Doc: ${cuitDisplay})`,
+                searchKey: `${nombreDisplay} ${cuitDisplay}`.toLowerCase()
+            };
+        });
+    }, [listaClientes]);
 
     useEffect(() => {
         if (isError) {
@@ -156,10 +183,28 @@ const ImportacionesMultas = () => {
 
     const handleConfirmarImportacion = async () => {
         const multasAImportar = multasPreprocesadas.filter(m => m.incluir);
+        const multasNoImputadas = multasPreprocesadas.filter(m => !m.incluir);
         
         if (multasAImportar.length === 0) {
-            toast.error("No hay multas seleccionadas para importar.");
-            return;
+            if (multasNoImputadas.length > 0) {
+                let finalErrors = [];
+                multasNoImputadas.forEach(m => {
+                    const actaStr = m.acta_nro ? `, Acta: ${m.acta_nro}` : '';
+                    const filaNum = m.numero_fila_excel || m.id_temp;
+                    const advertenciaStr = m.advertencia || 'Desmarcada manualmente (no se seleccionó para imputar)';
+                    finalErrors.push(`Fila ${filaNum} (Dominio: ${m.dominio}${actaStr}): No imputada - ${advertenciaStr}`);
+                });
+                setLocalErrors(finalErrors);
+                downloadErrorsExcel(finalErrors);
+                toast.info("Se generó el Excel con las multas no imputadas.");
+                setShowModal(false);
+                setFile(null);
+                setMultasPreprocesadas([]);
+                return;
+            } else {
+                toast.error("No hay multas para procesar.");
+                return;
+            }
         }
 
         const sinCliente = multasAImportar.filter(m => !m.id_cliente);
@@ -179,20 +224,35 @@ const ImportacionesMultas = () => {
             const usuarioNombre = user?.user || user?.nombre || user?.email || "sistema";
             const res = await dispatch(confirmarImportacionMultas({ multas: multasAImportar, usuario: usuarioNombre })).unwrap();
             setIsConfirming(false);
+            
+            let finalErrors = [...(res?.errores || [])];
+            
+            if (multasNoImputadas.length > 0) {
+                multasNoImputadas.forEach(m => {
+                    const actaStr = m.acta_nro ? `, Acta: ${m.acta_nro}` : '';
+                    const filaNum = m.numero_fila_excel || m.id_temp;
+                    const advertenciaStr = m.advertencia || 'Desmarcada manualmente (no se seleccionó para imputar)';
+                    finalErrors.push(`Fila ${filaNum} (Dominio: ${m.dominio}${actaStr}): No imputada - ${advertenciaStr}`);
+                });
+            }
+
             if (res?.status) {
-                toast.success(res.message || "¡Multas imputadas correctamente!");
+                toast.success(res.message || "¡Proceso finalizado!");
                 setShowModal(false);
                 setFile(null);
                 setMultasPreprocesadas([]);
-                if (res.errores && res.errores.length > 0) {
-                    setLocalErrors(res.errores);
-                    downloadErrorsExcel(res.errores);
+                if (finalErrors.length > 0) {
+                    setLocalErrors(finalErrors);
+                    downloadErrorsExcel(finalErrors);
                 } else {
                     setLocalErrors([]);
                 }
             } else {
                 toast.error(res?.message || "Ocurrió un error al imputar las multas.");
-                if (res?.errores) setLocalErrors(res.errores);
+                if (finalErrors.length > 0) {
+                    setLocalErrors(finalErrors);
+                    downloadErrorsExcel(finalErrors);
+                }
             }
         } catch (error) {
             setIsConfirming(false);
@@ -438,32 +498,64 @@ const ImportacionesMultas = () => {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ padding: "10px 8px" }}>
-                                                        <select
-                                                            value={row.id_cliente || ""}
-                                                            disabled={esVehiculoInexistente}
-                                                            onChange={(e) => handleClienteChange(row.id_temp, e.target.value)}
-                                                            style={{
-                                                                width: "100%",
-                                                                padding: "6px 8px",
-                                                                borderRadius: "6px",
-                                                                border: row.id_cliente ? "1px solid #d9d9d9" : "2px solid #ff4d4f",
-                                                                backgroundColor: esVehiculoInexistente ? "#f5f5f5" : (row.id_cliente ? "#fff" : "#fff2f0"),
-                                                                cursor: esVehiculoInexistente ? "not-allowed" : "default",
-                                                                fontSize: "12px"
+                                                    <td style={{ padding: "8px", minWidth: "260px" }}>
+                                                        <Select
+                                                            value={opcionesClientes.find(opt => String(opt.value) === String(row.id_cliente)) || null}
+                                                            isDisabled={esVehiculoInexistente}
+                                                            onChange={(opt) => handleClienteChange(row.id_temp, opt ? opt.value : "")}
+                                                            options={opcionesClientes}
+                                                            placeholder="-- Buscar Cliente --"
+                                                            isClearable={false}
+                                                            noOptionsMessage={() => "No se encontraron clientes"}
+                                                            filterOption={(option, inputValue) => {
+                                                                if (!inputValue) return true;
+                                                                return option.data.searchKey.includes(inputValue.toLowerCase());
                                                             }}
-                                                        >
-                                                            <option value="" disabled>-- Seleccionar Cliente --</option>
-                                                            {listaClientes.map((c) => {
-                                                                const nombreDisplay = c.razon_social || `${c.nombre || ''} ${c.apellido || ''}`.trim();
-                                                                const cuitDisplay = c.nro_documento || 'S/D';
-                                                                return (
-                                                                    <option key={c.id} value={c.id}>
-                                                                        {nombreDisplay} (Doc: {cuitDisplay})
-                                                                    </option>
-                                                                );
-                                                            })}
-                                                        </select>
+                                                            menuPortalTarget={document.body}
+                                                            styles={{
+                                                                menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                                                control: (base, state) => ({
+                                                                    ...base,
+                                                                    minHeight: "32px",
+                                                                    height: "32px",
+                                                                    fontSize: "12px",
+                                                                    borderRadius: "6px",
+                                                                    borderColor: !row.id_cliente ? "#ff4d4f" : (state.isFocused ? "#4096ff" : "#d9d9d9"),
+                                                                    backgroundColor: esVehiculoInexistente ? "#f5f5f5" : (!row.id_cliente ? "#fff2f0" : "#fff"),
+                                                                    boxShadow: state.isFocused ? "0 0 0 2px rgba(24, 144, 255, 0.2)" : null,
+                                                                    "&:hover": {
+                                                                        borderColor: !row.id_cliente ? "#ff4d4f" : "#4096ff"
+                                                                    }
+                                                                }),
+                                                                valueContainer: (base) => ({
+                                                                    ...base,
+                                                                    height: "32px",
+                                                                    padding: "0 8px"
+                                                                }),
+                                                                input: (base) => ({
+                                                                    ...base,
+                                                                    margin: "0px",
+                                                                    fontSize: "12px"
+                                                                }),
+                                                                indicatorsContainer: (base) => ({
+                                                                    ...base,
+                                                                    height: "32px"
+                                                                }),
+                                                                option: (base, state) => ({
+                                                                    ...base,
+                                                                    fontSize: "12px",
+                                                                    padding: "6px 10px",
+                                                                    backgroundColor: state.isSelected ? "#e6f7ff" : (state.isFocused ? "#f5f5f5" : null),
+                                                                    color: state.isSelected ? "#1677ff" : "#333",
+                                                                    cursor: "pointer"
+                                                                }),
+                                                                menu: (base) => ({
+                                                                    ...base,
+                                                                    fontSize: "12px",
+                                                                    zIndex: 99999
+                                                                })
+                                                            }}
+                                                        />
                                                     </td>
                                                 </tr>
                                             );

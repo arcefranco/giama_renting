@@ -532,22 +532,7 @@ export const preprocesarTelepases = async (req, res) => {
                 continue;
             }
 
-            let fechaStr = "";
-            const rawFecha = fila.FECHA;
-            if (typeof rawFecha === "number") {
-                const fechaJS = new Date(Math.round((rawFecha - 25569) * 86400 * 1000));
-                const d = String(fechaJS.getUTCDate()).padStart(2, "0");
-                const m = String(fechaJS.getUTCMonth() + 1).padStart(2, "0");
-                const y = fechaJS.getUTCFullYear();
-                fechaStr = `${d}/${m}/${y}`;
-            } else if (rawFecha instanceof Date) {
-                const d = String(rawFecha.getUTCDate()).padStart(2, "0");
-                const m = String(rawFecha.getUTCMonth() + 1).padStart(2, "0");
-                const y = rawFecha.getUTCFullYear();
-                fechaStr = `${d}/${m}/${y}`;
-            } else if (rawFecha) {
-                fechaStr = String(rawFecha).trim();
-            }
+            const dateObj = parseFechaTelepase(fila.FECHA);
 
             if (!gruposPorPatente[patente]) {
                 gruposPorPatente[patente] = {
@@ -566,7 +551,7 @@ export const preprocesarTelepases = async (req, res) => {
             gruposPorPatente[patente].totalNeto += montoNeto;
             gruposPorPatente[patente].cantidadPasadas += 1;
             if (fila.AUTOPISTA) gruposPorPatente[patente].autopistas.add(String(fila.AUTOPISTA).trim());
-            if (fechaStr) gruposPorPatente[patente].fechas.push(fechaStr);
+            if (dateObj) gruposPorPatente[patente].fechas.push(dateObj);
         }
 
         const patentes = Object.keys(gruposPorPatente);
@@ -605,28 +590,33 @@ export const preprocesarTelepases = async (req, res) => {
                 idVehiculo = vehiculo.ID;
             }
 
-            // 2. Determinar rango de fechas y fecha de referencia más reciente
-            const fechasOrdenadas = grupo.fechas.sort();
-            const rangoFechas = fechasOrdenadas.length > 0
-                ? (fechasOrdenadas[0] === fechasOrdenadas[fechasOrdenadas.length - 1]
-                    ? fechasOrdenadas[0]
-                    : `${fechasOrdenadas[0]} al ${fechasOrdenadas[fechasOrdenadas.length - 1]}`)
-                : "S/D";
+            // 2. Determinar rango de fechas y fecha de referencia más reciente ordenando cronológicamente
+            grupo.fechas.sort((a, b) => a.getTime() - b.getTime());
 
-            const fechaMasReciente = grupo.fechas.length > 0
-                ? obtenerFechaMasReciente(grupo.fechas)
-                : getTodayDate();
+            let rangoFechas = "S/D";
+            let fechaMasReciente = getTodayDate();
 
-            // 3. Verificar si este paquete de telepases ya fue procesado en la tabla telepases
+            if (grupo.fechas.length > 0) {
+                const fechaMin = formatFechaDDMMAAAA(grupo.fechas[0]);
+                const fechaMax = formatFechaDDMMAAAA(grupo.fechas[grupo.fechas.length - 1]);
+                rangoFechas = fechaMin === fechaMax ? fechaMin : `${fechaMin} al ${fechaMax}`;
+                fechaMasReciente = formatFechaYYYYMMDD(grupo.fechas[grupo.fechas.length - 1]);
+            }
+
+            // 3. Verificar si este paquete de telepases ya fue procesado en la tabla telepases (contemplando formato nuevo e histórico invertido)
             if (patente && rangoFechas) {
+                const rangoInvertido = grupo.fechas.length > 0
+                    ? `${formatFechaDDMMAAAA(grupo.fechas[grupo.fechas.length - 1])} al ${formatFechaDDMMAAAA(grupo.fechas[0])}`
+                    : rangoFechas;
+
                 const [telepaseExistente] = await giama_renting.query(
                     `SELECT id, fecha_proceso 
                      FROM telepases 
-                     WHERE dominio = :dominio AND rango_fechas = :rango_fechas AND se_proceso = 1 
+                     WHERE dominio = :dominio AND (rango_fechas = :rango_fechas OR rango_fechas = :rango_invertido) AND se_proceso = 1 
                      LIMIT 1`,
                     {
                         type: QueryTypes.SELECT,
-                        replacements: { dominio: patente, rango_fechas: rangoFechas }
+                        replacements: { dominio: patente, rango_fechas: rangoFechas, rango_invertido: rangoInvertido }
                     }
                 );
 
@@ -835,42 +825,71 @@ export const importacionesTelepases = async (req, res) => {
     return preprocesarTelepases(req, res);
 };
 
-function obtenerFechaMasReciente(fechas) {
-    let max = null;
-
-    for (const f of fechas) {
-        let dateObj = null;
-
-        if (f.includes("/")) {
-            const parts = f.split("/");
-            if (parts.length === 3) {
-                const [dia, mes, anio] = parts;
-                dateObj = new Date(`${anio}-${mes}-${dia}T00:00:00`);
-            }
-        } else if (f.includes("-")) {
-            const parts = f.split("-");
-            if (parts.length === 3) {
-                if (parts[0].length === 4) {
-                    dateObj = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00`);
-                } else {
-                    dateObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
-                }
-            }
-        }
-
-        if (dateObj && !isNaN(dateObj.getTime())) {
-            if (!max || dateObj > max) {
-                max = dateObj;
-            }
-        }
+function parseFechaTelepase(valor) {
+    if (!valor) return null;
+    if (valor instanceof Date && !isNaN(valor.getTime())) {
+        return valor;
     }
+    if (typeof valor === "number") {
+        const fechaJS = new Date(Math.round((valor - 25569) * 86400 * 1000));
+        return isNaN(fechaJS.getTime()) ? null : fechaJS;
+    }
+    if (typeof valor === "string") {
+        const str = valor.trim();
+        const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+        if (slashMatch) {
+            const dia = parseInt(slashMatch[1], 10);
+            const mes = parseInt(slashMatch[2], 10) - 1;
+            let anio = parseInt(slashMatch[3], 10);
+            if (anio < 100) anio += 2000;
+            const d = new Date(Date.UTC(anio, mes, dia));
+            return isNaN(d.getTime()) ? null : d;
+        }
+        const dashMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (dashMatch) {
+            const anio = parseInt(dashMatch[1], 10);
+            const mes = parseInt(dashMatch[2], 10) - 1;
+            const dia = parseInt(dashMatch[3], 10);
+            const d = new Date(Date.UTC(anio, mes, dia));
+            return isNaN(d.getTime()) ? null : d;
+        }
+        const dashMatchDMY = str.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})/);
+        if (dashMatchDMY) {
+            const dia = parseInt(dashMatchDMY[1], 10);
+            const mes = parseInt(dashMatchDMY[2], 10) - 1;
+            let anio = parseInt(dashMatchDMY[3], 10);
+            if (anio < 100) anio += 2000;
+            const d = new Date(Date.UTC(anio, mes, dia));
+            return isNaN(d.getTime()) ? null : d;
+        }
+        const parsed = new Date(str);
+        if (!isNaN(parsed.getTime())) return parsed;
+    }
+    return null;
+}
 
-    if (!max) return getTodayDate();
+function formatFechaDDMMAAAA(date) {
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const y = date.getUTCFullYear();
+    return `${d}/${m}/${y}`;
+}
 
-    const y = max.getFullYear();
-    const m = String(max.getMonth() + 1).padStart(2, "0");
-    const d = String(max.getDate()).padStart(2, "0");
+function formatFechaYYYYMMDD(date) {
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
+}
+
+function obtenerFechaMasReciente(fechas) {
+    if (!fechas || fechas.length === 0) return getTodayDate();
+    const fechasValidas = fechas
+        .map(f => (f instanceof Date ? f : parseFechaTelepase(f)))
+        .filter(d => d !== null)
+        .sort((a, b) => a.getTime() - b.getTime());
+    if (fechasValidas.length === 0) return getTodayDate();
+    return formatFechaYYYYMMDD(fechasValidas[fechasValidas.length - 1]);
 }
 
 
