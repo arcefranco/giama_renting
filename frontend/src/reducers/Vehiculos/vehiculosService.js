@@ -123,6 +123,22 @@ const postObservacionVehiculo = async (data) => {
   return postFunction("vehiculos/postObservacionVehiculo", data);
 };
 
+const getRemitos = async () => {
+  return getFunction("vehiculos/remitos");
+};
+
+const getRemitoById = async (data) => {
+  return postFunction("vehiculos/remito/id", data);
+};
+
+const postRemito = async (data) => {
+  return postFunction("vehiculos/remito/nuevo", data);
+};
+
+const anularRemito = async (data) => {
+  return postFunction("vehiculos/remito/anular", data);
+};
+
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,
@@ -144,5 +160,10 @@ const vehiculosService = {
   postActualizarKilometraje,
   getObservacionesVehiculo,
   postObservacionVehiculo,
+  getRemitos,
+  getRemitoById,
+  postRemito,
+  anularRemito,
 };
 export default vehiculosService;
+

@@ -16,6 +16,7 @@ const menuItems = [
       { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["2", "3", "4", "5"] },
       { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
       { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
+      { label: "Remitos", to: "/vehiculos/remitos" },
       { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["1"] }
     ],
   },

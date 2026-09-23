@@ -19,7 +19,11 @@ import {
   postVehiculosMasivos,
   postActualizarKilometraje,
   getObservacionesVehiculo,
-  postObservacionVehiculo
+  postObservacionVehiculo,
+  getRemitos,
+  getRemitoById,
+  postRemito,
+  anularRemito,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 import { auth } from "../middlewares/auth.js";
@@ -97,4 +101,11 @@ vehiculosRouter.post(
 vehiculosRouter.post("/getObservacionesVehiculo", auth, getObservacionesVehiculo);
 vehiculosRouter.post("/postObservacionVehiculo", auth, postObservacionVehiculo);
 
+// Remitos
+vehiculosRouter.get("/remitos", auth, getRemitos);
+vehiculosRouter.post("/remito/id", auth, getRemitoById);
+vehiculosRouter.post("/remito/nuevo", auth, postRemito);
+vehiculosRouter.post("/remito/anular", auth, anularRemito);
+
 export default vehiculosRouter;
+
