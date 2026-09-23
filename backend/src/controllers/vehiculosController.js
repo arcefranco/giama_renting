@@ -2496,6 +2496,7 @@ export const getRemitoById = async (req, res) => {
          rd.id_movimiento,
          v.dominio,
          v.dominio_provisorio,
+         v.estado_actual,
          v.modelo,
          m.nombre AS modelo_nombre,
          um.fecha_movimiento,
@@ -2538,6 +2539,7 @@ export const postRemito = async (req, res) => {
     observaciones,
     usuario_alta,
     unidades,
+    estado_vehiculos,
   } = req.body;
 
   if (!tipo || !fecha_movimiento) {
@@ -2574,6 +2576,7 @@ export const postRemito = async (req, res) => {
     );
 
     const numero = numResult.siguiente_numero;
+    const nroFormatted = `${String(punto_venta).padStart(4, "0")}-${String(numero).padStart(8, "0")}`;
     const tipoNormalizado = tipo.toLowerCase();
     const motivo = tipoNormalizado === "egreso" ? "egreso_remito" : "ingreso_remito";
 
@@ -2625,10 +2628,31 @@ export const postRemito = async (req, res) => {
           transaction,
         }
       );
+
+      if (estado_vehiculos) {
+        await giama_renting.query(
+          `UPDATE vehiculos SET estado_actual = ? WHERE id = ?`,
+          {
+            replacements: [estado_vehiculos, id_unidad],
+            type: QueryTypes.UPDATE,
+            transaction,
+          }
+        );
+
+        const obsText = `Cambio de estado automático generado por Remito N° ${nroFormatted}`;
+        await giama_renting.query(
+          `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
+           VALUES (?, ?, ?, NOW())`,
+          {
+            replacements: [id_unidad, obsText, usuario_alta || "Sistema"],
+            type: QueryTypes.INSERT,
+            transaction,
+          }
+        );
+      }
     }
 
     await transaction.commit();
-    const nroFormatted = `${String(punto_venta).padStart(4, "0")}-${String(numero).padStart(8, "0")}`;
     return res.send({
       status: true,
       message: `Remito N° ${nroFormatted} generado correctamente.`,

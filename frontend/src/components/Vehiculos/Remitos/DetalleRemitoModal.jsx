@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { getRemitoById } from "../../../reducers/Vehiculos/vehiculosSlice.js";
 import { format, parseISO } from "date-fns";
+import html2pdf from "html2pdf.js";
 
 const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
   const dispatch = useDispatch();
@@ -22,82 +23,181 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
     ? `${String(remito.punto_venta).padStart(4, "0")}-${String(remito.numero).padStart(8, "0")}`
     : "";
 
+  const firstDetalles = detalles.length > 2 ? detalles.slice(0, -2) : [];
+  const lastDetalles = detalles.length > 2 ? detalles.slice(-2) : detalles;
+
+  const colgroupHtml = `
+    <colgroup>
+      <col style="width: 5%;">
+      <col style="width: 15%;">
+      <col style="width: 20%;">
+      <col style="width: 15%;">
+      <col style="width: 15%;">
+      <col style="width: 15%;">
+      <col style="width: 15%;">
+    </colgroup>
+  `;
+
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    const content = `
-      <html>
-        <head>
-          <title>Remito ${nroFormatted}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
-            .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-            .header h2 { margin: 0; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .footer { margin-top: 40px; display: flex; justify-content: space-between; }
-            .signature { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2>REMITO DE UNIDADES N° ${nroFormatted}</h2>
-            <p><strong>Fecha de Emisión:</strong> ${
+    const element = document.createElement("div");
+    const generateRemitoPage = (tipoCopia) => `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 800px; margin: 0 auto; box-sizing: border-box; min-height: 270mm; display: flex; flex-direction: column;">
+        <div style="text-align: center; margin-bottom: 5px; font-weight: bold; font-size: 14px; letter-spacing: 2px;">
+          ${tipoCopia}
+        </div>
+        <div style="flex-grow: 1;">
+        <div style="border: 1px solid #000; margin-bottom: 20px; display: flex; position: relative;">
+          <!-- Central separator line -->
+          <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background-color: #000;"></div>
+          
+          <!-- Central Box (Letter R) -->
+          <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); background: white; border: 1px solid #000; border-top: none; padding: 5px 12px; text-align: center; font-weight: bold; font-size: 24px;">
+            R
+            <div style="font-size: 8px; font-weight: normal; margin-top: 2px;">CÓD. 091</div>
+          </div>
+
+          <!-- Left Side -->
+          <div style="flex: 1; padding: 20px; box-sizing: border-box;">
+            <h1 style="margin: 0 0 2px 0; font-size: 28px; font-weight: 900; color: #800020; letter-spacing: 2px; line-height: 1;">GIAMA</h1>
+            <span style="font-size: 11px; color: #555; font-weight: bold; letter-spacing: 1.5px; display: block; margin-bottom: 20px;">RENTING</span>
+            
+            <p style="margin: 0; font-size: 11px;"><strong>Razón Social:</strong> GIAMA RENTING S.A.</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px;"><strong>Domicilio Comercial:</strong> De Los Incas Av. 5150 Piso:8</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px;">Capital Federal, Ciudad de Buenos Aires</p>
+            <p style="margin: 4px 0 0 0; font-size: 11px;"><strong>Condición frente al IVA:</strong> IVA Responsable Inscripto</p>
+          </div>
+
+          <!-- Right Side -->
+          <div style="flex: 1; padding: 40px 20px 20px 60px; box-sizing: border-box;">
+            <h2 style="margin: 0 0 5px 0; font-size: 22px; color: #333;">REMITO</h2>
+            <p style="margin: 0; font-size: 14px; font-weight: bold;">N° ${nroFormatted}</p>
+            <p style="margin: 5px 0 20px 0; font-size: 12px; color: #444;"><strong>Fecha de Emisión:</strong> ${
               remito?.fecha_emision
-                ? format(parseISO(remito.fecha_emision), "dd/MM/yyyy HH:mm")
+                ? format(parseISO(remito.fecha_emision), "dd/MM/yyyy ")
                 : ""
             }</p>
+            
+            <p style="margin: 0; font-size: 11px;"><strong>CUIT:</strong> 30718651200</p>
           </div>
-          <div class="info-grid">
-            <p><strong>Estado:</strong> ${remito?.estado}</p>
-            <p><strong>Usuario Alta:</strong> ${remito?.usuario_alta || "-"}</p>
-            <p><strong>Observaciones:</strong> ${remito?.observaciones || "-"}</p>
-          </div>
-          <h3>Detalle de Unidades (${detalles.length})</h3>
-          <table>
-            <thead>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 14px;">
+          <p style="margin: 0;"><strong>Estado:</strong> ${remito?.estado}</p>
+          <p style="margin: 0;"><strong>Observaciones:</strong> ${remito?.observaciones || "-"}</p>
+        </div>
+        <h3 style="font-size: 16px;">Detalle de Unidades</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; table-layout: fixed;">
+          ${colgroupHtml}
+          <thead>
+            <tr>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">N°</th>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Dominio / Patente</th>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Modelo</th>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Tipo Movimiento</th>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Motivo</th>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Persona que Retira</th>
+              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Autorizó</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${firstDetalles
+              .map(
+                (d, i) => `
               <tr>
-                <th>N°</th>
-                <th>Dominio / Patente</th>
-                <th>Modelo</th>
-                <th>Tipo Movimiento</th>
-                <th>Destino</th>
-                <th>Persona que Retira</th>
-                <th>Autorizó</th>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${i + 1}</td>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.dominio || d.dominio_provisorio || "-"}</td>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.modelo_nombre || "-"}</td>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.tipo ? d.tipo.toUpperCase() : "-"}</td>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.destino || "-"}</td>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.retira || "-"}</td>
+                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.autorizo || "-"}</td>
               </tr>
-            </thead>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        </div> <!-- End flex-grow wrapper -->
+        <div style="page-break-inside: avoid;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;">
+            ${colgroupHtml}
             <tbody>
-              ${detalles
+              ${lastDetalles
                 .map(
                   (d, i) => `
                 <tr>
-                  <td>${i + 1}</td>
-                  <td>${d.dominio || d.dominio_provisorio || "-"}</td>
-                  <td>${d.modelo_nombre || "-"}</td>
-                  <td>${d.tipo ? d.tipo.toUpperCase() : "-"}</td>
-                  <td>${d.destino || "-"}</td>
-                  <td>${d.retira || "-"}</td>
-                  <td>${d.autorizo || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${firstDetalles.length + i + 1}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.dominio || d.dominio_provisorio || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.modelo_nombre || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.tipo ? d.tipo.toUpperCase() : "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.destino || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.retira || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.autorizo || "-"}</td>
                 </tr>
               `
                 )
                 .join("")}
             </tbody>
           </table>
-          <div class="footer">
-            <div class="signature">Firma Entregó</div>
-            <div class="signature">Firma Recibió</div>
+          <div style="margin-top: 60px; position: relative;">
+          <div style="display: flex; justify-content: space-between; padding: 0 30px; padding-bottom: 40px;">
+            <div style="display: flex; flex-direction: column; gap: 40px;">
+              <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 13px;">Firma Entregó</div>
+              <div style="width: 200px; text-align: center; font-size: 13px;">
+                <div style="min-height: 20px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;">
+                  <strong>${detalles[0]?.autorizo || ""}</strong>
+                </div>
+                <div style="border-top: 1px solid #000; padding-top: 5px;">Aclaración Autorizó</div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 40px;">
+              <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 13px;">Firma Recibió</div>
+              <div style="width: 200px; text-align: center; font-size: 13px;">
+                <div style="min-height: 20px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;">
+                  <strong>${detalles[0]?.retira || ""}</strong>
+                </div>
+                <div style="border-top: 1px solid #000; padding-top: 5px;">Aclaración Retiró</div>
+              </div>
+            </div>
           </div>
-        </body>
-      </html>
+          <div style="position: absolute; bottom: -20px; left: 0; width: 100%; text-align: center; font-weight: bold; font-size: 11px; color: #555;">
+             DOCUMENTO NO VÁLIDO COMO FACTURA
+          </div>
+        </div>
+      </div>
     `;
-    printWindow.document.write(content);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+
+    element.innerHTML = `
+      ${generateRemitoPage("ORIGINAL")}
+      <div class="html2pdf__page-break"></div>
+      ${generateRemitoPage("DUPLICADO")}
+    `;
+
+    const opt = {
+      margin:       [10, 10, 20, 10], // top, right, bottom, left (increased bottom margin for page numbers)
+      filename:     `Remito_${nroFormatted}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: 'css', before: '.html2pdf__page-break' }
+    };
+
+    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(9);
+        pdf.setTextColor(100);
+        
+        // Pág X de Y
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const text = `Pág ${i} de ${totalPages}`;
+        
+        // Add to bottom right
+        pdf.text(text, pageWidth - 10, pageHeight - 10, { align: 'right' });
+      }
+    }).save();
   };
 
   return (
@@ -189,9 +289,6 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
                   {remito.estado}
                 </span>
               </div>
-              <div>
-                <strong>Usuario Generador:</strong> {remito.usuario_alta || "-"}
-              </div>
               {remito.observaciones && (
                 <div style={{ gridColumn: "1 / -1" }}>
                   <strong>Observaciones:</strong> {remito.observaciones}
@@ -210,7 +307,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
                     <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Dominio</th>
                     <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Modelo</th>
                     <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Movimiento</th>
-                    <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Destino</th>
+                    <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Motivo</th>
                     <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Retira</th>
                     <th style={{ padding: "8px", borderBottom: "2px solid #cbd5e1" }}>Autorizó</th>
                   </tr>

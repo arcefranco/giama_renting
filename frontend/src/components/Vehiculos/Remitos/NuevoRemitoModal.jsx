@@ -6,6 +6,7 @@ import es from "date-fns/locale/es";
 import { format } from "date-fns";
 import Select from "react-select";
 import Swal from "sweetalert2";
+import { ESTADOS_ESTATICOS } from "../../../utils/estadosVehiculoConfig.js";
 
 registerLocale("es", es);
 
@@ -25,6 +26,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
     autorizo: "",
     observaciones: "",
     unidades: [], // array de IDs de vehiculos
+    estado_vehiculos: "",
   });
 
   const opcionesVehiculos = useMemo(() => {
@@ -82,6 +84,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
       observaciones: form.observaciones,
       usuario_alta: username,
       unidades: form.unidades,
+      estado_vehiculos: form.estado_vehiculos || null,
     };
 
     const res = await dispatch(postRemito(payload));
@@ -99,6 +102,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
         autorizo: "",
         observaciones: "",
         unidades: [],
+        estado_vehiculos: "",
       });
     } else {
       Swal.fire("Error", res.payload?.message || "No se pudo generar el remito", "error");
@@ -201,7 +205,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
           `}</style>
 
           {/* Sección 1: Datos de Emisión y Movimiento */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.1fr 1fr 0.8fr", gap: "14px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.1fr 1fr", gap: "14px" }}>
             <div>
               <label style={labelStyle}>Tipo de movimiento *</label>
               <select
@@ -232,27 +236,17 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
                 style={inputStyle}
               />
             </div>
-            <div>
-              <label style={labelStyle}>Pto. Venta</label>
-              <input
-                type="number"
-                min="1"
-                value={form.punto_venta}
-                onChange={(e) => setForm({ ...form, punto_venta: e.target.value })}
-                style={inputStyle}
-              />
-            </div>
           </div>
 
           {/* Sección 2: Traslado y Responsables */}
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "14px" }}>
             <div>
-              <label style={labelStyle}>Destino / Sucursal</label>
+              <label style={labelStyle}>Motivo</label>
               <input
                 type="text"
                 value={form.destino}
                 onChange={(e) => setForm({ ...form, destino: e.target.value })}
-                placeholder="Ej. Casa Central, Taller, etc."
+                placeholder="Ej. Taller, Traslado, etc."
                 style={inputStyle}
               />
             </div>
@@ -315,6 +309,23 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
                 }),
               }}
             />
+          </div>
+
+          {/* Sección 3.5: Cambio de Estado (Opcional) */}
+          <div>
+            <label style={labelStyle}>Cambiar estado de las unidades a (opcional)</label>
+            <select
+              value={form.estado_vehiculos}
+              onChange={(e) => setForm({ ...form, estado_vehiculos: e.target.value })}
+              style={{ ...inputStyle, cursor: "pointer" }}
+            >
+              <option value="">No cambiar estado</option>
+              {ESTADOS_ESTATICOS.map((est) => (
+                <option key={est.id} value={est.id}>
+                  {est.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Sección 4: Observaciones */}
