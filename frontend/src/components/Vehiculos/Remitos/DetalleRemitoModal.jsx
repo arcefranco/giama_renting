@@ -41,7 +41,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
   const handlePrint = () => {
     const element = document.createElement("div");
     const generateRemitoPage = (tipoCopia) => `
-      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 800px; margin: 0 auto; box-sizing: border-box; min-height: 270mm; display: flex; flex-direction: column;">
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 800px; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column;">
         <div style="text-align: center; margin-bottom: 5px; font-weight: bold; font-size: 14px; letter-spacing: 2px;">
           ${tipoCopia}
         </div>
@@ -160,7 +160,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
               </div>
             </div>
           </div>
-          <div style="position: absolute; bottom: -20px; left: 0; width: 100%; text-align: center; font-weight: bold; font-size: 11px; color: #555;">
+          <div style="margin-top: 20px; text-align: center; font-weight: bold; font-size: 11px; color: #555;">
              DOCUMENTO NO VÁLIDO COMO FACTURA
           </div>
         </div>
