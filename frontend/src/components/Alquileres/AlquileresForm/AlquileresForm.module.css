@@ -111,7 +111,8 @@
   border-bottom: 2px solid #a52a2a;
 }
 
-.inputContainer input[type="date"] {
+.inputContainer input[type="date"],
+.inputContainer input[type="time"] {
   border: none;
   border-bottom: 2px solid #800000;
   padding: 8px;
@@ -121,7 +122,8 @@
   background-color: transparent;
 }
 
-.inputContainer input[type="date"]:focus {
+.inputContainer input[type="date"]:focus,
+.inputContainer input[type="time"]:focus {
   border-bottom: 2px solid #a52a2a;
 }
 

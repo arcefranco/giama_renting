@@ -1,0 +1,256 @@
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DY	2026-08-28	2026-09-07	711	2026-08-18	2028-08-22	Hugo Eduardo	Retamar Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BJ	2026-08-28	2026-09-07	639	2026-07-13	2028-07-18	Dionicio Ruiz	Diaz 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CW	2026-08-29	2026-09-07	733	2026-08-28	2028-08-29	Gainsbor Jhoan	Huallata Espinoza Flash & Go 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BH	2026-08-28	2026-09-07	706	2026-08-14	2028-08-15	Gabriel Alejandro	Dobarro Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252SX	2026-08-29	2026-09-07	560	2026-05-28	2026-09-01	DANIEL GUILLERMO	CARDONA PUELLO	
+AH252SX	2026-08-29	2026-09-07	737	2026-09-02	2026-09-14	DANIEL GUILLERMO	CARDONA PUELLO	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI210DR	2026-08-28	2026-09-07	563	2026-06-01	2026-12-01			PLUMA AGROAVICOLA ARGENTINA SAS
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BV	2026-08-28	2026-09-07	636	2026-07-13	2028-07-18	rodrigo roberto	cussi rueda	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448TY	2026-08-28	2026-09-07	685	2026-08-05	2026-11-10	MAXIMILIANO EUGENIO 	RODRIGUEZ	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325CB	2026-08-28	2026-09-07	638	2026-07-13	2028-07-18	Hector Marcelo	Rodriguez	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DX	2026-08-28	2026-09-07	670	2026-08-03	2026-09-02	Atilio Miguel	Quaini Flash & Go 	
+AI288DX	2026-08-28	2026-09-07	741	2026-09-03	2028-09-05	Leandro	Barreto Maldonado Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LI	2026-08-28	2026-09-07	669	2026-07-30	2026-11-03	luis guillermo	bottini	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BG	2026-08-28	2026-09-07	679	2026-08-05	2028-08-08	Manuel Eliecen	Morales Bastidas	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LF	2026-08-29	2026-09-07	617	2026-07-01	2026-09-29	Oscar Mauricio	Chinchilla Lopez	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH645XD	2026-08-29	2026-09-07	664	2026-07-29	2026-10-27	Hugo Cesar	Fernandez Britez	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252SV	2026-08-28	2026-09-07	697	2026-08-12	2026-11-10	carlos enrique	Huaman felipe	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CU	2026-08-28	2026-09-06	722	2026-08-26	2028-08-29	Jean Carlos 	Cambero Noguera Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DZ	2026-08-28	2026-09-07	715	2026-08-21	2028-08-22	MARIO DANIEL	LANZILOTTI	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BU	2026-08-28	2026-09-07	691	2026-08-10	2028-08-15	Sergio Rafael 	Alvez Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH191LX	2026-08-28	2026-09-07	596	2026-06-19	2026-09-22	Daniel Oscar	Aguirre 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH502KC	2026-08-28	2026-09-06	721	2026-08-26	2026-09-09	Ramón Daniel Maximiliano 	Palavecino	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH502KG	2026-08-28	2026-09-07	680	2026-08-05	2026-10-20	JAVIER LUCIO	ALDEA MEDRANO	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BB	2026-08-28	2026-09-07	710	2026-08-19	2028-08-22	Leopoldo Lucas Matias	Peralta	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TO	2026-08-28	2026-09-07	708	2026-08-19	2026-11-17	Ramon Marcelo	Montes	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DF	2026-08-28	2026-09-05	725	2026-08-27	2028-08-29	Lucas Matias	Diaz Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448TP	2026-08-28	2026-09-07	665	2026-07-29	2026-10-27	CLAUDIO GUILLERMO	GUTIERREZ	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DU	2026-08-29	2026-09-07	712	2026-08-20	2028-08-22	Daniel Esteban	Godoy 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BO	2026-08-28	2026-09-06	647	2026-07-17	2028-07-18	Martin	Nacher	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BE	2026-08-28	2026-09-07	633	2026-07-08	2028-07-11	Fernando Augusto Carlos	Zacarias Fernandez	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI210DQ	2026-08-28	2026-09-07	607	2026-07-01	2026-09-29	Vanina Leonor	Lezcano 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LD	2026-08-28	2026-09-03	645	2026-07-15	2026-10-20	Marcelo Fabian	Sindaco	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BQ	2026-08-28	2026-09-06	723	2026-08-26	2028-08-29	Ruben Enrique	Perez Matamoros Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH645XC	2026-08-28	2026-09-06	613	2026-07-01	2026-09-29	ariel angel	grismado	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TL	2026-08-29	2026-09-06	655	2026-07-22	2026-10-27	CLAUDIO MATIAS	MINUET	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LH	2026-08-29	2026-09-07	618	2026-07-01	2026-09-29	Victor Hugo	Liendro 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LA	2026-08-31	2026-09-02	631	2026-07-08	2026-10-06	Juan Pablo	Vergez 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DD	2026-08-29	2026-09-07	726	2026-08-27	2028-08-29	Hector Emmanuel 	Albornoz Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448UK	2026-08-28	2026-09-07	649	2026-07-20	2026-10-20	Marcela Claudia	Ferreyra	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252ST	2026-08-28	2026-09-07	566	2026-06-03	2026-09-01	LUCAS GABRIEL	LEMA	
+AH252ST	2026-08-28	2026-09-07	736	2026-09-02	2026-12-01	LUCAS GABRIEL	LEMA	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH502KB	2026-08-30	2026-09-04	663	2026-07-29	2026-10-27	Marcelo Roberto	Alvarez 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BS	2026-08-28	2026-09-06	707	2026-08-14	2028-08-15	Fabian Omar	Dobarro Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BA	2026-08-28	2026-09-07	642	2026-07-14	2028-07-18	patricio joel	vergniaud	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TT	2026-08-29	2026-09-07	600	2026-06-24	2026-09-14	Sandro Facundo	Portal 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TP	2026-08-28	2026-09-07	718	2026-08-26	2026-11-24	SERGIO DANIEL	SIÑANI CALLE	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DB	2026-09-05	2026-09-07	724	2026-08-27	2028-08-29	Nahuel Tobias	Campos Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH645XB	2026-08-29	2026-09-03	673	2026-08-05	2026-11-03	Guillermo Alejandro	Lescano 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325CA	2026-08-28	2026-09-05	666	2026-07-29	2028-08-01	mario ezequiel	garcia	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CS	2026-08-28	2026-09-07	729	2026-08-26	2026-09-08	DEMETRIO 	POQUECHOQUE MURUCHI	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BT	2026-08-28	2026-09-07	684	2026-08-05	2028-08-08	Johnny Rafael	Martinez Rodriguez Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BK	2026-08-28	2026-09-07	690	2026-08-10	2028-08-15	Orlando Luis	Mengual Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DE	2026-08-29	2026-09-05	732	2026-08-28	2028-08-29	Gabriel Ricardo 	Romero Albano Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LG	2026-08-28	2026-09-07	720	2026-08-26	2026-11-24	RAFAEL MIGUEL	PAUCARA	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LJ	2026-08-28	2026-09-06	616	2026-07-01	2026-09-29	Luis Esteban	Santana Majarres	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252SM	2026-08-30	2026-09-07	696	2026-08-12	2026-11-10	Amilcar Alejandro 	Tellechea	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BC	2026-08-28	2026-09-06	640	2026-07-13	2028-07-18	Carlos Gustavo	Zabala 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448UA	2026-08-28	2026-09-07	719	2026-08-26	2026-11-24	Mariano Martin 	Carello	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TK	2026-08-29	2026-09-07	682	2026-08-06	2026-09-13	Rolando Antonio	Bustos Cavieres	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387KZ	2026-08-29	2026-09-06	656	2026-07-22	2026-10-27	JAIME RAFAEL	CORREA	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CR	2026-09-02	2026-09-03	728	2026-08-28	2026-11-10	juan manuel	suarez	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LM	2026-08-28	2026-09-04	601	2026-06-24	2026-09-29	Walter Lujan	Testori 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DC	2026-09-01	2026-09-02	735	2026-08-31	2026-09-03	Douglas Efrain 	Araujo Rada Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BM	2026-09-01	2026-09-06	731	2026-08-28	2028-08-29	Carlos Fernando	Claros	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BD	2026-08-29	2026-09-06	730	2026-08-28	2026-09-10	Raul Octavio	Aguirre	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448UI	2026-08-29	2026-09-05	674	2026-08-05	2026-11-03	abel daniel	marquez luna	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CZ	2026-08-29	2026-09-07	632	2026-07-08	2028-07-11	Jorge Eduardo	Sayavedra	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH087VY	2026-08-28	2026-09-06	692	2026-08-12	2026-11-10	AMADO GERMAN	FERNANDEZ	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TM	2026-09-03	2026-09-07	739	2026-09-02	2026-11-10	maximiliano omar	falzone	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH191LZ	2026-08-28	2026-09-07	568	2026-06-08	2026-09-08	hernan alberto	sosa	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TZ	2026-08-28	2026-09-07	611	2026-07-01	2026-09-29	Jhon Alexander 	Silva Sanchez 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CT	2026-08-28	2026-09-07	634	2026-07-08	2028-07-08	Hugo Mario	Pereyra	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DA	2026-08-28	2026-08-28	686	2026-08-06	2028-08-08	Elis Omar	Garcia Rodriguez Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BL	2026-08-30	2026-09-03	700	2026-08-12	2028-08-15	Frank William	Quispe Soto Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH252TS	2026-09-04	2026-09-04	695	2026-08-12	2026-11-10	Martin Ismael	Drago 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH387LE	2026-08-29	2026-09-01	693	2026-08-12	2026-09-01	maximiliano omar	falzone	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CX	2026-09-02	2026-09-07	734	2026-08-31	2028-09-05	Junior Alfonso	Perez Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448TS	2026-09-01	2026-09-01	602	2026-06-24	2026-09-29	Juan Jose	Concepción 	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BF	2026-08-28	2026-09-04	698	2026-08-12	2028-08-15	CALIXTO JOSE	LAUREANO	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288DV	2026-08-30	2026-09-06	713	2026-08-21	2028-08-22	Jose Ignacio	Tombetta	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BZ	2026-09-03	2026-09-07	704	2026-08-13	2028-08-15	Carlos Fernando	Viviani Flash & Go	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH191LK	2026-08-29	2026-09-03	672	2026-08-05	2026-11-03	Yesica Andrea	Garcia	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448UC	2026-08-31	2026-08-31	687	2026-08-07	2026-08-31	Jonathan Ezequiel	Zablosky	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BI	2026-08-28	2026-09-07	648	2026-07-17	2028-07-18	Diego Rafael	Minuet	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AH448TR	2026-09-06	2026-09-06	740	2026-09-02	2026-12-01	José Gustavo 	Figueroa	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI288CV	2026-08-30	2026-09-02	641	2026-07-15	2026-09-01	DENIS JOSUE	BRICEÑO MONSALVE	
+AI288CV	2026-08-30	2026-09-02	742	2026-09-02	2026-09-07	roberto fabian	rojas	
+
+patente	min_date	max_date	contrato_id	fecha_desde	fecha_hasta	nombre	apellido	razon_social
+AI325BR	2026-09-07	2026-09-07	683	2026-08-05	2028-08-08	Arturo Omar 	Kunin Flash & Go 	
+

@@ -21,19 +21,21 @@ import { saveAs } from 'file-saver-es';
 import { exportDataGrid } from 'devextreme/excel_exporter';
 import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
+
 const ReporteContratos = () => {
   const dispatch = useDispatch()
   const location = useLocation();
   const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
 
 
-  
+
   const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
     visible: false,
     id_contrato: null,
     id_vehiculo_actual: null,
     id_vehiculo_nuevo: null
   });
+
 
   const [modalFlota, setModalFlota] = useState({
     visible: false,
@@ -295,6 +297,8 @@ const ReporteContratos = () => {
       </button>
     );
   }
+
+
 
   const handleCustomSummary = (e) => {
     if (e.name === "countVehiculos") {
@@ -567,6 +571,7 @@ const ReporteContratos = () => {
             showInColumn="id_vehiculo" />
         </Summary>
       </DataGrid>
+
 
       {modalCambioVehiculo.visible && (
         <div style={{

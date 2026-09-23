@@ -7,6 +7,8 @@ const initialState = {
   vehiculos: [],
   imagenes: [],
   observacionesVehiculo: [],
+  remitos: [],
+  remitoDetalle: null,
   situacionFlota: {},
   fichas: [],
   fichaByIdVehiculo: [],
@@ -203,6 +205,47 @@ export const postObservacionVehiculo = createAsyncThunk(
       rejectWithValue
     )
 );
+
+export const getRemitos = createAsyncThunk(
+  "getRemitos",
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.getRemitos(),
+      responses.array,
+      rejectWithValue
+    )
+);
+
+export const getRemitoById = createAsyncThunk(
+  "getRemitoById",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.getRemitoById(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const postRemito = createAsyncThunk(
+  "postRemito",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.postRemito(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const anularRemito = createAsyncThunk(
+  "anularRemito",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => vehiculosService.anularRemito(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 /* export const getAllAmortizaciones = createAsyncThunk(
   "getAllAmortizaciones",
   async (_, { rejectWithValue }) =>
@@ -484,6 +527,56 @@ export const vehiculosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.message = action.payload?.message || "Error al agregar observación";
+    });
+    builder.addCase(getRemitos.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getRemitos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.remitos = action.payload || [];
+    });
+    builder.addCase(getRemitos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al obtener remitos";
+    });
+    builder.addCase(getRemitoById.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getRemitoById.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.remitoDetalle = action.payload;
+    });
+    builder.addCase(getRemitoById.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al obtener detalle del remito";
+    });
+    builder.addCase(postRemito.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postRemito.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.message = action.payload?.message || "Remito generado con éxito";
+    });
+    builder.addCase(postRemito.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al generar el remito";
+    });
+    builder.addCase(anularRemito.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anularRemito.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.message = action.payload?.message || "Remito anulado con éxito";
+    });
+    builder.addCase(anularRemito.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al anular el remito";
     });
   },
 });

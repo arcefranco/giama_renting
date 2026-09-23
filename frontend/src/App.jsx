@@ -28,6 +28,8 @@ import ContratoAlquiler from './components/Alquileres/ContratoAlquiler/ContratoA
 import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteContratos';
 import SituacionFlota from './components/Vehiculos/SituacionFlota/SituacionFlota';
 import ImportacionMasiva from './components/Vehiculos/ImportacionMasiva';
+import Remitos from './components/Vehiculos/Remitos/Remitos';
+
 import PrivateRoute from "./utils/PrivateRoute";
 import Unauthorized from "./utils/Unauthorized";
 import AdminRoute from "./utils/AdminRoute";
@@ -86,6 +88,7 @@ function App() {
           <Route path='/vehiculos/ficha/:id/:anio/:mes' element={<FichaVehiculo />} />
           <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos />} />
           <Route path="/vehiculos/situacionFlota" element={<SituacionFlota />} />
+          <Route path="/vehiculos/remitos" element={<Remitos />} />
           <Route element={<PrivateRoute allowedRoles={["1"]} />}>
             <Route path="/vehiculos/importacionMasiva" element={<ImportacionMasiva />} />
           </Route>

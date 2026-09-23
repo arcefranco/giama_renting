@@ -73,6 +73,14 @@ const getContratoById = async (data) => {
   return postArrayFunction("alquileres/contrato/id", data);
 };
 
+const getMovimientosContrato = async (data) => {
+  return postFunction("alquileres/contrato/movimientos", data);
+};
+
+const postMovimientoContrato = async (data) => {
+  return postFunction("alquileres/contrato/movimiento", data);
+};
+
 const alquileresService = {
   postFormaCobro,
   postAlquiler,
@@ -91,6 +99,9 @@ const alquileresService = {
   getContratosByIdCliente,
   cambioVehiculo,
   renovacionFlota,
+  getMovimientosContrato,
+  postMovimientoContrato,
 };
 
 export default alquileresService;
+
