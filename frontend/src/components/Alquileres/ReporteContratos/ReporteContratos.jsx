@@ -22,12 +22,18 @@ import { exportDataGrid } from 'devextreme/excel_exporter';
 import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
 
+import MovimientosUnidadModal from '../ContratoAlquiler/MovimientosUnidadModal';
+
 const ReporteContratos = () => {
   const dispatch = useDispatch()
   const location = useLocation();
   const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
 
-
+  const [modalMovimientos, setModalMovimientos] = useState({
+    visible: false,
+    id_contrato: null,
+    contratoInfo: ''
+  });
 
   const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
     visible: false,
@@ -204,8 +210,37 @@ const ReporteContratos = () => {
     );
   }
 
+  const renderRegistrarMovimiento = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2") && !userRoles.includes("6")) return null;
+    const row = data.data;
+    const vehiculo = vehiculos?.find(e => e.id == row.id_vehiculo);
+    const cliente = clientes?.find(e => e.id == row.id_cliente);
+    const dominio = vehiculo?.dominio || vehiculo?.dominio_provisorio || "SIN DOMINIO";
+    const clienteNombre = cliente?.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente?.razon_social || "");
+    const contratoInfo = `${dominio}${clienteNombre ? ` | ${clienteNombre}` : ""}`;
+
+    return (
+      <button
+        onClick={() => {
+          setModalMovimientos({
+            visible: true,
+            id_contrato: row.id,
+            contratoInfo
+          });
+        }}
+        style={{
+          color: '#800020', fontSize: "11px", fontWeight: "600",
+          textDecoration: 'underline', background: 'none', border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        Registrar Egreso / Ingreso
+      </button>
+    );
+  }
+
   const renderModificarVehiculo = (data) => {
-    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
+    if (!userRoles.includes("1") && !userRoles.includes("2") && !userRoles.includes("3") && !userRoles.includes("6")) return null;
     return (
       <button
         style={{
@@ -557,8 +592,9 @@ const ReporteContratos = () => {
         <Column dataField="deposito_garantia" alignment="right" allowHeaderFiltering={false} allowFiltering={false} caption="Depósito"
           customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
         <Column caption="" cellRender={renderModificar} alignment="center" />
+        <Column caption="Egreso / Ingreso" cellRender={renderRegistrarMovimiento} alignment="center" />
         {
-          (roles?.includes("1") || roles?.includes("3")) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
+          (roles?.includes("1") || roles?.includes("3") || roles?.includes("6")) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
         }
         <Column dataField="nro_asiento" caption="Asiento depósito" alignment="center" />
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />
@@ -622,6 +658,13 @@ const ReporteContratos = () => {
           </div>
         </div>
       )}
+
+      <MovimientosUnidadModal
+        isOpen={modalMovimientos.visible}
+        idContrato={modalMovimientos.id_contrato}
+        contratoInfo={modalMovimientos.contratoInfo}
+        onClose={() => setModalMovimientos({ visible: false, id_contrato: null, contratoInfo: '' })}
+      />
     </div>
   )
 }
