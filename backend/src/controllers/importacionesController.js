@@ -7,6 +7,13 @@ import {
     registrarIngresoMasivoConsolidado
 } from "./costosController.js";
 import { getTodayDate } from "../../helpers/getTodayDate.js";
+import {
+    parseMonto,
+    parseFechaTelepase,
+    formatFechaDDMMAAAA,
+    formatFechaYYYYMMDD,
+    agruparPasadasTelepases
+} from "../../helpers/telepasesHelper.js";
 
 export const preprocesarMultas = async (req, res) => {
     const COLUMNAS_REQUERIDAS = ["Dominio", "Fecha_Infraccion", "Hora", "Motivo_Infraccion", "Importe", "Acta_Nro"];
@@ -502,18 +509,9 @@ export const preprocesarTelepases = async (req, res) => {
             { type: QueryTypes.SELECT }
         );
 
-        const gruposPorPatente = {};
+        const pasadasValidas = [];
         const erroresLectura = [];
-
-        const parseMonto = (valor) => {
-            if (typeof valor === "number") return valor;
-            if (!valor) return 0;
-            let str = String(valor).replace(/[^0-9,\.-]/g, '');
-            if (str.includes(',')) {
-                str = str.replace(/\./g, '').replace(',', '.');
-            }
-            return parseFloat(str) || 0;
-        };
+        const patentesSet = new Set();
 
         for (const [index, fila] of data.entries()) {
             const numeroFilaExcel = index + 2;
@@ -533,29 +531,24 @@ export const preprocesarTelepases = async (req, res) => {
             }
 
             const dateObj = parseFechaTelepase(fila.FECHA);
+            const chofer = fila.CHOFER ? String(fila.CHOFER).trim() : "S/D";
+            const autopista = fila.AUTOPISTA ? String(fila.AUTOPISTA).trim() : null;
 
-            if (!gruposPorPatente[patente]) {
-                gruposPorPatente[patente] = {
-                    totalTarifa: 0,
-                    totalBonificacion: 0,
-                    totalNeto: 0,
-                    cantidadPasadas: 0,
-                    chofer: fila.CHOFER ? String(fila.CHOFER).trim() : "S/D",
-                    autopistas: new Set(),
-                    fechas: [],
-                };
-            }
-
-            gruposPorPatente[patente].totalTarifa += tarifa;
-            gruposPorPatente[patente].totalBonificacion += bonificacion;
-            gruposPorPatente[patente].totalNeto += montoNeto;
-            gruposPorPatente[patente].cantidadPasadas += 1;
-            if (fila.AUTOPISTA) gruposPorPatente[patente].autopistas.add(String(fila.AUTOPISTA).trim());
-            if (dateObj) gruposPorPatente[patente].fechas.push(dateObj);
+            patentesSet.add(patente);
+            pasadasValidas.push({
+                numeroFilaExcel,
+                patente,
+                tarifa,
+                bonificacion,
+                montoNeto,
+                dateObj,
+                chofer,
+                autopista
+            });
         }
 
-        const patentes = Object.keys(gruposPorPatente);
-        if (patentes.length === 0) {
+        const patentesArray = Array.from(patentesSet);
+        if (pasadasValidas.length === 0 || patentesArray.length === 0) {
             return res.send({
                 status: false,
                 message: "No se encontraron pasadas válidas para procesar en el archivo.",
@@ -563,124 +556,116 @@ export const preprocesarTelepases = async (req, res) => {
             });
         }
 
-        const filasPreprocesadas = [];
+        // 1. Bulk query: Obtener todos los vehículos involucrados
+        const vehiculos = await giama_renting.query(
+            `SELECT ID, UPPER(TRIM(Dominio)) AS dominio FROM vehiculos WHERE UPPER(TRIM(Dominio)) IN (:patentes)`,
+            {
+                replacements: { patentes: patentesArray },
+                type: QueryTypes.SELECT
+            }
+        );
 
-        for (const [index, patente] of patentes.entries()) {
-            const grupo = gruposPorPatente[patente];
-            let advertencia = null;
-            let yaExiste = false;
-            let idVehiculo = null;
-            let idCliente = null;
-            let cuitCliente = '';
-            let nombreCliente = 'Sin cliente asignado';
-            let esEmpresa = false;
+        const vehiculosMap = new Map();
+        const idsVehiculos = [];
+        for (const v of vehiculos) {
+            vehiculosMap.set(v.dominio, v.ID);
+            idsVehiculos.push(v.ID);
+        }
 
-            // 1. Buscar vehículo por dominio
-            const [vehiculo] = await giama_renting.query(
-                `SELECT ID FROM vehiculos WHERE UPPER(TRIM(Dominio)) = :dominio LIMIT 1`,
+        // 2. Bulk query: Obtener todos los contratos de esos vehículos con fechas formateadas directamente desde MySQL
+        const contratosPorVehiculo = new Map();
+        if (idsVehiculos.length > 0) {
+            const contratos = await giama_renting.query(
+                `SELECT ca.id, ca.id_vehiculo, ca.id_cliente, 
+                        DATE_FORMAT(ca.fecha_desde, '%Y-%m-%d') AS fecha_desde, 
+                        DATE_FORMAT(ca.fecha_hasta, '%Y-%m-%d') AS fecha_hasta,
+                        c.nro_documento, c.nombre, c.apellido, c.razon_social
+                 FROM contratos_alquiler ca
+                 JOIN clientes c ON ca.id_cliente = c.id
+                 WHERE ca.id_vehiculo IN (:idsVehiculos)
+                 ORDER BY ca.fecha_desde ASC`,
                 {
-                    replacements: { dominio: patente },
-                    type: QueryTypes.SELECT,
+                    replacements: { idsVehiculos },
+                    type: QueryTypes.SELECT
                 }
             );
 
-            if (!vehiculo) {
-                advertencia = "El vehículo no existe en el sistema";
-            } else {
-                idVehiculo = vehiculo.ID;
+            for (const c of contratos) {
+                if (!contratosPorVehiculo.has(c.id_vehiculo)) {
+                    contratosPorVehiculo.set(c.id_vehiculo, []);
+                }
+                contratosPorVehiculo.get(c.id_vehiculo).push(c);
             }
+        }
 
-            // 2. Determinar rango de fechas y fecha de referencia más reciente ordenando cronológicamente
-            grupo.fechas.sort((a, b) => a.getTime() - b.getTime());
-
-            let rangoFechas = "S/D";
-            let fechaMasReciente = getTodayDate();
-
-            if (grupo.fechas.length > 0) {
-                const fechaMin = formatFechaDDMMAAAA(grupo.fechas[0]);
-                const fechaMax = formatFechaDDMMAAAA(grupo.fechas[grupo.fechas.length - 1]);
-                rangoFechas = fechaMin === fechaMax ? fechaMin : `${fechaMin} al ${fechaMax}`;
-                fechaMasReciente = formatFechaYYYYMMDD(grupo.fechas[grupo.fechas.length - 1]);
+        // 3. Bulk query: Chequeo de duplicados históricos en una sola consulta
+        const telepasesExistentes = patentesArray.length > 0 ? await giama_renting.query(
+            `SELECT dominio, id_cliente, rango_fechas 
+             FROM telepases 
+             WHERE dominio IN (:patentes) AND se_proceso = 1`,
+            {
+                replacements: { patentes: patentesArray },
+                type: QueryTypes.SELECT
             }
+        ) : [];
 
-            // 3. Verificar si este paquete de telepases ya fue procesado en la tabla telepases (contemplando formato nuevo e histórico invertido)
-            if (patente && rangoFechas) {
+        // 4. Agrupación por (Patente + Cliente/Contrato según fecha de cada pasada) usando helper de dominio
+        const gruposList = agruparPasadasTelepases({
+            pasadasValidas,
+            vehiculosMap,
+            contratosPorVehiculo
+        });
+
+        const filasPreprocesadas = [];
+
+        for (const [index, grupo] of gruposList.entries()) {
+            let advertencia = grupo.advertencia;
+            let yaExiste = false;
+
+            // Verificar si este consumo ya fue procesado en la tabla telepases
+            if (grupo.patente && grupo.rangoFechas && grupo.rangoFechas !== "S/D") {
                 const rangoInvertido = grupo.fechas.length > 0
                     ? `${formatFechaDDMMAAAA(grupo.fechas[grupo.fechas.length - 1])} al ${formatFechaDDMMAAAA(grupo.fechas[0])}`
-                    : rangoFechas;
+                    : grupo.rangoFechas;
 
-                const [telepaseExistente] = await giama_renting.query(
-                    `SELECT id, fecha_proceso 
-                     FROM telepases 
-                     WHERE dominio = :dominio AND (rango_fechas = :rango_fechas OR rango_fechas = :rango_invertido) AND se_proceso = 1 
-                     LIMIT 1`,
-                    {
-                        type: QueryTypes.SELECT,
-                        replacements: { dominio: patente, rango_fechas: rangoFechas, rango_invertido: rangoInvertido }
-                    }
+                const existe = telepasesExistentes.find(t =>
+                    t.dominio === grupo.patente &&
+                    (!grupo.idCliente || t.id_cliente === grupo.idCliente) &&
+                    (t.rango_fechas === grupo.rangoFechas || t.rango_fechas === rangoInvertido)
                 );
 
-                if (telepaseExistente) {
+                if (existe) {
                     yaExiste = true;
                     if (!advertencia) {
-                        advertencia = `Este consumo de telepase ya fue procesado anteriormente para el período ${rangoFechas}.`;
+                        advertencia = `Este consumo de telepase ya fue procesado anteriormente para el período ${grupo.rangoFechas}.`;
                     }
-                }
-            }
-
-            // 4. Buscar contrato activo
-            if (idVehiculo && !advertencia) {
-                const [clienteContrato] = await giama_renting.query(
-                    `SELECT c.id, c.nro_documento, c.nombre, c.apellido, c.razon_social 
-                     FROM contratos_alquiler ca
-                     JOIN clientes c ON ca.id_cliente = c.id
-                     WHERE ca.id_vehiculo = :id_vehiculo 
-                       AND ca.fecha_desde <= :fecha_referencia 
-                       AND (ca.fecha_hasta IS NULL OR ca.fecha_hasta >= :fecha_referencia)
-                     LIMIT 1`,
-                    {
-                        type: QueryTypes.SELECT,
-                        replacements: {
-                            id_vehiculo: idVehiculo,
-                            fecha_referencia: fechaMasReciente,
-                        }
-                    }
-                );
-
-                if (clienteContrato) {
-                    idCliente = clienteContrato.id;
-                    cuitCliente = clienteContrato.nro_documento || '';
-                    nombreCliente = clienteContrato.razon_social || `${clienteContrato.nombre || ''} ${clienteContrato.apellido || ''}`.trim();
-                    esEmpresa = !!clienteContrato.razon_social;
-                } else {
-                    advertencia = "No se encontró un contrato de alquiler activo para este vehículo en la fecha de las pasadas.";
                 }
             }
 
             filasPreprocesadas.push({
                 id_temp: index + 1,
-                dominio: patente,
+                dominio: grupo.patente,
                 chofer: grupo.chofer,
                 cantidad_pasadas: grupo.cantidadPasadas,
                 total_tarifa: parseFloat(grupo.totalTarifa.toFixed(2)),
                 total_bonificacion: parseFloat(grupo.totalBonificacion.toFixed(2)),
                 importe: parseFloat(grupo.totalNeto.toFixed(2)),
-                rango_fechas: rangoFechas,
+                rango_fechas: grupo.rangoFechas,
                 autopistas: Array.from(grupo.autopistas).join(", "),
-                id_vehiculo: idVehiculo,
-                id_cliente: idCliente,
-                cuit_cliente: cuitCliente,
-                nombre_cliente: nombreCliente,
-                es_empresa: esEmpresa,
+                id_vehiculo: grupo.idVehiculo,
+                id_cliente: grupo.idCliente,
+                cuit_cliente: grupo.cuitCliente,
+                nombre_cliente: grupo.nombreCliente,
+                es_empresa: grupo.esEmpresa,
                 advertencia: advertencia,
                 duplicada: yaExiste,
-                incluir: Boolean(idVehiculo) && !advertencia && !yaExiste
+                incluir: Boolean(grupo.idVehiculo) && !advertencia && !yaExiste
             });
         }
 
         return res.send({
             status: true,
-            message: `Preprocesamiento de telepases completado. Se procesaron ${filasPreprocesadas.length} patentes.`,
+            message: `Preprocesamiento de telepases completado. Se procesaron ${filasPreprocesadas.length} grupos de consumos.`,
             filas: filasPreprocesadas,
             clientes,
             errores: erroresLectura
@@ -688,7 +673,7 @@ export const preprocesarTelepases = async (req, res) => {
 
     } catch (error) {
         console.error("Error en preprocesarTelepases:", error);
-        return res.send({ status: false, message: "Ocurrió un error en el servidor al preprocesar los telepases" });
+        return res.send({ status: false, message: `Ocurrió un error en el servidor al preprocesar los telepases: ${error.message || error}` });
     }
 };
 
@@ -825,62 +810,7 @@ export const importacionesTelepases = async (req, res) => {
     return preprocesarTelepases(req, res);
 };
 
-function parseFechaTelepase(valor) {
-    if (!valor) return null;
-    if (valor instanceof Date && !isNaN(valor.getTime())) {
-        return valor;
-    }
-    if (typeof valor === "number") {
-        const fechaJS = new Date(Math.round((valor - 25569) * 86400 * 1000));
-        return isNaN(fechaJS.getTime()) ? null : fechaJS;
-    }
-    if (typeof valor === "string") {
-        const str = valor.trim();
-        const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
-        if (slashMatch) {
-            const dia = parseInt(slashMatch[1], 10);
-            const mes = parseInt(slashMatch[2], 10) - 1;
-            let anio = parseInt(slashMatch[3], 10);
-            if (anio < 100) anio += 2000;
-            const d = new Date(Date.UTC(anio, mes, dia));
-            return isNaN(d.getTime()) ? null : d;
-        }
-        const dashMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-        if (dashMatch) {
-            const anio = parseInt(dashMatch[1], 10);
-            const mes = parseInt(dashMatch[2], 10) - 1;
-            const dia = parseInt(dashMatch[3], 10);
-            const d = new Date(Date.UTC(anio, mes, dia));
-            return isNaN(d.getTime()) ? null : d;
-        }
-        const dashMatchDMY = str.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})/);
-        if (dashMatchDMY) {
-            const dia = parseInt(dashMatchDMY[1], 10);
-            const mes = parseInt(dashMatchDMY[2], 10) - 1;
-            let anio = parseInt(dashMatchDMY[3], 10);
-            if (anio < 100) anio += 2000;
-            const d = new Date(Date.UTC(anio, mes, dia));
-            return isNaN(d.getTime()) ? null : d;
-        }
-        const parsed = new Date(str);
-        if (!isNaN(parsed.getTime())) return parsed;
-    }
-    return null;
-}
 
-function formatFechaDDMMAAAA(date) {
-    const d = String(date.getUTCDate()).padStart(2, "0");
-    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const y = date.getUTCFullYear();
-    return `${d}/${m}/${y}`;
-}
-
-function formatFechaYYYYMMDD(date) {
-    const y = date.getUTCFullYear();
-    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const d = String(date.getUTCDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-}
 
 function obtenerFechaMasReciente(fechas) {
     if (!fechas || fechas.length === 0) return getTodayDate();
