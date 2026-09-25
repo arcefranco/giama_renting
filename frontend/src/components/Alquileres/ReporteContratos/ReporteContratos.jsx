@@ -22,12 +22,22 @@ import { exportDataGrid } from 'devextreme/excel_exporter';
 import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
 
+import MovimientosUnidadModal from '../ContratoAlquiler/MovimientosUnidadModal';
+import DetalleRemitoModal from '../../Vehiculos/Remitos/DetalleRemitoModal.jsx';
+import Swal from 'sweetalert2';
+
 const ReporteContratos = () => {
   const dispatch = useDispatch()
   const location = useLocation();
   const esAVencer = location.pathname === "/alquileres/contrato/reporte/a-vencer";
 
+  const [modalMovimientos, setModalMovimientos] = useState({
+    visible: false,
+    id_contrato: null,
+    contratoInfo: ''
+  });
 
+  const [remitoParaImprimir, setRemitoParaImprimir] = useState(null);
 
   const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
     visible: false,
@@ -61,7 +71,7 @@ const ReporteContratos = () => {
     message,
     isError,
     isSuccess,
-    isLoading
+    isLoadingContratos
   } = useSelector((state) => state.alquileresReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { roles, username } = useSelector((state) => state.loginReducer)
@@ -204,8 +214,37 @@ const ReporteContratos = () => {
     );
   }
 
+  const renderRegistrarMovimiento = (data) => {
+    if (!userRoles.includes("1") && !userRoles.includes("2") && !userRoles.includes("6")) return null;
+    const row = data.data;
+    const vehiculo = vehiculos?.find(e => e.id == row.id_vehiculo);
+    const cliente = clientes?.find(e => e.id == row.id_cliente);
+    const dominio = vehiculo?.dominio || vehiculo?.dominio_provisorio || "SIN DOMINIO";
+    const clienteNombre = cliente?.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente?.razon_social || "");
+    const contratoInfo = `${dominio}${clienteNombre ? ` | ${clienteNombre}` : ""}`;
+
+    return (
+      <button
+        onClick={() => {
+          setModalMovimientos({
+            visible: true,
+            id_contrato: row.id,
+            contratoInfo
+          });
+        }}
+        style={{
+          color: '#800020', fontSize: "11px", fontWeight: "600",
+          textDecoration: 'underline', background: 'none', border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        Registrar Egreso / Ingreso
+      </button>
+    );
+  }
+
   const renderModificarVehiculo = (data) => {
-    if (!userRoles.includes("1") && !userRoles.includes("2")) return null;
+    if (!userRoles.includes("1") && !userRoles.includes("2") && !userRoles.includes("3") && !userRoles.includes("6")) return null;
     return (
       <button
         style={{
@@ -493,7 +532,7 @@ const ReporteContratos = () => {
       )}
       {/* ===== FIN MODAL ===== */}
 
-      {isLoading && (
+      {isLoadingContratos && (
         <div className={styles.spinnerOverlay}>
           <ClipLoader
             size={60}
@@ -557,8 +596,9 @@ const ReporteContratos = () => {
         <Column dataField="deposito_garantia" alignment="right" allowHeaderFiltering={false} allowFiltering={false} caption="Depósito"
           customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
         <Column caption="" cellRender={renderModificar} alignment="center" />
+        <Column caption="Egreso / Ingreso" cellRender={renderRegistrarMovimiento} alignment="center" />
         {
-          (roles?.includes("1") || roles?.includes("3")) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
+          (roles?.includes("1") || roles?.includes("3") || roles?.includes("6")) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
         }
         <Column dataField="nro_asiento" caption="Asiento depósito" alignment="center" />
         <Column caption="" cellRender={renderRenovarAlquiler} alignment="center" />
@@ -621,6 +661,43 @@ const ReporteContratos = () => {
             </div>
           </div>
         </div>
+      )}
+
+      <MovimientosUnidadModal
+        isOpen={modalMovimientos.visible}
+        idContrato={modalMovimientos.id_contrato}
+        contratoInfo={modalMovimientos.contratoInfo}
+        onClose={() => setModalMovimientos({ visible: false, id_contrato: null, contratoInfo: '' })}
+        onMovimientoRegistrado={({ id_remito, numero_remito }) => {
+          setModalMovimientos({ visible: false, id_contrato: null, contratoInfo: '' });
+          handleActualizar();
+          if (id_remito) {
+            Swal.fire({
+              title: "¡Movimiento y Remito Registrados!",
+              text: numero_remito
+                ? `Se generó el Remito N° ${numero_remito}. ¿Desea ver e imprimir el remito ahora?`
+                : "Movimiento registrado con éxito. ¿Desea ver el remito?",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "Imprimir Remito",
+              cancelButtonText: "Cerrar",
+              confirmButtonColor: "#800020",
+              cancelButtonColor: "#64748b",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                setRemitoParaImprimir(id_remito);
+              }
+            });
+          }
+        }}
+      />
+
+      {remitoParaImprimir && (
+        <DetalleRemitoModal
+          isOpen={!!remitoParaImprimir}
+          idRemito={remitoParaImprimir}
+          onClose={() => setRemitoParaImprimir(null)}
+        />
       )}
     </div>
   )

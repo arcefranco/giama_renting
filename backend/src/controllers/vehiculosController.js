@@ -2438,6 +2438,7 @@ export const getRemitos = async (req, res) => {
          r.punto_venta,
          r.fecha_emision,
          r.estado,
+         r.id_contrato,
          r.fecha_anulacion,
          r.usuario_anulacion,
          r.motivo_anulacion,
@@ -2446,6 +2447,7 @@ export const getRemitos = async (req, res) => {
          r.created_at,
          COUNT(rd.id) AS cantidad_unidades,
          COALESCE(MAX(um.tipo), 'egreso') AS tipo_movimiento,
+         COALESCE(MAX(um.motivo), MAX(um.destino), '-') AS motivo,
          MAX(um.destino) AS destino,
          MAX(um.retira) AS retira,
          MAX(um.autorizo) AS autorizo
@@ -2475,7 +2477,19 @@ export const getRemitoById = async (req, res) => {
   }
   try {
     const [remito] = await giama_renting.query(
-      `SELECT * FROM remitos WHERE id = ?`,
+      `SELECT r.*,
+              c.id AS contrato_id,
+              c.id_cliente,
+              c.fecha_desde AS contrato_fecha_desde,
+              c.fecha_hasta AS contrato_fecha_hasta,
+              cli.nombre AS cliente_nombre,
+              cli.apellido AS cliente_apellido,
+              cli.razon_social AS cliente_razon_social,
+              cli.nro_documento AS cliente_documento
+       FROM remitos r
+       LEFT JOIN contratos_alquiler c ON r.id_contrato = c.id
+       LEFT JOIN clientes cli ON c.id_cliente = cli.id
+       WHERE r.id = ?`,
       {
         replacements: [id],
         type: QueryTypes.SELECT,
@@ -2533,6 +2547,7 @@ export const postRemito = async (req, res) => {
     punto_venta = 1,
     fecha_movimiento,
     tipo,
+    motivo: motivoReq,
     destino,
     retira,
     autorizo,
@@ -2540,6 +2555,7 @@ export const postRemito = async (req, res) => {
     usuario_alta,
     unidades,
     estado_vehiculos,
+    id_contrato,
   } = req.body;
 
   if (!tipo || !fecha_movimiento) {
@@ -2578,17 +2594,18 @@ export const postRemito = async (req, res) => {
     const numero = numResult.siguiente_numero;
     const nroFormatted = `${String(punto_venta).padStart(4, "0")}-${String(numero).padStart(8, "0")}`;
     const tipoNormalizado = tipo.toLowerCase();
-    const motivo = tipoNormalizado === "egreso" ? "egreso_remito" : "ingreso_remito";
+    const motivo = motivoReq || destino || (tipoNormalizado === "egreso" ? "egreso_remito" : "ingreso_remito");
 
     const [id_remito] = await giama_renting.query(
       `INSERT INTO remitos 
-       (numero, punto_venta, fecha_emision, estado, observaciones, usuario_alta, created_at)
-       VALUES (?, ?, ?, 'EMITIDO', ?, ?, NOW())`,
+       (numero, punto_venta, fecha_emision, estado, id_contrato, observaciones, usuario_alta, created_at)
+       VALUES (?, ?, ?, 'EMITIDO', ?, ?, ?, NOW())`,
       {
         replacements: [
           numero,
           punto_venta,
           fecha_movimiento,
+          id_contrato || null,
           observaciones || null,
           usuario_alta || null,
         ],
@@ -2600,8 +2617,8 @@ export const postRemito = async (req, res) => {
     for (const id_unidad of unidadesUnicas) {
       const [id_movimiento] = await giama_renting.query(
         `INSERT INTO unidad_movimientos
-         (id_unidad, fecha_movimiento, tipo, motivo, destino, retira, autorizo, observaciones, usuario_alta, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+         (id_unidad, fecha_movimiento, tipo, motivo, destino, id_contrato, retira, autorizo, observaciones, usuario_alta, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         {
           replacements: [
             id_unidad,
@@ -2609,6 +2626,7 @@ export const postRemito = async (req, res) => {
             tipoNormalizado,
             motivo,
             destino || null,
+            id_contrato || null,
             retira || null,
             autorizo || null,
             observaciones || null,
