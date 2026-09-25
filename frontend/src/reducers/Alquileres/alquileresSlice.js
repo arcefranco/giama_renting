@@ -20,6 +20,7 @@ const initialState = {
   isError: false,
   isSuccess: false,
   isLoading: false,
+  isLoadingContratos: false,
   message: "",
 };
 
@@ -218,7 +219,12 @@ export const alquileresSlice = createSlice({
   name: "alquileres",
   initialState,
   reducers: {
-    reset: (state) => ({ ...initialState, contratosAVencer: state.contratosAVencer }),
+    reset: (state) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.isError = false;
+      state.message = "";
+    },
     reset_nro_recibo: (state) => {
       state.nro_recibo_alquiler = null;
       state.nro_recibo_deposito = null;
@@ -434,9 +440,11 @@ export const alquileresSlice = createSlice({
     });
     builder.addCase(getContratos.pending, (state) => {
       state.isLoading = true;
+      state.isLoadingContratos = true;
     });
     builder.addCase(getContratos.fulfilled, (state, action) => {
       state.isLoading = false;
+      state.isLoadingContratos = false;
       state.isSuccess = true;
       state.isError = false;
       state.message = "";
@@ -444,6 +452,7 @@ export const alquileresSlice = createSlice({
     });
     builder.addCase(getContratos.rejected, (state, action) => {
       state.isLoading = false;
+      state.isLoadingContratos = false;
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload.message;
@@ -518,7 +527,7 @@ export const alquileresSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.message = action.payload?.message || "Movimiento registrado con éxito";
+      state.message = "";
     });
     builder.addCase(postMovimientoContrato.rejected, (state, action) => {
       state.isLoading = false;

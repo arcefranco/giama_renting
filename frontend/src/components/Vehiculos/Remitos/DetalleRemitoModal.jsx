@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { getRemitoById } from "../../../reducers/Vehiculos/vehiculosSlice.js";
 import { format, parseISO } from "date-fns";
@@ -7,6 +7,7 @@ import html2pdf from "html2pdf.js";
 const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
   const dispatch = useDispatch();
   const { remitoDetalle, isLoading } = useSelector((state) => state.vehiculosReducer);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (isOpen && idRemito) {
@@ -23,145 +24,137 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
     ? `${String(remito.punto_venta).padStart(4, "0")}-${String(remito.numero).padStart(8, "0")}`
     : "";
 
-  const firstDetalles = detalles.length > 2 ? detalles.slice(0, -2) : [];
-  const lastDetalles = detalles.length > 2 ? detalles.slice(-2) : detalles;
+  const getObservacionesLimpias = (obs) => {
+    if (!obs) return "-";
+    const cleaned = obs
+      .replace(/^Contrato\s*#\d+(\s*\([^)]*\))?\s*(-|\s)\s*/i, "")
+      .trim();
+    if (/^Contrato\s*#\d+(\s*\([^)]*\))?$/i.test(obs.trim())) {
+      return "-";
+    }
+    return cleaned || "-";
+  };
 
   const colgroupHtml = `
     <colgroup>
       <col style="width: 5%;">
+      <col style="width: 16%;">
+      <col style="width: 21%;">
+      <col style="width: 14%;">
       <col style="width: 15%;">
-      <col style="width: 20%;">
-      <col style="width: 15%;">
-      <col style="width: 15%;">
-      <col style="width: 15%;">
+      <col style="width: 14%;">
       <col style="width: 15%;">
     </colgroup>
   `;
 
   const handlePrint = () => {
     const element = document.createElement("div");
+    element.style.width = "190mm";
+    element.style.margin = "0 auto";
+
+    const autorizoNombre = detalles[0]?.autorizo || remito?.usuario_alta || "";
+    const retiraNombre = detalles[0]?.retira || "";
+
     const generateRemitoPage = (tipoCopia) => `
-      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 800px; margin: 0 auto; box-sizing: border-box; min-height: 270mm; display: flex; flex-direction: column;">
-        <div style="text-align: center; margin-bottom: 5px; font-weight: bold; font-size: 14px; letter-spacing: 2px;">
-          ${tipoCopia}
-        </div>
-        <div style="flex-grow: 1;">
-        <div style="border: 1px solid #000; margin-bottom: 20px; display: flex; position: relative;">
-          <!-- Central separator line -->
-          <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background-color: #000;"></div>
-          
-          <!-- Central Box (Letter R) -->
-          <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); background: white; border: 1px solid #000; border-top: none; padding: 5px 12px; text-align: center; font-weight: bold; font-size: 24px;">
-            R
-            <div style="font-size: 8px; font-weight: normal; margin-top: 2px;">CÓD. 091</div>
+      <div style="font-family: Arial, sans-serif; padding: 8px 12px; color: #333; width: 100%; max-width: 190mm; box-sizing: border-box; height: 265mm; display: flex; flex-direction: column; justify-content: space-between;">
+        <!-- CONTENIDO SUPERIOR -->
+        <div>
+          <div style="text-align: center; margin-bottom: 6px; font-weight: bold; font-size: 13px; letter-spacing: 2px;">
+            ${tipoCopia}
           </div>
-
-          <!-- Left Side -->
-          <div style="flex: 1; padding: 20px; box-sizing: border-box;">
-            <h1 style="margin: 0 0 2px 0; font-size: 28px; font-weight: 900; color: #800020; letter-spacing: 2px; line-height: 1;">GIAMA</h1>
-            <span style="font-size: 11px; color: #555; font-weight: bold; letter-spacing: 1.5px; display: block; margin-bottom: 20px;">RENTING</span>
+          <div style="border: 1px solid #000; margin-bottom: 12px; display: flex; position: relative;">
+            <!-- Central separator line -->
+            <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background-color: #000;"></div>
             
-            <p style="margin: 0; font-size: 11px;"><strong>Razón Social:</strong> GIAMA RENTING S.A.</p>
-            <p style="margin: 4px 0 0 0; font-size: 11px;"><strong>Domicilio Comercial:</strong> De Los Incas Av. 5150 Piso:8</p>
-            <p style="margin: 4px 0 0 0; font-size: 11px;">Capital Federal, Ciudad de Buenos Aires</p>
-            <p style="margin: 4px 0 0 0; font-size: 11px;"><strong>Condición frente al IVA:</strong> IVA Responsable Inscripto</p>
+            <!-- Central Box (Letter R) -->
+            <div style="position: absolute; left: 50%; top: 0; width: 44px; margin-left: -23px; background: white; border: 1px solid #000; border-top: none; padding: 4px 0; text-align: center; font-weight: bold; font-size: 22px; box-sizing: border-box;">
+              R
+              <div style="font-size: 8px; font-weight: normal; margin-top: 1px;">CÓD. 091</div>
+            </div>
+
+            <!-- Left Side -->
+            <div style="flex: 1; padding: 12px 16px; box-sizing: border-box;">
+              <h1 style="margin: 0 0 2px 0; font-size: 24px; font-weight: 900; color: #800020; letter-spacing: 2px; line-height: 1;">GIAMA</h1>
+              <span style="font-size: 10px; color: #555; font-weight: bold; letter-spacing: 1.5px; display: block; margin-bottom: 12px;">RENTING</span>
+              
+              <p style="margin: 0; font-size: 10px; line-height: 1.3;"><strong>Razón Social:</strong> GIAMA RENTING S.A.</p>
+              <p style="margin: 2px 0 0 0; font-size: 10px; line-height: 1.3;"><strong>Domicilio Comercial:</strong> De Los Incas Av. 5150 Piso:8</p>
+              <p style="margin: 2px 0 0 0; font-size: 10px; line-height: 1.3;">Capital Federal, Ciudad de Buenos Aires</p>
+              <p style="margin: 2px 0 0 0; font-size: 10px; line-height: 1.3;"><strong>Condición frente al IVA:</strong> IVA Responsable Inscripto</p>
+            </div>
+
+            <!-- Right Side -->
+            <div style="flex: 1; padding: 25px 16px 12px 45px; box-sizing: border-box;">
+              <h2 style="margin: 0 0 4px 0; font-size: 20px; color: #333;">REMITO</h2>
+              <p style="margin: 0; font-size: 13px; font-weight: bold;">N° ${nroFormatted}</p>
+              <p style="margin: 4px 0 10px 0; font-size: 11px; color: #444;"><strong>Fecha de Emisión:</strong> ${
+                remito?.fecha_emision
+                  ? format(parseISO(remito.fecha_emision), "dd/MM/yyyy")
+                  : ""
+              }</p>
+              
+              <p style="margin: 0; font-size: 10px;"><strong>CUIT:</strong> 30718651200</p>
+            </div>
           </div>
 
-          <!-- Right Side -->
-          <div style="flex: 1; padding: 40px 20px 20px 60px; box-sizing: border-box;">
-            <h2 style="margin: 0 0 5px 0; font-size: 22px; color: #333;">REMITO</h2>
-            <p style="margin: 0; font-size: 14px; font-weight: bold;">N° ${nroFormatted}</p>
-            <p style="margin: 5px 0 20px 0; font-size: 12px; color: #444;"><strong>Fecha de Emisión:</strong> ${
-              remito?.fecha_emision
-                ? format(parseISO(remito.fecha_emision), "dd/MM/yyyy ")
-                : ""
-            }</p>
-            
-            <p style="margin: 0; font-size: 11px;"><strong>CUIT:</strong> 30718651200</p>
+          <div style="margin-bottom: 12px; font-size: 11px;">
+            <p style="margin: 0;"><strong>Observaciones:</strong> ${getObservacionesLimpias(remito?.observaciones)}</p>
           </div>
-        </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 14px;">
-          <p style="margin: 0;"><strong>Estado:</strong> ${remito?.estado}</p>
-          <p style="margin: 0;"><strong>Observaciones:</strong> ${remito?.observaciones || "-"}</p>
-        </div>
-        <h3 style="font-size: 16px;">Detalle de Unidades</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; table-layout: fixed;">
-          ${colgroupHtml}
-          <thead>
-            <tr>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">N°</th>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Dominio / Patente</th>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Modelo</th>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Tipo Movimiento</th>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Motivo</th>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Persona que Retira</th>
-              <th style="border: 1px solid #ccc; padding: 6px; text-align: left; background-color: #f2f2f2;">Autorizó</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${firstDetalles
-              .map(
-                (d, i) => `
-              <tr>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${i + 1}</td>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.dominio || d.dominio_provisorio || "-"}</td>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.modelo_nombre || "-"}</td>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.tipo ? d.tipo.toUpperCase() : "-"}</td>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.destino || "-"}</td>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.retira || "-"}</td>
-                <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.autorizo || "-"}</td>
-              </tr>
-            `
-              )
-              .join("")}
-          </tbody>
-        </table>
-        </div> <!-- End flex-grow wrapper -->
-        <div style="page-break-inside: avoid;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;">
+          <h3 style="font-size: 13px; margin: 0 0 6px 0; color: #1e293b;">Detalle de Unidades (${detalles.length})</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed;">
             ${colgroupHtml}
+            <thead>
+              <tr>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">N°</th>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">Dominio</th>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">Modelo</th>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">Movimiento</th>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">Motivo</th>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">Retira</th>
+                <th style="border: 1px solid #ccc; padding: 5px; text-align: left; background-color: #f2f2f2;">Autorizó</th>
+              </tr>
+            </thead>
             <tbody>
-              ${lastDetalles
+              ${detalles
                 .map(
                   (d, i) => `
                 <tr>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${firstDetalles.length + i + 1}</td>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.dominio || d.dominio_provisorio || "-"}</td>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.modelo_nombre || "-"}</td>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.tipo ? d.tipo.toUpperCase() : "-"}</td>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.destino || "-"}</td>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.retira || "-"}</td>
-                  <td style="border: 1px solid #ccc; padding: 6px; word-break: break-word;">${d.autorizo || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word;">${i + 1}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word; font-weight: bold;">${d.dominio || d.dominio_provisorio || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word;">${d.modelo_nombre || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word;">${d.tipo ? d.tipo.toUpperCase() : "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word;">${d.motivo || d.destino || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word;">${d.retira || "-"}</td>
+                  <td style="border: 1px solid #ccc; padding: 5px; word-break: break-word;">${d.autorizo || "-"}</td>
                 </tr>
               `
                 )
                 .join("")}
             </tbody>
           </table>
-          <div style="margin-top: 60px; position: relative;">
-          <div style="display: flex; justify-content: space-between; padding: 0 30px; padding-bottom: 40px;">
-            <div style="display: flex; flex-direction: column; gap: 40px;">
-              <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 13px;">Firma Entregó</div>
-              <div style="width: 200px; text-align: center; font-size: 13px;">
-                <div style="min-height: 20px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;">
-                  <strong>${detalles[0]?.autorizo || ""}</strong>
-                </div>
-                <div style="border-top: 1px solid #000; padding-top: 5px;">Aclaración Autorizó</div>
+        </div>
+
+        <!-- PIE DE PÁGINA (FIRMAS Y ACLARACIÓN SIEMPRE AL FONDO) -->
+        <div style="margin-top: auto; padding-top: 15px;">
+          <div style="display: flex; justify-content: space-around; padding: 0 20px 15px 20px;">
+            <div style="width: 220px; text-align: center;">
+              <div style="height: 40px;"></div>
+              <div style="border-top: 1px solid #000; padding-top: 4px; font-size: 12px; font-weight: bold;">Firma Entregó</div>
+              <div style="margin-top: 8px; font-size: 11px;">
+                <span style="color: #666;">Aclaración:</span> <strong>${autorizoNombre}</strong>
               </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 40px;">
-              <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 13px;">Firma Recibió</div>
-              <div style="width: 200px; text-align: center; font-size: 13px;">
-                <div style="min-height: 20px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;">
-                  <strong>${detalles[0]?.retira || ""}</strong>
-                </div>
-                <div style="border-top: 1px solid #000; padding-top: 5px;">Aclaración Retiró</div>
+            <div style="width: 220px; text-align: center;">
+              <div style="height: 40px;"></div>
+              <div style="border-top: 1px solid #000; padding-top: 4px; font-size: 12px; font-weight: bold;">Firma Recibió</div>
+              <div style="margin-top: 8px; font-size: 11px;">
+                <span style="color: #666;">Aclaración:</span> <strong>${retiraNombre}</strong>
               </div>
             </div>
           </div>
-          <div style="position: absolute; bottom: -20px; left: 0; width: 100%; text-align: center; font-weight: bold; font-size: 11px; color: #555;">
-             DOCUMENTO NO VÁLIDO COMO FACTURA
+          <div style="text-align: center; font-weight: bold; font-size: 10px; color: #666; padding-bottom: 2px;">
+            DOCUMENTO NO VÁLIDO COMO FACTURA
           </div>
         </div>
       </div>
@@ -174,7 +167,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
     `;
 
     const opt = {
-      margin:       [10, 10, 20, 10], // top, right, bottom, left (increased bottom margin for page numbers)
+      margin:       [10, 10, 10, 10], // 10mm de margen (alto imprimible: 277mm)
       filename:     `Remito_${nroFormatted}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true },
@@ -182,22 +175,41 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
       pagebreak:    { mode: 'css', before: '.html2pdf__page-break' }
     };
 
-    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-      const totalPages = pdf.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(9);
-        pdf.setTextColor(100);
-        
-        // Pág X de Y
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const text = `Pág ${i} de ${totalPages}`;
-        
-        // Add to bottom right
-        pdf.text(text, pageWidth - 10, pageHeight - 10, { align: 'right' });
-      }
-    }).save();
+    setIsDownloading(true);
+    try {
+      html2pdf()
+        .set(opt)
+        .from(element)
+        .toPdf()
+        .get("pdf")
+        .then(function (pdf) {
+          const totalPages = pdf.internal.getNumberOfPages();
+          for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(9);
+            pdf.setTextColor(100);
+
+            // Pág X de Y
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const text = `Pág ${i} de ${totalPages}`;
+
+            // Add to bottom right
+            pdf.text(text, pageWidth - 10, pageHeight - 5, { align: "right" });
+          }
+        })
+        .save()
+        .then(() => {
+          setIsDownloading(false);
+        })
+        .catch((err) => {
+          console.error("Error al generar PDF:", err);
+          setIsDownloading(false);
+        });
+    } catch (error) {
+      console.error("Error al preparar descarga de remito:", error);
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -212,7 +224,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: 10000,
+        zIndex: 20000,
       }}
     >
       <div
@@ -289,9 +301,23 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
                   {remito.estado}
                 </span>
               </div>
+              {remito.id_contrato && (
+                <div>
+                  <strong>Contrato Asociado:</strong> #{remito.id_contrato}
+                </div>
+              )}
+              {(remito.cliente_nombre || remito.cliente_razon_social) && (
+                <div>
+                  <strong>Cliente:</strong>{" "}
+                  {remito.cliente_nombre
+                    ? `${remito.cliente_nombre} ${remito.cliente_apellido || ""}`.trim()
+                    : remito.cliente_razon_social}
+                  {remito.cliente_documento ? ` (Doc: ${remito.cliente_documento})` : ""}
+                </div>
+              )}
               {remito.observaciones && (
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <strong>Observaciones:</strong> {remito.observaciones}
+                  <strong>Observaciones:</strong> {getObservacionesLimpias(remito.observaciones)}
                 </div>
               )}
             </div>
@@ -333,7 +359,7 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
                           {d.tipo ? d.tipo.toUpperCase() : "-"}
                         </span>
                       </td>
-                      <td style={{ padding: "8px" }}>{d.destino || "-"}</td>
+                      <td style={{ padding: "8px" }}>{d.motivo || d.destino || "-"}</td>
                       <td style={{ padding: "8px" }}>{d.retira || "-"}</td>
                       <td style={{ padding: "8px" }}>{d.autorizo || "-"}</td>
                     </tr>
@@ -352,20 +378,22 @@ const DetalleRemitoModal = ({ idRemito, isOpen, onClose }) => {
             >
               <button
                 onClick={handlePrint}
+                disabled={isDownloading}
                 style={{
-                  backgroundColor: "#0284c7",
+                  backgroundColor: isDownloading ? "#94a3b8" : "#0284c7",
                   color: "#fff",
                   border: "none",
                   padding: "8px 16px",
                   borderRadius: "4px",
                   fontWeight: "bold",
-                  cursor: "pointer",
+                  cursor: isDownloading ? "not-allowed" : "pointer",
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
                 }}
               >
-                <i className="fa-solid fa-print"></i> Descargar / Imprimir
+                <i className="fa-solid fa-print"></i>{" "}
+                {isDownloading ? "Generando PDF..." : "Descargar / Imprimir"}
               </button>
 
               <button

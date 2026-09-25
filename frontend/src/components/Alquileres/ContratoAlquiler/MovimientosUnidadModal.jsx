@@ -9,15 +9,19 @@ import "react-datepicker/dist/react-datepicker.css";
 import es from "date-fns/locale/es";
 import { format, parseISO } from "date-fns";
 import Swal from "sweetalert2";
+import DetalleRemitoModal from "../../Vehiculos/Remitos/DetalleRemitoModal.jsx";
 
 registerLocale("es", es);
 
-const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) => {
+const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose, onMovimientoRegistrado }) => {
   const dispatch = useDispatch();
-  const { movimientosContrato, isLoading } = useSelector(
+  const { movimientosContrato } = useSelector(
     (state) => state.alquileresReducer
   );
   const { username } = useSelector((state) => state.loginReducer);
+
+  const [selectedRemitoId, setSelectedRemitoId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     fecha_movimiento: new Date(),
@@ -31,6 +35,7 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
   useEffect(() => {
     if (isOpen && idContrato) {
       dispatch(getMovimientosContrato({ id_contrato: idContrato }));
+      setSelectedRemitoId(null);
       setForm({
         fecha_movimiento: new Date(),
         hora_movimiento: format(new Date(), "HH:mm"),
@@ -63,18 +68,35 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
       usuario_alta: username,
     };
 
+    setIsSubmitting(true);
     const res = await dispatch(postMovimientoContrato(payload));
+    setIsSubmitting(false);
+
     if (res.meta.requestStatus === "fulfilled" && res.payload?.status !== false) {
-      Swal.fire("Éxito", res.payload?.message || "Movimiento registrado con éxito", "success");
-      setForm({
-        fecha_movimiento: new Date(),
-        hora_movimiento: format(new Date(), "HH:mm"),
-        tipo: "egreso",
-        retira: "",
-        autorizo: "",
-        observaciones: "",
-      });
-      dispatch(getMovimientosContrato({ id_contrato: idContrato }));
+      const idRemitoGenerado = res.payload?.id_remito;
+      const nroRemito = res.payload?.numero_remito;
+
+      if (onMovimientoRegistrado) {
+        onMovimientoRegistrado({ id_remito: idRemitoGenerado, numero_remito: nroRemito });
+      } else {
+        onClose();
+        Swal.fire({
+          title: "¡Movimiento y Remito Registrados!",
+          text: nroRemito
+            ? `Se generó el Remito N° ${nroRemito}. ¿Desea ver e imprimir el remito ahora?`
+            : "Movimiento registrado con éxito. ¿Desea ver el remito?",
+          icon: "success",
+          showCancelButton: true,
+          confirmButtonText: "Imprimir Remito",
+          cancelButtonText: "Cerrar",
+          confirmButtonColor: "#800020",
+          cancelButtonColor: "#64748b",
+        }).then((result) => {
+          if (result.isConfirmed && idRemitoGenerado) {
+            setSelectedRemitoId(idRemitoGenerado);
+          }
+        });
+      }
     } else {
       Swal.fire("Error", res.payload?.message || "Error al registrar movimiento", "error");
     }
@@ -265,7 +287,7 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
           <div style={{ marginTop: "16px", textAlign: "right" }}>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               style={{
                 backgroundColor: "#800020",
                 color: "#fff",
@@ -275,13 +297,14 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
                 borderRadius: "6px",
                 fontWeight: 600,
                 fontSize: "14px",
-                cursor: "pointer",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                opacity: isSubmitting ? 0.7 : 1,
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#5c0017"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#800020"}
             >
-              {isLoading ? "Guardando..." : "Registrar Movimiento"}
+              {isSubmitting ? "Guardando..." : "Registrar Movimiento"}
             </button>
           </div>
         </form>
@@ -301,6 +324,7 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
                 <th style={{ padding: "10px", borderBottom: "2px solid #cbd5e1" }}>Autorizó</th>
                 <th style={{ padding: "10px", borderBottom: "2px solid #cbd5e1" }}>Observaciones</th>
                 <th style={{ padding: "10px", borderBottom: "2px solid #cbd5e1" }}>Usuario</th>
+                <th style={{ padding: "10px", borderBottom: "2px solid #cbd5e1", textAlign: "center" }}>Remito</th>
               </tr>
             </thead>
             <tbody>
@@ -331,11 +355,42 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
                     <td style={{ padding: "10px" }}>{m.autorizo || "-"}</td>
                     <td style={{ padding: "10px" }}>{m.observaciones || "-"}</td>
                     <td style={{ padding: "10px" }}>{m.usuario_alta || "-"}</td>
+                    <td style={{ padding: "10px", textAlign: "center" }}>
+                      {m.id_remito ? (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRemitoId(m.id_remito)}
+                          title="Ver e Imprimir Remito"
+                          style={{
+                            backgroundColor: "#800020",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "4px 10px",
+                            fontSize: "0.78rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <i className="fa-solid fa-print"></i>
+                          <span>
+                            {m.remito_numero
+                              ? `${String(m.remito_punto_venta || 1).padStart(4, "0")}-${String(m.remito_numero).padStart(8, "0")}`
+                              : "Imprimir"}
+                          </span>
+                        </button>
+                      ) : (
+                        <span style={{ color: "#94a3b8", fontSize: "0.8rem" }}>-</span>
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
+                  <td colSpan={8} style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
                     No hay movimientos registrados para este contrato.
                   </td>
                 </tr>
@@ -362,6 +417,14 @@ const MovimientosUnidadModal = ({ idContrato, contratoInfo, isOpen, onClose }) =
           </button>
         </div>
       </div>
+
+      {selectedRemitoId && (
+        <DetalleRemitoModal
+          isOpen={!!selectedRemitoId}
+          idRemito={selectedRemitoId}
+          onClose={() => setSelectedRemitoId(null)}
+        />
+      )}
     </div>
   );
 };

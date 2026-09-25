@@ -23,6 +23,8 @@ import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
 
 import MovimientosUnidadModal from '../ContratoAlquiler/MovimientosUnidadModal';
+import DetalleRemitoModal from '../../Vehiculos/Remitos/DetalleRemitoModal.jsx';
+import Swal from 'sweetalert2';
 
 const ReporteContratos = () => {
   const dispatch = useDispatch()
@@ -34,6 +36,8 @@ const ReporteContratos = () => {
     id_contrato: null,
     contratoInfo: ''
   });
+
+  const [remitoParaImprimir, setRemitoParaImprimir] = useState(null);
 
   const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
     visible: false,
@@ -67,7 +71,7 @@ const ReporteContratos = () => {
     message,
     isError,
     isSuccess,
-    isLoading
+    isLoadingContratos
   } = useSelector((state) => state.alquileresReducer)
   const { vehiculos } = useSelector((state) => state.vehiculosReducer)
   const { roles, username } = useSelector((state) => state.loginReducer)
@@ -528,7 +532,7 @@ const ReporteContratos = () => {
       )}
       {/* ===== FIN MODAL ===== */}
 
-      {isLoading && (
+      {isLoadingContratos && (
         <div className={styles.spinnerOverlay}>
           <ClipLoader
             size={60}
@@ -664,7 +668,37 @@ const ReporteContratos = () => {
         idContrato={modalMovimientos.id_contrato}
         contratoInfo={modalMovimientos.contratoInfo}
         onClose={() => setModalMovimientos({ visible: false, id_contrato: null, contratoInfo: '' })}
+        onMovimientoRegistrado={({ id_remito, numero_remito }) => {
+          setModalMovimientos({ visible: false, id_contrato: null, contratoInfo: '' });
+          handleActualizar();
+          if (id_remito) {
+            Swal.fire({
+              title: "¡Movimiento y Remito Registrados!",
+              text: numero_remito
+                ? `Se generó el Remito N° ${numero_remito}. ¿Desea ver e imprimir el remito ahora?`
+                : "Movimiento registrado con éxito. ¿Desea ver el remito?",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "Imprimir Remito",
+              cancelButtonText: "Cerrar",
+              confirmButtonColor: "#800020",
+              cancelButtonColor: "#64748b",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                setRemitoParaImprimir(id_remito);
+              }
+            });
+          }
+        }}
       />
+
+      {remitoParaImprimir && (
+        <DetalleRemitoModal
+          isOpen={!!remitoParaImprimir}
+          idRemito={remitoParaImprimir}
+          onClose={() => setRemitoParaImprimir(null)}
+        />
+      )}
     </div>
   )
 }
