@@ -29,6 +29,9 @@ a:hover {
 body.swal2-height-auto {
   height: 100% !important;
 }
+.swal2-container {
+  z-index: 99999 !important;
+}
 body {
   margin: 0;
   display: flex;

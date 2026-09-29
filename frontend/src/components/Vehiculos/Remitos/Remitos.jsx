@@ -22,7 +22,7 @@ import DetalleRemitoModal from "./DetalleRemitoModal.jsx";
 
 const Remitos = () => {
   const dispatch = useDispatch();
-  const { remitos, isLoading } = useSelector((state) => state.vehiculosReducer);
+  const { remitos } = useSelector((state) => state.vehiculosReducer);
   const { username } = useSelector((state) => state.loginReducer);
 
   const [modalNuevoOpen, setModalNuevoOpen] = useState(false);
@@ -153,9 +153,9 @@ const Remitos = () => {
             gap: "5px",
             transition: "all 0.2s",
           }}
-          title="Consultar detalle"
+          title="Ver detalle"
         >
-          <i className="fa-solid fa-eye"></i> Consultar
+          <i className="fa-solid fa-eye"></i> Ver
         </button>
 
         <button
@@ -296,6 +296,20 @@ const Remitos = () => {
           caption="Cant. Unidades"
           alignment="center"
           allowHeaderFiltering={false}
+        />
+        <Column
+          dataField="motivo"
+          caption="Motivo"
+          alignment="center"
+          allowHeaderFiltering={true}
+          cellRender={(data) => {
+            const val = data.value || data.data?.destino;
+            return (
+              <span style={{ fontWeight: 600, textTransform: "uppercase" }}>
+                {val && val !== "-" ? val : "-"}
+              </span>
+            );
+          }}
         />
         <Column
           dataField="usuario_alta"

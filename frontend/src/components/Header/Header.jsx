@@ -14,9 +14,9 @@ const menuItems = [
     items: [
       { label: "Ingreso de vehículos", to: "/vehiculos", roles: ["1", "2"] },
       { label: "Listado vehículos", to: "/vehiculosReporte", roles: ["2", "3", "4", "5"] },
-      { label: "Listado fichas", to: "/vehiculos/ficha/reporte" },
-      { label: "Situación de la flota", to: "/vehiculos/situacionFlota" },
-      { label: "Remitos", to: "/vehiculos/remitos" },
+      { label: "Listado fichas", to: "/vehiculos/ficha/reporte", roles: ["2", "3", "4", "5"] },
+      { label: "Situación de la flota", to: "/vehiculos/situacionFlota", roles: ["2", "3", "4", "5"] },
+      { label: "Remitos", to: "/vehiculos/remitos", roles: ["1", "2", "3", "4", "5", "6"] },
       { label: "Importación masiva de vehículos", to: "/vehiculos/importacionMasiva", roles: ["1"] }
     ],
   },
@@ -34,7 +34,7 @@ const menuItems = [
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["2"] },
       { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3", "5"] },
-      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5"] },
+      { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5", "6"] },
     ]
   },
   {
@@ -55,7 +55,7 @@ const menuItems = [
       { label: "Ingresos x seguros", to: "/costos/ingresos_seguros", roles: ["2"] },
       { label: "Carga de egresos", to: "/costos/egresos", roles: ["2"] },
       { label: "Carga de egresos prorrateados", to: "/costos/prorrateo", roles: ["2"] },
-      { label: "Listado de recibos", to: "/recibos/reporte" },
+      { label: "Listado de recibos", to: "/recibos/reporte", roles: ["2", "3", "4", "5"] },
       { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "4"] },
       { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2"] },
     ]
@@ -66,7 +66,7 @@ const menuItems = [
     items: [
       { label: "Crear usuario", to: "/usuarios/alta", roles: ["1", "2"] },
       { label: "Listado de usuarios", to: "/usuarios/reporte", roles: ["1", "2"] },
-      { label: "Alta de alertas", to: "/usuarios/alertas" }
+      { label: "Alta de alertas", to: "/usuarios/alertas", roles: ["1"] }
     ]
   },
   {

@@ -3732,8 +3732,14 @@ export const getMovimientosContrato = async (req, res) => {
   }
   try {
     const movimientos = await giama_renting.query(
-      `SELECT um.*
+      `SELECT um.*,
+              r.id AS id_remito,
+              r.numero AS remito_numero,
+              r.punto_venta AS remito_punto_venta,
+              r.estado AS remito_estado
        FROM unidad_movimientos um
+       LEFT JOIN remito_detalles rd ON rd.id_movimiento = um.id
+       LEFT JOIN remitos r ON r.id = rd.id_remito
        WHERE um.id_contrato = ?
        ORDER BY um.fecha_movimiento DESC, um.id DESC`,
       {
@@ -3761,6 +3767,7 @@ export const postMovimientoContrato = async (req, res) => {
     retira,
     autorizo,
     usuario_alta,
+    punto_venta = 1,
   } = req.body;
 
   if (!id_contrato || !fecha_movimiento || !tipo) {
@@ -3773,7 +3780,10 @@ export const postMovimientoContrato = async (req, res) => {
   const transaction = await giama_renting.transaction();
   try {
     const [contrato] = await giama_renting.query(
-      `SELECT id, id_vehiculo FROM contratos_alquiler WHERE id = ?`,
+      `SELECT c.id, c.id_vehiculo, c.id_cliente, cli.nombre, cli.apellido, cli.razon_social
+       FROM contratos_alquiler c
+       LEFT JOIN clientes cli ON c.id_cliente = cli.id
+       WHERE c.id = ?`,
       {
         replacements: [id_contrato],
         type: QueryTypes.SELECT,
@@ -3790,9 +3800,44 @@ export const postMovimientoContrato = async (req, res) => {
     }
 
     const tipoNormalizado = tipo.toLowerCase();
-    const motivo = tipoNormalizado === "egreso" ? "alquiler" : "devolucion";
+    const motivo = "alquiler";
     const id_unidad = contrato.id_vehiculo;
 
+    const obsRemito = observaciones || null;
+
+    // Obtener siguiente correlativo de remito
+    const [numResult] = await giama_renting.query(
+      `SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente_numero FROM remitos WHERE punto_venta = ? FOR UPDATE`,
+      {
+        replacements: [punto_venta],
+        type: QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    const numero = numResult.siguiente_numero;
+    const nroFormatted = `${String(punto_venta).padStart(4, "0")}-${String(numero).padStart(8, "0")}`;
+
+    // 1. Insertar Remito asociado al contrato
+    const [id_remito] = await giama_renting.query(
+      `INSERT INTO remitos 
+       (numero, punto_venta, fecha_emision, estado, id_contrato, observaciones, usuario_alta, created_at)
+       VALUES (?, ?, ?, 'EMITIDO', ?, ?, ?, NOW())`,
+      {
+        replacements: [
+          numero,
+          punto_venta,
+          fecha_movimiento,
+          id_contrato,
+          obsRemito,
+          usuario_alta || null,
+        ],
+        type: QueryTypes.INSERT,
+        transaction,
+      }
+    );
+
+    // 2. Insertar Movimiento de Unidad
     const [id_movimiento] = await giama_renting.query(
       `INSERT INTO unidad_movimientos 
        (id_unidad, fecha_movimiento, tipo, motivo, observaciones, id_contrato, id_chofer, retira, autorizo, usuario_alta, created_at)
@@ -3815,6 +3860,18 @@ export const postMovimientoContrato = async (req, res) => {
       }
     );
 
+    // 3. Insertar Detalle del Remito vinculando remito y movimiento
+    await giama_renting.query(
+      `INSERT INTO remito_detalles (id_remito, id_unidad, id_movimiento, created_at)
+       VALUES (?, ?, ?, NOW())`,
+      {
+        replacements: [id_remito, id_unidad, id_movimiento],
+        type: QueryTypes.INSERT,
+        transaction,
+      }
+    );
+
+    // 4. Actualizar contrato según corresponda
     if (tipoNormalizado === "egreso") {
       await giama_renting.query(
         `UPDATE contratos_alquiler SET id_unidad_movimiento_entrega = ? WHERE id = ?`,
@@ -3838,8 +3895,10 @@ export const postMovimientoContrato = async (req, res) => {
     await transaction.commit();
     return res.send({
       status: true,
-      message: `Movimiento de ${tipoNormalizado} registrado con éxito.`,
+      message: `Movimiento de ${tipoNormalizado} y Remito N° ${nroFormatted} registrados con éxito.`,
       id_movimiento,
+      id_remito,
+      numero_remito: nroFormatted,
     });
   } catch (error) {
     if (transaction && !transaction.finished) {

@@ -11,6 +11,7 @@ async function createTables() {
         punto_venta INT NOT NULL,
         fecha_emision DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         estado VARCHAR(50) NOT NULL DEFAULT 'EMITIDO',
+        id_contrato INT NULL,
         fecha_anulacion DATETIME NULL,
         usuario_anulacion VARCHAR(100) NULL,
         motivo_anulacion TEXT NULL,
@@ -20,7 +21,8 @@ async function createTables() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_numero_punto_venta (punto_venta, numero),
-        INDEX idx_fecha_emision (fecha_emision)
+        INDEX idx_fecha_emision (fecha_emision),
+        INDEX idx_id_contrato (id_contrato)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `, { type: QueryTypes.RAW });
 
