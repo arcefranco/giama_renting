@@ -84,7 +84,10 @@ AAAAAAAAAAAAAAAwEeUUZTJjlnZMQAAAABJRU5ErkJggg==`;
 
 export const getReciboById = async (req, res) => {
   const { id } = req.body;
-  const serverURL = process.env.SERVER;
+  if (!id) {
+    return res.status(400).json({ status: false, message: "Número de recibo no especificado." });
+  }
+  const serverURL = process.env.SERVER || "";
   const imageURL = `${serverURL}/public/images/Vector.png`;
   try {
     const data = await giama_renting.query(
@@ -105,6 +108,7 @@ export const getReciboById = async (req, res) => {
         r.id_forma_cobro_3,
         c.nombre AS nombre_cliente,
         c.apellido AS apellido_cliente,
+        c.razon_social,
         c.direccion,
         c.nro_direccion AS numero_direccion,
 	f1.nombre AS nombre_forma_cobro,      
@@ -141,7 +145,7 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
     const html = `
       <div style="font-family: Arial; max-width: 700px; margin: 0 auto; padding: 20px; border: 1px solid #ccc">
         <h4 style="text-align: center;">Recibo de Pago</h4>
-           <h3 style="text-align: center;">DOUMENTO NO VÁLIDO COMO FACTURA</h3>
+           <h3 style="text-align: center;">DOCUMENTO NO VÁLIDO COMO FACTURA</h3>
         <img src="${imageURL}" alt="Logo" style="height: 180px; margin: 10px auto; display: block;" />
         <div style="display: grid; grid-template-columns: 1fr 1fr; justify-content: space-between; margin-bottom: 20px; font-size: 11px">
           <div>           
@@ -165,13 +169,15 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
           <div>
             <h4>Receptor</h4>
             <div>
-              <p><b>Nombre: </b> ${recibo.nombre_cliente} ${
-      recibo.apellido_cliente
-    }</p>
+              <p><b>Nombre: </b> ${
+                (recibo.nombre_cliente && recibo.apellido_cliente)
+                  ? `${recibo.nombre_cliente} ${recibo.apellido_cliente}`
+                  : (recibo.razon_social || `${recibo.nombre_cliente || ''} ${recibo.apellido_cliente || ''}`.trim() || 'S/D')
+              }</p>
             </div>
             <div>
-              <p><b>Dirección: </b>${recibo.direccion} ${
-      recibo.numero_direccion
+              <p><b>Dirección: </b>${recibo.direccion || ''} ${
+      recibo.numero_direccion || ''
     }</p>
             </div>
           </div>
@@ -186,7 +192,7 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
             <p><b>Fecha Pago: </b>  ${formatearFechaISOText(recibo.fecha)}</p>
           </div>
            <div>
-            <p><b>Creado por: </b> ${recibo.nombre_usuario}</p>
+            <p><b>Creado por: </b> ${recibo.nombre_usuario || recibo.usuario_alta || 'Sistema'}</p>
           </div>
            <div>
             <p><b>Cuenta: </b> Giama Renting</p>
@@ -206,11 +212,11 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
         <p><b>Dominio: ${recibo.dominio_vehiculo ? recibo.dominio_vehiculo : recibo.dominio_provisorio_vehiculo ? recibo.dominio_provisorio_vehiculo : "SIN DOMINIO"}</b></p>
         </div>
         <div style="font-size: 12px">
-         <p>${recibo.detalle}</p>
+         <p>${recibo.detalle || ''}</p>
         </div>
         <div style="display: flex;  justify-content: space-between; font-size: 12px">
-        <p>${recibo.nombre_forma_cobro}</p>
-        <p>$${recibo.importe_total_1}</p>
+        <p>${recibo.nombre_forma_cobro || 'Cobro'}</p>
+        <p>$${recibo.importe_total_1 !== null && recibo.importe_total_1 !== undefined ? recibo.importe_total_1 : (recibo.importe_total || 0)}</p>
         </div>
         ${
           recibo.nombre_forma_cobro_2 ? `
@@ -232,7 +238,7 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
         }
         <div style="display: flex;  justify-content: space-between; font-size: 14px">
         <p><b>Total</b></p>
-        <p><b>$${recibo.importe_total}</b></p>
+        <p><b>$${recibo.importe_total || 0}</b></p>
         </div>
         <hr/>
         <div style="margin-top: 40px; text-align: right;">
@@ -245,7 +251,7 @@ LEFT JOIN formas_cobro f3 ON f3.id = r.id_forma_cobro_3
     return res.send({ status: true, data: { html: html } });
   } catch (error) {
     console.error(error);
-    return res.send({ status: false, message: "Error al generar el recibo" });
+    return res.status(500).send({ status: false, message: "Error al generar el recibo" });
   }
 };
 

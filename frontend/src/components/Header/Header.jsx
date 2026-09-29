@@ -58,6 +58,7 @@ const menuItems = [
       { label: "Listado de recibos", to: "/recibos/reporte", roles: ["2", "3", "4", "5"] },
       { label: "Importación de multas", to: "/costos/importaciones", roles: ["2", "4"] },
       { label: "Importación de telepases", to: "/costos/importacionTelepases", roles: ["2"] },
+      { label: "Pagos Cabify", to: "/costos/pagos_cabify", roles: ["2"] },
     ]
   },
   ,
