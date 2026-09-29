@@ -15,6 +15,7 @@ const initialState = {
   message: "",
   errores_importacion: [],
   guardados_importacion: [],
+  pagosCabify: [],
 };
 
 export const getCuentasContables = createAsyncThunk(
@@ -153,6 +154,36 @@ export const confirmarImportacionTelepases = createAsyncThunk(
     handleAsyncThunk(
       () => costosService.confirmarImportacionTelepases(data),
       responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const preprocesarCabify = createAsyncThunk(
+  "preprocesarCabify",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.preprocesarCabify(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const confirmarImportacionCabify = createAsyncThunk(
+  "confirmarImportacionCabify",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.confirmarImportacionCabify(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const getPagosCabify = createAsyncThunk(
+  "getPagosCabify",
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => costosService.getPagosCabify(),
+      responses.array,
       rejectWithValue
     )
 );
@@ -369,6 +400,18 @@ export const costosSlice = createSlice({
       state.isSuccess = false;
       state.message = action.payload.message;
       state.errores_importacion = action.payload.errores || [];
+    });
+    builder.addCase(getPagosCabify.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(getPagosCabify.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.pagosCabify = action.payload || [];
+    });
+    builder.addCase(getPagosCabify.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.message = action.payload?.message || "Error al obtener historial de pagos Cabify";
     });
   },
 });

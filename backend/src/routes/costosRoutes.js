@@ -14,7 +14,17 @@ import {
 import { auth } from "../middlewares/auth.js";
 
 import { upload } from "../middlewares/upload.js";
-import { importacionesMultas, importacionesTelepases, preprocesarMultas, confirmarImportacionMultas, preprocesarTelepases, confirmarImportacionTelepases } from "../controllers/importacionesController.js";
+import {
+  importacionesMultas,
+  importacionesTelepases,
+  preprocesarMultas,
+  confirmarImportacionMultas,
+  preprocesarTelepases,
+  confirmarImportacionTelepases,
+  preprocesarCabify,
+  confirmarImportacionCabify,
+  getPagosCabify
+} from "../controllers/importacionesController.js";
 
 const costosRouter = Router();
 
@@ -96,6 +106,22 @@ costosRouter.post(
   auth,
   upload.single("file"),
   importacionesTelepases 
+);
+costosRouter.post(
+  "/preprocesarCabify",
+  auth,
+  upload.single("file"),
+  preprocesarCabify
+);
+costosRouter.post(
+  "/confirmarImportacionCabify",
+  auth,
+  confirmarImportacionCabify
+);
+costosRouter.get(
+  "/pagosCabify",
+  auth,
+  getPagosCabify
 );
 
 costosRouter.post("/prorrateo", auth, prorrateo);

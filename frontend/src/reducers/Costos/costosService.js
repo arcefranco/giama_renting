@@ -69,6 +69,20 @@ const postImportacionesTelepases = async (form) => {
   });
 };
 
+const preprocesarCabify = async (form) => {
+  return postFunction("costos/preprocesarCabify", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+const confirmarImportacionCabify = async (data) => {
+  return postFunction("costos/confirmarImportacionCabify", data);
+};
+
+const getPagosCabify = async () => {
+  return getFunction("costos/pagosCabify");
+};
+
 const costosService = {
   getCuentasContables,
   postConceptoCostos,
@@ -85,6 +99,9 @@ const costosService = {
   confirmarImportacionMultas,
   preprocesarTelepases,
   confirmarImportacionTelepases,
-  postImportacionesTelepases
+  postImportacionesTelepases,
+  preprocesarCabify,
+  confirmarImportacionCabify,
+  getPagosCabify
 };
 export default costosService;

@@ -115,13 +115,13 @@ export const recibosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.html_recibo_alquiler = action.payload.data.html;
+      state.html_recibo_alquiler = action.payload?.data?.html || action.payload?.html || null;
     });
     builder.addCase(getReciboAlquilerById.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload.message;
+      state.message = action.payload?.message || "Error al obtener recibo de alquiler";
     });
     builder.addCase(getReciboDepositoById.pending, (state) => {
       state.isLoading = true;
@@ -130,13 +130,13 @@ export const recibosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.html_recibo_deposito = action.payload.data.html;
+      state.html_recibo_deposito = action.payload?.data?.html || action.payload?.html || null;
     });
     builder.addCase(getReciboDepositoById.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload.message;
+      state.message = action.payload?.message || "Error al obtener recibo de depósito";
     });
     builder.addCase(getReciboIngresoById.pending, (state) => {
       state.isLoading = true;
@@ -145,13 +145,13 @@ export const recibosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.html_recibo_ingreso = action.payload.data.html;
+      state.html_recibo_ingreso = action.payload?.data?.html || action.payload?.html || null;
     });
     builder.addCase(getReciboIngresoById.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload.message;
+      state.message = action.payload?.message || "Error al obtener recibo de ingreso";
     });
     builder.addCase(getRecibos.pending, (state) => {
       state.isLoading = true;
@@ -166,7 +166,7 @@ export const recibosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload.message;
+      state.message = action.payload?.message || "Error al obtener recibos";
     });
     builder.addCase(getRecibosByFormaCobro.pending, (state) => {
       state.isLoading = true;
@@ -181,7 +181,7 @@ export const recibosSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload.message;
+      state.message = action.payload?.message || "Error al obtener recibos por forma de cobro";
     });
     builder.addCase(getReciboByIdSlice.pending, (state) => {
       state.isLoading = true;
@@ -190,13 +190,13 @@ export const recibosSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      state.html_recibo = action.payload.data.html;
+      state.html_recibo = action.payload?.data?.html || action.payload?.html || (typeof action.payload === 'string' ? action.payload : null);
     });
     builder.addCase(getReciboByIdSlice.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;
-      state.message = action.payload.message;
+      state.message = action.payload?.message || "Error al obtener recibo";
     });
     builder.addCase(anulacionRecibo.pending, (state) => {
       state.isLoading = true;
