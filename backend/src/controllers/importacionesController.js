@@ -14,6 +14,10 @@ import {
     formatFechaYYYYMMDD,
     agruparPasadasTelepases
 } from "../../helpers/telepasesHelper.js";
+import { insertRecibo } from "../../helpers/insertRecibo.js";
+import { insertPago } from "../../helpers/insertPago.js";
+import { asientoContable } from "../../helpers/asientoContable.js";
+import { getNumeroAsiento, getNumeroAsientoSecundario } from "../../helpers/getNumeroAsiento.js";
 
 export const preprocesarMultas = async (req, res) => {
     const COLUMNAS_REQUERIDAS = ["Dominio", "Fecha_Infraccion", "Hora", "Motivo_Infraccion", "Importe", "Acta_Nro"];
@@ -821,5 +825,470 @@ function obtenerFechaMasReciente(fechas) {
     if (fechasValidas.length === 0) return getTodayDate();
     return formatFechaYYYYMMDD(fechasValidas[fechasValidas.length - 1]);
 }
+
+export const preprocesarCabify = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.send({ status: false, message: "No se envió ningún archivo" });
+        }
+
+        const validacion = validarArchivo(req.file, ["xls", "xlsx"], [
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ]);
+
+        if (!validacion.valido) {
+            return res.send({ status: false, message: validacion.message });
+        }
+
+        const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+
+        if (data.length === 0) {
+            return res.send({ status: false, message: "El archivo está vacío" });
+        }
+
+        // Obtener clientes para mapeo por CUIT y selector
+        const clientes = await giama_renting.query(
+            `SELECT id, nro_documento, nombre, apellido, razon_social FROM clientes ORDER BY razon_social ASC, apellido ASC`,
+            { type: QueryTypes.SELECT }
+        );
+        const clientesMap = new Map();
+        for (const c of clientes) {
+            if (c.nro_documento) {
+                const cleanDoc = String(c.nro_documento).replace(/\D/g, "");
+                clientesMap.set(cleanDoc, c);
+            }
+        }
+
+        // Obtener vehículos con modelos para mapeo por Patente
+        const vehiculos = await giama_renting.query(
+            `SELECT v.id, UPPER(TRIM(v.dominio)) AS dominio, UPPER(TRIM(v.dominio_provisorio)) AS dominio_provisorio,
+                    m.nombre AS nombre_modelo
+             FROM vehiculos v
+             LEFT JOIN modelos m ON v.modelo = m.id`,
+            { type: QueryTypes.SELECT }
+        );
+        const vehiculosMap = new Map();
+        for (const v of vehiculos) {
+            if (v.dominio) vehiculosMap.set(v.dominio, v);
+            if (v.dominio_provisorio) vehiculosMap.set(v.dominio_provisorio, v);
+        }
+
+        const filasPreprocesadas = [];
+        const errores = [];
+
+        for (const [index, row] of data.entries()) {
+            const numeroFilaExcel = index + 2;
+
+            let rawConductor = "";
+            let rawPatente = "";
+            let rawCuit = "";
+            let rawImporte = 0;
+
+            for (const key of Object.keys(row)) {
+                const kLower = key.trim().toLowerCase();
+                if (kLower.includes("conductor") || kLower.includes("chofer") || kLower.includes("nombre")) {
+                    rawConductor = row[key];
+                } else if (kLower.includes("patente") || kLower.includes("dominio")) {
+                    rawPatente = row[key];
+                } else if (kLower.includes("cuit") || kLower.includes("cuil") || kLower.includes("documento")) {
+                    rawCuit = row[key];
+                } else if (kLower.includes("importe") || kLower.includes("descontado") || kLower.includes("total a pagar") || kLower.includes("a pagar")) {
+                    rawImporte = row[key];
+                }
+            }
+
+            const conductor = String(rawConductor || "").trim();
+            const patenteLimpia = String(rawPatente || "").trim().toUpperCase();
+            const cuitLimpio = String(rawCuit || "").replace(/\D/g, "");
+            const importe = parseMonto(rawImporte);
+
+            let errorCuit = null;
+            let errorPatente = null;
+            let advertencia = null;
+
+            if (!cuitLimpio) {
+                errorCuit = "El CUIT está vacío.";
+            } else if (!clientesMap.has(cuitLimpio)) {
+                errorCuit = `No existe chofer registrado con CUIT ${cuitLimpio}.`;
+            }
+
+            if (!patenteLimpia) {
+                errorPatente = "La patente está vacía.";
+            } else if (patenteLimpia.includes("DEUDA")) {
+                errorPatente = `Patente con deuda en el archivo (${patenteLimpia}).`;
+            } else if (!vehiculosMap.has(patenteLimpia)) {
+                errorPatente = `El vehículo con patente ${patenteLimpia} no existe en el sistema.`;
+            }
+
+            const clienteEncontrado = clientesMap.get(cuitLimpio);
+            const vehiculoEncontrado = vehiculosMap.get(patenteLimpia);
+
+            const esValido = !errorCuit && !errorPatente;
+
+            if (!esValido) {
+                advertencia = [errorCuit, errorPatente].filter(Boolean).join(" | ");
+                errores.push(`Fila ${numeroFilaExcel} (Conductor: ${conductor || 'S/D'}, CUIT: ${cuitLimpio || 'S/D'}, Patente: ${patenteLimpia || 'S/D'}): ${advertencia}`);
+            } else if (importe <= 0) {
+                advertencia = "Importe en $0,00 (sin cobro a realizar).";
+            }
+
+            filasPreprocesadas.push({
+                id_temp: index + 1,
+                numero_fila_excel: numeroFilaExcel,
+                conductor: conductor || (clienteEncontrado ? (clienteEncontrado.razon_social || `${clienteEncontrado.nombre || ''} ${clienteEncontrado.apellido || ''}`.trim()) : "S/D"),
+                cuit: cuitLimpio,
+                patente: patenteLimpia,
+                modelo: vehiculoEncontrado ? (vehiculoEncontrado.nombre_modelo || "S/D") : "-",
+                importe: importe,
+                id_cliente: clienteEncontrado ? clienteEncontrado.id : null,
+                id_vehiculo: vehiculoEncontrado ? vehiculoEncontrado.id : null,
+                valido: esValido,
+                advertencia: advertencia,
+                incluir: esValido && importe > 0
+            });
+        }
+
+        return res.send({
+            status: true,
+            filas: filasPreprocesadas,
+            clientes: clientes,
+            errores: errores
+        });
+
+    } catch (error) {
+        console.error("Error en preprocesarCabify:", error);
+        return res.send({ status: false, message: error?.message || "Ocurrió un error al preprocesar el archivo de Cabify." });
+    }
+};
+
+export const confirmarImportacionCabify = async (req, res) => {
+    const { pagos, usuario } = req.body;
+    const usuarioAuditoria = req.user?.user || req.user?.email || usuario || "sistema";
+
+    if (!pagos || !Array.isArray(pagos) || pagos.length === 0) {
+        return res.send({ status: false, message: "No se recibieron pagos para procesar." });
+    }
+
+    try {
+        let [formaCobroCabify] = await giama_renting.query(
+            `SELECT id, cuenta_contable, cuenta_secundaria FROM formas_cobro WHERE cuenta_contable = 110409 OR LOWER(nombre) LIKE '%cabify%' LIMIT 1`,
+            { type: QueryTypes.SELECT }
+        );
+
+        if (!formaCobroCabify) {
+            const [insertedId] = await giama_renting.query(
+                `INSERT INTO formas_cobro (nombre, cuenta_contable, cuenta_secundaria) VALUES ('Cabify', 110409, 110409)`,
+                { type: QueryTypes.INSERT }
+            );
+            formaCobroCabify = {
+                id: insertedId,
+                cuenta_contable: 110409,
+                cuenta_secundaria: 110409
+            };
+        }
+
+        const idFormaCobro = formaCobroCabify.id;
+        const cuentaContableDebe = formaCobroCabify.cuenta_contable || 110409;
+        const cuentaContableHaber = 110310;
+        const cuentaSecundariaDebe = formaCobroCabify.cuenta_secundaria || cuentaContableDebe;
+        const cuentaSecundariaHaber = 110310;
+
+        const validPagos = [];
+        const errores = [];
+
+        for (const item of pagos) {
+            const numeroFila = item.numero_fila_excel || item.id_temp;
+            const importeNumber = parseFloat(Number(item.importe).toFixed(2));
+
+            if (!item.id_cliente) {
+                errores.push(`Fila ${numeroFila} (Patente: ${item.patente}, CUIT: ${item.cuit}): No tiene cliente asignado.`);
+            } else if (isNaN(importeNumber) || importeNumber <= 0) {
+                errores.push(`Fila ${numeroFila} (Patente: ${item.patente}, CUIT: ${item.cuit}): El importe a cobrar debe ser mayor a 0.`);
+            } else {
+                validPagos.push(item);
+            }
+        }
+
+        if (validPagos.length === 0) {
+            return res.send({
+                status: false,
+                message: "No se encontró ningún pago válido con cliente e importe mayor a 0 para imputar.",
+                errores
+            });
+        }
+
+        const count = validPagos.length;
+        const fechaHoy = getTodayDate();
+        const transaction = await giama_renting.transaction();
+        const transaction_asientos = await pa7_giama_renting.transaction();
+
+        try {
+            // 1. Reservar bloque de asientos en pa7_giama_renting en una sola operación atómica
+            const [rowA] = await pa7_giama_renting.query(
+                "SELECT Valor FROM parametros WHERE Codigo = 'NUMA' FOR UPDATE",
+                { type: QueryTypes.SELECT, transaction: transaction_asientos }
+            );
+            const [rowB] = await pa7_giama_renting.query(
+                "SELECT Valor FROM parametros WHERE Codigo = 'NUMB' FOR UPDATE",
+                { type: QueryTypes.SELECT, transaction: transaction_asientos }
+            );
+
+            const baseAsiento = parseInt(rowA.Valor, 10);
+            const baseAsientoSecundario = parseInt(rowB.Valor, 10);
+
+            await pa7_giama_renting.query(
+                "UPDATE parametros SET Valor = Valor + :count WHERE Codigo = 'NUMA'",
+                { replacements: { count }, type: QueryTypes.UPDATE, transaction: transaction_asientos }
+            );
+            await pa7_giama_renting.query(
+                "UPDATE parametros SET Valor = Valor + :count WHERE Codigo = 'NUMB'",
+                { replacements: { count }, type: QueryTypes.UPDATE, transaction: transaction_asientos }
+            );
+
+            // 2. Inserción masiva en tabla recibos (obteniendo el id del primer recibo de forma contigua)
+            const recibosValues = [];
+            const recibosReplacements = [];
+
+            for (let i = 0; i < count; i++) {
+                const item = validPagos[i];
+                const importeNumber = parseFloat(Number(item.importe).toFixed(2));
+                recibosValues.push("(?, ?, ?, ?, ?, ?, ?, ?)");
+                recibosReplacements.push(
+                    fechaHoy,
+                    `Cobro semanal Cabify - Chofer: ${item.conductor || ''} - CUIT: ${item.cuit || ''} - Patente: ${item.patente || ''}`,
+                    importeNumber,
+                    item.id_cliente,
+                    item.id_vehiculo || null,
+                    idFormaCobro,
+                    usuarioAuditoria,
+                    importeNumber
+                );
+            }
+
+            const [firstReciboId] = await giama_renting.query(
+                `INSERT INTO recibos (fecha, detalle, importe_total, id_cliente, id_vehiculo, id_forma_cobro, usuario_alta, importe_total_1)
+                 VALUES ${recibosValues.join(", ")}`,
+                { replacements: recibosReplacements, type: QueryTypes.INSERT, transaction }
+            );
+
+            // 3. Inserción masiva en pagos_clientes (cuenta corriente de clientes)
+            const pagosClientesValues = [];
+            const pagosClientesReplacements = [];
+
+            for (let i = 0; i < count; i++) {
+                const item = validPagos[i];
+                const importeNumber = parseFloat(Number(item.importe).toFixed(2));
+                const nro_recibo = firstReciboId + i;
+                const nro_asiento = baseAsiento + i + 1;
+                const observacion = `Forma de cobro: Cabify - Observación: Cobro semanal Cabify - Patente: ${item.patente || ''}`;
+
+                pagosClientesValues.push("(?, ?, ?, ?, ?, ?, ?, ?)");
+                pagosClientesReplacements.push(
+                    item.id_cliente,
+                    fechaHoy,
+                    usuarioAuditoria,
+                    idFormaCobro,
+                    importeNumber,
+                    nro_recibo,
+                    observacion,
+                    nro_asiento
+                );
+            }
+
+            await giama_renting.query(
+                `INSERT INTO pagos_clientes (id_cliente, fecha, usuario_alta_registro, id_forma_cobro, importe_cobro, nro_recibo, observacion, nro_asiento)
+                 VALUES ${pagosClientesValues.join(", ")}`,
+                { replacements: pagosClientesReplacements, type: QueryTypes.INSERT, transaction }
+            );
+
+            // 4. Inserción masiva en tabla pagos_cabify (historial / auditoría)
+            const pagosCabifyValues = [];
+            const pagosCabifyReplacements = [];
+            const guardados = [];
+
+            for (let i = 0; i < count; i++) {
+                const item = validPagos[i];
+                const importeNumber = parseFloat(Number(item.importe).toFixed(2));
+                const nro_recibo = firstReciboId + i;
+                const nro_asiento = baseAsiento + i + 1;
+                const nro_asiento_secundario = baseAsientoSecundario + i + 1;
+
+                pagosCabifyValues.push("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                pagosCabifyReplacements.push(
+                    item.conductor || null,
+                    item.cuit,
+                    item.patente,
+                    importeNumber,
+                    item.id_cliente,
+                    item.id_vehiculo || null,
+                    nro_recibo,
+                    nro_asiento,
+                    nro_asiento_secundario,
+                    usuarioAuditoria
+                );
+
+                guardados.push({
+                    ...item,
+                    nro_recibo,
+                    nro_asiento,
+                    nro_asiento_secundario
+                });
+            }
+
+            await giama_renting.query(
+                `INSERT INTO pagos_cabify (conductor, cuit, patente, importe, id_cliente, id_vehiculo, nro_recibo, nro_asiento, nro_asiento_secundario, usuario, fecha_proceso)
+                 VALUES ${pagosCabifyValues.join(", ")}`,
+                { replacements: pagosCabifyReplacements, type: QueryTypes.INSERT, transaction }
+            );
+
+            // 5. Inserción masiva en c_movimientos (Asientos contables principales)
+            const cMovValues = [];
+            const cMovReplacements = [];
+
+            for (let i = 0; i < count; i++) {
+                const item = validPagos[i];
+                const importeNumber = parseFloat(Number(item.importe).toFixed(2));
+                const nro_recibo = firstReciboId + i;
+                const nro_asiento = baseAsiento + i + 1;
+                const nro_asiento_secundario = baseAsientoSecundario + i + 1;
+                const concepto = `RECIBO: ${nro_recibo} Chofer: ${item.conductor || ''} CUIT: ${item.cuit || ''} Patente: ${item.patente || ''} - Cobro Cabify`.slice(0, 200);
+
+                // Asiento Debe: Cobros Cabify c/o choferes 110409
+                cMovValues.push("(?, ?, ?, 'D', ?, ?, ?, ?)");
+                cMovReplacements.push(
+                    fechaHoy,
+                    nro_asiento,
+                    cuentaContableDebe,
+                    importeNumber,
+                    concepto,
+                    nro_recibo,
+                    nro_asiento_secundario
+                );
+
+                // Asiento Haber: Cta Cte Clientes 110310
+                cMovValues.push("(?, ?, ?, 'H', ?, ?, ?, ?)");
+                cMovReplacements.push(
+                    fechaHoy,
+                    nro_asiento,
+                    cuentaContableHaber,
+                    importeNumber,
+                    concepto,
+                    nro_recibo,
+                    nro_asiento_secundario
+                );
+            }
+
+            await pa7_giama_renting.query(
+                `INSERT INTO c_movimientos (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, AsientoSecundario)
+                 VALUES ${cMovValues.join(", ")}`,
+                { replacements: cMovReplacements, type: QueryTypes.INSERT, transaction: transaction_asientos }
+            );
+
+            // 6. Inserción masiva en c2_movimientos (Asientos contables secundarios)
+            const c2MovValues = [];
+            const c2MovReplacements = [];
+
+            for (let i = 0; i < count; i++) {
+                const item = validPagos[i];
+                const importeNumber = parseFloat(Number(item.importe).toFixed(2));
+                const nro_recibo = firstReciboId + i;
+                const nro_asiento_secundario = baseAsientoSecundario + i + 1;
+                const concepto = `RECIBO: ${nro_recibo} Chofer: ${item.conductor || ''} CUIT: ${item.cuit || ''} Patente: ${item.patente || ''} - Cobro Cabify`.slice(0, 200);
+
+                // Debe
+                c2MovValues.push("(?, ?, ?, 'D', ?, ?, ?)");
+                c2MovReplacements.push(
+                    fechaHoy,
+                    nro_asiento_secundario,
+                    cuentaSecundariaDebe,
+                    importeNumber,
+                    concepto,
+                    nro_recibo
+                );
+
+                // Haber
+                c2MovValues.push("(?, ?, ?, 'H', ?, ?, ?)");
+                c2MovReplacements.push(
+                    fechaHoy,
+                    nro_asiento_secundario,
+                    cuentaSecundariaHaber,
+                    importeNumber,
+                    concepto,
+                    nro_recibo
+                );
+            }
+
+            await pa7_giama_renting.query(
+                `INSERT INTO c2_movimientos (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante)
+                 VALUES ${c2MovValues.join(", ")}`,
+                { replacements: c2MovReplacements, type: QueryTypes.INSERT, transaction: transaction_asientos }
+            );
+
+            // Commit unificado de ambas transacciones
+            await transaction.commit();
+            await transaction_asientos.commit();
+
+            const montoTotalImportado = guardados.reduce((acc, g) => acc + (Number(g.importe) || 0), 0);
+
+            return res.send({
+                status: true,
+                message: `Proceso completado. Se imputaron ${guardados.length} pagos de Cabify correctamente por $${montoTotalImportado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}.${errores.length > 0 ? ` Se omitieron ${errores.length} por errores.` : ""}`,
+                guardados,
+                errores
+            });
+
+        } catch (errBatch) {
+            if (!transaction.finished) await transaction.rollback();
+            if (!transaction_asientos.finished) await transaction_asientos.rollback();
+            console.error("Error al procesar lote de pagos Cabify:", errBatch);
+            return res.send({
+                status: false,
+                message: `Error al procesar los pagos en la base de datos: ${errBatch.message || errBatch}`,
+                errores
+            });
+        }
+
+    } catch (error) {
+        console.error("Error general en confirmarImportacionCabify:", error);
+        return res.send({ status: false, message: "Ocurrió un error general al confirmar la importación de Cabify." });
+    }
+};
+
+export const getPagosCabify = async (req, res) => {
+    try {
+        const pagos = await giama_renting.query(
+            `SELECT pc.id, 
+                    COALESCE(pc.conductor, c.razon_social, CONCAT(COALESCE(c.nombre, ''), ' ', COALESCE(c.apellido, ''))) AS conductor,
+                    pc.cuit, 
+                    pc.patente, 
+                    pc.importe, 
+                    pc.id_cliente, 
+                    pc.id_vehiculo, 
+                    pc.nro_recibo, 
+                    pc.nro_asiento, 
+                    pc.nro_asiento_secundario, 
+                    pc.usuario, 
+                    DATE_FORMAT(pc.fecha_proceso, '%Y-%m-%d %H:%i:%s') AS fecha_proceso,
+                    c.razon_social, 
+                    c.nombre, 
+                    c.apellido
+             FROM pagos_cabify pc
+             LEFT JOIN clientes c ON pc.id_cliente = c.id
+             ORDER BY pc.id DESC
+             LIMIT 1000`,
+            { type: QueryTypes.SELECT }
+        );
+
+        return res.send(pagos);
+    } catch (error) {
+        console.error("Error al obtener pagos Cabify:", error);
+        return res.status(500).send({ message: "Error al obtener historial de pagos Cabify." });
+    }
+};
+
 
 

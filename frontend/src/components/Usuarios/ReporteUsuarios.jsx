@@ -242,7 +242,6 @@ const ReporteUsuarios = () => {
               <Select
                 isMulti
                 options={roles
-                  .filter((r) => r.concepto?.trim().toLowerCase() !== "verificador")
                   .map((r) => ({
                   value: r.id,
                   label: r.concepto,

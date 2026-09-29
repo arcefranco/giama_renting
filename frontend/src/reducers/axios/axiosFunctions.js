@@ -34,11 +34,11 @@ export const getObjectFunction = async (route) => {
     );
     const data = response.data;
 
-    if (typeof response.data === "object" && !Array.isArray(response.data)) {
-      return { status: true, data };
-    }
     if (data?.status === false) {
       return data; // backend ya manda status:false,message
+    }
+    if (typeof response.data === "object" && !Array.isArray(response.data)) {
+      return { status: true, data };
     }
 
     return { status: false, message: "Formato inesperado en la respuesta." };
@@ -105,11 +105,11 @@ export const postObjectFunction = async (route, form) => {
     );
     const data = response.data;
 
-    if (typeof response.data === "object" && !Array.isArray(response.data)) {
-      return { status: true, data };
-    }
     if (data?.status === false) {
       return data; // backend ya manda status:false,message
+    }
+    if (typeof response.data === "object" && !Array.isArray(response.data)) {
+      return { status: true, data };
     }
 
     return { status: false, message: "Formato inesperado en la respuesta." };
