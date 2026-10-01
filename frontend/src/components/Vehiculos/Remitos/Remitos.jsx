@@ -292,10 +292,26 @@ const Remitos = () => {
           allowHeaderFiltering={true}
         />
         <Column
-          dataField="cantidad_unidades"
-          caption="Cant. Unidades"
+          dataField="patentes"
+          caption="Patente(s)"
           alignment="center"
           allowHeaderFiltering={false}
+          allowFiltering={true}
+          allowSearch={true}
+          width={350}
+          cellRender={(data) => (
+            <div
+              title={data.value}
+              style={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%",
+              }}
+            >
+              {data.value || "-"}
+            </div>
+          )}
         />
         <Column
           dataField="motivo"
