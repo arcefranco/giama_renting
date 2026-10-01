@@ -2450,10 +2450,12 @@ export const getRemitos = async (req, res) => {
          COALESCE(MAX(um.motivo), MAX(um.destino), '-') AS motivo,
          MAX(um.destino) AS destino,
          MAX(um.retira) AS retira,
-         MAX(um.autorizo) AS autorizo
+         MAX(um.autorizo) AS autorizo,
+         GROUP_CONCAT(DISTINCT v.dominio SEPARATOR ', ') AS patentes
        FROM remitos r
        LEFT JOIN remito_detalles rd ON r.id = rd.id_remito
        LEFT JOIN unidad_movimientos um ON rd.id_movimiento = um.id
+       LEFT JOIN vehiculos v ON rd.id_unidad = v.id
        GROUP BY r.id
        ORDER BY r.fecha_emision DESC, r.id DESC`,
       {

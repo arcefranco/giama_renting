@@ -10,6 +10,7 @@ import {
     reset
 } from '../../reducers/Costos/costosSlice';
 import { getReciboByIdSlice, reset as resetRecibos } from '../../reducers/Recibos/recibosSlice';
+import { getVehiculos } from '../../reducers/Vehiculos/vehiculosSlice';
 import DataGrid, {
     Column, Scrolling, Paging, FilterRow, HeaderFilter, SearchPanel, Export
 } from "devextreme-react/data-grid";
@@ -80,6 +81,7 @@ const ImportacionesCabify = () => {
     const dispatch = useDispatch();
     const { isError, message, pagosCabify, isLoading: isCostosLoading } = useSelector((state) => state.costosReducer);
     const { html_recibo } = useSelector((state) => state.recibosReducer);
+    const { vehiculos } = useSelector((state) => state.vehiculosReducer || {});
     const { username } = useSelector((state) => state.loginReducer || {});
     const { user } = useSelector((state) => state.authReducer || state.auth || {});
 
@@ -107,8 +109,22 @@ const ImportacionesCabify = () => {
         });
     }, [listaClientes]);
 
+    const opcionesPatentes = useMemo(() => {
+        if (!vehiculos || !Array.isArray(vehiculos)) return [];
+        return vehiculos.map((v) => {
+            const patenteDisplay = v.dominio || v.patente;
+            if (!patenteDisplay) return null;
+            return {
+                value: patenteDisplay,
+                label: patenteDisplay,
+                searchKey: patenteDisplay.toLowerCase()
+            };
+        }).filter(Boolean);
+    }, [vehiculos]);
+
     useEffect(() => {
         dispatch(getPagosCabify());
+        dispatch(getVehiculos());
         return () => {
             dispatch(reset());
             dispatch(resetRecibos());
@@ -275,6 +291,31 @@ const ImportacionesCabify = () => {
         }));
     };
 
+    const handlePatenteChange = (idTemp, selectedOption) => {
+        const patenteSeleccionada = vehiculos.find(v => (v.dominio || v.patente) === selectedOption?.value);
+        if (!patenteSeleccionada) return;
+
+        setCabifyPreprocesados(prev => prev.map(item => {
+            if (item.id_temp === idTemp) {
+                let advs = item.advertencia ? item.advertencia.split(" | ") : [];
+                advs = advs.filter(a => !a.toLowerCase().includes("patente") && !a.toLowerCase().includes("vehículo") && !a.toLowerCase().includes("deuda"));
+                const advertenciaActualizada = advs.length > 0 ? advs.join(" | ") : null;
+
+                const esAhoraValido = Boolean(item.id_cliente) && Boolean(patenteSeleccionada.id) && !advertenciaActualizada;
+
+                return {
+                    ...item,
+                    patente: selectedOption.value,
+                    id_vehiculo: patenteSeleccionada.id,
+                    valido: esAhoraValido,
+                    advertencia: advertenciaActualizada,
+                    incluir: esAhoraValido && Number(item.importe) > 0 ? true : item.incluir
+                };
+            }
+            return item;
+        }));
+    };
+
     const handleClienteChange = (idTemp, selectedOption) => {
         const clienteSeleccionado = listaClientes.find(c => c.id === selectedOption?.value);
         if (!clienteSeleccionado) return;
@@ -285,9 +326,9 @@ const ImportacionesCabify = () => {
                     `${clienteSeleccionado.nombre || ''} ${clienteSeleccionado.apellido || ''}`.trim();
                 const cuitChofer = clienteSeleccionado.nro_documento ? String(clienteSeleccionado.nro_documento).replace(/\D/g, "") : item.cuit;
 
-                const advertenciaActualizada = (item.advertencia && item.advertencia.includes("No existe chofer registrado"))
-                    ? null
-                    : item.advertencia;
+                let advs = item.advertencia ? item.advertencia.split(" | ") : [];
+                advs = advs.filter(a => !a.toLowerCase().includes("cuit") && !a.toLowerCase().includes("chofer") && !a.toLowerCase().includes("cliente"));
+                const advertenciaActualizada = advs.length > 0 ? advs.join(" | ") : null;
 
                 const esAhoraValido = Boolean(item.id_vehiculo) && !advertenciaActualizada;
 
@@ -743,8 +784,27 @@ const ImportacionesCabify = () => {
                                                     <td style={{ padding: "10px 8px", fontFamily: "monospace", fontSize: "12.5px" }}>
                                                         {row.cuit || <span style={{ color: "#999" }}>S/D</span>}
                                                     </td>
-                                                    <td style={{ padding: "10px 8px", fontWeight: "bold", letterSpacing: "0.5px" }}>
-                                                        {row.patente || <span style={{ color: "#999" }}>S/D</span>}
+                                                    <td style={{ padding: "10px 8px" }}>
+                                                        <div style={{ minWidth: "140px" }}>
+                                                            <Select
+                                                                value={row.patente ? { value: row.patente, label: row.patente } : null}
+                                                                options={opcionesPatentes}
+                                                                onChange={(option) => handlePatenteChange(row.id_temp, option)}
+                                                                placeholder="Patente..."
+                                                                isClearable={false}
+                                                                menuPortalTarget={document.body}
+                                                                styles={{
+                                                                    menuPortal: (base) => ({ ...base, zIndex: 99999 }),
+                                                                    control: (base) => ({
+                                                                        ...base,
+                                                                        fontSize: "12px",
+                                                                        minHeight: "30px",
+                                                                        fontWeight: "bold",
+                                                                        borderColor: (!row.patente || row.patente === 'DEUDA' || !row.id_vehiculo) ? "#ff4d4f" : "#d9d9d9"
+                                                                    })
+                                                                }}
+                                                            />
+                                                        </div>
                                                     </td>
                                                     <td style={{ padding: "10px 8px", color: "#555" }}>
                                                         {row.modelo || "-"}
