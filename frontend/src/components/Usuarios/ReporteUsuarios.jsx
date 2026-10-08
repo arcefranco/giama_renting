@@ -119,12 +119,24 @@ const ReporteUsuarios = () => {
     "2": "Finanzas",
     "3": "Ventas",
     "4": "Administración",
-    "5": "General"
+    "5": "General",
+    "6": "Verificador",
+    "7": "Verificador"
   };
 
   const calculateRolesValue = (rowData) => {
     const userRoles = rowData.roles ? rowData.roles.toString().split(",") : [];
-    return userRoles.map(r => rolesMap[r.trim()] || r).join(", ");
+    return userRoles
+      .map((r) => {
+        const trimmed = r.trim();
+        if (rolesMap[trimmed]) return rolesMap[trimmed];
+        const roleObj = roles?.find((rol) => rol.id?.toString() === trimmed);
+        if (roleObj?.concepto) {
+          return roleObj.concepto.charAt(0).toUpperCase() + roleObj.concepto.slice(1).toLowerCase();
+        }
+        return trimmed;
+      })
+      .join(", ");
   };
 
   const estadoCellRender = (data) => {

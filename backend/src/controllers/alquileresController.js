@@ -3912,3 +3912,302 @@ export const postMovimientoContrato = async (req, res) => {
   }
 };
 
+export const postFacturacionMasiva = async (req, res) => {
+  const { alquileres, usuario } = req.body;
+
+  if (!alquileres || !Array.isArray(alquileres) || alquileres.length === 0) {
+    return res.send({ status: false, message: "No se enviaron contratos para facturar" });
+  }
+
+  const resultados = [];
+  let cuentaIV21_base, cuentaIV21_2_base, cuentaALQU_base, cuentaALQU_2_base;
+  
+  try {
+    cuentaIV21_base = await getParametro("IV21");
+    cuentaIV21_2_base = await getParametro("IV22");
+    cuentaALQU_base = await getParametro("ALQU");
+    cuentaALQU_2_base = await getParametro("ALQ2");
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: "Error al obtener parámetros contables (ALQU, IV21)" });
+  }
+
+  // Agrupar los contratos recibidos por id_cliente
+  const alquileresAgrupados = alquileres.reduce((acc, alq) => {
+    if (!acc[alq.id_cliente]) acc[alq.id_cliente] = [];
+    acc[alq.id_cliente].push(alq);
+    return acc;
+  }, {});
+
+  for (const grupo of Object.values(alquileresAgrupados)) {
+    const id_cliente = grupo[0].id_cliente;
+    let transaction_giama_renting = await giama_renting.transaction();
+    let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+
+    try {
+      // 1. Validar cliente general
+      let estadoCliente = await verificarCliente(id_cliente);
+      if (estadoCliente) throw new Error(estadoCliente);
+
+      const clResult = await giama_renting.query(
+        "SELECT nro_documento, razon_social FROM clientes WHERE id = ?",
+        { type: QueryTypes.SELECT, replacements: [id_cliente], transaction: transaction_giama_renting }
+      );
+      let CUIT = clResult[0]["nro_documento"] || "";
+      let esEmpresa = !!clResult[0]["razon_social"];
+      let apellido_cliente = clResult[0]["razon_social"] || grupo[0].apellido_cliente;
+
+      let importeTotalGrupo = 0;
+      let importeNetoGrupo = 0;
+      let importeIvaGrupo = 0;
+      let patentesGrupo = [];
+      let facturaItems = [];
+      let fecha_factura_alquiler = grupo[0].fecha_factura_alquiler;
+
+      let NroAsiento_deuda = await getNumeroAsiento();
+      let NroAsientoSecundario_deuda = await getNumeroAsientoSecundario();
+
+      // 2. Validar cada vehículo y acumular importes
+      for (const alq of grupo) {
+        if (!(alq.debe_alquiler > 0)) throw new Error(`El importe a facturar debe ser mayor a $0 (Contrato ${alq.id_contrato})`);
+        if (!fecha_factura_alquiler) throw new Error("Falta definir la fecha de emisión de factura");
+        if (alq.fecha_desde_alquiler > alq.fecha_hasta_alquiler) throw new Error(`Fecha desde (${alq.fecha_desde_alquiler}) es posterior a fecha hasta (${alq.fecha_hasta_alquiler}) en contrato ${alq.id_contrato}`);
+
+        // Vehiculo vendido
+        const vhResult = await giama_renting.query(
+          "SELECT fecha_venta, dominio, dominio_provisorio FROM vehiculos WHERE id = ?",
+          { type: QueryTypes.SELECT, replacements: [alq.id_vehiculo], transaction: transaction_giama_renting }
+        );
+        if (!vhResult.length) throw new Error(`Vehículo ID ${alq.id_vehiculo} no encontrado`);
+        let dominio = vhResult[0]["dominio"] || vhResult[0]["dominio_provisorio"] || "SIN DOMINIO";
+        alq.dominio_detectado = dominio;
+
+        if (vhResult[0]["fecha_venta"]) throw new Error(`El vehículo ${dominio} figura como vendido`);
+
+        // Limites contrato
+        let contrato = await giama_renting.query(
+          "SELECT fecha_desde, fecha_hasta FROM contratos_alquiler WHERE id = ?",
+          { type: QueryTypes.SELECT, replacements: [alq.id_contrato], transaction: transaction_giama_renting }
+        );
+        if (!contrato.length) throw new Error(`Contrato de alquiler ${alq.id_contrato} no encontrado`);
+        if (alq.fecha_desde_alquiler < contrato[0].fecha_desde) throw new Error(`Fecha desde (${alq.fecha_desde_alquiler}) es anterior al inicio del contrato (${contrato[0].fecha_desde})`);
+        if (alq.fecha_hasta_alquiler > contrato[0].fecha_hasta) throw new Error(`Fecha hasta (${alq.fecha_hasta_alquiler}) es posterior al vencimiento del contrato (${contrato[0].fecha_hasta})`);
+
+        // Superposicion
+        const alquileresVigentes = await giama_renting.query(
+          `SELECT fecha_desde, fecha_hasta FROM alquileres WHERE id_vehiculo = ? AND anulado = 0`,
+          { type: QueryTypes.SELECT, replacements: [alq.id_vehiculo], transaction: transaction_giama_renting }
+        );
+        const parseDate = (str) => new Date(str.split("T")[0]);
+        const nuevaDesde = parseDate(alq.fecha_desde_alquiler);
+        const nuevaHasta = parseDate(alq.fecha_hasta_alquiler);
+        const hayConflicto = alquileresVigentes.some(({ fecha_desde, fecha_hasta }) => {
+          return nuevaDesde <= parseDate(fecha_desde) && parseDate(fecha_desde) <= nuevaHasta ||
+                 nuevaDesde <= parseDate(fecha_hasta) && parseDate(fecha_hasta) <= nuevaHasta ||
+                 parseDate(fecha_desde) <= nuevaDesde && nuevaHasta <= parseDate(fecha_hasta);
+        });
+        if (hayConflicto) throw new Error(`El vehículo ${dominio} ya posee un alquiler registrado en el período seleccionado (${alq.fecha_desde_alquiler} al ${alq.fecha_hasta_alquiler})`);
+
+        importeTotalGrupo += parseFloat(alq.debe_alquiler);
+        importeNetoGrupo += parseFloat(alq.debe_alquiler_neto);
+        importeIvaGrupo += parseFloat(alq.debe_alquiler_iva);
+        patentesGrupo.push(dominio);
+
+        // Para obtener el modelo
+        const vhModeloResult = await giama_renting.query(
+          "SELECT m.nombre as modelo_nombre FROM vehiculos v LEFT JOIN modelos m ON v.modelo = m.id WHERE v.id = ?",
+          { type: QueryTypes.SELECT, replacements: [alq.id_vehiculo], transaction: transaction_giama_renting }
+        );
+        let modeloStr = vhModeloResult[0] && vhModeloResult[0]["modelo_nombre"] ? vhModeloResult[0]["modelo_nombre"] : "";
+
+        let fDesdeItem = alq.fecha_desde_alquiler.split("T")[0].split("-");
+        let fHastaItem = alq.fecha_hasta_alquiler.split("T")[0].split("-");
+        let fechaDesdeItemStr = `${fDesdeItem[2]}/${fDesdeItem[1]}/${fDesdeItem[0]}`;
+        let fechaHastaItemStr = `${fHastaItem[2]}/${fHastaItem[1]}/${fHastaItem[0]}`;
+
+        facturaItems.push({
+          descripcion: `Renovación Alquiler - desde: ${fechaDesdeItemStr} hasta: ${fechaHastaItemStr} Dominio: ${dominio} CUIT/CUIL: ${CUIT}`,
+          cantidad: 1,
+          precioUnitario: parseFloat(alq.debe_alquiler_neto),
+          porcentaje: 21,
+          subtotal: parseFloat(alq.debe_alquiler),
+        });
+        
+        // Guardamos el dominio adentro del obj para usarlo en la insercion despues si hiciera falta
+        alq.dominio_detectado = dominio;
+      }
+
+      // 3. Emitir Factura consolidada
+      const dominiosJuntos = patentesGrupo.join(", ");
+      let fechaDesdeStrGlo = grupo[0].fecha_desde_alquiler.split("T")[0].split("-");
+      let fechaHastaStrGlo = grupo[0].fecha_hasta_alquiler.split("T")[0].split("-");
+      let concepto_factura = `Renovación Flota - desde: ${fechaDesdeStrGlo[2]}/${fechaDesdeStrGlo[1]}/${fechaDesdeStrGlo[0]} hasta: ${fechaHastaStrGlo[2]}/${fechaHastaStrGlo[1]}/${fechaHastaStrGlo[0]} Dominios: ${dominiosJuntos}`;
+      
+      if (concepto_factura.length > 255) concepto_factura = concepto_factura.substring(0, 250) + "...";
+
+      let nro_factura = await insertFactura(
+        id_cliente,
+        importeNetoGrupo.toFixed(2),
+        importeIvaGrupo.toFixed(2),
+        importeTotalGrupo.toFixed(2),
+        usuario,
+        NroAsiento_deuda,
+        NroAsientoSecundario_deuda,
+        concepto_factura,
+        transaction_giama_renting,
+        transaction_pa7_giama_renting,
+        fecha_factura_alquiler,
+        facturaItems
+      );
+
+      // 4. Insertar cada alquiler con el mismo nro_factura y NroAsiento_deuda
+      for (const alq of grupo) {
+        await insertAlquiler({
+          id_vehiculo: alq.id_vehiculo,
+          id_cliente: id_cliente,
+          fecha_desde_alquiler: alq.fecha_desde_alquiler,
+          fecha_hasta_alquiler: alq.fecha_hasta_alquiler,
+          importe_neto: alq.debe_alquiler_neto,
+          importe_iva: alq.debe_alquiler_iva,
+          importe_total: alq.debe_alquiler,
+          NroAsiento: NroAsiento_deuda,
+          observacion: alq.observacion || "",
+          id_contrato: alq.id_contrato,
+          transaction: transaction_giama_renting,
+          id_factura_pa6: nro_factura,
+          fecha_alquiler: fecha_factura_alquiler,
+        });
+      }
+
+      // 5. Cuentas contables y Asientos
+      let cuentaALQU = cuentaALQU_base;
+      let cuentaALQU_2 = cuentaALQU_2_base;
+      let cuentaIV21 = cuentaIV21_base;
+      let cuentaIV21_2 = cuentaIV21_2_base;
+
+      if (esEmpresa) {
+        cuentaALQU = mapCuentaPorEmpresaYConcepto({ esEmpresa, tipo: "alquiler", cuentaActual: cuentaALQU });
+        cuentaALQU_2 = mapCuentaPorEmpresaYConcepto({ esEmpresa, tipo: "alquiler", cuentaActual: cuentaALQU_2 });
+      }
+
+      // El asiento contable en Renovar Flota usa concepto_factura tal cual
+      let concepto_deuda = concepto_factura;
+      
+      await asientoContable("c_movimientos", NroAsiento_deuda, 110310, "D", importeTotalGrupo.toFixed(2), concepto_deuda, transaction_pa7_giama_renting, null, fecha_factura_alquiler, NroAsientoSecundario_deuda, null);
+      await asientoContable("c_movimientos", NroAsiento_deuda, cuentaALQU, "H", importeNetoGrupo.toFixed(2), concepto_deuda, transaction_pa7_giama_renting, null, fecha_factura_alquiler, NroAsientoSecundario_deuda, null);
+      await asientoContable("c_movimientos", NroAsiento_deuda, cuentaIV21, "H", importeIvaGrupo.toFixed(2), concepto_deuda, transaction_pa7_giama_renting, null, fecha_factura_alquiler, NroAsientoSecundario_deuda, null);
+      
+      await asientoContable("c2_movimientos", NroAsientoSecundario_deuda, 110310, "D", importeTotalGrupo.toFixed(2), concepto_deuda, transaction_pa7_giama_renting, null, fecha_factura_alquiler, null, null);
+      await asientoContable("c2_movimientos", NroAsientoSecundario_deuda, cuentaALQU_2, "H", importeNetoGrupo.toFixed(2), concepto_deuda, transaction_pa7_giama_renting, null, fecha_factura_alquiler, null, null);
+      await asientoContable("c2_movimientos", NroAsientoSecundario_deuda, cuentaIV21_2, "H", importeIvaGrupo.toFixed(2), concepto_deuda, transaction_pa7_giama_renting, null, fecha_factura_alquiler, null, null);
+
+      await transaction_giama_renting.commit();
+      await transaction_pa7_giama_renting.commit();
+
+      // Guardar resultados exitosos
+      for (const alq of grupo) {
+        resultados.push({ id_contrato: alq.id_contrato, success: true, nro_factura });
+      }
+
+    } catch (err) {
+      await transaction_giama_renting.rollback();
+      await transaction_pa7_giama_renting.rollback();
+      console.log(`Error facturando grupo cliente ${id_cliente}:`, err);
+      
+      // Guardar resultados fallidos con información detallada para reporte / Excel
+      for (const alq of grupo) {
+        resultados.push({ 
+          id_contrato: alq.id_contrato, 
+          id_cliente: alq.id_cliente,
+          cliente: alq.apellido_cliente || "",
+          id_vehiculo: alq.id_vehiculo,
+          dominio: alq.dominio_detectado || "",
+          fecha_desde: alq.fecha_desde_alquiler,
+          fecha_hasta: alq.fecha_hasta_alquiler,
+          importe: alq.debe_alquiler,
+          success: false, 
+          error: err.message 
+        });
+      }
+    }
+  }
+
+  const exito = resultados.filter(r => r.success).length;
+  const fallos = resultados.filter(r => !r.success).length;
+
+  if (exito === 0 && fallos > 0) {
+    const primerError = resultados.find(r => r.error)?.error || "Error al facturar contratos.";
+    return res.send({
+      status: false,
+      message: primerError,
+      data: resultados
+    });
+  }
+
+  if (fallos > 0) {
+    return res.send({
+      status: true,
+      message: `Facturación parcial: ${exito} procesados, ${fallos} fallidos.`,
+      data: resultados
+    });
+  }
+
+  return res.send({
+    status: true,
+    message: "Facturación exitosa",
+    data: resultados
+  });
+};
+
+export const getValoresModelos = async (req, res) => {
+  try {
+    // Asegurar que la tabla exista antes de consultarla por primera vez
+    await giama_renting.query(`
+      CREATE TABLE IF NOT EXISTS modelos_valores_alquiler (
+        id_modelo INT PRIMARY KEY, 
+        valor DECIMAL(18,2) DEFAULT 0.00
+      );
+    `);
+
+    const result = await giama_renting.query(`
+      SELECT m.id AS id_modelo, m.nombre AS modelo_nombre, IFNULL(v.valor, 0) AS valor
+      FROM modelos m
+      LEFT JOIN modelos_valores_alquiler v ON m.id = v.id_modelo
+      ORDER BY m.nombre ASC
+    `, { type: QueryTypes.SELECT });
+    return res.send(result);
+  } catch (error) {
+    return res.send({ status: false, message: error.message });
+  }
+};
+
+export const postValoresModelos = async (req, res) => {
+  const { id_modelo, valor } = req.body;
+  if (!id_modelo) {
+    return res.send({ status: false, message: "Falta id_modelo" });
+  }
+  try {
+    // Asegurar que la tabla exista por si en producción no se corrió la query
+    await giama_renting.query(`
+      CREATE TABLE IF NOT EXISTS modelos_valores_alquiler (
+        id_modelo INT PRIMARY KEY, 
+        valor DECIMAL(18,2) DEFAULT 0.00
+      );
+    `);
+
+    await giama_renting.query(`
+      INSERT INTO modelos_valores_alquiler (id_modelo, valor) 
+      VALUES (?, ?) 
+      ON DUPLICATE KEY UPDATE valor = ?
+    `, {
+      replacements: [id_modelo, valor, valor],
+      type: QueryTypes.INSERT
+    });
+    return res.send({ status: true, message: "Valor actualizado" });
+  } catch (error) {
+    console.log(error);
+    return res.send({ status: false, message: error.message });
+  }
+};
+
+
