@@ -24,6 +24,8 @@ import { hasAdminAccess } from '../../../helpers/hasAdminAccess.js'
 
 import MovimientosUnidadModal from '../ContratoAlquiler/MovimientosUnidadModal';
 import DetalleRemitoModal from '../../Vehiculos/Remitos/DetalleRemitoModal.jsx';
+import FacturacionMasivaModal from './FacturacionMasivaModal.jsx';
+import ValoresModelosModal from './ValoresModelosModal.jsx';
 import Swal from 'sweetalert2';
 
 const ReporteContratos = () => {
@@ -38,6 +40,9 @@ const ReporteContratos = () => {
   });
 
   const [remitoParaImprimir, setRemitoParaImprimir] = useState(null);
+  
+  const [modalFacturacionMasiva, setModalFacturacionMasiva] = useState(false);
+  const [modalValoresModelos, setModalValoresModelos] = useState(false);
 
   const [modalCambioVehiculo, setModalCambioVehiculo] = useState({
     visible: false,
@@ -422,6 +427,17 @@ const ReporteContratos = () => {
   return (
     <div className={styles.container}>
       <ToastContainer />
+      <FacturacionMasivaModal 
+        visible={modalFacturacionMasiva} 
+        onClose={() => {
+          setModalFacturacionMasiva(false);
+          handleActualizar();
+        }} 
+        contratos={contratos} 
+        clientes={clientes} 
+        vehiculos={vehiculos} 
+        modelos={modelos} 
+      />
 
       {/* ===== MODAL RENOVACIÓN DE FLOTA ===== */}
       {modalFlota.visible && (
@@ -532,6 +548,12 @@ const ReporteContratos = () => {
       )}
       {/* ===== FIN MODAL ===== */}
 
+      {/* ===== MODAL VALORES POR MODELO ===== */}
+      <ValoresModelosModal
+        visible={modalValoresModelos}
+        onClose={() => setModalValoresModelos(false)}
+      />
+
       {isLoadingContratos && (
         <div className={styles.spinnerOverlay}>
           <ClipLoader
@@ -542,10 +564,51 @@ const ReporteContratos = () => {
           <span className={styles.loadingText}>Cargando contratos...</span>
         </div>
       )}
-      <h2>Listado de contratos</h2>
-      <button onClick={handleActualizar} className={styles.refreshButton}>
-        🔄 Actualizar reporte
-      </button>
+      <h2 style={{ marginTop: '20px', marginBottom: '10px' }}>Listado de contratos</h2>
+      
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
+        <button 
+          onClick={handleActualizar} 
+          className={styles.refreshButton}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <i className="fa-solid fa-rotate" style={{ fontSize: '14px' }}></i> Actualizar reporte
+        </button>
+        
+        {userRoles.includes("2") && (
+          <button 
+            onClick={() => setModalValoresModelos(true)} 
+            className={styles.refreshButton}
+            style={{ 
+              backgroundColor: '#800020', 
+              color: '#fff', 
+              border: 'none', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px' 
+            }}
+          >
+            <i className="fa-solid fa-tags" style={{ fontSize: '14px' }}></i> Valores por Modelo
+          </button>
+        )}
+        
+        {userRoles.includes("2") && (
+          <button 
+            onClick={() => setModalFacturacionMasiva(true)} 
+            className={styles.refreshButton}
+            style={{ 
+              backgroundColor: '#800020', 
+              color: '#fff', 
+              border: 'none', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px' 
+            }}
+          >
+            <i className="fa-solid fa-file-invoice-dollar" style={{ fontSize: '15px' }}></i> Facturación Masiva
+          </button>
+        )}
+      </div>
       <div className={styles.inputContainer} style={{ alignItems: "self-end" }}>
         <span>Vigentes</span>
         <input type="checkbox" name='vigentes' value={form["vigentes"]}

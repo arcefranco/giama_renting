@@ -17,6 +17,7 @@ const initialState = {
   movimientosContrato: [],
   nro_recibo_alquiler: null,
   nro_recibo_deposito: null,
+  valoresModelos: [],
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -38,6 +39,36 @@ export const postAlquiler = createAsyncThunk(
   async (data, { rejectWithValue }) =>
     handleAsyncThunk(
       () => alquileresService.postAlquiler(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const postFacturacionMasiva = createAsyncThunk(
+  "postFacturacionMasiva",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.postFacturacionMasiva(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
+export const getValoresModelos = createAsyncThunk(
+  "getValoresModelos",
+  async (_, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.getValoresModelos(),
+      responses.array,
+      rejectWithValue
+    )
+);
+
+export const postValoresModelos = createAsyncThunk(
+  "postValoresModelos",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => alquileresService.postValoresModelos(data),
       responses.successObject,
       rejectWithValue
     )
@@ -231,6 +262,9 @@ export const alquileresSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(getValoresModelos.fulfilled, (state, action) => {
+      state.valoresModelos = action.payload;
+    });
     builder.addCase(postAlquiler.pending, (state) => {
       state.isLoading = true;
     });
@@ -242,6 +276,28 @@ export const alquileresSlice = createSlice({
       state.message = action.payload.message;
     });
     builder.addCase(postAlquiler.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload.message;
+    });
+
+    builder.addCase(postFacturacionMasiva.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(postFacturacionMasiva.fulfilled, (state, action) => {
+      state.isLoading = false;
+      if (action.payload?.status === false) {
+        state.isSuccess = false;
+        state.isError = true;
+        state.message = action.payload.message;
+      } else {
+        state.isSuccess = true;
+        state.isError = false;
+        state.message = action.payload?.message || "Facturación exitosa";
+      }
+    });
+    builder.addCase(postFacturacionMasiva.rejected, (state, action) => {
       state.isLoading = false;
       state.isError = true;
       state.isSuccess = false;

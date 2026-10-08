@@ -90,8 +90,10 @@ const ReporteFacturas = () => {
         hideOnOutsideClick={true}
         showTitle={true}
         title={selectedFactura ? `Detalle de Factura ${selectedFactura.TipoComprobante} N° ${selectedFactura.NroComprobante}` : "Detalle"}
-        width={900}
-        height={500}
+        width="85%"
+        maxWidth={1350}
+        minWidth={950}
+        height={600}
       >
         <div style={{ marginBottom: '15px' }}>
           <strong>Cliente:</strong> {selectedFactura?.NombreCliente} (Cód: {selectedFactura?.CodigoCliente}) <br/>
@@ -104,11 +106,11 @@ const ReporteFacturas = () => {
           columnAutoWidth={true}
           rowAlternationEnabled={true}
         >
-          <Column dataField="Cantidad" caption="Cant." width={70} />
-          <Column dataField="Descripcion" caption="Descripción" />
-          <Column dataField="PrecioUnitario" caption="Precio Unit." format="currency" width={100} />
-          <Column dataField="Porcentaje" caption="% IVA" width={70} />
-          <Column dataField="Subtotal" caption="Subtotal" format="currency" width={100} />
+          <Column dataField="Cantidad" caption="Cant." width={80} alignment="center" />
+          <Column dataField="Descripcion" caption="Descripción" minWidth={350} />
+          <Column dataField="PrecioUnitario" caption="Precio Unit." format="currency" width={140} alignment="right" />
+          <Column dataField="Porcentaje" caption="% IVA" width={90} alignment="center" />
+          <Column dataField="Subtotal" caption="Subtotal" format="currency" width={140} alignment="right" />
         </DataGrid>
       </Popup>
     </div>
