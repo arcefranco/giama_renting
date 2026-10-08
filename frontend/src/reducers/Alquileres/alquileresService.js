@@ -33,8 +33,20 @@ const renovacionFlota = async (form) => {
   return postFunction("alquileres/flota/renovacion", form);
 };
 
+const postFacturacionMasiva = async (form) => {
+  return postFunction("alquileres/flota/facturacion-masiva", form);
+};
+
 const getFormasDeCobro = async () => {
   return getFunction("alquileres/formaDeCobro");
+};
+
+const getValoresModelos = async () => {
+  return getFunction("alquileres/flota/valores-modelos");
+};
+
+const postValoresModelos = async (form) => {
+  return postFunction("alquileres/flota/valores-modelos", form);
 };
 
 const getAlquileres = async (form) => {
@@ -101,6 +113,9 @@ const alquileresService = {
   renovacionFlota,
   getMovimientosContrato,
   postMovimientoContrato,
+  postFacturacionMasiva,
+  getValoresModelos,
+  postValoresModelos
 };
 
 export default alquileresService;

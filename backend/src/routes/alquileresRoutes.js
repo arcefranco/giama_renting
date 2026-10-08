@@ -19,6 +19,9 @@ import {
   renovacionContratoFlota,
   getMovimientosContrato,
   postMovimientoContrato,
+  postFacturacionMasiva,
+  getValoresModelos,
+  postValoresModelos
 } from "../controllers/alquileresController.js";
 import { auth } from "../middlewares/auth.js";
 
@@ -74,5 +77,8 @@ alquileresRouter.post("/contrato/cambioVehiculo", auth, cambioVehiculo);
 alquileresRouter.post("/flota/renovacion", auth, renovacionContratoFlota);
 alquileresRouter.post("/contrato/movimientos", auth, getMovimientosContrato);
 alquileresRouter.post("/contrato/movimiento", auth, postMovimientoContrato);
+alquileresRouter.post("/flota/facturacion-masiva", auth, postFacturacionMasiva);
+alquileresRouter.get("/flota/valores-modelos", auth, getValoresModelos);
+alquileresRouter.post("/flota/valores-modelos", auth, postValoresModelos);
 export default alquileresRouter;
 
