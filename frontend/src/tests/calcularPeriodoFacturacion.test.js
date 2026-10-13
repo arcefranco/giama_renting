@@ -134,4 +134,57 @@ describe('Suite de Pruebas: Cálculo de Período para Facturación Masiva', () =
     });
   });
 
+  // =========================================================================
+  // 6. Clientes particulares (no empresas) - Período semanal (Miércoles a Martes)
+  // =========================================================================
+  describe('6. Clientes particulares (esEmpresa = false) - Período semanal miércoles a martes', () => {
+    it('debe renovar desde el miércoles siguiente si el último alquiler terminó un martes (ej: 06/10/2026)', () => {
+      const { fechaDesde, fechaHasta } = calcularPeriodoFacturacion(
+        '2026-01-01',
+        '2027-01-01',
+        new Date(2026, 9, 7),
+        { esEmpresa: false, ultimaFechaHasta: '2026-10-06' }
+      );
+
+      assert.equal(fechaDesde, '2026-10-07'); // Miércoles
+      assert.equal(fechaHasta, '2026-10-13'); // Martes (+6 días)
+    });
+
+    it('debe iniciar en la misma fecha si es contrato nuevo sin alquiler previo que inicia un miércoles (07/10/2026)', () => {
+      const { fechaDesde, fechaHasta } = calcularPeriodoFacturacion(
+        '2026-10-07',
+        '2027-10-07',
+        new Date(2026, 9, 7),
+        { esEmpresa: false, ultimaFechaHasta: null }
+      );
+
+      assert.equal(fechaDesde, '2026-10-07');
+      assert.equal(fechaHasta, '2026-10-13');
+    });
+
+    it('debe buscar el próximo miércoles si es contrato nuevo que inicia un lunes (05/10/2026)', () => {
+      const { fechaDesde, fechaHasta } = calcularPeriodoFacturacion(
+        '2026-10-05',
+        '2027-10-05',
+        new Date(2026, 9, 5),
+        { esEmpresa: false, ultimaFechaHasta: null }
+      );
+
+      assert.equal(fechaDesde, '2026-10-07');
+      assert.equal(fechaHasta, '2026-10-13');
+    });
+
+    it('debe respetar el límite de fin de contrato si vence antes del martes', () => {
+      const { fechaDesde, fechaHasta } = calcularPeriodoFacturacion(
+        '2026-10-07',
+        '2026-10-10', // Vence sábado
+        new Date(2026, 9, 7),
+        { esEmpresa: false, ultimaFechaHasta: null }
+      );
+
+      assert.equal(fechaDesde, '2026-10-07');
+      assert.equal(fechaHasta, '2026-10-10');
+    });
+  });
+
 });

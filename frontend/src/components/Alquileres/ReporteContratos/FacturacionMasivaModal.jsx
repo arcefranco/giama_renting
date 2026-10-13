@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { postFacturacionMasiva, getValoresModelos } from '../../../reducers/Alquileres/alquileresSlice';
 import { calcularPeriodoFacturacion } from '../../../helpers/calcularPeriodoFacturacion';
@@ -67,7 +67,7 @@ const FacturacionMasivaModal = ({ visible, onClose, contratos, clientes, vehicul
 
         const nombreCliente = cliente?.nombre ? `${cliente.nombre} ${cliente.apellido}` : (cliente?.razon_social || "SIN DATOS");
         const vehiculoDisplay = `${vehiculo?.dominio || vehiculo?.dominio_provisorio || "SIN DOMINIO"} - ${modelo?.nombre || ""}`;
-        
+
         let valorPorDefecto = "";
         if (modelo && valoresModelos && valoresModelos.length > 0) {
           const mVal = valoresModelos.find(v => v.id_modelo == modelo.id);
@@ -76,9 +76,13 @@ const FacturacionMasivaModal = ({ visible, onClose, contratos, clientes, vehicul
           }
         }
 
+        const esEmpresa = !!(cliente?.razon_social);
+
         const { fechaDesde, fechaHasta } = calcularPeriodoFacturacion(
           contrato.fecha_desde,
-          contrato.fecha_hasta
+          contrato.fecha_hasta,
+          new Date(),
+          { esEmpresa, ultimaFechaHasta: contrato.ultima_fecha_hasta }
         );
 
         return {
@@ -117,33 +121,33 @@ const FacturacionMasivaModal = ({ visible, onClose, contratos, clientes, vehicul
 
   const todosSeleccionados = contratosFiltrados.length > 0 && contratosFiltrados.every(c => c.incluir);
   const seleccionadosCount = contratosEditables.filter(c => c.incluir).length;
-  
+
   const totalAImputar = contratosEditables
     .filter(c => c.incluir && c.debe_alquiler)
     .reduce((acc, curr) => acc + parseFloat(curr.debe_alquiler || 0), 0);
 
   const handleToggleSelectAll = (checked) => {
     const idsFiltrados = contratosFiltrados.map(c => c.id);
-    setContratosEditables(prev => prev.map(c => 
+    setContratosEditables(prev => prev.map(c =>
       idsFiltrados.includes(c.id) ? { ...c, incluir: checked } : c
     ));
   };
 
   const handleToggleRow = (id) => {
-    setContratosEditables(prev => prev.map(c => 
+    setContratosEditables(prev => prev.map(c =>
       c.id === id ? { ...c, incluir: !c.incluir } : c
     ));
   };
 
   const handleInputChange = (id, field, value) => {
-    setContratosEditables(prev => prev.map(c => 
+    setContratosEditables(prev => prev.map(c =>
       c.id === id ? { ...c, [field]: value } : c
     ));
   };
 
   const handleConfirmar = async () => {
     const seleccionados = contratosEditables.filter(c => c.incluir);
-    
+
     if (seleccionados.length === 0) {
       toast.warning("Debe seleccionar al menos un contrato para facturar.");
       return;
@@ -255,7 +259,7 @@ const FacturacionMasivaModal = ({ visible, onClose, contratos, clientes, vehicul
         <div style={{ padding: '12px 24px', backgroundColor: '#fafafa', borderBottom: '1px solid #e8e8e8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <span>Contratos Seleccionados: <strong style={{ color: '#1890ff' }}>{seleccionadosCount} de {contratosEditables.length}</strong></span>
-            <input 
+            <input
               type="text"
               placeholder="Buscar por cliente, CUIT o patente..."
               value={busqueda}
@@ -404,22 +408,22 @@ const FacturacionMasivaModal = ({ visible, onClose, contratos, clientes, vehicul
             )}
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
+            <button
               onClick={onClose}
               disabled={isProcessing}
-              style={{ 
-                padding: '8px 16px', border: '1px solid #d9d9d9', backgroundColor: '#fff', 
-                cursor: isProcessing ? 'not-allowed' : 'pointer', borderRadius: '4px' 
+              style={{
+                padding: '8px 16px', border: '1px solid #d9d9d9', backgroundColor: '#fff',
+                cursor: isProcessing ? 'not-allowed' : 'pointer', borderRadius: '4px'
               }}
             >
               Cancelar
             </button>
-            <button 
+            <button
               onClick={handleConfirmar}
               disabled={seleccionadosCount === 0 || isProcessing}
-              style={{ 
+              style={{
                 padding: '8px 20px', border: 'none', borderRadius: '4px',
-                backgroundColor: (seleccionadosCount === 0 || isProcessing) ? '#d9d9d9' : '#800020', 
+                backgroundColor: (seleccionadosCount === 0 || isProcessing) ? '#d9d9d9' : '#800020',
                 color: '#fff', cursor: (seleccionadosCount === 0 || isProcessing) ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
                 display: 'flex', alignItems: 'center', gap: '8px'
