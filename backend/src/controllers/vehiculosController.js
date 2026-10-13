@@ -2296,6 +2296,19 @@ const facturaVentaVehiculo = async (
     vehiculoAnterior[0].dominio_provisorio ||
     "Sin Dominio";
   const concepto_factura = `Venta de Vehículo Usado - Dominio: ${dominioVehiculo}`;
+
+  // Control estricto de cuadre AFIP (ImpTotal == ImpNeto + ImpIVA + ImpPerc):
+  // Si existe una discrepancia de centavos por redondeos independientes, se absorbe en el IVA.
+  const totParsed = parseFloat(facturaVentaData.importe_total || 0);
+  const netParsed = parseFloat(facturaVentaData.importe_neto || 0);
+  const ivaParsed = parseFloat(facturaVentaData.importe_iva || 0);
+  const percParsed = parseFloat(facturaVentaData.importe_percepcion || 0);
+  const diffCentavos = parseFloat((totParsed - (netParsed + ivaParsed + percParsed)).toFixed(2));
+
+  if (Math.abs(diffCentavos) === 0.01 && ivaParsed > 0) {
+    facturaVentaData.importe_iva = (ivaParsed + diffCentavos).toFixed(2);
+  }
+
   const itemsArray = [
     {
       descripcion: concepto_factura,
