@@ -3,6 +3,7 @@ import Select from 'react-select';
 import { useSelector, useDispatch } from 'react-redux';
 import { getClientes } from '../../../reducers/Clientes/clientesSlice';
 import { getProvincias } from '../../../reducers/Generales/generalesSlice';
+import { calcularImportesDesdeTotal, calcularImportesDesdeNeto } from '../../../helpers/calcularImportesFactura';
 
 const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
   const dispatch = useDispatch();
@@ -71,39 +72,37 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
       
-      const porcIva = parseFloat(newData.porcentaje_iva || 0) / 100;
-      const tasaPerc = parseFloat(newData.tasa_percepcion || 0) / 100;
-      
       if (name === 'tipo_percepcion' && value === 'ninguna') {
-          newData.tasa_percepcion = '';
-          newData.importe_percepcion = '';
+        newData.tasa_percepcion = '';
+        newData.importe_percepcion = '';
       }
 
-      const percAmount = name === 'importe_percepcion' ? parseFloat(value || 0) : 
-                        (newData.tasa_percepcion ? parseFloat(newData.importe_neto || 0) * tasaPerc : 0);
-                        
-      if (name !== 'importe_percepcion') {
-          newData.importe_percepcion = percAmount > 0 ? percAmount.toFixed(2) : '';
-      }
+      const tasaPerc = newData.tipo_percepcion !== 'ninguna' ? parseFloat(newData.tasa_percepcion || 0) : 0;
 
-      const perc = parseFloat(newData.importe_percepcion || 0);
-
-      if (name === 'importe_total' && value) {
-        const total = parseFloat(value);
-        const neto = (total / (1 + porcIva + tasaPerc)).toFixed(2);
-        const iva = (neto * porcIva).toFixed(2);
-        const calcPerc = (neto * tasaPerc).toFixed(2);
+      if (name === 'importe_total') {
+        const { neto, iva, percepcion } = calcularImportesDesdeTotal({
+          total: value,
+          porcentajeIva: parseFloat(newData.porcentaje_iva || 0),
+          tasaPercepcion: tasaPerc
+        });
         newData.importe_neto = neto;
         newData.importe_iva = iva;
-        newData.importe_percepcion = calcPerc > 0 ? calcPerc : '';
+        newData.importe_percepcion = percepcion;
       } 
-      else if ((name === 'importe_neto' || name === 'porcentaje_iva' || name === 'tasa_percepcion' || name === 'importe_percepcion')) {
-        const neto = parseFloat(newData.importe_neto || 0);
-        const iva = (neto * porcIva).toFixed(2);
-        const total = (neto + parseFloat(iva) + perc).toFixed(2);
+      else if (['importe_neto', 'porcentaje_iva', 'tasa_percepcion', 'tipo_percepcion', 'importe_percepcion'].includes(name)) {
         if (newData.importe_neto) {
-            newData.importe_iva = iva;
-            newData.importe_total = total;
+          const { neto, iva, percepcion, total } = calcularImportesDesdeNeto({
+            neto: newData.importe_neto,
+            porcentajeIva: parseFloat(newData.porcenxtaje_iva || 0),
+            tasaPercepcion: tasaPerc,
+            importePercepcion: name === 'importe_percepcion' ? value : null
+          });
+          newData.importe_neto = neto;
+          newData.importe_iva = iva;
+          if (name !== 'importe_percepcion') {
+            newData.importe_percepcion = percepcion;
+          }
+          newData.importe_total = total;
         }
       }
       
