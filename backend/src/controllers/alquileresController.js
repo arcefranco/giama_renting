@@ -305,7 +305,7 @@ export const getAlquileres = async (req, res) => {
 };
 
 export const getContratos = async (req, res) => {
-  const { vigentes } = req.body;
+  const { vigentes } = req.body || {};
 
   const baseQuery = `
     SELECT 

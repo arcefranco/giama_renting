@@ -29,6 +29,8 @@ import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteCo
 import SituacionFlota from './components/Vehiculos/SituacionFlota/SituacionFlota';
 import ImportacionMasiva from './components/Vehiculos/ImportacionMasiva';
 import Remitos from './components/Vehiculos/Remitos/Remitos';
+import SiniestrosListado from './components/Vehiculos/Siniestros/SiniestrosListado';
+import SiniestrosInspeccion from './components/Vehiculos/Siniestros/SiniestrosInspeccion';
 
 import PrivateRoute from "./utils/PrivateRoute";
 import Unauthorized from "./utils/Unauthorized";
@@ -90,6 +92,11 @@ function App() {
           <Route path='/vehiculos/ficha/reporte' element={<ReporteFichasVehiculos />} />
           <Route path="/vehiculos/situacionFlota" element={<SituacionFlota />} />
           <Route path="/vehiculos/remitos" element={<Remitos />} />
+          <Route element={<PrivateRoute allowedRoles={["1", "2", "4", "6", "7"]} />}>
+            <Route path="/vehiculos/siniestros" element={<SiniestrosListado />} />
+            <Route path="/vehiculos/siniestros/nuevo" element={<SiniestrosInspeccion />} />
+            <Route path="/vehiculos/siniestros/:id" element={<SiniestrosInspeccion />} />
+          </Route>
           <Route element={<PrivateRoute allowedRoles={["1"]} />}>
             <Route path="/vehiculos/importacionMasiva" element={<ImportacionMasiva />} />
           </Route>
