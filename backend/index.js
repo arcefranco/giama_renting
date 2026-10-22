@@ -13,6 +13,7 @@ import parametrosRouter from "./src/routes/parametrosRoutes.js";
 import ctacteRouter from "./src/routes/ctacteRoutes.js";
 import usuariosRouter from "./src/routes/usuariosRoutes.js";
 import auditoriaRouter from "./src/routes/auditoriaRoutes.js";
+import siniestrosRouter from "./src/routes/siniestrosRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -32,7 +33,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.listen(process.env.PORT, (error) => {
   if (!error) console.log("Escuchando en puerto: " + process.env.PORT);
   else console.log("Ocurrió un error: ", error);
@@ -54,3 +56,4 @@ app.use("/parametros", parametrosRouter);
 app.use("/ctacte", ctacteRouter);
 app.use("/usuarios", usuariosRouter);
 app.use("/auditoria", auditoriaRouter);
+app.use("/siniestros", siniestrosRouter);
