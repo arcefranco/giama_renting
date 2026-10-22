@@ -912,23 +912,20 @@
 .primaryBtn:hover {
   background: #17385d;
 }
-
 /* Print CSS */
 @media print {
   @page {
     size: A4;
-    margin: 10mm;
+    margin: 8mm;
   }
   
-  body {
-    background: #fff !important;
-  }
-  
-  .wrapper {
-    padding: 0 !important;
-    max-width: none !important;
-  }
-  
+  /* Ocultar elementos de UI no imprimibles, modales y navegación */
+  header,
+  nav,
+  :global(.swal2-container),
+  :global(.swal2-backdrop),
+  :global(.swal2-popup),
+  .backButton,
   .stepPill,
   .actions,
   .clearSign,
@@ -937,8 +934,22 @@
   .manualToggle,
   .damageSummaryActions,
   .photoStepActions,
-  .ocrBadge {
+  .ocrBadge,
+  .damagePanel {
     display: none !important;
+  }
+  
+  :global(body),
+  :global(html),
+  :global(body.swal2-shown) {
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  .wrapper {
+    padding: 0 !important;
+    max-width: none !important;
   }
   
   .card {
@@ -946,11 +957,19 @@
     border: 1px solid #b8c3ce !important;
     padding: 14px !important;
     margin-bottom: 12px !important;
-    break-inside: avoid;
   }
   
-  .multiViewWorkspace {
+  .multiViewWorkspace,
+  .separatedDiagrams {
+    display: block !important;
     grid-template-columns: 1fr !important;
+  }
+
+  .croppedView {
+    display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 12px !important;
   }
   
   .input,
@@ -959,14 +978,26 @@
     border-color: #999 !important;
     padding: 6px !important;
     font-size: 12px !important;
+    color: #000 !important;
   }
   
   .guidedPhotos {
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 8px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
   
   .photoStep {
     min-height: 120px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .signatureGrid,
+  .signatureBox {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }
+

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { ClipLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import siniestrosService from "../../../reducers/Siniestros/siniestrosService.js";
 import styles from "./SiniestrosListado.module.css";
@@ -68,7 +69,7 @@ const SiniestrosListado = () => {
       const idStr = String(item.id || "");
       const contratoIdStr = String(item.id_contrato || "");
       const dominio = (item.vehiculo_dominio || item.vehiculo_dominio_provisorio || "").toLowerCase();
-      const modelo = (item.vehiculo_modelo || "").toLowerCase();
+      const modelo = String(item.vehiculo_modelo || "").toLowerCase();
       const cliente = (
         `${item.cliente_nombre || ""} ${item.cliente_apellido || ""} ${item.cliente_razon_social || ""}`
       ).toLowerCase();
@@ -85,33 +86,7 @@ const SiniestrosListado = () => {
     });
   }, [siniestros, search, tipoFiltro, estadoFiltro]);
 
-  const getTypeBadgeClass = (tipo) => {
-    switch (tipo?.toLowerCase()) {
-      case "entrega":
-        return `${styles.typeBadge} ${styles.typeEntrega}`;
-      case "devolución":
-      case "devolucion":
-        return `${styles.typeBadge} ${styles.typeDevolucion}`;
-      case "siniestro":
-        return `${styles.typeBadge} ${styles.typeSiniestro}`;
-      default:
-        return styles.typeBadge;
-    }
-  };
 
-  const getStatusSelectClass = (estado) => {
-    switch (estado?.toLowerCase()) {
-      case "pendiente":
-        return `${styles.statusSelect} ${styles.statusPendiente}`;
-      case "finalizada":
-        return `${styles.statusSelect} ${styles.statusFinalizada}`;
-      case "cancelada":
-      case "anulada":
-        return `${styles.statusSelect} ${styles.statusCancelada}`;
-      default:
-        return styles.statusSelect;
-    }
-  };
 
   const formatFechaHora = (fechaStr) => {
     if (!fechaStr) return "-";
@@ -134,27 +109,14 @@ const SiniestrosListado = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleArea}>
-          <h1>Siniestros e Inspecciones</h1>
-          <p>Control integral de actas de entrega, devolución y registro de siniestros</p>
+          <h1>Agenda e historial de verificaciones</h1>
+          <p>Cada vehículo conserva sus verificaciones y daños anteriores.</p>
         </div>
         <button
           className={styles.newButton}
           onClick={() => navigate("/vehiculos/siniestros/nuevo")}
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Nueva inspección
+          + Nueva verificación
         </button>
       </div>
 
@@ -193,7 +155,8 @@ const SiniestrosListado = () => {
       <div className={styles.tableCard}>
         {loading ? (
           <div className={styles.loadingState}>
-            Cargando inspecciones y siniestros...
+            <ClipLoader size={45} color="#10243e" loading={true} />
+            <span>Cargando verificaciones...</span>
           </div>
         ) : filteredData.length === 0 ? (
           <div className={styles.emptyState}>
@@ -216,7 +179,7 @@ const SiniestrosListado = () => {
               className={styles.newButton}
               onClick={() => navigate("/vehiculos/siniestros/nuevo")}
             >
-              Crear primera acta
+              + Nueva verificación
             </button>
           </div>
         ) : (
@@ -224,15 +187,12 @@ const SiniestrosListado = () => {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>N.º Acta</th>
-                  <th>Fecha y Hora</th>
-                  <th>Tipo</th>
-                  <th>Vehículo</th>
-                  <th>Cliente</th>
-                  <th>Contrato</th>
-                  <th>Verificador</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
+                  <th>FECHA</th>
+                  <th>CLIENTE</th>
+                  <th>VEHÍCULO</th>
+                  <th>VERIFICADOR</th>
+                  <th>ESTADO</th>
+                  <th>ACTA E HISTORIAL</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,39 +203,31 @@ const SiniestrosListado = () => {
                     "-";
                   const vehiculoDominio =
                     item.vehiculo_dominio || item.vehiculo_dominio_provisorio || "S/D";
-                  const vehiculoModelo = item.vehiculo_modelo || "";
+                  const rawModelo = String(item.vehiculo_modelo || "").trim();
+                  const vehiculoModelo = rawModelo && isNaN(Number(rawModelo)) ? rawModelo : "";
 
                   return (
                     <tr key={item.id}>
-                      <td>
-                        <span className={styles.idBadge}>#{item.id}</span>
-                      </td>
                       <td>
                         <span className={styles.dateTime}>
                           {formatFechaHora(item.fecha_hora)}
                         </span>
                       </td>
                       <td>
-                        <span className={getTypeBadgeClass(item.tipo)}>
-                          {item.tipo || "Entrega"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.vehicleDominio}>{vehiculoDominio}</div>
-                        {vehiculoModelo && (
-                          <div className={styles.vehicleModel}>{vehiculoModelo}</div>
-                        )}
-                      </td>
-                      <td>
                         <div className={styles.clientName}>{clienteNombre}</div>
                       </td>
                       <td>
-                        <span className={styles.idBadge}>#{item.id_contrato}</span>
+                        <div className={styles.vehicleCell}>
+                          <strong className={styles.vehicleDominioInline}>
+                            {vehiculoDominio}
+                          </strong>
+                          {vehiculoModelo && ` · ${vehiculoModelo}`}
+                        </div>
                       </td>
                       <td>{item.verificador || "-"}</td>
                       <td>
                         <select
-                          className={getStatusSelectClass(item.estado)}
+                          className={styles.statusSelect}
                           value={item.estado || "Pendiente"}
                           onChange={(e) => handleEstadoChange(item.id, e.target.value)}
                         >
@@ -286,11 +238,10 @@ const SiniestrosListado = () => {
                       </td>
                       <td>
                         <button
-                          className={styles.actionButton}
+                          className={styles.iniciarActaBtn}
                           onClick={() => navigate(`/vehiculos/siniestros/${item.id}`)}
-                          title="Ver detalle de inspección"
                         >
-                          Ver / Editar
+                          Iniciar acta
                         </button>
                       </td>
                     </tr>

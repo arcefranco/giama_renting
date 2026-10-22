@@ -285,6 +285,22 @@ const SiniestrosInspeccion = () => {
 
   const searchTimeoutRef = useRef(null);
 
+  // Formateador de opciones para el selector de contratos
+  const formatContratoOption = (c) => {
+    const dom = c.vehiculo_dominio || c.vehiculo_dominio_provisorio || "S/D";
+    const mod = String(c.vehiculo_modelo || "").trim();
+    const cli =
+      `${c.cliente_nombre || ""} ${c.cliente_apellido || ""}`.trim() ||
+      c.cliente_razon_social ||
+      "Cliente N/D";
+
+    return {
+      value: c.id,
+      contrato: c,
+      label: `Contrato #${c.id} — ${dom} ${mod ? `(${mod}) ` : ""}— ${cli}`,
+    };
+  };
+
   // Búsqueda asíncrona de contratos on-demand con debounce
   const loadContratosOptions = (inputValue, callback) => {
     if (searchTimeoutRef.current) {
@@ -299,21 +315,7 @@ const SiniestrosInspeccion = () => {
         .buscarContratos("")
         .then((res) => {
           const list = Array.isArray(res) ? res : res?.data || [];
-          const options = list.map((c) => {
-            const dom = c.vehiculo_dominio || c.vehiculo_dominio_provisorio || "S/D";
-            const mod = (c.vehiculo_modelo || "").trim();
-            const cli =
-              `${c.cliente_nombre || ""} ${c.cliente_apellido || ""}`.trim() ||
-              c.cliente_razon_social ||
-              "Cliente N/D";
-
-            return {
-              value: c.id,
-              contrato: c,
-              label: `Contrato #${c.id} — ${dom} ${mod ? `(${mod}) ` : ""}— ${cli}`,
-            };
-          });
-          callback(options);
+          callback(list.map(formatContratoOption));
         })
         .catch(() => callback([]));
       return;
@@ -325,22 +327,7 @@ const SiniestrosInspeccion = () => {
         .buscarContratos(term)
         .then((res) => {
           const list = Array.isArray(res) ? res : res?.data || [];
-          const options = list.map((c) => {
-            const dom = c.vehiculo_dominio || c.vehiculo_dominio_provisorio || "S/D";
-            const mod = (c.vehiculo_modelo || "").trim();
-            const cli =
-              `${c.cliente_nombre || ""} ${c.cliente_apellido || ""}`.trim() ||
-              c.cliente_razon_social ||
-              "Cliente N/D";
-
-            return {
-              value: c.id,
-              contrato: c,
-              label: `Contrato #${c.id} — ${dom} ${mod ? `(${mod}) ` : ""}— ${cli}`,
-            };
-          });
-
-          callback(options);
+          callback(list.map(formatContratoOption));
         })
         .catch((err) => {
           console.error("Error al buscar contratos:", err);
@@ -367,10 +354,10 @@ const SiniestrosInspeccion = () => {
       c.cliente_razon_social ||
       "";
     setClienteNombre(nombreCompleto);
-    setDni(c.cliente_documento || "");
+    setDni(String(c.cliente_documento || ""));
     setTelefono(c.cliente_celular || c.cliente_telefono_alternativo || "");
 
-    const mod = (c.vehiculo_modelo || "").trim();
+    const mod = String(c.vehiculo_modelo || "").trim();
     setPatente(c.vehiculo_dominio || c.vehiculo_dominio_provisorio || "");
     setVehiculoInfo(mod || "Vehículo Giama");
     setColor(c.vehiculo_color || "");
@@ -460,8 +447,8 @@ const SiniestrosInspeccion = () => {
 
   // Kilometraje & OCR
   const [km, setKm] = useState("");
-  const [manualKm, setManualKm] = useState(false);
-  const [ocrStatus, setOcrStatus] = useState("Sacá la foto del kilometraje para completar.");
+  const [manualKm, setManualKm] = useState(true);
+  const [ocrStatus, setOcrStatus] = useState("Ingresá el kilometraje o cargá la foto.");
 
   const handleGuidedPhotoChange = async (e) => {
     const file = e.target.files?.[0];
@@ -623,7 +610,7 @@ const SiniestrosInspeccion = () => {
         setPhotos(Array(8).fill(null));
         setExtraPhotos([]);
         setKm("");
-        setManualKm(false);
+        setManualKm(true);
         clearCanvas(clientCanvasRef, setClientSigned);
         clearCanvas(staffCanvasRef, setStaffSigned);
         setClientSignName("");
@@ -640,6 +627,19 @@ const SiniestrosInspeccion = () => {
     }
     if (!patente || !clienteNombre) {
       Swal.fire("Atención", "Completá los datos del cliente y vehículo.", "warning");
+      return;
+    }
+
+    const missingPhotos = PHOTO_STEPS.filter(
+      (_, idx) => !photos[idx] || (typeof photos[idx] === "string" && !photos[idx].trim())
+    );
+
+    if (missingPhotos.length > 0) {
+      Swal.fire({
+        title: "Fotos obligatorias incompletas",
+        html: `Debés cargar las 8 fotos guiadas de la unidad.<br/><br/><b>Faltan ${missingPhotos.length} foto(s):</b><ul style="text-align: left; margin-top: 8px;">${missingPhotos.map((item) => `<li>${item}</li>`).join("")}</ul>`,
+        icon: "warning",
+      });
       return;
     }
 
@@ -685,20 +685,36 @@ const SiniestrosInspeccion = () => {
       }
       setIsSaving(false);
       if (res && res.status) {
-        Swal.fire({
-          title: "Éxito",
-          text: res.message || "Inspección guardada correctamente",
-          icon: "success",
-          showCancelButton: true,
-          confirmButtonText: "Ir al listado",
-          cancelButtonText: "Seguir editando",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            navigate("/vehiculos/siniestros");
-          }
-        });
         if (imprimir) {
-          setTimeout(() => window.print(), 500);
+          // Imprimir el acta sin interferencia de modales en pantalla
+          setTimeout(() => {
+            window.print();
+            Swal.fire({
+              title: "Inspección finalizada",
+              text: res.message || "Inspección guardada correctamente.",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "Ir al listado",
+              cancelButtonText: "Seguir en el acta",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                navigate("/vehiculos/siniestros");
+              }
+            });
+          }, 300);
+        } else {
+          Swal.fire({
+            title: "Éxito",
+            text: res.message || "Inspección guardada correctamente",
+            icon: "success",
+            showCancelButton: true,
+            confirmButtonText: "Ir al listado",
+            cancelButtonText: "Seguir editando",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate("/vehiculos/siniestros");
+            }
+          });
         }
       } else {
         Swal.fire("Error", res?.message || "No se pudo guardar la inspección", "error");
@@ -732,9 +748,21 @@ const SiniestrosInspeccion = () => {
             Completá el estado de la unidad, daños en croquis, control general y registro fotográfico.
           </p>
         </div>
-        <div className={styles.stepPill}>
-          <b>{progressPct}%</b>
-          <span>completado</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {id && (
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => window.print()}
+              title="Imprimir o guardar PDF del acta"
+            >
+              Imprimir PDF
+            </button>
+          )}
+          <div className={styles.stepPill}>
+            <b>{progressPct}%</b>
+            <span>completado</span>
+          </div>
         </div>
       </div>
 
@@ -1402,6 +1430,7 @@ const SiniestrosInspeccion = () => {
           <button type="button" className={styles.secondaryBtn} onClick={handleLimpiarActa} disabled={isSaving}>
             Limpiar acta
           </button>
+          {/* 
           <button
             type="button"
             className={styles.secondaryBtn}
@@ -1417,6 +1446,7 @@ const SiniestrosInspeccion = () => {
               </>
             )}
           </button>
+          */}
           <button
             type="button"
             className={styles.primaryBtn}

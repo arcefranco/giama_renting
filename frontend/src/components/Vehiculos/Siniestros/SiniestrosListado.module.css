@@ -189,54 +189,53 @@
 }
 
 .statusSelect {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   outline: none;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  transition: all 0.15s ease;
 }
 
-.statusPendiente {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fde68a;
+.statusSelect:focus {
+  border-color: #111827;
 }
 
-.statusFinalizada {
-  background: #d1fae5;
-  color: #065f46;
-  border-color: #a7f3d0;
+.vehicleCell {
+  font-size: 13.5px;
+  color: #334155;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.statusCancelada {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fecaca;
+.vehicleDominioInline {
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.actionButton {
+.iniciarActaBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #f1f5f9;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-size: 12.5px;
+  justify-content: center;
+  background: #000000;
+  color: #ffffff;
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 18px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.actionButton:hover {
-  background: #10243e;
-  color: #ffffff;
-  border-color: #10243e;
+.iniciarActaBtn:hover {
+  background: #27272a;
+  transform: translateY(-1px);
 }
 
 .emptyState {
@@ -266,6 +265,11 @@
 
 .loadingState {
   padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
   text-align: center;
   color: #64748b;
   font-size: 14px;

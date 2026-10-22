@@ -12,6 +12,27 @@ const safeJsonStringify = (val) => {
   }
 };
 
+const parseJsonIfString = (val) => {
+  if (typeof val === "string") {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return null;
+    }
+  }
+  return val;
+};
+
+export const validarFotosGuiadas = (fotos) => {
+  const parsed = parseJsonIfString(fotos);
+  if (!Array.isArray(parsed) || parsed.length !== 8) {
+    return false;
+  }
+  return parsed.every(
+    (foto) => foto && typeof foto === "string" && foto.trim().length > 0
+  );
+};
+
 /**
  * Buscar contratos para el selector de actas de inspección / siniestros.
  * Permite buscar por ID de contrato, dominio, modelo, o datos del cliente.
@@ -35,15 +56,17 @@ export const buscarContratos = async (req, res) => {
         cli.telefono_alternativo AS cliente_telefono_alternativo,
         v.dominio AS vehiculo_dominio,
         v.dominio_provisorio AS vehiculo_dominio_provisorio,
-        v.modelo AS vehiculo_modelo,
+        COALESCE(m.nombre, '') AS vehiculo_modelo,
         v.color AS vehiculo_color
       FROM contratos_alquiler c
       LEFT JOIN clientes cli ON c.id_cliente = cli.id
       LEFT JOIN vehiculos v ON c.id_vehiculo = v.id
+      LEFT JOIN modelos m ON v.modelo = m.id
       WHERE (:queryTerm = '' 
         OR c.id LIKE :likeParam
         OR v.dominio LIKE :likeParam
         OR v.dominio_provisorio LIKE :likeParam
+        OR m.nombre LIKE :likeParam
         OR cli.nombre LIKE :likeParam
         OR cli.apellido LIKE :likeParam
         OR cli.razon_social LIKE :likeParam
@@ -77,12 +100,13 @@ export const getSiniestros = async (req, res) => {
         cli.nro_documento AS cliente_documento,
         v.dominio AS vehiculo_dominio,
         v.dominio_provisorio AS vehiculo_dominio_provisorio,
-        v.modelo AS vehiculo_modelo,
+        COALESCE(m.nombre, '') AS vehiculo_modelo,
         v.color AS vehiculo_color
       FROM siniestros_inspecciones si
       LEFT JOIN contratos_alquiler c ON si.id_contrato = c.id
       LEFT JOIN clientes cli ON si.id_cliente = cli.id
       LEFT JOIN vehiculos v ON si.id_vehiculo = v.id
+      LEFT JOIN modelos m ON v.modelo = m.id
       ORDER BY si.id DESC`,
       {
         type: QueryTypes.SELECT,
@@ -117,12 +141,13 @@ export const getSiniestroById = async (req, res) => {
         cli.telefono_alternativo AS cliente_telefono_alternativo,
         v.dominio AS vehiculo_dominio,
         v.dominio_provisorio AS vehiculo_dominio_provisorio,
-        v.modelo AS vehiculo_modelo,
+        COALESCE(m.nombre, '') AS vehiculo_modelo,
         v.color AS vehiculo_color
       FROM siniestros_inspecciones si
       LEFT JOIN contratos_alquiler c ON si.id_contrato = c.id
       LEFT JOIN clientes cli ON si.id_cliente = cli.id
       LEFT JOIN vehiculos v ON si.id_vehiculo = v.id
+      LEFT JOIN modelos m ON v.modelo = m.id
       WHERE si.id = ?`,
       {
         replacements: [id],
@@ -176,6 +201,13 @@ export const postSiniestro = async (req, res) => {
     return res.send({
       status: false,
       message: "Contrato, vehículo y cliente son campos obligatorios.",
+    });
+  }
+
+  if (!validarFotosGuiadas(fotos_guiadas)) {
+    return res.send({
+      status: false,
+      message: "Deben cargarse las 8 fotos obligatorias del registro fotográfico.",
     });
   }
 
@@ -321,6 +353,13 @@ export const updateSiniestro = async (req, res) => {
     aclaracion_verificador,
     estado,
   } = req.body;
+
+  if (fotos_guiadas !== undefined && !validarFotosGuiadas(fotos_guiadas)) {
+    return res.send({
+      status: false,
+      message: "Deben cargarse las 8 fotos obligatorias del registro fotográfico.",
+    });
+  }
 
   try {
     await giama_renting.query(
