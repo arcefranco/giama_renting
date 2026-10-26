@@ -1223,6 +1223,7 @@ const SiniestrosInspeccion = () => {
             ref={guidedPhotoInputRef}
             type="file"
             accept="image/*"
+            capture="environment"
             style={{ display: "none" }}
             onChange={handleGuidedPhotoChange}
           />
@@ -1334,6 +1335,7 @@ const SiniestrosInspeccion = () => {
                 ref={extraPhotoInputRef}
                 type="file"
                 accept="image/*"
+                capture="environment"
                 multiple
                 onChange={handleExtraPhotosChange}
               />
