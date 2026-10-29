@@ -34,7 +34,6 @@ const menuItems = [
     title: "Alquileres",
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["2"] },
-      { label: "Contrato digital", to: "/alquileres/contrato-digital", roles: ["1", "2", "3", "4", "5", "6"] },
       { label: "Listado contratos digitales", to: "/alquileres/contratos-digitales/listado", roles: ["1", "2", "3", "4", "5", "6"] },
       { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3", "5"] },
       { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5", "6"] },
