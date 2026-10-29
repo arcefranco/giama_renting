@@ -105,9 +105,20 @@ const Header = () => {
     return userRoles.some((r) => itemRoles.includes(r));
   };
 
+  const appEnv = import.meta.env.VITE_APP_ENV;
+  const isNonProd = appEnv && appEnv.toLowerCase() !== "production";
+
   return (
     <header className={styles.header}>
-      <div className={styles.logo}>Giama Renting</div>
+      <div className={styles.logo}>
+        <span className={styles.logoText}>Giama Renting</span>
+        {isNonProd && (
+          <span className={styles.envBadge}>
+            <span className={styles.pulseDot} />
+            {appEnv.toUpperCase()}
+          </span>
+        )}
+      </div>
 
       <nav className={styles.nav}>
         <ul className={styles.menu}>
