@@ -25,6 +25,8 @@ import AltaPassword from './components/Usuarios/Password/AltaPassword';
 import RecoveryPass from './components/Usuarios/Password/RecoveryPass';
 import ReporteUsuarios from './components/Usuarios/ReporteUsuarios';
 import ContratoAlquiler from './components/Alquileres/ContratoAlquiler/ContratoAlquiler';
+import ContratoDigital from './components/Alquileres/ContratoDigital/ContratoDigital';
+import ContratosDigitalesListado from './components/Alquileres/ContratoDigital/ContratosDigitalesListado';
 import ReporteContratos from './components/Alquileres/ReporteContratos/ReporteContratos';
 import SituacionFlota from './components/Vehiculos/SituacionFlota/SituacionFlota';
 import ImportacionMasiva from './components/Vehiculos/ImportacionMasiva';
@@ -154,6 +156,12 @@ function App() {
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2"]} />}>
             <Route path='/alquileres/contrato' element={<ContratoAlquiler />} />
+          </Route>
+          <Route element={<PrivateRoute allowedRoles={["1", "2", "3", "4", "5", "6"]} />}>
+            <Route path='/alquileres/contrato-digital' element={<ContratoDigital />} />
+            <Route path='/alquileres/contrato-digital/:idContrato' element={<ContratoDigital />} />
+            <Route path='/alquileres/contrato-digital/ver/:idDigital' element={<ContratoDigital />} />
+            <Route path='/alquileres/contratos-digitales/listado' element={<ContratosDigitalesListado />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["2", "6"]} />}>
             <Route path='/contrato/actualizar/:id' element={<UpdateContrato />} />
