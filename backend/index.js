@@ -14,6 +14,7 @@ import ctacteRouter from "./src/routes/ctacteRoutes.js";
 import usuariosRouter from "./src/routes/usuariosRoutes.js";
 import auditoriaRouter from "./src/routes/auditoriaRoutes.js";
 import siniestrosRouter from "./src/routes/siniestrosRoutes.js";
+import contratoDigitalRouter from "./src/routes/contratoDigitalRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -57,3 +58,4 @@ app.use("/ctacte", ctacteRouter);
 app.use("/usuarios", usuariosRouter);
 app.use("/auditoria", auditoriaRouter);
 app.use("/siniestros", siniestrosRouter);
+app.use("/contratos-digitales", contratoDigitalRouter);

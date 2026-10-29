@@ -26,6 +26,7 @@ import MovimientosUnidadModal from '../ContratoAlquiler/MovimientosUnidadModal';
 import DetalleRemitoModal from '../../Vehiculos/Remitos/DetalleRemitoModal.jsx';
 import FacturacionMasivaModal from './FacturacionMasivaModal.jsx';
 import ValoresModelosModal from './ValoresModelosModal.jsx';
+import { IconFileText } from '../ContratoDigital/ContratoDigitalIcons';
 import Swal from 'sweetalert2';
 
 const ReporteContratos = () => {
@@ -215,6 +216,22 @@ const ReporteContratos = () => {
         }}
       >
         Modificar
+      </button>
+    );
+  }
+
+  const renderContratoDigital = (data) => {
+    return (
+      <button
+        onClick={() => window.open(`${import.meta.env.VITE_BASENAME}alquileres/contrato-digital/${data.data.id}`, '_blank')}
+        style={{
+          color: '#12243f', fontSize: "11px", fontWeight: "600",
+          background: '#e7edf5', border: '1px solid #c9d7e8', borderRadius: '4px',
+          padding: '3px 8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px'
+        }}
+        title="Generar o abrir Contrato Digital"
+      >
+        <IconFileText size={13} /> Oferta Digital
       </button>
     );
   }
@@ -659,6 +676,7 @@ const ReporteContratos = () => {
         <Column dataField="deposito_garantia" alignment="right" allowHeaderFiltering={false} allowFiltering={false} caption="Depósito"
           customizeText={(e) => Math.trunc(e.value).toLocaleString("es-AR")} />
         <Column caption="" cellRender={renderModificar} alignment="center" />
+        <Column caption="Digital" cellRender={renderContratoDigital} alignment="center" />
         <Column caption="Egreso / Ingreso" cellRender={renderRegistrarMovimiento} alignment="center" />
         {
           (roles?.includes("1") || roles?.includes("3") || roles?.includes("6")) && <Column caption="" cellRender={renderModificarVehiculo} alignment="center" />
