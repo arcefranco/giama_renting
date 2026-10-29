@@ -34,6 +34,8 @@ const menuItems = [
     title: "Alquileres",
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["2"] },
+      { label: "Contrato digital", to: "/alquileres/contrato-digital", roles: ["1", "2", "3", "4", "5", "6"] },
+      { label: "Listado contratos digitales", to: "/alquileres/contratos-digitales/listado", roles: ["1", "2", "3", "4", "5", "6"] },
       { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3", "5"] },
       { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5", "6"] },
     ]
@@ -103,9 +105,20 @@ const Header = () => {
     return userRoles.some((r) => itemRoles.includes(r));
   };
 
+  const appEnv = import.meta.env.VITE_APP_ENV;
+  const isNonProd = appEnv && appEnv.toLowerCase() !== "production";
+
   return (
     <header className={styles.header}>
-      <div className={styles.logo}>Giama Renting</div>
+      <div className={styles.logo}>
+        <span className={styles.logoText}>Giama Renting</span>
+        {isNonProd && (
+          <span className={styles.envBadge}>
+            <span className={styles.pulseDot} />
+            {appEnv.toUpperCase()}
+          </span>
+        )}
+      </div>
 
       <nav className={styles.nav}>
         <ul className={styles.menu}>

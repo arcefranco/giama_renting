@@ -1,0 +1,585 @@
+.container,
+.container * {
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 16px;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #172033;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #800000;
+  color: #fff;
+  padding: 14px 22px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(128, 0, 0, 0.15);
+}
+
+.brand {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.brand small {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #d5dfeb;
+}
+
+.badge {
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.listButton {
+  background: #ffffff;
+  color: #800000;
+  border: 1px solid #ffffff;
+  border-radius: 9px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  text-decoration: none;
+}
+
+.listButton:hover {
+  background: #f5f5f7;
+  color: #600000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 460px minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.panel, .paper {
+  background: #fff;
+  border: 1px solid #d9e0e9;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(18, 36, 63, 0.07);
+}
+
+.panel {
+  padding: 22px;
+  position: sticky;
+  top: 85px;
+  max-height: calc(100vh - 105px);
+  overflow-y: auto;
+}
+
+.panel h1 {
+  font-size: 1.3rem;
+  line-height: 1.25;
+  margin: 0 0 6px;
+  color: #12243f;
+}
+
+.intro {
+  font-size: 0.88rem;
+  color: #667085;
+  margin: 0 0 18px;
+  line-height: 1.45;
+}
+
+.searchBox {
+  background: #f4f7fb;
+  border: 1px solid #c9d7e8;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.searchBoxTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e5a91;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clearSearchBtn {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.clearSearchBtn:hover {
+  text-decoration: underline;
+}
+
+.section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+.section h2 {
+  font-size: 0.96rem;
+  margin: 0 0 14px;
+  color: #12243f;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+  row-gap: 16px;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.88rem;
+  background: #fff;
+  color: #172033;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: #1e5a91;
+  box-shadow: 0 0 0 3px rgba(30, 90, 145, 0.15);
+}
+
+.moneyWrapper {
+  position: relative;
+}
+
+.moneyPrefix {
+  position: absolute;
+  left: 12px;
+  top: 35px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.moneyInput {
+  padding-left: 28px !important;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  background: #f4f7fb;
+  border-radius: 9px;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: #2e384d;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.sigWrap {
+  border: 1px dashed #91a2b7;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.sigTitle {
+  font-size: 0.78rem;
+  color: #667085;
+  padding: 7px 10px;
+  background: #f4f7fb;
+  font-weight: 600;
+}
+
+.sigCanvas {
+  display: block;
+  width: 100%;
+  height: 140px;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.sigActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px;
+  border-top: 1px solid #d9e0e9;
+  background: #fafbfc;
+}
+
+.button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.secondary {
+  background: #e7edf5;
+  color: #12243f;
+}
+
+.secondary:hover {
+  background: #dbe4ef;
+}
+
+.primary {
+  background: #800000;
+  color: #fff;
+}
+
+.primary:hover {
+  background: #600000;
+}
+
+.successBtn {
+  background: #15803d;
+  color: #fff;
+}
+
+.successBtn:hover {
+  background: #166534;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.saveAction {
+  margin-top: 10px;
+}
+
+.statusMessage {
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.statusOk {
+  background: #e9f7f0;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.statusWarn {
+  background: #fff4d6;
+  color: #9a6700;
+  border: 1px solid #fde68a;
+}
+
+/* =========================================================
+   PAPER / DOCUMENT PREVIEW
+   ========================================================= */
+
+.paper {
+  padding: 48px 52px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #1a202c;
+  background: #fff;
+}
+
+.docHead {
+  text-align: center;
+  border-bottom: 2px solid #12243f;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.docHead h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #12243f;
+  letter-spacing: 0.02em;
+}
+
+.docHead p {
+  font: 700 0.8rem Inter, system-ui, sans-serif;
+  color: #667085;
+  margin: 6px 0 0;
+}
+
+.paper h3 {
+  font-size: 0.95rem;
+  margin: 22px 0 6px;
+  color: #0d294a;
+  font-weight: bold;
+}
+
+.paper p {
+  margin: 0 0 10px;
+  text-align: justify;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 22px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.82rem;
+}
+
+.dataTable td {
+  border: 1px solid #bfc9d6;
+  padding: 8px 10px;
+}
+
+.dataTable b {
+  color: #12243f;
+  display: inline-block;
+  margin-bottom: 3px;
+}
+
+.highlight {
+  background: #f0f6fd;
+  border-left: 4px solid #1e5a91;
+  padding: 12px 14px;
+  margin: 14px 0;
+}
+
+.highlight p {
+  margin: 0;
+}
+
+.signatures {
+  display: grid;
+  grid-template-columns: minmax(240px, 420px);
+  justify-content: center;
+  gap: 34px;
+  margin-top: 50px;
+}
+
+.sigBox {
+  text-align: center;
+  border-top: 1px solid #333;
+  padding-top: 8px;
+  min-height: 80px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.85rem;
+}
+
+.sigImage {
+  height: 72px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: -76px auto 6px;
+}
+
+.footerNote {
+  font: 500 0.74rem Inter, system-ui, sans-serif;
+  color: #667085;
+  border-top: 1px solid #d9e0e9;
+  padding-top: 12px;
+  margin-top: 30px;
+  text-align: center;
+}
+
+.empty {
+  color: #9aa4b2;
+  font-style: italic;
+}
+
+/* =========================================================
+   MEDIA QUERIES & PRINT STYLES
+   ========================================================= */
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .panel {
+    position: static;
+    max-height: none;
+  }
+  .paper {
+    padding: 30px 24px;
+  }
+  .badge {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm 10mm;
+  }
+
+  /* Ocultar elementos de UI global y navegación */
+  :global(header),
+  :global(nav),
+  :global(footer),
+  :global(.swal2-container),
+  .topBar,
+  .panel,
+  .actions,
+  .saveAction,
+  .statusMessage {
+    display: none !important;
+  }
+
+  :global(body), :global(html) {
+    background: #fff !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .layout {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .paper {
+    display: block !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 4mm 6mm !important;
+    font-size: 9.2pt !important;
+    line-height: 1.42 !important;
+    color: #000 !important;
+  }
+
+  .docHead {
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .paper h3 {
+    font-size: 9.4pt !important;
+    margin: 12px 0 3px !important;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .paper p {
+    margin-bottom: 6px !important;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .paper p, .highlight {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .highlight {
+    padding: 7px 9px !important;
+    margin: 8px 0 !important;
+    background: #f7f9fc !important;
+  }
+
+  .dataTable {
+    margin: 8px 0 12px !important;
+    font-size: 8pt !important;
+  }
+
+  .dataTable td {
+    padding: 4px 6px !important;
+  }
+
+  .signatures {
+    display: block !important;
+    width: 65% !important;
+    margin: 14mm auto 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .sigBox {
+    display: block !important;
+    min-height: 90px !important;
+  }
+
+  .sigImage {
+    display: block !important;
+    height: 64px !important;
+    margin: -68px auto 4px !important;
+  }
+
+  .footerNote {
+    margin-top: 10px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 7pt !important;
+  }
+}
