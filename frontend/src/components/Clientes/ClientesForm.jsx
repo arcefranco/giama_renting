@@ -469,6 +469,7 @@ const ClientesForm = () => {
                 <option value="">Seleccione...</option>
                 <option value="0">0 DIAS</option>
                 <option value="15">15 DIAS</option>
+                <option value="20">20 DIAS</option>
                 <option value="30">30 DIAS</option>
               </select>
             </div>
