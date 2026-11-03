@@ -2295,7 +2295,7 @@ const facturaVentaVehiculo = async (
     vehiculoAnterior[0].dominio ||
     vehiculoAnterior[0].dominio_provisorio ||
     "Sin Dominio";
-  const concepto_factura = `Venta de Vehículo Usado - Dominio: ${dominioVehiculo}`;
+  const concepto_factura = `Venta de Vehículo Bien de Uso - Dominio: ${dominioVehiculo}`;
 
   // Control estricto de cuadre AFIP (ImpTotal == ImpNeto + ImpIVA + ImpPerc):
   // Si existe una discrepancia de centavos por redondeos independientes, se absorbe en el IVA.
