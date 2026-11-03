@@ -2390,6 +2390,20 @@ const facturaVentaVehiculo = async (
     tipo_factura
   );
 
+  await asientoContable(
+    "c2_movimientos",
+    NroAsientoSecundario,
+    cuentaDebe,
+    "D",
+    importeDebe.toFixed(2),
+    concepto_factura,
+    transaction_pa7_giama_renting,
+    nro_factura.toString(),
+    getTodayDate(),
+    null,
+    tipo_factura
+  );
+
   // 2. HABER Venta (Neto)
   await asientoContable(
     "c_movimientos",
@@ -2402,6 +2416,20 @@ const facturaVentaVehiculo = async (
     nro_factura.toString(),
     getTodayDate(),
     NroAsientoSecundario,
+    tipo_factura
+  );
+
+  await asientoContable(
+    "c2_movimientos",
+    NroAsientoSecundario,
+    cuentaHaberVenta,
+    "H",
+    facturaVentaData.importe_neto,
+    concepto_factura,
+    transaction_pa7_giama_renting,
+    nro_factura.toString(),
+    getTodayDate(),
+    null,
     tipo_factura
   );
 
@@ -2420,6 +2448,20 @@ const facturaVentaVehiculo = async (
       NroAsientoSecundario,
       tipo_factura
     );
+
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuentaIva,
+      "H",
+      facturaVentaData.importe_iva,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      nro_factura.toString(),
+      getTodayDate(),
+      null,
+      tipo_factura
+    );
   }
 
   // 4. HABER Percepción
@@ -2435,6 +2477,20 @@ const facturaVentaVehiculo = async (
       nro_factura.toString(),
       getTodayDate(),
       NroAsientoSecundario,
+      tipo_factura
+    );
+
+    await asientoContable(
+      "c2_movimientos",
+      NroAsientoSecundario,
+      cuenta_percepcion,
+      "H",
+      facturaVentaData.importe_percepcion,
+      concepto_factura,
+      transaction_pa7_giama_renting,
+      nro_factura.toString(),
+      getTodayDate(),
+      null,
       tipo_factura
     );
   }
