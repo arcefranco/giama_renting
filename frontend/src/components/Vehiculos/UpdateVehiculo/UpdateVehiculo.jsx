@@ -186,14 +186,7 @@ const UpdateVehiculo = () => {
       });
 
       const result = await Swal.fire({
-        title: "¿Desea anular la factura de venta?",
-        html: `
-          <div style="text-align: left; font-size: 0.95rem; margin-top: 10px;">
-            <p style="margin-bottom: 6px;"><strong>Comprobante:</strong> ${fact.Tipo} ${nroComprobanteStr}</p>
-            <p style="margin-bottom: 6px;"><strong>Total:</strong> $ ${totalStr}</p>
-            <p style="margin-bottom: 12px; color: #666;">Se emitirá la Nota de Crédito correspondiente en PA7 (Punto de Venta 3), se revertirán los asientos contables y el vehículo volverá al estado <strong>"Vendido sin facturar"</strong>.</p>
-          </div>
-        `,
+        title: "¿Está seguro que desea anular esta factura?",
         input: "textarea",
         inputLabel: "Motivo de la anulación (obligatorio)",
         inputPlaceholder: "Ingrese el motivo...",
