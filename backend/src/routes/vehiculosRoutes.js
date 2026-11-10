@@ -24,6 +24,8 @@ import {
   getRemitoById,
   postRemito,
   anularRemito,
+  getFacturaVentaVehiculo,
+  anularFacturaVentaVehiculo,
 } from "../controllers/vehiculosController.js";
 import { upload } from "../middlewares/upload.js";
 import { auth } from "../middlewares/auth.js";
@@ -106,6 +108,10 @@ vehiculosRouter.get("/remitos", auth, getRemitos);
 vehiculosRouter.post("/remito/id", auth, getRemitoById);
 vehiculosRouter.post("/remito/nuevo", auth, postRemito);
 vehiculosRouter.post("/remito/anular", auth, anularRemito);
+
+// Factura Venta Bien de Uso
+vehiculosRouter.get("/factura-venta/:id", auth, getFacturaVentaVehiculo);
+vehiculosRouter.post("/anular-factura-venta/:id", auth, anularFacturaVentaVehiculo);
 
 export default vehiculosRouter;
 

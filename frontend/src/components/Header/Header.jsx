@@ -34,7 +34,7 @@ const menuItems = [
     title: "Alquileres",
     items: [
       { label: "Alta de contrato", to: "/alquileres/contrato", roles: ["2"] },
-      // { label: "Listado contratos digitales", to: "/alquileres/contratos-digitales/listado", roles: ["1", "2", "3", "4", "5", "6"] },
+      { label: "Listado contratos digitales", to: "/alquileres/contratos-digitales/listado", roles: ["1", "2", "3", "4", "5", "6"] },
       { label: "Listado de alquileres", to: "/alquileres/reporte", roles: ["2", "3", "5"] },
       { label: "Listado de contratos", to: "/alquileres/contrato/reporte", roles: ["2", "3", "5", "6"] },
     ]
@@ -75,8 +75,8 @@ const menuItems = [
   {
     title: "Auditoría Interna",
     items: [
-      { label: "Asientos PA7", to: "/auditoria/asientos", roles: ["1"] },
-      { label: "Facturas Giama", to: "/auditoria/facturas", roles: ["1"] }
+      { label: "Asientos PA6", to: "/auditoria/asientos", roles: ["1", "2"] },
+      { label: "Facturas PA6", to: "/auditoria/facturas", roles: ["1", "2"] }
     ]
   }
 ];
@@ -106,6 +106,7 @@ const Header = () => {
 
   const appEnv = import.meta.env.VITE_APP_ENV;
   const isNonProd = appEnv && appEnv.toLowerCase() !== "production";
+  const isTesting = (appEnv || "").trim().toLowerCase() === "testing";
 
   return (
     <header className={styles.header}>
@@ -122,8 +123,15 @@ const Header = () => {
       <nav className={styles.nav}>
         <ul className={styles.menu}>
           {menuItems.map((item, idx) => {
-            if (item.title === "Auditoría Interna" && username !== "gaston1234567@gmail.com") {
-              return null;
+            if (item.title === "Auditoría Interna") {
+              if (!isTesting) {
+                return null;
+              }
+              const userRoles = roles ? roles.split(",") : [];
+              const canView = userRoles.includes("1") || userRoles.includes("2") || username === "gaston1234567@gmail.com";
+              if (!canView) {
+                return null;
+              }
             }
             return (
               <li className={styles.menuItem} key={idx}>

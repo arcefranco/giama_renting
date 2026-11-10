@@ -32,6 +32,7 @@ import { movimientosProveedores } from "../../helpers/movimientosProveedores.js"
 import { validarArchivo } from "../../helpers/validarArchivo.js";
 import { padWithZeros } from "../../helpers/padWithZeros.js";
 import * as xlsx from "xlsx";
+import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
 
 /*FUNCIONES DEPRECADAS */
 /* export const getAllCostosPeriodo = async (req, res) => {
@@ -2262,10 +2263,23 @@ const facturaVentaVehiculo = async (
 
     if (clienteExistente) {
       finalClientId = clienteExistente.id;
+      if (facturaVentaData.estado_cobro === 'a_cobrar' && facturaVentaData.diasctacte) {
+        await giama_renting.query(
+          `UPDATE clientes SET diasctacte = :diasctacte WHERE id = :id`,
+          {
+            type: QueryTypes.UPDATE,
+            replacements: {
+              diasctacte: facturaVentaData.diasctacte,
+              id: finalClientId,
+            },
+            transaction: transaction_giama_renting,
+          }
+        );
+      }
     } else {
       const resultCliente = await giama_renting.query(
-        `INSERT INTO clientes (nombre, apellido, razon_social, tipo_documento, nro_documento, tipo_contribuyente, direccion, nro_direccion, ciudad, provincia, mail, usuario_alta)
-                  VALUES (:nombre, :apellido, :razon_social, :tipo_documento, :nro_documento, :tipo_contribuyente, :direccion, :nro_direccion, :ciudad, :provincia, :mail, :usuario_alta)`,
+        `INSERT INTO clientes (nombre, apellido, razon_social, tipo_documento, nro_documento, tipo_contribuyente, direccion, nro_direccion, ciudad, provincia, mail, usuario_alta, diasctacte)
+                  VALUES (:nombre, :apellido, :razon_social, :tipo_documento, :nro_documento, :tipo_contribuyente, :direccion, :nro_direccion, :ciudad, :provincia, :mail, :usuario_alta, :diasctacte)`,
         {
           type: QueryTypes.INSERT,
           replacements: {
@@ -2281,12 +2295,25 @@ const facturaVentaVehiculo = async (
             provincia: facturaVentaData.provincia || null,
             mail: facturaVentaData.mail || "",
             usuario_alta: usuario,
+            diasctacte: facturaVentaData.estado_cobro === 'a_cobrar' ? facturaVentaData.diasctacte || null : null,
           },
           transaction: transaction_giama_renting,
         }
       );
       finalClientId = resultCliente[0];
     }
+  } else if (finalClientId && facturaVentaData.estado_cobro === 'a_cobrar' && facturaVentaData.diasctacte) {
+    await giama_renting.query(
+      `UPDATE clientes SET diasctacte = :diasctacte WHERE id = :id`,
+      {
+        type: QueryTypes.UPDATE,
+        replacements: {
+          diasctacte: facturaVentaData.diasctacte,
+          id: finalClientId,
+        },
+        transaction: transaction_giama_renting,
+      }
+    );
   }
 
   const dominioVehiculo =
@@ -2387,7 +2414,8 @@ const facturaVentaVehiculo = async (
     nro_factura.toString(),
     getTodayDate(),
     NroAsientoSecundario,
-    tipo_factura
+    tipo_factura,
+    usuario
   );
 
   await asientoContable(
@@ -2401,7 +2429,8 @@ const facturaVentaVehiculo = async (
     nro_factura.toString(),
     getTodayDate(),
     null,
-    tipo_factura
+    tipo_factura,
+    usuario
   );
 
   // 2. HABER Venta (Neto)
@@ -2416,7 +2445,8 @@ const facturaVentaVehiculo = async (
     nro_factura.toString(),
     getTodayDate(),
     NroAsientoSecundario,
-    tipo_factura
+    tipo_factura,
+    usuario
   );
 
   await asientoContable(
@@ -2430,7 +2460,8 @@ const facturaVentaVehiculo = async (
     nro_factura.toString(),
     getTodayDate(),
     null,
-    tipo_factura
+    tipo_factura,
+    usuario
   );
 
   // 3. HABER IVA
@@ -2446,7 +2477,8 @@ const facturaVentaVehiculo = async (
       nro_factura.toString(),
       getTodayDate(),
       NroAsientoSecundario,
-      tipo_factura
+      tipo_factura,
+      usuario
     );
 
     await asientoContable(
@@ -2460,7 +2492,8 @@ const facturaVentaVehiculo = async (
       nro_factura.toString(),
       getTodayDate(),
       null,
-      tipo_factura
+      tipo_factura,
+      usuario
     );
   }
 
@@ -2477,7 +2510,8 @@ const facturaVentaVehiculo = async (
       nro_factura.toString(),
       getTodayDate(),
       NroAsientoSecundario,
-      tipo_factura
+      tipo_factura,
+      usuario
     );
 
     await asientoContable(
@@ -2491,7 +2525,8 @@ const facturaVentaVehiculo = async (
       nro_factura.toString(),
       getTodayDate(),
       null,
-      tipo_factura
+      tipo_factura,
+      usuario
     );
   }
 
@@ -2856,6 +2891,444 @@ export const anularRemito = async (req, res) => {
       status: false,
       message: error.message || "Error al anular el remito",
     });
+  }
+};
+
+export const getFacturaVentaVehiculo = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const vehiculo = await giama_renting.query(
+      `SELECT id, dominio, dominio_provisorio, estado_actual, precio_venta, fecha_venta 
+       FROM vehiculos WHERE id = :id LIMIT 1`,
+      {
+        replacements: { id },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!vehiculo.length) {
+      return res.send({ status: false, message: "No se encontró el vehículo" });
+    }
+
+    const dom = vehiculo[0].dominio ? vehiculo[0].dominio.trim() : null;
+    const domProv = vehiculo[0].dominio_provisorio ? vehiculo[0].dominio_provisorio.trim() : null;
+
+    if (!dom && !domProv) {
+      return res.send({
+        status: false,
+        message: "El vehículo no posee dominio para localizar su factura de venta",
+      });
+    }
+
+    const whereConds = [
+      "f.PuntoVenta = 3",
+      "f.Tipo IN ('FA', 'FB')"
+    ];
+    const replacements = {};
+
+    if (dom && domProv) {
+      whereConds.push("(fi.Descripcion LIKE :patronDom OR fi.Descripcion LIKE :patronDomProv)");
+      replacements.patronDom = `%${dom}%`;
+      replacements.patronDomProv = `%${domProv}%`;
+    } else if (dom) {
+      whereConds.push("fi.Descripcion LIKE :patronDom");
+      replacements.patronDom = `%${dom}%`;
+    } else if (domProv) {
+      whereConds.push("fi.Descripcion LIKE :patronDomProv");
+      replacements.patronDomProv = `%${domProv}%`;
+    }
+
+    const queryFactura = `
+      SELECT f.*, fi.Descripcion AS item_descripcion
+      FROM facturas f
+      INNER JOIN facturasitems fi ON fi.IdFactura = f.Id
+      WHERE ${whereConds.join(" AND ")}
+      ORDER BY f.Id DESC
+      LIMIT 1
+    `;
+
+    const facturas = await pa7_giama_renting.query(queryFactura, {
+      replacements,
+      type: QueryTypes.SELECT,
+    });
+
+    if (!facturas.length) {
+      return res.send({
+        status: false,
+        message: "No se encontró ninguna factura de venta (Punto de Venta 3) asociada a este vehículo",
+      });
+    }
+
+    const factura = facturas[0];
+    const nroComp = factura.NumeroFacturaEmitida || factura.Id;
+    const facAsoc1 = `${padWithZeros(factura.PuntoVenta, 5)}${padWithZeros(nroComp, 8)}`;
+    const facAsoc2 = `${padWithZeros(factura.PuntoVenta, 5)}${padWithZeros(factura.Id, 8)}`;
+
+    const ncExistente = await pa7_giama_renting.query(
+      `SELECT Id, Tipo, PuntoVenta, NumeroFacturaEmitida, FechaComprobante, Total 
+       FROM facturas 
+       WHERE PuntoVenta = 3 
+         AND Tipo IN ('CA', 'CB') 
+         AND (FacAsoc = :facAsoc1 OR FacAsoc = :facAsoc2)
+       LIMIT 1`,
+      {
+        replacements: { facAsoc1, facAsoc2 },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return res.send({
+      status: true,
+      data: {
+        ...factura,
+        yaAnulada: ncExistente.length > 0,
+        notaCredito: ncExistente.length > 0 ? ncExistente[0] : null,
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener factura de venta del vehículo:", error);
+    const { body } = handleError(error, "factura de venta", acciones.get);
+    return res.send(body);
+  }
+};
+
+export const anularFacturaVentaVehiculo = async (req, res) => {
+  const { id } = req.params;
+  const { motivo } = req.body;
+
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
+    });
+  }
+
+  try {
+    const vehiculo = await giama_renting.query(
+      `SELECT id, dominio, dominio_provisorio, estado_actual 
+       FROM vehiculos WHERE id = :id LIMIT 1`,
+      {
+        replacements: { id },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!vehiculo.length) {
+      return res.send({ status: false, message: "No se encontró el vehículo" });
+    }
+
+    if (Number(vehiculo[0].estado_actual) !== 11) {
+      return res.send({
+        status: false,
+        message: "El vehículo no se encuentra en estado 'Vendido Facturado'",
+      });
+    }
+
+    const dom = vehiculo[0].dominio ? vehiculo[0].dominio.trim() : null;
+    const domProv = vehiculo[0].dominio_provisorio ? vehiculo[0].dominio_provisorio.trim() : null;
+
+    if (!dom && !domProv) {
+      return res.send({
+        status: false,
+        message: "El vehículo no posee dominio para localizar su factura de venta",
+      });
+    }
+
+    const whereConds = [
+      "f.PuntoVenta = 3",
+      "f.Tipo IN ('FA', 'FB')"
+    ];
+    const replacements = {};
+
+    if (dom && domProv) {
+      whereConds.push("(fi.Descripcion LIKE :patronDom OR fi.Descripcion LIKE :patronDomProv)");
+      replacements.patronDom = `%${dom}%`;
+      replacements.patronDomProv = `%${domProv}%`;
+    } else if (dom) {
+      whereConds.push("fi.Descripcion LIKE :patronDom");
+      replacements.patronDom = `%${dom}%`;
+    } else if (domProv) {
+      whereConds.push("fi.Descripcion LIKE :patronDomProv");
+      replacements.patronDomProv = `%${domProv}%`;
+    }
+
+    const facturas = await pa7_giama_renting.query(
+      `SELECT f.*, fi.Descripcion AS item_descripcion
+       FROM facturas f
+       INNER JOIN facturasitems fi ON fi.IdFactura = f.Id
+       WHERE ${whereConds.join(" AND ")}
+       ORDER BY f.Id DESC
+       LIMIT 1`,
+      {
+        replacements,
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!facturas.length) {
+      return res.send({
+        status: false,
+        message: "No se encontró la factura de venta (Punto de Venta 3) asociada al vehículo",
+      });
+    }
+
+    const factura = facturas[0];
+    const nroComp = factura.NumeroFacturaEmitida || factura.Id;
+    const facAsoc1 = `${padWithZeros(factura.PuntoVenta, 5)}${padWithZeros(nroComp, 8)}`;
+    const facAsoc2 = `${padWithZeros(factura.PuntoVenta, 5)}${padWithZeros(factura.Id, 8)}`;
+
+    const ncExistente = await pa7_giama_renting.query(
+      `SELECT Id FROM facturas 
+       WHERE PuntoVenta = 3 
+         AND Tipo IN ('CA', 'CB') 
+         AND (FacAsoc = :facAsoc1 OR FacAsoc = :facAsoc2)
+       LIMIT 1`,
+      {
+        replacements: { facAsoc1, facAsoc2 },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (ncExistente.length > 0) {
+      return res.send({
+        status: false,
+        message: "La factura de venta ya fue anulada previamente con una Nota de Crédito",
+      });
+    }
+
+    let transaction_giama_renting = await giama_renting.transaction();
+    let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
+
+    try {
+      const NroAsiento_nuevo = await getNumeroAsiento();
+      const NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
+
+      const tipo_NC = factura.Tipo === "FA" ? "CA" : "CB";
+      const FacAsoc_insertada = `${padWithZeros(factura.PuntoVenta, 5)}${padWithZeros(nroComp, 8)}`;
+      const numCompStr = `${padWithZeros(factura.PuntoVenta, 5)}-${padWithZeros(nroComp, 8)}`;
+      const leyendaNC = `Anulación factura ${factura.Tipo} ${numCompStr}`;
+
+      const {
+        Id,
+        Tipo,
+        PuntoVenta,
+        FacAsoc,
+        NumeroFacturaEmitida,
+        VtoCAE,
+        CAE,
+        NroAsiento,
+        NroAsiento2,
+        item_descripcion,
+        observacion_Afip,
+        Resultado_Afip,
+        ...otrosCampos
+      } = factura;
+
+      otrosCampos.UsuarioAltaRegistro = req.user?.user || factura.UsuarioAltaRegistro;
+      otrosCampos.FechaAltaRegistro = new Date();
+      otrosCampos.FechaComprobante = getTodayDate();
+
+      const keys = Object.keys(otrosCampos);
+      const resultNC = await pa7_giama_renting.query(
+        `INSERT INTO facturas 
+           (Tipo, FacAsoc, PuntoVenta, NumeroFacturaEmitida, VtoCAE, CAE, NroAsiento, NroAsiento2, ${keys.join(", ")})
+         VALUES (?,?,?,?,?,?,?,?, ${keys.map(() => "?").join(", ")})`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: [
+            tipo_NC,
+            FacAsoc_insertada,
+            3,
+            null,
+            null,
+            null,
+            NroAsiento_nuevo,
+            NroAsientoSecundario_nuevo,
+            ...Object.values(otrosCampos),
+          ],
+          transaction: transaction_pa7_giama_renting,
+        }
+      );
+
+      const id_ndc = resultNC[0];
+
+      await pa7_giama_renting.query(
+        `INSERT INTO facturasitems (
+           IdFactura,
+           TipoAlicuota,
+           Descripcion,
+           Cantidad,
+           PrecioUnitario,
+           Porcentaje,
+           Subtotal,
+           usd_precio_unitario,
+           usd_subtotal
+         )
+         SELECT
+           :id_ndc AS IdFactura,
+           TipoAlicuota,
+           :leyendaNC AS Descripcion,
+           Cantidad,
+           PrecioUnitario,
+           Porcentaje,
+           Subtotal,
+           usd_precio_unitario,
+           usd_subtotal
+         FROM facturasitems
+         WHERE IdFactura = :id_factura_original`,
+        {
+          type: QueryTypes.INSERT,
+          replacements: {
+            id_ndc,
+            leyendaNC,
+            id_factura_original: factura.Id,
+          },
+          transaction: transaction_pa7_giama_renting,
+        }
+      );
+
+      const fechaHoy = getTodayDate();
+      const nro_comprobante = padWithZeros(`${NroAsiento_nuevo}`, 13);
+
+      if (factura.NroAsiento) {
+        await pa7_giama_renting.query(
+          `INSERT INTO c_movimientos (
+             Fecha,
+             NroAsiento,
+             Cuenta,
+             DH,
+             Importe,
+             Concepto,
+             TipoComprobante,
+             NroComprobante,
+             AsientoSecundario,
+             UsuarioAltaRegistro
+           )
+           SELECT
+             :fechaHoy AS Fecha,
+             :NroAsiento_nuevo AS NroAsiento,
+             Cuenta,
+             CASE WHEN DH = 'D' THEN 'H' ELSE 'D' END AS DH,
+             Importe,
+             :leyendaNC AS Concepto,
+             'ASD' AS TipoComprobante,
+             :nro_comprobante AS NroComprobante,
+             :NroAsientoSecundario_nuevo AS AsientoSecundario,
+             :usuarioAlta AS UsuarioAltaRegistro
+           FROM c_movimientos
+           WHERE NroAsiento = :nro_asiento_original
+             AND DATE(Fecha) = :fecha_asiento_original`,
+          {
+            type: QueryTypes.INSERT,
+            replacements: {
+              fechaHoy,
+              NroAsiento_nuevo,
+              leyendaNC,
+              nro_comprobante,
+              NroAsientoSecundario_nuevo,
+              nro_asiento_original: factura.NroAsiento,
+              fecha_asiento_original: factura.FechaComprobante ? factura.FechaComprobante.toISOString().split('T')[0] : fechaHoy,
+              usuarioAlta: req.user?.user || factura.UsuarioAltaRegistro || null,
+            },
+            transaction: transaction_pa7_giama_renting,
+          }
+        );
+
+        await pa7_giama_renting.query(
+          `INSERT INTO c2_movimientos (
+             Fecha,
+             NroAsiento,
+             Cuenta,
+             DH,
+             Importe,
+             Concepto,
+             TipoComprobante,
+             NroComprobante,
+             UsuarioAltaRegistro
+           )
+           SELECT
+             :fechaHoy AS Fecha,
+             :NroAsientoSecundario_nuevo AS NroAsiento,
+             Cuenta,
+             CASE WHEN DH = 'D' THEN 'H' ELSE 'D' END AS DH,
+             Importe,
+             :leyendaNC AS Concepto,
+             'ASD' AS TipoComprobante,
+             :nro_comprobante AS NroComprobante,
+             :usuarioAlta AS UsuarioAltaRegistro
+           FROM c_movimientos
+           WHERE NroAsiento = :nro_asiento_original
+             AND DATE(Fecha) = :fecha_asiento_original`,
+          {
+            type: QueryTypes.INSERT,
+            replacements: {
+              fechaHoy,
+              NroAsientoSecundario_nuevo,
+              leyendaNC,
+              nro_comprobante,
+              nro_asiento_original: factura.NroAsiento,
+              fecha_asiento_original: factura.FechaComprobante ? factura.FechaComprobante.toISOString().split('T')[0] : fechaHoy,
+              usuarioAlta: req.user?.user || factura.UsuarioAltaRegistro || null,
+            },
+            transaction: transaction_pa7_giama_renting,
+          }
+        );
+      }
+
+      await giama_renting.query(
+        `UPDATE vehiculos 
+         SET estado_actual = 10,
+             usuario_ultima_modificacion = :usuario
+         WHERE id = :id`,
+        {
+          replacements: {
+            id,
+            usuario: req.user?.user || "Sistema",
+          },
+          type: QueryTypes.UPDATE,
+          transaction: transaction_giama_renting,
+        }
+      );
+
+      const obsTexto = `Anulación de factura de venta ${factura.Tipo} ${numCompStr} (NC Id: ${id_ndc}). Motivo: ${motivo.trim()}`;
+      await giama_renting.query(
+        `INSERT INTO vehiculos_observaciones (vehiculo_id, observacion, usuario, fecha)
+         VALUES (?, ?, ?, NOW())`,
+        {
+          replacements: [id, obsTexto, req.user?.user || "Sistema"],
+          type: QueryTypes.INSERT,
+          transaction: transaction_giama_renting,
+        }
+      );
+
+      await registrarAnulacion({
+        tipo: "factura",
+        id_registro: id,
+        id_movimiento: factura.Id,
+        nro_asiento_anulacion: NroAsiento_nuevo,
+        concepto: leyendaNC,
+        motivo: motivo.trim(),
+        req,
+        transaction: transaction_giama_renting,
+      });
+
+      await transaction_giama_renting.commit();
+      await transaction_pa7_giama_renting.commit();
+
+      return res.send({
+        status: true,
+        message: `Factura ${factura.Tipo} ${numCompStr} anulada con éxito. Se generó la Nota de Crédito ${tipo_NC} (Id: ${id_ndc}) y el vehículo retornó al estado 'Vendido sin facturar'.`,
+        id_ndc,
+      });
+    } catch (innerError) {
+      await transaction_giama_renting.rollback();
+      await transaction_pa7_giama_renting.rollback();
+      throw innerError;
+    }
+  } catch (error) {
+    console.error("Error al anular factura de venta:", error);
+    const { body } = handleError(error, "factura de venta", acciones.delete);
+    return res.send(body);
   }
 };
 

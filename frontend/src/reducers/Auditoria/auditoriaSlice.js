@@ -9,6 +9,7 @@ const initialState = {
     isError: false,
     isSuccess: false,
     isLoading: false,
+    isLoadingDetail: false,
     message: "",
 };
 
@@ -78,9 +79,16 @@ export const auditoriaSlice = createSlice({
     reducers: {
         reset: (state) => {
             state.isLoading = false;
+            state.isLoadingDetail = false;
             state.isSuccess = false;
             state.isError = false;
             state.message = "";
+        },
+        clearAsientoLineas: (state) => {
+            state.asientoLineas = [];
+        },
+        clearFacturaItems: (state) => {
+            state.facturaItems = [];
         },
     },
     extraReducers: (builder) => {
@@ -114,29 +122,29 @@ export const auditoriaSlice = createSlice({
                 state.facturas = [];
             })
             .addCase(getAsientoLineas.pending, (state) => {
-                state.isLoading = true;
+                state.isLoadingDetail = true;
+                state.asientoLineas = [];
             })
             .addCase(getAsientoLineas.fulfilled, (state, action) => {
-                state.isLoading = false;
-                state.isSuccess = true;
+                state.isLoadingDetail = false;
                 state.asientoLineas = action.payload;
             })
             .addCase(getAsientoLineas.rejected, (state, action) => {
-                state.isLoading = false;
+                state.isLoadingDetail = false;
                 state.isError = true;
                 state.message = action.payload;
                 state.asientoLineas = [];
             })
             .addCase(getFacturaItems.pending, (state) => {
-                state.isLoading = true;
+                state.isLoadingDetail = true;
+                state.facturaItems = [];
             })
             .addCase(getFacturaItems.fulfilled, (state, action) => {
-                state.isLoading = false;
-                state.isSuccess = true;
+                state.isLoadingDetail = false;
                 state.facturaItems = action.payload;
             })
             .addCase(getFacturaItems.rejected, (state, action) => {
-                state.isLoading = false;
+                state.isLoadingDetail = false;
                 state.isError = true;
                 state.message = action.payload;
                 state.facturaItems = [];
@@ -144,5 +152,5 @@ export const auditoriaSlice = createSlice({
     },
 });
 
-export const { reset } = auditoriaSlice.actions;
+export const { reset, clearAsientoLineas, clearFacturaItems } = auditoriaSlice.actions;
 export default auditoriaSlice.reducer;
