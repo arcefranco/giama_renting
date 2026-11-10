@@ -10,6 +10,8 @@ import SelectEstados from '../../../utils/SelectEstados';
 import { renderEstadoVehiculo } from '../../../utils/renderEstadoVehiculo';
 import { useToastFeedback } from '../../../customHooks/useToastFeedback';
 import FacturaVentaModal from './FacturaVentaModal';
+import Swal from 'sweetalert2';
+import { getFacturaVentaVehiculo, anularFacturaVentaVehiculo as anularFacturaVentaVehiculoService } from '../../../reducers/Vehiculos/vehiculosService';
 
 const UpdateVehiculo = () => {
   const { id } = useParams();
@@ -145,6 +147,116 @@ const UpdateVehiculo = () => {
     }
   };
 
+  const handleAnularFacturaClick = async () => {
+    try {
+      Swal.fire({
+        title: "Buscando factura de venta...",
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        allowOutsideClick: false,
+      });
+
+      const resFactura = await getFacturaVentaVehiculo(id);
+      if (!resFactura.status || !resFactura.data) {
+        Swal.fire({
+          icon: "warning",
+          title: "Atención",
+          text: resFactura.message || "No se encontró la factura de venta asociada.",
+        });
+        return;
+      }
+
+      const fact = resFactura.data;
+      if (fact.yaAnulada) {
+        Swal.fire({
+          icon: "info",
+          title: "Factura ya anulada",
+          text: `La factura ya cuenta con una Nota de Crédito emitida (Id: ${fact.notaCredito?.Id || ''}).`,
+        });
+        return;
+      }
+
+      const nroComprobanteStr = fact.NumeroFacturaEmitida
+        ? `${String(fact.PuntoVenta).padStart(5, "0")}-${String(fact.NumeroFacturaEmitida).padStart(8, "0")}`
+        : `Id Interno #${fact.Id}`;
+      const totalStr = Number(fact.Total || 0).toLocaleString("es-AR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      const result = await Swal.fire({
+        title: "¿Desea anular la factura de venta?",
+        html: `
+          <div style="text-align: left; font-size: 0.95rem; margin-top: 10px;">
+            <p style="margin-bottom: 6px;"><strong>Comprobante:</strong> ${fact.Tipo} ${nroComprobanteStr}</p>
+            <p style="margin-bottom: 6px;"><strong>Total:</strong> $ ${totalStr}</p>
+            <p style="margin-bottom: 12px; color: #666;">Se emitirá la Nota de Crédito correspondiente en PA7 (Punto de Venta 3), se revertirán los asientos contables y el vehículo volverá al estado <strong>"Vendido sin facturar"</strong>.</p>
+          </div>
+        `,
+        input: "textarea",
+        inputLabel: "Motivo de la anulación (obligatorio)",
+        inputPlaceholder: "Ingrese el motivo...",
+        inputAttributes: {
+          "aria-label": "Motivo de la anulación",
+        },
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#b91c1c",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: "Sí, anular",
+        cancelButtonText: "Cancelar",
+        preConfirm: (motivo) => {
+          if (!motivo || !motivo.trim()) {
+            Swal.showValidationMessage("El motivo es obligatorio");
+            return false;
+          }
+          return motivo.trim();
+        },
+        didOpen: () => {
+          document.body.classList.remove("swal2-height-auto");
+        },
+      });
+
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Anulando factura...",
+          text: "Generando Nota de Crédito y contra-asientos...",
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          allowOutsideClick: false,
+        });
+
+        const anularRes = await anularFacturaVentaVehiculoService(id, {
+          motivo: result.value,
+        });
+
+        if (anularRes.status) {
+          await Swal.fire({
+            icon: "success",
+            title: "Factura anulada",
+            text: anularRes.message || "La factura fue anulada exitosamente.",
+          });
+          dispatch(getVehiculosById({ id }));
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error al anular",
+            text: anularRes.message || "Ocurrió un error al anular la factura.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error al anular factura:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error inesperado al procesar la anulación.",
+      });
+    }
+  };
+
   const customStyles = {
     container: (provided) => ({
       ...provided,
@@ -225,7 +337,7 @@ const UpdateVehiculo = () => {
               <input disabled={disabledFin} type="text" name="color" value={form.color} onChange={handleChange} />
             </div>
 
-            {!disabledFin && Number(vehiculo?.[0]?.estado_actual) === 10 && (
+            {!disabledFin && (Number(vehiculo?.[0]?.estado_actual) === 10 || Number(form?.estado) === 10) && (
               <div className={styles.inputContainer}>
                 <span>Factura de venta</span>
                 <button
@@ -243,6 +355,30 @@ const UpdateVehiculo = () => {
                   onClick={() => setModalFacturaVentaOpen(true)}
                 >
                   Facturar venta
+                </button>
+              </div>
+            )}
+
+            {!disabledFin && (Number(vehiculo?.[0]?.estado_actual) === 11 || Number(form?.estado) === 11) && (
+              <div className={styles.inputContainer}>
+                <span>Factura de venta</span>
+                <button
+                  type="button"
+                  className={styles.sendBtn}
+                  style={{
+                    width: 'auto',
+                    height: 'auto',
+                    whiteSpace: 'nowrap',
+                    marginTop: 0,
+                    padding: '6px 12px',
+                    fontSize: '0.85rem',
+                    alignSelf: 'flex-start',
+                    backgroundColor: '#b91c1c',
+                    borderColor: '#991b1b',
+                  }}
+                  onClick={handleAnularFacturaClick}
+                >
+                  Anular factura
                 </button>
               </div>
             )}

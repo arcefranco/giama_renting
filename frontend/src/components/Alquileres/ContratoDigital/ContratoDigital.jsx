@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Select from "react-select";
 import AsyncSelect from "react-select/async";
 import Swal from "sweetalert2";
 import {
@@ -16,6 +15,22 @@ import {
   IconTrash,
 } from "./ContratoDigitalIcons";
 import styles from "./ContratoDigital.module.css";
+
+export function contractEndDate(start, modality) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start || "")) return "";
+  const d = new Date(start + "T12:00:00Z");
+  if (isNaN(d)) return "";
+  if (modality === "purchase_24m") {
+    const day = d.getUTCDate();
+    d.setUTCDate(1);
+    d.setUTCFullYear(d.getUTCFullYear() + 2);
+    const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+    d.setUTCDate(Math.min(day, last));
+  } else {
+    d.setUTCDate(d.getUTCDate() + 84); // 12 semanas * 7 días = 84 días
+  }
+  return d.toISOString().slice(0, 10);
+}
 
 const initialForm = {
   id_contrato: null,
@@ -37,9 +52,13 @@ const initialForm = {
   vehiculo_kilometraje: "",
   alquiler_semanal: "",
   deposito_garantia: "",
-  km_limite_semanal: 1800,
-  valor_km_excedente: "",
-  plazo_semanas: 12,
+  km_limite_semanal: 2000,
+  valor_km_excedente: 520,
+  plazo_semanas: "12",
+  observaciones: "",
+  verify_address: false,
+  verify_email: false,
+  verify_phone: false,
   acepta_contrato: false,
   acepta_cabify: false,
   acepta_telepase: false,
@@ -179,9 +198,13 @@ const ContratoDigital = () => {
             vehiculo_kilometraje: c.vehiculo_kilometraje || "",
             alquiler_semanal: c.alquiler_semanal || "",
             deposito_garantia: c.deposito_garantia || "",
-            km_limite_semanal: c.km_limite_semanal || 1800,
-            valor_km_excedente: c.valor_km_excedente || "",
-            plazo_semanas: c.plazo_semanas || 12,
+            km_limite_semanal: c.km_limite_semanal || 2000,
+            valor_km_excedente: c.valor_km_excedente || 520,
+            plazo_semanas: String(c.plazo_semanas || "12"),
+            observaciones: c.observaciones || "",
+            verify_address: true,
+            verify_email: true,
+            verify_phone: true,
             acepta_contrato: Boolean(c.acepta_contrato),
             acepta_cabify: Boolean(c.acepta_cabify),
             acepta_telepase: Boolean(c.acepta_telepase),
@@ -228,6 +251,15 @@ const ContratoDigital = () => {
     const fechaHoy = new Date().toISOString().slice(0, 10);
     const horaActual = new Date().toTimeString().slice(0, 5);
 
+    let defaultDeposit = c.deposito_garantia;
+    if (!defaultDeposit) {
+      if (/cronos/i.test(c.vehiculo_modelo || "")) {
+        defaultDeposit = "250000";
+      } else if (/eu5/i.test(c.vehiculo_modelo || "")) {
+        defaultDeposit = "300000";
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
       id_contrato: c.id_contrato,
@@ -248,10 +280,10 @@ const ContratoDigital = () => {
       vehiculo_color: c.vehiculo_color || "",
       vehiculo_kilometraje: c.vehiculo_kilometraje || "",
       alquiler_semanal: c.alquiler_semanal || "",
-      deposito_garantia: c.deposito_garantia || "",
-      km_limite_semanal: 1800,
-      valor_km_excedente: prev.valor_km_excedente || "",
-      plazo_semanas: prev.plazo_semanas || 12,
+      deposito_garantia: defaultDeposit || "",
+      km_limite_semanal: 2000,
+      valor_km_excedente: 520,
+      plazo_semanas: prev.plazo_semanas || "12",
     }));
 
     setSelectedContratoOption({
@@ -269,10 +301,23 @@ const ContratoDigital = () => {
   // Manejo de cambios en el formulario
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      // Si cambia el modelo del vehículo, sugerir depósito según modelo
+      if (name === "vehiculo_modelo") {
+        if (/cronos/i.test(value) && (!prev.deposito_garantia || prev.deposito_garantia === "300000")) {
+          updated.deposito_garantia = "250000";
+        } else if (/eu5/i.test(value) && (!prev.deposito_garantia || prev.deposito_garantia === "250000")) {
+          updated.deposito_garantia = "300000";
+        }
+      }
+
+      return updated;
+    });
   };
 
   // Métodos de firma canvas
@@ -328,8 +373,11 @@ const ContratoDigital = () => {
       { key: "numero_contrato", label: "Número de contrato" },
       { key: "fecha", label: "Fecha" },
       { key: "hora", label: "Hora" },
-      { key: "locatario_nombre", label: "Nombre y apellido del locatario" },
-      { key: "locatario_dni", label: "DNI del locatario" },
+      { key: "locatario_nombre", label: "Nombre y apellido del cliente" },
+      { key: "locatario_dni", label: "DNI del cliente" },
+      { key: "locatario_domicilio", label: "Domicilio del cliente" },
+      { key: "locatario_localidad", label: "Localidad" },
+      { key: "locatario_email", label: "Correo electrónico" },
       { key: "vehiculo_patente", label: "Patente del vehículo" },
       { key: "alquiler_semanal", label: "Alquiler semanal" },
     ];
@@ -341,13 +389,22 @@ const ContratoDigital = () => {
       }
     }
 
+    if (!formData.verify_address || !formData.verify_email || !formData.verify_phone) {
+      Swal.fire(
+        "Verificaciones previas pendientes",
+        "Debes confirmar las 3 verificaciones previas (domicilio/DNI, correo electrónico y WhatsApp).",
+        "warning"
+      );
+      return false;
+    }
+
     if (!formData.acepta_contrato || !formData.acepta_cabify || !formData.acepta_telepase) {
       Swal.fire("Atención", "Debes tildar todas las conformidades y declaraciones de aceptación.", "warning");
       return false;
     }
 
     if (!signatureData) {
-      Swal.fire("Atención", "Falta registrar la firma manuscrita del locatario.", "warning");
+      Swal.fire("Atención", "Falta registrar la firma manuscrita del cliente.", "warning");
       return false;
     }
 
@@ -360,20 +417,22 @@ const ContratoDigital = () => {
 
     setIsSaving(true);
     try {
+      const computedFechaFin = contractEndDate(formData.fecha, formData.plazo_semanas);
       const payload = {
         ...formData,
-        vehiculo_patente: formData.vehiculo_patente.toUpperCase(),
+        fecha_fin: computedFechaFin,
+        vehiculo_patente: formData.vehiculo_patente ? formData.vehiculo_patente.toUpperCase() : "",
         firma_digital: signatureData,
       };
 
       const res = await postContratoDigital(payload);
       if (res?.status) {
         if (!silent) {
-          Swal.fire("Guardado", "El Contrato Digital ha sido guardado exitosamente en el sistema.", "success");
+          Swal.fire("Guardado", "La Carta Acuerdo ha sido guardada exitosamente en el sistema.", "success");
         }
         return true;
       } else {
-        Swal.fire("Error", res?.message || "No se pudo guardar el contrato digital.", "error");
+        Swal.fire("Error", res?.message || "No se pudo guardar la carta acuerdo.", "error");
         return false;
       }
     } catch (err) {
@@ -393,7 +452,7 @@ const ContratoDigital = () => {
     const ok = await handleGuardar(true);
     if (!ok) return;
 
-    setStatusMsg({ type: "ok", text: "Contrato digital listo. En la ventana de impresión seleccioná 'Guardar como PDF'." });
+    setStatusMsg({ type: "ok", text: "Carta acuerdo lista. En la ventana de impresión seleccioná 'Guardar como PDF'." });
 
     setTimeout(() => {
       window.print();
@@ -405,7 +464,7 @@ const ContratoDigital = () => {
       <div className={styles.topBar}>
         <div className={styles.brand}>
           Contrato Digital
-          <small>Carta oferta digital de locación</small>
+          <small>Carta acuerdo de locación</small>
         </div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <button
@@ -415,16 +474,16 @@ const ContratoDigital = () => {
           >
             <IconList size={16} /> Listado de contratos
           </button>
-          <span className={styles.badge}>Documento Oficial</span>
+          <span className={styles.badge}>Modelo 21/09/2026</span>
         </div>
       </div>
 
       <main className={styles.layout}>
         {/* PANEL LATERAL DE CARGA */}
         <aside className={styles.panel}>
-          <h1>Preparar contrato digital</h1>
+          <h1>Preparar contrato</h1>
           <p className={styles.intro}>
-            Podés autocargar los datos desde un contrato registrado en Giama Renting o completar la información manualmente. Giama acepta la oferta mediante la entrega de la unidad.
+            Revisá los datos y el contrato completo antes de firmar. Modelo del 21/09/2026. Después guardá el PDF en Archivos del contrato.
           </p>
 
           {/* BUSCADOR DE CONTRATO EXISTENTE */}
@@ -509,12 +568,12 @@ const ContratoDigital = () => {
               </div>
             </div>
 
-            {/* SECCION LOCATARIO */}
+            {/* SECCION CLIENTE */}
             <div className={styles.section}>
-              <h2>Locatario</h2>
+              <h2>Cliente</h2>
               <div className={styles.grid}>
                 <div className={styles.full}>
-                  <label className={styles.label} htmlFor="locatario_nombre">Nombre y apellido / Razón social</label>
+                  <label className={styles.label} htmlFor="locatario_nombre">Nombre y apellido</label>
                   <input
                     id="locatario_nombre"
                     name="locatario_nombre"
@@ -525,7 +584,7 @@ const ContratoDigital = () => {
                   />
                 </div>
                 <div>
-                  <label className={styles.label} htmlFor="locatario_dni">DNI / CUIT</label>
+                  <label className={styles.label} htmlFor="locatario_dni">DNI</label>
                   <input
                     id="locatario_dni"
                     name="locatario_dni"
@@ -553,6 +612,7 @@ const ContratoDigital = () => {
                     className={styles.input}
                     value={formData.locatario_domicilio}
                     onChange={handleChange}
+                    required
                   />
                 </div>
                 <div>
@@ -563,6 +623,7 @@ const ContratoDigital = () => {
                     className={styles.input}
                     value={formData.locatario_localidad}
                     onChange={handleChange}
+                    required
                   />
                 </div>
                 <div>
@@ -574,6 +635,7 @@ const ContratoDigital = () => {
                     className={styles.input}
                     value={formData.locatario_email}
                     onChange={handleChange}
+                    required
                   />
                 </div>
               </div>
@@ -676,7 +738,7 @@ const ContratoDigital = () => {
                     type="number"
                     className={styles.input}
                     value={formData.km_limite_semanal}
-                    onChange={handleChange}
+                    readOnly
                     required
                   />
                 </div>
@@ -689,7 +751,7 @@ const ContratoDigital = () => {
                     type="number"
                     className={`${styles.input} ${styles.moneyInput}`}
                     value={formData.valor_km_excedente}
-                    onChange={handleChange}
+                    readOnly
                   />
                 </div>
                 <div className={styles.full}>
@@ -701,12 +763,65 @@ const ContratoDigital = () => {
                     value={formData.plazo_semanas}
                     onChange={handleChange}
                   >
-                    <option value={12}>12 semanas</option>
-                    <option value={4}>4 semanas</option>
-                    <option value={1}>1 semana</option>
+                    <option value="12">12 semanas</option>
+                    <option value="purchase_24m">24 meses con opción de compra</option>
                   </select>
                 </div>
               </div>
+            </div>
+
+            {/* OBSERVACIONES */}
+            <div className={styles.section}>
+              <label className={styles.label} htmlFor="observaciones">Observaciones</label>
+              <textarea
+                id="observaciones"
+                name="observaciones"
+                rows={3}
+                placeholder="Observaciones que deben figurar en la carta acuerdo"
+                className={styles.input}
+                value={formData.observaciones}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* VERIFICACIONES PREVIAS */}
+            <div className={styles.section}>
+              <h2>Verificaciones previas</h2>
+              <p className={styles.intro} style={{ marginBottom: 10 }}>
+                Confirmá las verificaciones indicadas en el modelo antes de emitir el documento.
+              </p>
+              <label className={styles.check}>
+                <input
+                  name="verify_address"
+                  type="checkbox"
+                  checked={formData.verify_address}
+                  onChange={handleChange}
+                  required
+                />
+                <span>Verifiqué el domicilio real y la localidad del cliente contra su DNI.</span>
+              </label>
+
+              <label className={styles.check}>
+                <input
+                  name="verify_email"
+                  type="checkbox"
+                  checked={formData.verify_email}
+                  onChange={handleChange}
+                  required
+                />
+                <span>Recibí un correo de prueba desde el email del cliente.</span>
+              </label>
+
+              <label className={styles.check}>
+                <input
+                  name="verify_phone"
+                  type="checkbox"
+                  checked={formData.verify_phone}
+                  onChange={handleChange}
+                  required
+                />
+                <span>Recibí un WhatsApp desde el teléfono del cliente.</span>
+              </label>
             </div>
 
             {/* ACEPTACIONES DEL CLIENTE */}
@@ -719,7 +834,7 @@ const ContratoDigital = () => {
                   checked={formData.acepta_contrato}
                   onChange={handleChange}
                 />
-                <span>Declaro haber leído la totalidad de la carta oferta, mantenerla firme y recibir una copia.</span>
+                <span>Declaro haber leído la totalidad del contrato y acepto sus condiciones.</span>
               </label>
 
               <label className={styles.check}>
@@ -745,9 +860,9 @@ const ContratoDigital = () => {
               </label>
             </div>
 
-            {/* FIRMA DEL LOCATARIO */}
+            {/* FIRMA DEL CLIENTE */}
             <div className={styles.section}>
-              <h2>Firma del locatario</h2>
+              <h2>Firma del cliente</h2>
               <div className={styles.sigWrap}>
                 <div className={styles.sigTitle}>Firmar dentro del recuadro (táctil o con mouse)</div>
                 <canvas
@@ -820,7 +935,7 @@ const ContratoDigital = () => {
         {/* DOCUMENTO OFICIAL PREVIEW (PAPER) */}
         <article className={styles.paper} id="contrato-digital-document">
           <div className={styles.docHead}>
-            <h2>CARTA OFERTA DE LOCACIÓN DE AUTOMÓVIL</h2>
+            <h2>CARTA ACUERDO</h2>
             <p>
               Dirigida a GIAMA RENTING S.A. ·{" "}
               <span className={!formData.numero_contrato ? styles.empty : ""}>
@@ -831,8 +946,7 @@ const ContratoDigital = () => {
 
           <p>
             <b>Señores GIAMA RENTING S.A.</b><br />
-            Av. San Juan 1733, Ciudad Autónoma de Buenos Aires<br />
-            info@giamarenting.com
+            Av. San Juan 1733, Ciudad Autónoma de Buenos Aires info@giamarenting.com
           </p>
 
           <p>
@@ -841,7 +955,7 @@ const ContratoDigital = () => {
             <span className={!formData.hora ? styles.empty : ""}>{formData.hora || "hora"}</span>, quien suscribe,{" "}
             <b className={!formData.locatario_nombre ? styles.empty : ""}>
               {formData.locatario_nombre || "nombre del cliente"}
-            </b>, DNI/CUIT{" "}
+            </b>, DNI{" "}
             <span className={!formData.locatario_dni ? styles.empty : ""}>{formData.locatario_dni || "DNI"}</span>, con domicilio en{" "}
             <span className={!formData.locatario_domicilio ? styles.empty : ""}>
               {formData.locatario_domicilio || "domicilio"}
@@ -854,12 +968,12 @@ const ContratoDigital = () => {
             </span> y teléfono{" "}
             <span className={!formData.locatario_telefono ? styles.empty : ""}>
               {formData.locatario_telefono || "teléfono"}
-            </span>, en adelante el <b>OFERENTE o LOCATARIO</b>, formula a <b>GIAMA RENTING S.A.</b>, en adelante el <b>LOCADOR</b>, la presente oferta de locación del vehículo identificado a continuación, sujeta a los términos y condiciones siguientes.
+            </span>, en adelante el <b>CLIENTE</b>, formula a <b>GIAMA RENTING S.A.</b>, en adelante la <b>EMPRESA</b>, la presente oferta de locación del vehículo identificado a continuación, sujeta a los términos y condiciones siguientes.
           </p>
 
           <div className={styles.highlight}>
             <p>
-              <b>Forma de aceptación.</b> La presente carta oferta está firmada únicamente por el OFERENTE. Se considerará aceptada por el LOCADOR mediante la entrega material del vehículo al OFERENTE y la emisión del acta de entrega correspondiente. La ausencia de entrega implica falta de aceptación y no genera obligación para el LOCADOR.
+              <b>Forma de aceptación.</b> La presente carta oferta está firmada únicamente por el CLIENTE. Se considerará aceptada por el EMPRESA mediante la entrega material del vehículo al CLIENTE y la emisión del acta de entrega correspondiente. La ausencia de entrega implica falta de aceptación y no genera obligación para el EMPRESA.
             </p>
           </div>
 
@@ -904,133 +1018,159 @@ const ContratoDigital = () => {
 
           <h3>PRIMERA: OBJETO E IDENTIFICACIÓN</h3>
           <p>
-            El OFERENTE propone tomar en locación el vehículo individualizado precedentemente. La marca, modelo, patente, color, kilometraje, canon y depósito consignados en esta carta oferta son los cargados en el formulario al momento de su emisión y forman parte esencial de la oferta.
+            El CLIENTE propone tomar en locación el vehículo individualizado precedentemente. La marca, modelo, patente, color, kilometraje, canon y depósito consignados en esta carta oferta son los cargados en el formulario al momento de su emisión y forman parte esencial de la oferta.
           </p>
 
           <h3>SEGUNDA: ESTADO DE ENTREGA Y ACTA</h3>
           <p>
-            El vehículo será recibido conforme al acta digital de entrega, sus fotografías, croquis, kilometraje y observaciones, que integrarán esta carta oferta como Anexo I. El LOCATARIO deberá revisarlos antes de firmar y restituir la unidad en el mismo estado, salvo el desgaste normal derivado de su utilización correcta.
+            El vehículo será recibido conforme al acta digital de entrega, sus fotografías, croquis, kilometraje y observaciones, que integrarán esta carta oferta como Anexo I. El CLIENTE deberá revisarlos antes de firmar y restituir la unidad en el mismo estado, salvo el desgaste normal derivado de su utilización correcta.
           </p>
 
           <h3>TERCERA: DESTINO, CONDUCTOR Y ÁMBITO</h3>
           <p>
-            El vehículo será destinado exclusivamente al uso laboral del LOCATARIO mediante aplicaciones habilitadas de transporte de pasajeros, principalmente CABIFY, dentro del AMBA. No podrá ser cedido, prestado, subarrendado, utilizado para otro destino ni conducido por terceros sin autorización previa y escrita del LOCADOR. La salida del AMBA también requerirá autorización previa y escrita.
+            El vehículo será destinado exclusivamente al uso laboral del CLIENTE mediante aplicaciones habilitadas de transporte de pasajeros, principalmente CABIFY, dentro del AMBA. No podrá ser cedido, prestado, subarrendado, utilizado para otro destino ni conducido por terceros sin autorización previa y escrita del EMPRESA. La salida del AMBA también requerirá autorización previa y escrita.
           </p>
 
           <h3>CUARTA: KILOMETRAJE</h3>
           <p>
-            El límite máximo de utilización será de <b>{formData.km_limite_semanal ? Number(formData.km_limite_semanal).toLocaleString("es-AR") : "1.800"} kilómetros por semana</b>. Cada kilómetro excedente tendrá un cargo de <b>$ {formatMoney(formData.valor_km_excedente)}</b>, que podrá cobrarse junto con el alquiler o al finalizar la locación.
+            El límite máximo de utilización será de 2.000 kilómetros por semana. Cada kilómetro excedente tendrá un cargo de $ 520, que podrá cobrarse junto con el alquiler o al finalizar la locación.
           </p>
 
           <h3>QUINTA: PRECIO, ACTUALIZACIÓN Y FORMA DE PAGO</h3>
           <p>
-            El canon inicial será de <b>$ {formatMoney(formData.alquiler_semanal)} por semana</b>, pagadero en forma anticipada. El LOCADOR podrá actualizarlo mensualmente conforme al IPC, previa comunicación al LOCATARIO.
+            El canon inicial será de $ <b>{formatMoney(formData.alquiler_semanal)}</b> por semana, pagadero en forma anticipada. El EMPRESA podrá actualizarlo mensualmente a su solo arbitrio conforme al IPC, previa comunicación al CLIENTE al solo efecto de la toma de conocimiento.
           </p>
 
           <div className={styles.highlight}>
             <p>
-              <b>Pago mediante retención de CABIFY.</b> El LOCATARIO acepta que el canon semanal sea abonado en su totalidad mediante el sistema de retención de CABIFY. Si por cualquier motivo no pudiera retenerse el cien por ciento (100%) del canon, deberá cancelar inmediatamente la diferencia por el medio indicado por el LOCADOR. Además, se aplicará un cargo de <b>PESOS SESENTA MIL ($60.000)</b> en concepto de gastos administrativos por la gestión extraordinaria de cobro.
+              <b>Pago mediante retención de CABIFY.</b> El CLIENTE acepta que el canon semanal sea abonado en su totalidad mediante el sistema de retención de CABIFY. Si por cualquier motivo no pudiera retenerse el cien por ciento (100%) del canon, deberá cancelar inmediatamente la diferencia por el medio indicado por el EMPRESA. Además, se aplicará un cargo de <b>PESOS SESENTA MIL ($60.000)</b> en concepto de gastos administrativos por la gestión extraordinaria de cobro.
             </p>
           </div>
 
           <p>
-            El canon incluye patente, el seguro descripto en esta carta oferta y el mantenimiento ordinario autorizado. No incluye combustible, multas, peajes, TelePASE, limpieza, daños, franquicias ni demás conceptos expresamente puestos a cargo del LOCATARIO.
+            El canon incluye patente, el seguro descripto en esta carta oferta y el mantenimiento ordinario autorizado. No incluye combustible, multas, peajes, TelePASE, limpieza, daños, franquicias ni demás conceptos expresamente puestos a cargo del CLIENTE.
           </p>
 
           <h3>SEXTA: PLAZO, RENOVACIÓN Y RESCISIÓN</h3>
+          {formData.plazo_semanas === "purchase_24m" ? (
+            <div>
+              <p>
+                El plazo de la locación será de veinticuatro (24) meses contados desde el{" "}
+                <span>{formatDate(formData.fecha)}</span>, con finalización el{" "}
+                <b>{formatDate(contractEndDate(formData.fecha, "purchase_24m"))}</b>. El canon se abonará semanalmente, con vencimiento los miércoles antes de las 14:00. La EMPRESA podrá rescindir la locación y requerir la devolución de la unidad conforme a las condiciones de esta oferta. Si el CLIENTE rescinde antes del plazo pactado, abonará una penalidad equivalente a una semana de alquiler, salvo la excepción prevista por aumentos superiores al IPC.
+              </p>
+              <p>
+                <b>Opción de compra:</b> Al finalizar el plazo de veinticuatro (24) meses, el CLIENTE tendrá la opción de adquirir el vehículo identificado en este contrato u otro de características y estado similares, por un precio equivalente al cincuenta por ciento (50%) del precio de lista vigente al momento de finalizar el contrato, correspondiente al vehículo objeto de la compra.
+              </p>
+            </div>
+          ) : (
+            <p>
+              El plazo inicial será de 12 semanas, abonado semanalmente, con vencimiento los miércoles antes de las 14:00. Se renovará automáticamente por períodos de una semana mientras se abone anticipadamente el canon y no exista aviso de devolución con al menos 24 horas de anticipación. El EMPRESA podrá rescindir la locación y requerir la devolución de la unidad conforme a las condiciones de esta oferta. Si el CLIENTE rescinde antes del plazo inicial, abonará una penalidad equivalente a una semana de alquiler, salvo la excepción prevista por aumentos superiores al IPC.
+            </p>
+          )}
+
           <p>
-            El plazo inicial será de <b>{formData.plazo_semanas} semanas</b>, abonado semanalmente, con vencimiento los miércoles antes de las 14:00. Se renovará automáticamente por períodos de una semana mientras se abone anticipadamente el canon y no exista aviso de devolución con al menos 24 horas de anticipación. El LOCADOR podrá rescindir la locación y requerir la devolución de la unidad conforme a las condiciones de esta oferta. Si el LOCATARIO rescinde antes del plazo inicial, abonará una penalidad equivalente a una semana de alquiler, salvo la excepción prevista por aumentos superiores al IPC.
+            Si el CLIENTE registra una deuda pendiente de pago superior a <b>PESOS UN MILLÓN ($1.000.000)</b> derivada de esta locación, la EMPRESA podrá rescindir la locación por el nivel de deuda y requerir la devolución del vehículo. La devolución de la unidad no extinguirá la deuda pendiente.
           </p>
 
           <h3>SÉPTIMA: GUARDA, CUSTODIA Y LOCALIZACIÓN</h3>
           <p>
-            El LOCATARIO será depositario y custodio del vehículo desde su recepción hasta la devolución efectiva. Deberá conservarlo en condiciones seguras e informar al LOCADOR el domicilio habitual de guarda. Cualquier cambio deberá notificarse con quince (15) días de anticipación y quedará sujeto a autorización. El LOCATARIO acepta la utilización del sistema de localización satelital instalado en la unidad para fines de seguridad, recuperación, control del ámbito autorizado y verificación del kilometraje.
+            El CLIENTE será depositario y custodio del vehículo desde su recepción hasta la devolución efectiva. Deberá conservarlo en condiciones seguras e informar expresamente a la EMPRESA el domicilio habitual de guarda. Cualquier cambio deberá notificarse expresamente con quince (15) días de anticipación y quedará sujeto a autorización. El CLIENTE acepta la utilización del sistema de localización satelital instalado en la unidad para fines de seguridad, recuperación, control del ámbito autorizado y verificación del kilometraje.
           </p>
 
           <h3>OCTAVA: MANTENIMIENTO Y REVISIONES</h3>
           <p>
-            El LOCATARIO deberá presentar el vehículo a las revisiones, controles y servicios indicados por el LOCADOR, respetar las alertas del tablero y comunicar inmediatamente cualquier falla. No podrá realizar modificaciones, reparaciones ni instalar accesorios sin autorización escrita. Los daños agravados por falta de aviso o incumplimiento serán a su cargo.
+            El CLIENTE deberá presentar el vehículo a las revisiones, controles y servicios indicados por la EMPRESA en el lugar, fecha y horario que notifique la EMPRESA, respetar las alertas del tablero y comunicar inmediatamente cualquier falla. No podrá realizar modificaciones, reparaciones ni instalar accesorios sin autorización escrita. Los daños agravados por falta de aviso o incumplimiento serán a su cargo.
           </p>
 
           <h3>NOVENA: LIMPIEZA Y COMBUSTIBLE</h3>
           <p>
-            El vehículo deberá devolverse y presentarse a toda verificación en condiciones razonables de limpieza. Si estuviera sucio de modo que impida o dificulte la inspección, o requiera limpieza, el LOCATARIO deberá abonar el costo proporcional al valor promedio de lavado aplicable al tipo y estado del vehículo, con un <b>cargo mínimo de PESOS OCHENTA MIL ($80.000)</b>. También deberá reponer el combustible o nivel de carga acordado en el acta de entrega.
+            El vehículo deberá devolverse y presentarse a toda verificación en condiciones razonables de limpieza. Si estuviera sucio de modo que impida o dificulte la inspección, o requiera limpieza, el CLIENTE deberá abonar el costo proporcional al valor promedio de lavado aplicable al tipo y estado del vehículo, con un <b>cargo mínimo de PESOS OCHENTA MIL ($80.000)</b>. También deberá reponer el combustible o nivel de carga acordado en el acta de entrega.
           </p>
 
           <h3>DÉCIMA: SEGURO</h3>
           <p>
-            Durante la locación, el vehículo contará con seguro contra terceros y de responsabilidad civil, con cobertura para transporte de pasajeros, sujeto a los términos, límites, exclusiones y condiciones de la póliza vigente. El seguro no implica cobertura total de los daños propios del vehículo ni exime al LOCATARIO de las franquicias, exclusiones, incumplimientos o importes que correspondan.
+            Durante la locación, el vehículo contará con seguro contra terceros y de responsabilidad civil, con cobertura para transporte de pasajeros, sujeto a los términos, límites, exclusiones y condiciones de la póliza vigente que el cliente declara conocer. El seguro no implica cobertura total de los daños propios del vehículo ni exime al CLIENTE de las franquicias, exclusiones, incumplimientos o importes que correspondan.
           </p>
 
           <h3>DÉCIMA PRIMERA: SINIESTROS</h3>
           <p>
-            Todo accidente, incendio, robo, hurto, daño o siniestro deberá ser comunicado al LOCADOR en forma detallada dentro de las cuatro (4) horas de ocurrido. El LOCATARIO deberá efectuar las denuncias requeridas, aportar documentación, fotografías y datos de terceros, y colaborar con el LOCADOR y la aseguradora. La omisión o demora que provoque pérdida o rechazo de cobertura hará responsable al LOCATARIO por los perjuicios ocasionados.
+            Todo accidente, incendio, robo, hurto, daño o siniestro deberá ser comunicado al EMPRESA en forma detallada dentro de las cuatro (4) horas de ocurrido. El CLIENTE deberá efectuar las denuncias requeridas, aportar documentación, fotografías y datos de terceros, y colaborar con el EMPRESA y la aseguradora. La omisión o demora que provoque pérdida o rechazo de cobertura hará responsable al CLIENTE por los perjuicios ocasionados.
           </p>
 
           <h3>DÉCIMA SEGUNDA: DAÑOS Y FRANQUICIA</h3>
           <div className={styles.highlight}>
             <p>
-              Ante daños, roturas, faltantes o deterioros que excedan el uso normal, el LOCADOR evaluará su alcance y el costo de reparación, reposición y demás consecuencias comprobables. El LOCATARIO deberá abonar el importe determinado según dicha evaluación, con una <b>franquicia máxima total de hasta PESOS TRES MILLONES ($3.000.000)</b> por cada hecho o evento. El monto podrá ser inferior según la gravedad y el costo del daño, pero nunca superior a ese tope por el mismo evento, sin perjuicio de importes no cubiertos por el seguro cuando correspondan conforme a la ley y a la póliza.
+              Ante daños, roturas, faltantes o deterioros que excedan el uso normal, el EMPRESA evaluará su alcance y el costo de reparación, reposición y demás consecuencias comprobables. El CLIENTE deberá abonar el importe determinado según dicha evaluación, con una <b>franquicia máxima total de hasta PESOS TRES MILLONES ($3.000.000)</b> por cada hecho o evento. El monto podrá ser inferior según la gravedad y el costo del daño, pero nunca superior a ese tope por el mismo evento, sin perjuicio de importes no cubiertos por el seguro cuando correspondan conforme a la ley y a la póliza.
             </p>
           </div>
 
           <h3>DÉCIMA TERCERA: RESPONSABILIDAD</h3>
           <p>
-            El LOCATARIO responderá por el uso, guarda y conducción del vehículo, por los actos de terceros a quienes permita utilizarlo, por daños no cubiertos por el seguro, faltantes, gastos de recuperación y lucro cesante razonablemente acreditado cuando la unidad no pueda utilizarse por un hecho que le sea imputable. No podrá presentarse como representante, agente o mandatario del LOCADOR.
+            El CLIENTE responderá por el uso, guarda y conducción del vehículo, por los actos de terceros a quienes permita utilizarlo con o sin autorización de la EMPRESA, por daños no cubiertos por el seguro, faltantes, gastos de recuperación y lucro cesante razonablemente acreditado cuando la unidad no pueda utilizarse por un hecho que le sea imputable. No podrá presentarse como representante, agente o mandatario del EMPRESA.
           </p>
 
           <h3>DÉCIMA CUARTA: MULTAS E INFRACCIONES</h3>
           <p>
-            El LOCATARIO será responsable por todas las infracciones de tránsito cometidas durante la vigencia y sus prórrogas, aunque fueran notificadas después de la devolución. Deberá abonar multas, gastos administrativos y cargos asociados, e identificar al conductor o entregar las constancias que solicite el LOCADOR.
+            El CLIENTE será responsable por todas las infracciones de tránsito cometidas durante la vigencia y sus prórrogas, aunque fueran notificadas después de la devolución. Deberá abonar multas, gastos administrativos y cargos asociados, e identificar al conductor o entregar las constancias que solicite el EMPRESA.
           </p>
 
           <h3>DÉCIMA QUINTA: TELEPASE Y PEAJES</h3>
           <div className={styles.highlight}>
             <p>
-              El servicio de <b>TelePASE y los importes de autopistas y peajes no están incluidos en el alquiler</b>. El LOCATARIO se obliga a gestionar, mantener vigente y abonar, a su exclusivo cargo, su propio TelePASE asociado al vehículo, siguiendo las instrucciones del LOCADOR. Todos los cargos, intereses, multas y gastos ocasionados por falta de alta, falta de pago o utilización serán a cargo del LOCATARIO.
+              El servicio de <b>TelePASE y los importes de autopistas y peajes no están incluidos en el alquiler</b>. El CLIENTE se obliga a gestionar, mantener vigente y abonar, a su exclusivo cargo, su propio TelePASE asociado al vehículo, siguiendo las instrucciones de la EMPRESA. Todos los cargos, intereses, multas y gastos ocasionados por falta de alta, falta de pago o utilización serán a cargo del CLIENTE.
             </p>
           </div>
 
           <h3>DÉCIMA SEXTA: DEPÓSITO EN GARANTÍA</h3>
           <p>
-            El depósito se fija en <b>$ {formatMoney(formData.deposito_garantia)}</b>, según el vehículo informado en el formulario. Podrá aplicarse a alquileres, franquicias, daños, limpieza, multas, peajes, faltantes y cualquier obligación pendiente del LOCATARIO. El saldo resultante será devuelto dentro de los <b>noventa (90) días corridos</b> posteriores a la finalización y devolución del vehículo, siempre que no existan cobros, infracciones, daños o conceptos pendientes de determinación. Si existieran, el plazo se contará desde su liquidación definitiva.
+            El depósito se fija en <b>$ {formatMoney(formData.deposito_garantia)}</b>, según el vehículo informado en el formulario. Podrá aplicarse a alquileres, franquicias, daños, limpieza, multas, peajes, faltantes y cualquier obligación pendiente del CLIENTE. El saldo resultante, si lo hubiere será devuelto dentro de los <b>ciento veinte (120) días corridos</b> posteriores a la finalización y devolución del vehículo, siempre que no existan cobros, infracciones, daños o conceptos pendientes de determinación. Si existieran, el plazo se contará desde su liquidación definitiva.
           </p>
 
           <h3>DÉCIMA SÉPTIMA: MORA Y DEVOLUCIÓN</h3>
           <p>
-            La falta de pago o de restitución en término producirá la mora automática. Por cada día de retraso podrá aplicarse un cargo equivalente al veinte por ciento (20%) del canon semanal, sin perjuicio de las acciones para recuperar el vehículo y reclamar los daños acreditados. La unidad deberá devolverse en el lugar, fecha y horario indicados por el LOCADOR, junto con llaves, documentación, accesorios y elementos recibidos.
+            La falta de pago o de restitución en término producirá la mora automática. Por cada día de retraso podrá aplicarse un cargo equivalente al veinte por ciento (20%) del canon semanal, sin perjuicio de las acciones para recuperar el vehículo y reclamar los daños acreditados. La unidad deberá devolverse en el lugar, fecha y horario indicados por el EMPRESA, junto con llaves, documentación, accesorios y elementos recibidos.
           </p>
 
           <h3>DÉCIMA OCTAVA: DOCUMENTACIÓN DIGITAL Y NOTIFICACIONES</h3>
           <p>
-            El OFERENTE acepta el uso de esta carta oferta digital, el acta de entrega, fotografías, registros de aceptación y comunicaciones cursadas a los domicilios electrónicos denunciados. Declara que los datos son correctos y que pudo leer el documento completo antes de firmarlo.
+            El CLIENTE acepta el uso de esta carta oferta digital, el acta de entrega, fotografías, registros de aceptación y comunicaciones cursadas a los domicilios electrónicos constituidos (Art 75 Código Civil y Comercial). Declara que los datos son correctos y que pudo leer el documento completo antes de firmarlo.
           </p>
 
           <h3>DÉCIMA NOVENA: JURISDICCIÓN</h3>
           <p>
-            Las partes constituyen los domicilios indicados y se someten a la jurisdicción de los tribunales competentes con asiento en la Ciudad Autónoma de Buenos Aires, con renuncia a cualquier otro fuero o jurisdicción que pudiera corresponder, sin perjuicio de las normas imperativas aplicables.
+            Las partes constituyen los domicilios físicos y/o electrónicos indicados y se someten a la jurisdicción de los tribunales competentes con asiento en la Ciudad Autónoma de Buenos Aires, con renuncia a cualquier otro fuero o jurisdicción que pudiera corresponder, sin perjuicio de las normas imperativas aplicables.
           </p>
 
           <h3>RATIFICACIÓN DE LA OFERTA</h3>
           <p>
-            El OFERENTE declara conocer y aceptar íntegramente las condiciones precedentes, mantiene la presente oferta y solicita al LOCADOR su aceptación mediante la entrega del vehículo. La firma que sigue pertenece exclusivamente al OFERENTE; no se requiere la firma del LOCADOR.
+            El CLIENTE declara conocer y aceptar íntegramente las condiciones precedentes, mantiene la presente oferta y solicita al EMPRESA su aceptación mediante la entrega del vehículo. La firma que sigue pertenece exclusivamente al CLIENTE; no se requiere la firma del EMPRESA.
           </p>
 
-          <div className={styles.signatures}>
+          {formData.observaciones && formData.observaciones.trim() && (
+            <div style={{ marginTop: 20 }}>
+              <h3>Observaciones</h3>
+              <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                {formData.observaciones}
+              </p>
+            </div>
+          )}
+
+          <div className={styles.signatures} style={{ gridTemplateColumns: "1fr" }}>
             <div className={styles.sigBox}>
               {signatureData ? (
-                <img src={signatureData} alt="Firma del oferente" className={styles.sigImage} />
+                <img src={signatureData} alt="Firma del cliente" className={styles.sigImage} />
               ) : (
                 <div style={{ height: 60 }} />
               )}
-              <b>FIRMA DEL OFERENTE / LOCATARIO</b><br />
-              <span>{formData.locatario_nombre || "Nombre y apellido"}</span><br />
-              DNI/CUIT <span>{formData.locatario_dni || "-"}</span>
+              <b>Firma del CLIENTE</b><br />
+              Aclaración: <span>{formData.locatario_nombre || "—"}</span><br />
+              DNI: <span>{formData.locatario_dni || "—"}</span>
             </div>
           </div>
 
           <p className={styles.footerNote}>
-            Contrato digital generado electrónicamente: {formData.numero_contrato || "-"}. Fecha y hora declaradas: {formatDate(formData.fecha)} {formData.hora || "-"}. La aceptación del LOCADOR se instrumenta mediante la entrega del vehículo y su acta correspondiente.
+            Contrato digital generado electrónicamente: {formData.numero_contrato || "-"}. Fecha y hora declaradas: {formatDate(formData.fecha)} {formData.hora || "-"}. La aceptación del EMPRESA se instrumenta mediante la entrega del vehículo y su acta correspondiente.
           </p>
         </article>
       </main>

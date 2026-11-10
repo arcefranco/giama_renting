@@ -73,11 +73,15 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
             <Route path='/usuarios/alta' element={<AltaUsuario />} />
+            {(import.meta.env.VITE_APP_ENV || "").trim().toLowerCase() === "testing" && (
+              <>
+                <Route path='/auditoria/asientos' element={<ReporteAsientos />} />
+                <Route path='/auditoria/facturas' element={<ReporteFacturas />} />
+              </>
+            )}
           </Route>
           <Route element={<AdminRoute />}>
             <Route path='/usuarios/alertas' element={<Alertas />} />
-            <Route path='/auditoria/asientos' element={<ReporteAsientos />} />
-            <Route path='/auditoria/facturas' element={<ReporteFacturas />} />
           </Route>
           <Route element={<PrivateRoute allowedRoles={["1", "2"]} />}>
             <Route path="/vehiculos" element={<VehiculosForm />} />

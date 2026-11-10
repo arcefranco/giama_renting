@@ -13,6 +13,8 @@ router.use(auth);
 
 router.get("/asientos", getAsientos);
 router.get("/asientos/:nroAsiento", getAsientoLineas);
+router.get("/asientos/:nroAsiento/:fecha", getAsientoLineas);
+router.get("/asientos/:nroAsiento/:fecha", getAsientoLineas);
 router.get("/facturas", getFacturas);
 router.get("/facturas/:idFactura/items", getFacturaItems);
 

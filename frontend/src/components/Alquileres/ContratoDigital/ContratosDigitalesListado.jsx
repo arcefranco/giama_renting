@@ -158,7 +158,13 @@ const ContratosDigitalesListado = () => {
                     </td>
                     <td><b>{formatMoney(c.alquiler_semanal)}</b></td>
                     <td>{formatMoney(c.deposito_garantia)}</td>
-                    <td>{c.plazo_semanas || 12} sem.</td>
+                    <td>
+                      {c.plazo_semanas === "purchase_24m" ? (
+                        <span className={styles.purchaseBadge}>24 meses (compra)</span>
+                      ) : (
+                        `${c.plazo_semanas || 12} sem.`
+                      )}
+                    </td>
                     <td>
                       {c.firma_digital ? (
                         <span className={styles.signedBadge}>

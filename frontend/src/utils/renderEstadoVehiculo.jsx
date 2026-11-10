@@ -19,16 +19,16 @@ export const renderEstadoVehiculo = (vehiculo) => {
     return <span style={{ ...baseStyle, background: "#555555" }}>Cobrado DT</span>;
   }
 
-  if (vehiculo?.estado_actual === 11 || vehiculo?.fecha_venta) {
-    return <span style={{ ...baseStyle, background: "#198754" }}>Vendido Facturado</span>;
-  }
-
   if (vehiculo?.estado_actual === 9) {
     return <span style={{ ...baseStyle, background: "#009688" }}>Reservado venta</span>;
   }
 
   if (vehiculo?.estado_actual === 10) {
     return <span style={{ ...baseStyle, background: "#fd7e14" }}>Vendido sin facturar</span>;
+  }
+
+  if (vehiculo?.estado_actual === 11 || (!vehiculo?.estado_actual && vehiculo?.fecha_venta)) {
+    return <span style={{ ...baseStyle, background: "#198754" }}>Vendido Facturado</span>;
   }
 
   if (vehiculo?.vehiculo_alquilado === 1) {

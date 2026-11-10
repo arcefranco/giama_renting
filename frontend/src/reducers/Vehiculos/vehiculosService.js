@@ -1,5 +1,6 @@
 import {
   getFunction,
+  getObjectFunction,
   postArrayFunction,
   postFunction,
   postObjectFunction,
@@ -139,6 +140,14 @@ const anularRemito = async (data) => {
   return postFunction("vehiculos/remito/anular", data);
 };
 
+export const getFacturaVentaVehiculo = async (id) => {
+  return getObjectFunction(`vehiculos/factura-venta/${id}`);
+};
+
+export const anularFacturaVentaVehiculo = async (id, data) => {
+  return postFunction(`vehiculos/anular-factura-venta/${id}`, data);
+};
+
 const vehiculosService = {
   getVehiculos,
   getVehiculosById,
@@ -164,6 +173,8 @@ const vehiculosService = {
   getRemitoById,
   postRemito,
   anularRemito,
+  getFacturaVentaVehiculo,
+  anularFacturaVentaVehiculo,
 };
 export default vehiculosService;
 

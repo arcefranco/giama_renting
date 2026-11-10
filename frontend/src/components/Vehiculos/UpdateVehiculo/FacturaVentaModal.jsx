@@ -22,6 +22,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
     importe_percepcion: '',
     importe_total: '',
     estado_cobro: 'cobrado', // Nuevo estado
+    diasctacte: '',
     nuevoCliente: false,
     nombre: '',
     apellido: '',
@@ -51,6 +52,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
         importe_percepcion: '',
         importe_total: '',
         estado_cobro: 'cobrado',
+        diasctacte: '',
         nuevoCliente: false,
         nombre: '',
         apellido: '',
@@ -77,6 +79,10 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
         newData.importe_percepcion = '';
       }
 
+      if (name === 'estado_cobro' && value === 'cobrado') {
+        newData.diasctacte = '';
+      }
+
       const tasaPerc = newData.tipo_percepcion !== 'ninguna' ? parseFloat(newData.tasa_percepcion || 0) : 0;
 
       if (name === 'importe_total') {
@@ -93,7 +99,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
         if (newData.importe_neto) {
           const { neto, iva, percepcion, total } = calcularImportesDesdeNeto({
             neto: newData.importe_neto,
-            porcentajeIva: parseFloat(newData.porcenxtaje_iva || 0),
+            porcentajeIva: parseFloat(newData.porcentaje_iva || 0),
             tasaPercepcion: tasaPerc,
             importePercepcion: name === 'importe_percepcion' ? value : null
           });
@@ -103,6 +109,12 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
             newData.importe_percepcion = percepcion;
           }
           newData.importe_total = total;
+        } else {
+          newData.importe_iva = '';
+          newData.importe_total = '';
+          if (name !== 'importe_percepcion') {
+            newData.importe_percepcion = '';
+          }
         }
       }
       
@@ -111,9 +123,11 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const handleClienteChange = (selectedOption) => {
+    const clienteSel = clientes?.find((c) => String(c.id) === String(selectedOption?.value));
     setFormData(prev => ({
       ...prev,
-      id_cliente: selectedOption ? selectedOption.value : ''
+      id_cliente: selectedOption ? selectedOption.value : '',
+      diasctacte: clienteSel?.diasctacte ? String(clienteSel.diasctacte) : prev.diasctacte
     }));
   };
 
@@ -121,6 +135,11 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
     e.preventDefault();
     if (!formData.importe_neto || !formData.importe_total) {
       alert("Por favor complete los importes");
+      return;
+    }
+
+    if (formData.estado_cobro === 'a_cobrar' && !formData.diasctacte) {
+      alert("Por favor seleccione la condición de venta (plazo de cobro)");
       return;
     }
     
@@ -295,6 +314,24 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                         <option value="a_cobrar">A Cobrar</option>
                     </select>
                 </div>
+
+                {formData.estado_cobro === 'a_cobrar' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <label>Condición de Venta:</label>
+                        <select 
+                            name="diasctacte" 
+                            value={formData.diasctacte} 
+                            onChange={handleChange} 
+                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', height: '35px', backgroundColor: '#fff' }}
+                        >
+                            <option value="">Seleccione plazo...</option>
+                            <option value="20">20 días</option>
+                            <option value="30">30 días</option>
+                            <option value="60">60 días</option>
+                            <option value="90">90 días</option>
+                        </select>
+                    </div>
+                )}
             </div>
 
             <hr style={{ width: '100%', borderColor: '#eee', margin: '5px 0' }} />
@@ -304,6 +341,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 <label>Importe Neto:</label>
                 <input 
                     type="number" 
+                    step="any"
                     name="importe_neto" 
                     value={formData.importe_neto} 
                     onChange={handleChange} 
@@ -331,6 +369,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 <label>Importe IVA:</label>
                 <input 
                     type="number" 
+                    step="any"
                     name="importe_iva" 
                     value={formData.importe_iva} 
                     onChange={handleChange} 
@@ -358,6 +397,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 <label>Tasa Perc. (%):</label>
                 <input 
                     type="number" 
+                    step="any"
                     name="tasa_percepcion" 
                     value={formData.tasa_percepcion} 
                     onChange={handleChange} 
@@ -370,6 +410,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 <label>Imp. Percepción:</label>
                 <input 
                     type="number" 
+                    step="any"
                     name="importe_percepcion" 
                     value={formData.importe_percepcion} 
                     onChange={handleChange} 
@@ -382,6 +423,7 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
                 <label>Importe Total:</label>
                 <input 
                     type="number" 
+                    step="any"
                     name="importe_total" 
                     value={formData.importe_total} 
                     onChange={handleChange} 

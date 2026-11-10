@@ -13,16 +13,17 @@ export const asientoContable = async (
   comprobante,
   Fecha,
   AsientoSecundario,
-  TipoComprobante
+  TipoComprobante,
+  UsuarioAltaRegistro
 ) => {
   console.log("IMPORTE: ", importe);
   if (db === "c_movimientos") {
     try {
       await pa7_giama_renting.query(
         `INSERT INTO ${db} 
-    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, AsientoSecundario, TipoComprobante) 
+    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, AsientoSecundario, TipoComprobante, UsuarioAltaRegistro) 
     VALUES (:Fecha,:NroAsiento,:cuenta_contable,
-    :DH,:importe,:concepto,:comprobante,:AsientoSecundario, :TipoComprobante)`,
+    :DH,:importe,:concepto,:comprobante,:AsientoSecundario, :TipoComprobante, :UsuarioAltaRegistro)`,
         {
           type: QueryTypes.INSERT,
           replacements: {
@@ -35,6 +36,7 @@ export const asientoContable = async (
             comprobante: comprobante ?? null,
             AsientoSecundario: AsientoSecundario ? AsientoSecundario : null,
             TipoComprobante: TipoComprobante ? TipoComprobante : null,
+            UsuarioAltaRegistro: UsuarioAltaRegistro ?? null,
           },
           transaction: transaction,
         }
@@ -52,9 +54,9 @@ export const asientoContable = async (
     try {
       await pa7_giama_renting.query(
         `INSERT INTO ${db} 
-    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, TipoComprobante) 
+    (Fecha, NroAsiento, Cuenta, DH, Importe, Concepto, NroComprobante, TipoComprobante, UsuarioAltaRegistro) 
     VALUES (:Fecha,:NroAsiento,:cuenta_contable,
-    :DH,:importe,:concepto,:comprobante, :TipoComprobante)`,
+    :DH,:importe,:concepto,:comprobante, :TipoComprobante, :UsuarioAltaRegistro)`,
         {
           type: QueryTypes.INSERT,
           replacements: {
@@ -66,6 +68,7 @@ export const asientoContable = async (
             concepto,
             comprobante: comprobante ?? null,
             TipoComprobante: TipoComprobante ? TipoComprobante : null,
+            UsuarioAltaRegistro: UsuarioAltaRegistro ?? null,
           },
           transaction: transaction,
         }
