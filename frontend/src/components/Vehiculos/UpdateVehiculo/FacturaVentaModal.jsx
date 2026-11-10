@@ -86,24 +86,33 @@ const FacturaVentaModal = ({ isOpen, onClose, onSubmit }) => {
       const tasaPerc = newData.tipo_percepcion !== 'ninguna' ? parseFloat(newData.tasa_percepcion || 0) : 0;
 
       if (name === 'importe_total') {
-        const { neto, iva, percepcion } = calcularImportesDesdeTotal({
-          total: value,
-          porcentajeIva: parseFloat(newData.porcentaje_iva || 0),
-          tasaPercepcion: tasaPerc
-        });
-        newData.importe_neto = neto;
-        newData.importe_iva = iva;
-        newData.importe_percepcion = percepcion;
+        newData.importe_total = value;
+        if (value && !isNaN(parseFloat(value)) && parseFloat(value) > 0) {
+          const { neto, iva, percepcion } = calcularImportesDesdeTotal({
+            total: value,
+            porcentajeIva: parseFloat(newData.porcentaje_iva || 0),
+            tasaPercepcion: tasaPerc
+          });
+          newData.importe_neto = neto;
+          newData.importe_iva = iva;
+          newData.importe_percepcion = percepcion;
+        } else {
+          newData.importe_neto = '';
+          newData.importe_iva = '';
+          newData.importe_percepcion = '';
+        }
       } 
       else if (['importe_neto', 'porcentaje_iva', 'tasa_percepcion', 'tipo_percepcion', 'importe_percepcion'].includes(name)) {
-        if (newData.importe_neto) {
-          const { neto, iva, percepcion, total } = calcularImportesDesdeNeto({
+        if (name === 'importe_neto') {
+          newData.importe_neto = value;
+        }
+        if (newData.importe_neto && !isNaN(parseFloat(newData.importe_neto)) && parseFloat(newData.importe_neto) > 0) {
+          const { iva, percepcion, total } = calcularImportesDesdeNeto({
             neto: newData.importe_neto,
             porcentajeIva: parseFloat(newData.porcentaje_iva || 0),
             tasaPercepcion: tasaPerc,
             importePercepcion: name === 'importe_percepcion' ? value : null
           });
-          newData.importe_neto = neto;
           newData.importe_iva = iva;
           if (name !== 'importe_percepcion') {
             newData.importe_percepcion = percepcion;
