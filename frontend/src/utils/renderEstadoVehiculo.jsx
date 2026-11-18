@@ -27,7 +27,7 @@ export const renderEstadoVehiculo = (vehiculo) => {
     return <span style={{ ...baseStyle, background: "#fd7e14" }}>Vendido sin facturar</span>;
   }
 
-  if (vehiculo?.estado_actual === 11 || (!vehiculo?.estado_actual && vehiculo?.fecha_venta)) {
+  if (vehiculo?.estado_actual === 11 || vehiculo?.fecha_venta) {
     return <span style={{ ...baseStyle, background: "#198754" }}>Vendido Facturado</span>;
   }
 
