@@ -30,13 +30,15 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
   });
 
   const esEgreso = form.tipo === "egreso";
+  const esVehiculoVendidoFacturado = (v) =>
+    Number(v?.estado_actual) === 11 || Boolean(v?.fecha_venta);
 
   const opcionesVehiculos = useMemo(() => {
     if (!vehiculos) return [];
     return vehiculos
       .filter((v) => {
         const esActivoSinVenta = !v.fecha_venta && v.activo === 1;
-        const esVendidoFacturado = Number(v.estado_actual) === 11;
+        const esVendidoFacturado = esVehiculoVendidoFacturado(v);
         const esVendidoSinFacturar = Number(v.estado_actual) === 10;
         if (esEgreso) {
           return esActivoSinVenta || esVendidoFacturado || esVendidoSinFacturar;
@@ -58,7 +60,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
     if (!vehiculos || !form.unidades.length) return false;
     return form.unidades.some((id) => {
       const v = vehiculos.find((item) => item.id === id);
-      return Number(v?.estado_actual) === 11;
+      return esVehiculoVendidoFacturado(v);
     });
   }, [vehiculos, form.unidades]);
 
@@ -79,7 +81,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
   const handleSelectUnidades = (selectedOptions) => {
     const ids = selectedOptions ? selectedOptions.map((opt) => opt.value) : [];
     const incluyeFacturada = vehiculos
-      ? ids.some((id) => Number(vehiculos.find((item) => item.id === id)?.estado_actual) === 11)
+      ? ids.some((id) => esVehiculoVendidoFacturado(vehiculos.find((item) => item.id === id)))
       : false;
     setForm((prev) => ({
       ...prev,
