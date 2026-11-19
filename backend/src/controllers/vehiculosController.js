@@ -1140,6 +1140,26 @@ export const updateVehiculo = async (req, res) => {
     return res.send({ status: false, message: "Se requiere permiso de administración para poder realizar cambio de dispositivo peaje" })
   }
 
+  const estadoAnterior = Number(vehiculoAnterior[0]["estado_actual"]);
+  const estadoNuevo =
+    estado !== undefined && estado !== null && estado !== ""
+      ? Number(estado)
+      : estadoAnterior;
+
+  if (estadoAnterior === 11 && estadoNuevo !== 11) {
+    return res.send({
+      status: false,
+      message: "No se puede modificar manualmente el estado de un vehículo en Vendido Facturado. Debe anular la factura mediante Nota de Crédito."
+    });
+  }
+
+  if (estadoAnterior !== 11 && estadoNuevo === 11 && !facturaVentaData) {
+    return res.send({
+      status: false,
+      message: "No se puede pasar manualmente un vehículo a Vendido Facturado sin generar la factura de venta."
+    });
+  }
+
   if (estado && String(vehiculoAnterior[0]["estado_actual"]) !== String(estado) &&
     String(estado) !== "10" && String(estado) !== "11" &&
     (!userRoles.includes("4") && !userRoles.includes("2") && !userRoles.includes("1"))) {
@@ -2686,8 +2706,36 @@ export const postRemito = async (req, res) => {
     });
   }
 
+  if (estado_vehiculos && Number(estado_vehiculos) === 11) {
+    return res.send({
+      status: false,
+      message: "No se puede asignar manualmente el estado Vendido Facturado desde un remito",
+    });
+  }
+
   const transaction = await giama_renting.transaction();
   try {
+    if (estado_vehiculos) {
+      const unidadesFacturadas = await giama_renting.query(
+        `SELECT id, dominio, dominio_provisorio FROM vehiculos WHERE id IN (?) AND estado_actual = 11`,
+        {
+          replacements: [unidadesUnicas],
+          type: QueryTypes.SELECT,
+          transaction,
+        }
+      );
+
+      if (unidadesFacturadas.length > 0) {
+        await transaction.rollback();
+        const dominios = unidadesFacturadas
+          .map((u) => u.dominio || u.dominio_provisorio || `ID ${u.id}`)
+          .join(", ");
+        return res.send({
+          status: false,
+          message: `No se puede modificar manualmente el estado de unidades en Vendido Facturado (${dominios}). Deje "No cambiar estado" para emitir el remito.`,
+        });
+      }
+    }
     const [numResult] = await giama_renting.query(
       `SELECT COALESCE(MAX(numero), 0) + 1 AS siguiente_numero FROM remitos WHERE punto_venta = ? FOR UPDATE`,
       {
@@ -3278,6 +3326,9 @@ export const anularFacturaVentaVehiculo = async (req, res) => {
       await giama_renting.query(
         `UPDATE vehiculos 
          SET estado_actual = 10,
+             fecha_venta = NULL,
+             precio_venta = NULL,
+             activo = 1,
              usuario_ultima_modificacion = :usuario
          WHERE id = :id`,
         {
