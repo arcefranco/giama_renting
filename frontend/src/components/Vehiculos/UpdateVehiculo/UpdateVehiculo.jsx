@@ -379,30 +379,26 @@ const UpdateVehiculo = () => {
           </fieldset>
           <fieldset className={styles.fieldSet}>
             <legend>Preparación del vehículo</legend>
-            <div className={styles.inputContainer}>
-              <span>Estado</span>
-              <SelectEstados
-                disabled={disabledAdm || Number(vehiculo?.[0]?.estado_actual) === 11 || Boolean(vehiculo?.[0]?.fecha_venta)}
-                disabledOptions={[11]}
-                estados={estados}
-                value={form.estado}
-                onChange={(value) => {
-                  if (Number(vehiculo?.[0]?.estado_actual) === 11 || Boolean(vehiculo?.[0]?.fecha_venta)) return;
-                  if (value != 11) {
-                    setFacturaVentaData(null);
-                  }
-                  setForm((prev) => ({
-                    ...prev,
-                    estado: value
-                  }));
-                }}
-              />
-              {(Number(vehiculo?.[0]?.estado_actual) === 11 || Boolean(vehiculo?.[0]?.fecha_venta)) && (
-                <small style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '4px' }}>
-                  El estado Vendido Facturado solo puede modificarse anulando la factura (NC).
-                </small>
-              )}
-            </div>
+            {!(Number(vehiculo?.[0]?.estado_actual) === 11 || Boolean(vehiculo?.[0]?.fecha_venta)) && (
+              <div className={styles.inputContainer}>
+                <span>Estado</span>
+                <SelectEstados
+                  disabled={disabledAdm}
+                  disabledOptions={[11]}
+                  estados={estados}
+                  value={form.estado}
+                  onChange={(value) => {
+                    if (value != 11) {
+                      setFacturaVentaData(null);
+                    }
+                    setForm((prev) => ({
+                      ...prev,
+                      estado: value
+                    }));
+                  }}
+                />
+              </div>
+            )}
             <div className={styles.inputContainer}>
               <span>Kilómetros actuales</span>
               <input disabled={disabledAdm} type="number" min={0} name="kilometros" value={!form.kilometros ? "0" : form.kilometros} onChange={handleChange} />
