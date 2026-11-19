@@ -382,11 +382,12 @@ const UpdateVehiculo = () => {
             <div className={styles.inputContainer}>
               <span>Estado</span>
               <SelectEstados
-                disabled={disabledAdm}
+                disabled={disabledAdm || Number(vehiculo?.[0]?.estado_actual) === 11}
                 disabledOptions={[11]}
                 estados={estados}
                 value={form.estado}
                 onChange={(value) => {
+                  if (Number(vehiculo?.[0]?.estado_actual) === 11) return;
                   if (value != 11) {
                     setFacturaVentaData(null);
                   }
@@ -396,6 +397,11 @@ const UpdateVehiculo = () => {
                   }));
                 }}
               />
+              {Number(vehiculo?.[0]?.estado_actual) === 11 && (
+                <small style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '4px' }}>
+                  El estado Vendido Facturado solo puede modificarse anulando la factura (NC).
+                </small>
+              )}
             </div>
             <div className={styles.inputContainer}>
               <span>Kilómetros actuales</span>

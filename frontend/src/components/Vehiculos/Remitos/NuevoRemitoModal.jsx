@@ -29,10 +29,20 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
     estado_vehiculos: "",
   });
 
+  const esEgreso = form.tipo === "egreso";
+
   const opcionesVehiculos = useMemo(() => {
     if (!vehiculos) return [];
     return vehiculos
-      .filter((v) => !v.fecha_venta && v.activo === 1)
+      .filter((v) => {
+        const esActivoSinVenta = !v.fecha_venta && v.activo === 1;
+        const esVendidoFacturado = Number(v.estado_actual) === 11;
+        const esVendidoSinFacturar = Number(v.estado_actual) === 10;
+        if (esEgreso) {
+          return esActivoSinVenta || esVendidoFacturado || esVendidoSinFacturar;
+        }
+        return esActivoSinVenta;
+      })
       .map((v) => {
         const dominio = v.dominio || v.dominio_provisorio || "SIN DOMINIO";
         const modeloNombre = modelos?.find((m) => m.id === v.modelo)?.nombre || "";
@@ -42,13 +52,40 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
           searchKey: `${dominio} ${modeloNombre}`.toLowerCase(),
         };
       });
-  }, [vehiculos, modelos]);
+  }, [vehiculos, modelos, esEgreso]);
+
+  const tieneUnidadVendidaFacturada = useMemo(() => {
+    if (!vehiculos || !form.unidades.length) return false;
+    return form.unidades.some((id) => {
+      const v = vehiculos.find((item) => item.id === id);
+      return Number(v?.estado_actual) === 11;
+    });
+  }, [vehiculos, form.unidades]);
 
   if (!isOpen) return null;
 
+  const handleTipoChange = (nuevoTipo) => {
+    if (nuevoTipo !== "egreso" && form.unidades.length > 0 && vehiculos) {
+      const unidadesValidas = form.unidades.filter((id) => {
+        const v = vehiculos.find((item) => item.id === id);
+        return v && !v.fecha_venta && v.activo === 1;
+      });
+      setForm((prev) => ({ ...prev, tipo: nuevoTipo, unidades: unidadesValidas }));
+    } else {
+      setForm((prev) => ({ ...prev, tipo: nuevoTipo }));
+    }
+  };
+
   const handleSelectUnidades = (selectedOptions) => {
     const ids = selectedOptions ? selectedOptions.map((opt) => opt.value) : [];
-    setForm({ ...form, unidades: ids });
+    const incluyeFacturada = vehiculos
+      ? ids.some((id) => Number(vehiculos.find((item) => item.id === id)?.estado_actual) === 11)
+      : false;
+    setForm((prev) => ({
+      ...prev,
+      unidades: ids,
+      estado_vehiculos: incluyeFacturada ? "" : prev.estado_vehiculos,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -211,7 +248,7 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
               <label style={labelStyle}>Tipo de movimiento *</label>
               <select
                 value={form.tipo}
-                onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+                onChange={(e) => handleTipoChange(e.target.value)}
                 style={{ ...inputStyle, cursor: "pointer" }}
               >
                 <option value="egreso">Egreso (Salida / Entrega)</option>
@@ -317,16 +354,26 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
             <label style={labelStyle}>Cambiar estado de las unidades a (opcional)</label>
             <select
               value={form.estado_vehiculos}
+              disabled={tieneUnidadVendidaFacturada}
               onChange={(e) => setForm({ ...form, estado_vehiculos: e.target.value })}
-              style={{ ...inputStyle, cursor: "pointer" }}
+              style={{
+                ...inputStyle,
+                cursor: tieneUnidadVendidaFacturada ? "not-allowed" : "pointer",
+                backgroundColor: tieneUnidadVendidaFacturada ? "#f1f5f9" : "#fff",
+              }}
             >
               <option value="">No cambiar estado</option>
-              {ESTADOS_ESTATICOS.map((est) => (
+              {ESTADOS_ESTATICOS.filter((est) => est.id !== 11).map((est) => (
                 <option key={est.id} value={est.id}>
                   {est.nombre}
                 </option>
               ))}
             </select>
+            {tieneUnidadVendidaFacturada && (
+              <small style={{ display: "block", marginTop: "4px", color: "#64748b", fontSize: "12px" }}>
+                No se puede cambiar manualmente el estado de unidades en Vendido Facturado.
+              </small>
+            )}
           </div>
 
           {/* Sección 4: Observaciones */}
