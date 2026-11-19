@@ -352,31 +352,23 @@ const NuevoRemitoModal = ({ isOpen, onClose }) => {
           </div>
 
           {/* Sección 3.5: Cambio de Estado (Opcional) */}
-          <div>
-            <label style={labelStyle}>Cambiar estado de las unidades a (opcional)</label>
-            <select
-              value={form.estado_vehiculos}
-              disabled={tieneUnidadVendidaFacturada}
-              onChange={(e) => setForm({ ...form, estado_vehiculos: e.target.value })}
-              style={{
-                ...inputStyle,
-                cursor: tieneUnidadVendidaFacturada ? "not-allowed" : "pointer",
-                backgroundColor: tieneUnidadVendidaFacturada ? "#f1f5f9" : "#fff",
-              }}
-            >
-              <option value="">No cambiar estado</option>
-              {ESTADOS_ESTATICOS.filter((est) => est.id !== 11).map((est) => (
-                <option key={est.id} value={est.id}>
-                  {est.nombre}
-                </option>
-              ))}
-            </select>
-            {tieneUnidadVendidaFacturada && (
-              <small style={{ display: "block", marginTop: "4px", color: "#64748b", fontSize: "12px" }}>
-                No se puede cambiar manualmente el estado de unidades en Vendido Facturado.
-              </small>
-            )}
-          </div>
+          {!tieneUnidadVendidaFacturada && (
+            <div>
+              <label style={labelStyle}>Cambiar estado de las unidades a (opcional)</label>
+              <select
+                value={form.estado_vehiculos}
+                onChange={(e) => setForm({ ...form, estado_vehiculos: e.target.value })}
+                style={{ ...inputStyle, cursor: "pointer" }}
+              >
+                <option value="">No cambiar estado</option>
+                {ESTADOS_ESTATICOS.filter((est) => est.id !== 11).map((est) => (
+                  <option key={est.id} value={est.id}>
+                    {est.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Sección 4: Observaciones */}
           <div>
