@@ -50,6 +50,7 @@ const UpdateVehiculo = () => {
 
   const [modalFacturaVentaOpen, setModalFacturaVentaOpen] = useState(false);
   const [facturaVentaData, setFacturaVentaData] = useState(null);
+  const [tieneFacturaVentaAnulable, setTieneFacturaVentaAnulable] = useState(false);
 
   useEffect(() => {
     dispatch(getModelos());
@@ -101,6 +102,33 @@ const UpdateVehiculo = () => {
       });
     }
   }, [vehiculo]);
+
+  useEffect(() => {
+    let cancelado = false;
+    const v = vehiculo?.[0];
+    const esFacturado = v && (Number(v.estado_actual) === 11 || Boolean(v.fecha_venta));
+
+    if (!esFacturado || disabledFin) {
+      setTieneFacturaVentaAnulable(false);
+      return;
+    }
+
+    getFacturaVentaVehiculo(id)
+      .then((res) => {
+        if (!cancelado) {
+          setTieneFacturaVentaAnulable(Boolean(res?.status && res?.data && !res.data.yaAnulada));
+        }
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setTieneFacturaVentaAnulable(false);
+        }
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [vehiculo, id, disabledFin]);
 
   useToastFeedback({
     isError,
@@ -330,7 +358,7 @@ const UpdateVehiculo = () => {
               <input disabled={disabledFin} type="text" name="color" value={form.color} onChange={handleChange} />
             </div>
 
-            {!disabledFin && (Number(vehiculo?.[0]?.estado_actual) === 10 || Number(form?.estado) === 10) && (
+            {!disabledFin && !vehiculo?.[0]?.fecha_venta && (Number(vehiculo?.[0]?.estado_actual) === 10 || Number(form?.estado) === 10) && (
               <div className={styles.inputContainer}>
                 <span>Factura de venta</span>
                 <button
@@ -352,7 +380,7 @@ const UpdateVehiculo = () => {
               </div>
             )}
 
-            {!disabledFin && (Number(vehiculo?.[0]?.estado_actual) === 11 || Number(form?.estado) === 11) && (
+            {!disabledFin && tieneFacturaVentaAnulable && (
               <div className={styles.inputContainer}>
                 <span>Factura de venta</span>
                 <button

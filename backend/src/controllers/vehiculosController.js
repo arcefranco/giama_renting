@@ -3055,7 +3055,7 @@ export const anularFacturaVentaVehiculo = async (req, res) => {
 
   try {
     const vehiculo = await giama_renting.query(
-      `SELECT id, dominio, dominio_provisorio, estado_actual 
+      `SELECT id, dominio, dominio_provisorio, estado_actual, fecha_venta 
        FROM vehiculos WHERE id = :id LIMIT 1`,
       {
         replacements: { id },
@@ -3067,7 +3067,7 @@ export const anularFacturaVentaVehiculo = async (req, res) => {
       return res.send({ status: false, message: "No se encontró el vehículo" });
     }
 
-    if (Number(vehiculo[0].estado_actual) !== 11) {
+    if (Number(vehiculo[0].estado_actual) !== 11 && !vehiculo[0].fecha_venta) {
       return res.send({
         status: false,
         message: "El vehículo no se encuentra en estado 'Vendido Facturado'",
