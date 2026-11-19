@@ -1145,8 +1145,10 @@ export const updateVehiculo = async (req, res) => {
     estado !== undefined && estado !== null && estado !== ""
       ? Number(estado)
       : estadoAnterior;
+  const esVendidoFacturadoAnterior =
+    estadoAnterior === 11 || Boolean(vehiculoAnterior[0]["fecha_venta"]);
 
-  if (estadoAnterior === 11 && estadoNuevo !== 11) {
+  if (esVendidoFacturadoAnterior && estadoNuevo !== estadoAnterior) {
     return res.send({
       status: false,
       message: "No se puede modificar manualmente el estado de un vehículo en Vendido Facturado. Debe anular la factura mediante Nota de Crédito."
@@ -2717,7 +2719,7 @@ export const postRemito = async (req, res) => {
   try {
     if (estado_vehiculos) {
       const unidadesFacturadas = await giama_renting.query(
-        `SELECT id, dominio, dominio_provisorio FROM vehiculos WHERE id IN (?) AND estado_actual = 11`,
+        `SELECT id, dominio, dominio_provisorio FROM vehiculos WHERE id IN (?) AND (estado_actual = 11 OR fecha_venta IS NOT NULL)`,
         {
           replacements: [unidadesUnicas],
           type: QueryTypes.SELECT,
