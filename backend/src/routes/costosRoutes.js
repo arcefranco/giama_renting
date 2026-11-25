@@ -19,6 +19,8 @@ import {
   importacionesTelepases,
   preprocesarMultas,
   confirmarImportacionMultas,
+  getUltimoLoteMultas,
+  anularMultasImportadas,
   preprocesarTelepases,
   confirmarImportacionTelepases,
   preprocesarCabify,
@@ -83,6 +85,16 @@ costosRouter.post(
   "/confirmarImportacionMultas",
   auth,
   confirmarImportacionMultas
+);
+costosRouter.post(
+  "/ultimoLoteMultas",
+  auth,
+  getUltimoLoteMultas
+);
+costosRouter.post(
+  "/anularMultas",
+  auth,
+  anularMultasImportadas
 );
 costosRouter.post(
   "/importacionMultas",

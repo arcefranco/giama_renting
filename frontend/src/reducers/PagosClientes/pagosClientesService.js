@@ -56,6 +56,10 @@ const postDevolucionGarantia = async (data) => {
   return postFunction("ctacte/devolucionGarantia", data);
 };
 
+const anulacionDevolucionGarantia = async (data) => {
+  return postFunction("ctacte/anulacionDevolucionGarantia", data);
+};
+
 const pagosClientesService = {
     postPago,
     ctacteCliente,
@@ -64,7 +68,8 @@ const pagosClientesService = {
     anulacionFactura,
     anulacionRecibo,
     anulacionDeuda,
-    postDevolucionGarantia
+    postDevolucionGarantia,
+    anulacionDevolucionGarantia
 }
 
 export default pagosClientesService;

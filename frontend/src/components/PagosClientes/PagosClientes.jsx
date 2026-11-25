@@ -10,7 +10,7 @@ import { getClientes, getClientesById } from '../../reducers/Clientes/clientesSl
 import {
     ctacteCliente as getCtaCteCliente, reset, postPago, anulacionFactura,
     anulacionRecibo, getEstadoDeuda,
-    anulacionDeuda, postDevolucionGarantia
+    anulacionDeuda, postDevolucionGarantia, anulacionDevolucionGarantia
 } from '../../reducers/PagosClientes/pagosClientesSlice';
 import { useToastFeedback } from '../../customHooks/useToastFeedback';
 import { getFormasDeCobro } from '../../reducers/Generales/generalesSlice.js'
@@ -43,7 +43,6 @@ export const PagosClientes = () => {
     const [isDevolviendo, setIsDevolviendo] = useState(false)
     const [formDevolucion, setFormDevolucion] = useState({
         fecha: new Date().toISOString().split('T')[0],
-        id_forma_pago: '',
         importe: '',
         observacion: '',
         id_contrato: ''
@@ -352,6 +351,38 @@ export const PagosClientes = () => {
             }
         })
     }
+    const handleAnulacionDevolucionGarantia = (id_registro) => {
+        Swal.fire({
+            title: '¿Desea anular el registro de devolución de garantía?',
+            text: 'Solo se anulará el registro informativo en Renting (no afecta asientos en PA6).',
+            input: 'textarea',
+            inputLabel: 'Motivo de la anulación',
+            inputPlaceholder: 'Ingrese el motivo...',
+            inputAttributes: { 'aria-label': 'Motivo de la anulación' },
+            showCancelButton: true,
+            confirmButtonText: 'Sí, anular',
+            cancelButtonText: 'Cancelar',
+            icon: 'warning',
+            preConfirm: (motivo) => {
+                if (!motivo || !motivo.trim()) {
+                    Swal.showValidationMessage('El motivo es obligatorio')
+                }
+                return motivo
+            },
+            didOpen: () => {
+                document.body.classList.remove('swal2-height-auto');
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                dispatch(reset())
+                dispatch(anulacionDevolucionGarantia({
+                    id_registro, motivo: result.value
+                }))
+            } else if (result.isDismissed) {
+                dispatch(reset())
+            }
+        })
+    }
     const renderFecha = (data) => {
         if (data.value) {
             let fechaSplit = data.value.split("-")
@@ -359,7 +390,7 @@ export const PagosClientes = () => {
         }
 
     }
-    const tipoAnulacionMap = { 1: 'factura', 2: 'deuda', 3: 'factura', 4: 'recibo' }
+    const tipoAnulacionMap = { 1: 'factura', 2: 'deuda', 3: 'factura', 4: 'recibo', 5: 'devolucion_garantia' }
 
     const handleVerMotivo = async (tipo_num, id_registro) => {
         const tipo = tipoAnulacionMap[tipo_num] || 'deuda'
@@ -439,6 +470,20 @@ export const PagosClientes = () => {
         }
 
         if (userRoles.includes("1") || userRoles.includes("2")) {
+            if (row.tipo == 5) {
+                return (
+                    <button
+                        onClick={() => handleAnulacionDevolucionGarantia(row.id_registro)}
+                        style={{
+                            color: '#1976d2', fontSize: "11px",
+                            textDecoration: 'underline', background: 'none', border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Anular
+                    </button>
+                );
+            }
             if (row.tipo == 4) {
                 return (
                     <button
@@ -471,11 +516,11 @@ export const PagosClientes = () => {
         return null;
     }
     const handleProcesarDevolucion = async () => {
-        if (!formDevolucion.id_forma_pago || !formDevolucion.importe || formDevolucion.importe <= 0) {
+        if (!formDevolucion.importe || Number(formDevolucion.importe) <= 0) {
             Swal.fire({
                 icon: "warning",
-                title: "Campos incompletos",
-                text: "Por favor complete la forma de pago y un importe válido mayor a cero."
+                title: "Importe inválido",
+                text: "Por favor ingrese un importe válido mayor a cero."
             });
             return;
         }
@@ -483,7 +528,6 @@ export const PagosClientes = () => {
         const data = {
             id_cliente: id || form.id_cliente || (cliente?.length > 0 ? cliente[0].id : null),
             fecha: formDevolucion.fecha,
-            id_forma_pago: formDevolucion.id_forma_pago,
             importe: formDevolucion.importe,
             observacion: formDevolucion.observacion,
             usuario_alta_registro: username,
@@ -494,27 +538,26 @@ export const PagosClientes = () => {
         dispatch(postDevolucionGarantia(data)).then((res) => {
             setIsDevolviendo(false);
             if (!res.error) {
-                // Si salió todo bien, reseteamos el form y cerramos el modal
                 setFormDevolucion({
-                    fecha: new Date().toISOString().split('T')[0], // formato YYYY-MM-DD
-                    id_forma_pago: '',
+                    fecha: new Date().toISOString().split('T')[0],
                     importe: '',
-                    observacion: ''
+                    observacion: '',
+                    id_contrato: ''
                 });
                 setIsModalDevolucionOpen(false);
-                dispatch(getCtaCteCliente({ id_cliente: id ? id : form.id_cliente })); // Refresca la grilla
+                dispatch(getCtaCteCliente({ id_cliente: id ? id : form.id_cliente, ver_anulados: verAnulados }));
                 Swal.fire({
                     icon: "success",
-                    title: "Devolución Exitosa",
-                    text: res.payload.message || "Se procesó correctamente",
-                    timer: 2000,
+                    title: "Devolución Registrada",
+                    text: res.payload.message || "Se registró correctamente",
+                    timer: 2500,
                     showConfirmButton: false
                 });
             } else {
                 Swal.fire({
                     icon: "error",
-                    title: "Error al devolver la garantía",
-                    text: res.payload || "No se pudo procesar la devolución. Revisa la consola para más detalles."
+                    title: "Error al registrar la devolución",
+                    text: res.payload?.message || res.payload || "No se pudo registrar la devolución."
                 });
             }
         }).catch(() => {
@@ -711,9 +754,14 @@ export const PagosClientes = () => {
                 allowColumnResizing={true}
                 wordWrapEnabled={true}
                 onRowPrepared={(e) => {
-                    if (e.rowType === "data" && e.data && e.data.anulado) {
-                        e.rowElement.style.backgroundColor = "#ededed";
-                        e.rowElement.style.color = "#777777";
+                    if (e.rowType === "data" && e.data) {
+                        if (e.data.anulado) {
+                            e.rowElement.style.backgroundColor = "#ededed";
+                            e.rowElement.style.color = "#777777";
+                        } else if (e.data.tipo === 5) {
+                            e.rowElement.style.backgroundColor = "#f1f8e9";
+                            e.rowElement.style.fontStyle = "italic";
+                        }
                     }
                 }}
                 height={600}
@@ -730,7 +778,36 @@ export const PagosClientes = () => {
                     caption="Garantía Dev." 
                     cellRender={(data) => {
                         const val = Number(data.value);
-                        return (val && val > 0) ? val.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
+                        if (!val || val <= 0) return "";
+                        const formatted = val.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        const row = data.data;
+                        if (row?.tipo === 2) {
+                            const debe = Number(row.debe) || 0;
+                            const isTotal = debe > 0 && val >= debe - 0.01;
+                            return (
+                                <span
+                                    title={isTotal ? "Garantía devuelta totalmente" : "Garantía devuelta parcialmente"}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        color: "#2e7d32",
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    <span>✓</span>
+                                    <span>{formatted}</span>
+                                </span>
+                            );
+                        }
+                        if (row?.tipo === 5) {
+                            return (
+                                <span style={{ color: "#2e7d32", fontWeight: 600 }}>
+                                    {formatted}
+                                </span>
+                            );
+                        }
+                        return formatted;
                     }} 
                 />
                 <Column dataField="saldo" alignment="right" caption="Saldo" cellRender={renderSaldo} />
@@ -994,33 +1071,33 @@ export const PagosClientes = () => {
                             </button>
                         </div>
                         <form style={{ display: "flex", flexDirection: "column", gap: "0", padding: "24px" }}>
-                            
-                            <div style={{ marginBottom: "16px" }}>
-                                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>
-                                    Fecha <span style={{ color: "#999", fontWeight: 400, textTransform: "none" }}>(automática de hoy)</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formDevolucion.fecha}
-                                    disabled
-                                    style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", backgroundColor: "#f5f5f5" }}
-                                />
+                            <div style={{
+                                marginBottom: "16px",
+                                padding: "10px 12px",
+                                borderRadius: "6px",
+                                backgroundColor: "#e8f5e9",
+                                border: "1px solid #c8e6c9",
+                                color: "#2e7d32",
+                                fontSize: "12px",
+                                lineHeight: 1.4
+                            }}>
+                                <strong>Registro solo informativo:</strong> marca la garantía como devuelta y se visualiza en la cuenta corriente sin modificar el saldo ni generar OP o asiento contable en PA6.
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px", marginBottom: "16px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                                 <div>
-                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Medio de Pago</label>
-                                    <select
-                                        value={formDevolucion.id_forma_pago}
-                                        onChange={(e) => setFormDevolucion({ ...formDevolucion, id_forma_pago: e.target.value })}
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>
+                                        Fecha de Devolución
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formDevolucion.fecha}
+                                        onChange={(e) => setFormDevolucion({ ...formDevolucion, fecha: e.target.value })}
                                         style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                                    >
-                                        <option value="" disabled>Seleccione...</option>
-                                        {formasDeCobro?.length && formasDeCobro.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-                                    </select>
+                                    />
                                 </div>
                                 <div>
-                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Importe a Devolver</label>
+                                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>Importe Devuelto</label>
                                     <input
                                         type="number"
                                         value={formDevolucion.importe}

@@ -18,6 +18,14 @@ import { insertRecibo } from "../../helpers/insertRecibo.js";
 import { insertPago } from "../../helpers/insertPago.js";
 import { asientoContable } from "../../helpers/asientoContable.js";
 import { getNumeroAsiento, getNumeroAsientoSecundario } from "../../helpers/getNumeroAsiento.js";
+import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
+import { contraAsientoDeuda, obtenerNumerosContraAsiento } from "../../helpers/asientosAnulacion.js";
+import {
+    ID_CONCEPTO_MULTAS,
+    asegurarEstructuraMultas,
+    getUltimoLote,
+    resolverCostosIngresosMultas
+} from "../../helpers/multasVinculo.js";
 
 export const preprocesarMultas = async (req, res) => {
     const COLUMNAS_REQUERIDAS = ["Dominio", "Fecha_Infraccion", "Hora", "Motivo_Infraccion", "Importe", "Acta_Nro"];
@@ -327,6 +335,14 @@ export const confirmarImportacionMultas = async (req, res) => {
             INDEX idx_id_vehiculo (id_vehiculo)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `, { type: QueryTypes.RAW });
+        await asegurarEstructuraMultas();
+
+        // Cada confirmación es un lote: es lo que luego se puede anular en bloque
+        const usuarioLote = req.user?.user || req.user?.email || req.body?.usuario || "sistema";
+        const [id_lote] = await giama_renting.query(
+            `INSERT INTO multas_lotes (fecha_alta, usuario, cantidad, importe_total) VALUES (NOW(), :usuario, 0, 0)`,
+            { type: QueryTypes.INSERT, replacements: { usuario: usuarioLote } }
+        );
 
         const guardados = [];
         const errores = [];
@@ -347,11 +363,12 @@ export const confirmarImportacionMultas = async (req, res) => {
                 const usuarioAuditoria = req.user?.user || req.user?.email || req.body?.usuario || "sistema";
 
                 // Guardar en tabla multas marcando se_proceso = 1 y fecha_proceso = NOW()
-                await giama_renting.query(
-                    `INSERT INTO multas (dominio, fecha_infraccion, hora, motivo_infraccion, importe, acta_nro, id_vehiculo, id_cliente, cuit_cliente, usuario, usuario_alta, fecha_alta, se_proceso, fecha_proceso)
-                     VALUES (:dominio, :fecha_infraccion, :hora, :motivo_infraccion, :importe, :acta_nro, :id_vehiculo, :id_cliente, :cuit_cliente, :usuario, :usuario_alta, NOW(), 1, NOW())`,
+                const [id_multa] = await giama_renting.query(
+                    `INSERT INTO multas (dominio, fecha_infraccion, hora, motivo_infraccion, importe, acta_nro, id_vehiculo, id_cliente, cuit_cliente, usuario, usuario_alta, fecha_alta, se_proceso, fecha_proceso, id_lote)
+                     VALUES (:dominio, :fecha_infraccion, :hora, :motivo_infraccion, :importe, :acta_nro, :id_vehiculo, :id_cliente, :cuit_cliente, :usuario, :usuario_alta, NOW(), 1, NOW(), :id_lote)`,
                     {
                         replacements: {
+                            id_lote,
                             dominio: item.dominio,
                             fecha_infraccion: item.fecha_solo_date || (item.fecha_sql ? item.fecha_sql.split(" ")[0] : getTodayDate()),
                             hora: item.hora || "00:00:00",
@@ -369,9 +386,7 @@ export const confirmarImportacionMultas = async (req, res) => {
                     }
                 );
 
-                const ID_CONCEPTO_MULTAS = 36; // 36 = "Infracción de Tránsito"
-
-                await registrarIngresoIndividual({
+                const { id_costo_ingreso, nro_asiento } = await registrarIngresoIndividual({
                     debe_ingreso: item.importe,
                     id_vehiculo: item.id_vehiculo,
                     fecha_deuda: `${getTodayDate()} 00:00:00`,
@@ -390,6 +405,16 @@ export const confirmarImportacionMultas = async (req, res) => {
                     transaction_asientos: transaction_asientos
                 });
 
+                // Vínculo explícito multa -> deuda/asiento, para poder anularla luego
+                await giama_renting.query(
+                    `UPDATE multas SET id_costo_ingreso = :id_costo_ingreso, nro_asiento = :nro_asiento WHERE id = :id_multa`,
+                    {
+                        replacements: { id_costo_ingreso, nro_asiento, id_multa },
+                        type: QueryTypes.UPDATE,
+                        transaction
+                    }
+                );
+
                 await transaction.commit();
                 await transaction_asientos.commit();
 
@@ -402,7 +427,12 @@ export const confirmarImportacionMultas = async (req, res) => {
             }
         }
 
-        if (guardados.length === 0 && errores.length > 0) {
+        if (guardados.length === 0) {
+            // Un lote vacío no debe quedar como "última importación"
+            await giama_renting.query(`DELETE FROM multas_lotes WHERE id = :id_lote`, {
+                type: QueryTypes.DELETE,
+                replacements: { id_lote }
+            });
             return res.send({
                 status: false,
                 message: "No se pudo importar ninguna multa debido a errores.",
@@ -410,9 +440,22 @@ export const confirmarImportacionMultas = async (req, res) => {
             });
         }
 
+        await giama_renting.query(
+            `UPDATE multas_lotes SET cantidad = :cantidad, importe_total = :importe_total WHERE id = :id_lote`,
+            {
+                type: QueryTypes.UPDATE,
+                replacements: {
+                    cantidad: guardados.length,
+                    importe_total: guardados.reduce((acc, m) => acc + (Number(m.importe) || 0), 0).toFixed(2),
+                    id_lote
+                }
+            }
+        );
+
         return res.send({
             status: true,
             message: `Proceso completado. Se guardaron e imputaron ${guardados.length} multas correctamente.${errores.length > 0 ? ` Se omitieron ${errores.length} por errores.` : ""}`,
+            id_lote,
             guardados,
             errores
         });
@@ -420,6 +463,194 @@ export const confirmarImportacionMultas = async (req, res) => {
     } catch (error) {
         console.error("Error en confirmarImportacionMultas:", error);
         return res.send({ status: false, message: "Ocurrió un error al procesar las multas en el servidor." });
+    }
+};
+
+// Clasifica cada multa procesada según si su deuda en cuenta corriente se puede anular
+const armarMultasConVinculo = async (multas) => {
+    const vinculos = await resolverCostosIngresosMultas(multas.filter((m) => Number(m.se_proceso) === 1));
+    return multas.map((multa) => {
+        if (Number(multa.se_proceso) !== 1) {
+            return { ...multa, estado: "anulada", detalle: "Anulada: habilitada para volver a importarse" };
+        }
+        const costo = vinculos.get(multa.id);
+        let estado = "anulable";
+        let detalle = null;
+        if (!costo) {
+            estado = "sin_vinculo";
+            detalle = "No se encontró su deuda en cuenta corriente";
+        } else if (costo.id_factura_pa6) {
+            estado = "con_factura";
+            detalle = "Tiene factura emitida: anulala desde Cuenta Corriente (genera Nota de Crédito)";
+        } else if (Number(costo.anulado) === 1) {
+            estado = "deuda_anulada";
+            detalle = "La deuda ya estaba anulada; solo se habilitará el reprocesamiento";
+        } else if (!costo.nro_asiento) {
+            estado = "sin_asiento";
+            detalle = "La deuda no tiene número de asiento";
+        }
+        return {
+            ...multa,
+            id_costo_ingreso: costo?.id ?? null,
+            nro_asiento: costo?.nro_asiento ?? null,
+            fecha_deuda: costo?.fecha ?? null,
+            observacion_deuda: costo?.observacion ?? null,
+            estado,
+            detalle
+        };
+    });
+};
+
+// Solo la última importación masiva se puede anular en bloque
+export const getUltimoLoteMultas = async (req, res) => {
+    try {
+        await asegurarEstructuraMultas();
+        const lote = await getUltimoLote();
+        if (!lote) {
+            return res.send({ status: true, data: { lote: null, multas: [] } });
+        }
+        const multas = await giama_renting.query(
+            `SELECT m.id, m.dominio, m.fecha_infraccion, m.hora, m.motivo_infraccion, m.importe, m.acta_nro,
+                    m.id_vehiculo, m.id_cliente, m.fecha_proceso, m.se_proceso, m.id_costo_ingreso, m.nro_asiento,
+                    COALESCE(NULLIF(c.razon_social, ''), CONCAT_WS(' ', c.nombre, c.apellido)) AS nombre_cliente
+             FROM multas m
+             LEFT JOIN clientes c ON c.id = m.id_cliente
+             WHERE m.id_lote = :id_lote
+             ORDER BY m.id`,
+            { type: QueryTypes.SELECT, replacements: { id_lote: lote.id } }
+        );
+        return res.send({ status: true, data: { lote, multas: await armarMultasConVinculo(multas) } });
+    } catch (error) {
+        console.error("Error en getUltimoLoteMultas:", error);
+        return res.send({ status: false, message: "Ocurrió un error al obtener la última importación de multas." });
+    }
+};
+
+export const anularMultasImportadas = async (req, res) => {
+    const { id_lote, ids_multas, motivo } = req.body;
+
+    if (!id_lote) {
+        return res.send({ status: false, message: "No se indicó la importación a anular" });
+    }
+    if (!Array.isArray(ids_multas) || ids_multas.length === 0) {
+        return res.send({ status: false, message: "No se seleccionaron multas para anular" });
+    }
+    if (!motivo || !String(motivo).trim()) {
+        return res.send({ status: false, message: "Debe ingresar un motivo para la anulación" });
+    }
+    const ids = [...new Set(ids_multas.map(Number).filter(Number.isInteger))];
+    const motivoAnulacion = String(motivo).trim();
+
+    try {
+        await asegurarEstructuraMultas();
+        const ultimoLote = await getUltimoLote();
+        if (!ultimoLote || Number(ultimoLote.id) !== Number(id_lote)) {
+            return res.send({
+                status: false,
+                message: "Solo se puede anular la última importación masiva. Volvé a abrir la anulación para ver la importación vigente."
+            });
+        }
+        const multas = await giama_renting.query(
+            `SELECT id, dominio, acta_nro, motivo_infraccion, importe, id_vehiculo, id_cliente, fecha_proceso, se_proceso, id_costo_ingreso
+             FROM multas
+             WHERE id IN (:ids) AND id_lote = :id_lote AND se_proceso = 1
+             ORDER BY id`,
+            { type: QueryTypes.SELECT, replacements: { ids, id_lote: ultimoLote.id } }
+        );
+        const multasConVinculo = await armarMultasConVinculo(multas);
+
+        const anuladas = [];
+        const errores = [];
+        const encontradas = new Set(multas.map((m) => m.id));
+        ids.filter((id) => !encontradas.has(id)).forEach((id) => {
+            errores.push(`Multa ${id}: ya no figura como procesada en esta importación`);
+        });
+
+        for (const multa of multasConVinculo) {
+            const etiqueta = `Multa ${multa.id} (Dominio: ${multa.dominio}${multa.acta_nro ? `, Acta: ${multa.acta_nro}` : ""})`;
+            if (!["anulable", "deuda_anulada"].includes(multa.estado)) {
+                errores.push(`${etiqueta}: ${multa.detalle}`);
+                continue;
+            }
+
+            let numeros = null;
+            if (multa.estado === "anulable") {
+                try {
+                    numeros = await obtenerNumerosContraAsiento();
+                } catch (errNumeros) {
+                    errores.push(`${etiqueta}: ${errNumeros.message}`);
+                    continue;
+                }
+            }
+
+            const transaction = await giama_renting.transaction();
+            const transaction_asientos = await pa7_giama_renting.transaction();
+            try {
+                if (multa.estado === "anulable") {
+                    const nro_asiento_anulacion = await contraAsientoDeuda({
+                        nro_asiento_original: multa.nro_asiento,
+                        fecha_deuda: multa.fecha_deuda,
+                        observacion: multa.observacion_deuda,
+                        ...numeros,
+                        transaction: transaction_asientos
+                    });
+
+                    const [, deudasAnuladas] = await giama_renting.query(
+                        `UPDATE costos_ingresos SET anulado = 1, fecha_anulacion = :fecha WHERE id = :id AND IFNULL(anulado, 0) = 0`,
+                        {
+                            type: QueryTypes.UPDATE,
+                            replacements: { fecha: getTodayDate(), id: multa.id_costo_ingreso },
+                            transaction
+                        }
+                    );
+                    if (!deudasAnuladas) {
+                        throw new Error("La deuda fue anulada por otro usuario mientras se procesaba");
+                    }
+
+                    await registrarAnulacion({
+                        tipo: "deuda",
+                        id_registro: multa.id_costo_ingreso,
+                        nro_asiento_anulacion,
+                        motivo: motivoAnulacion,
+                        req,
+                        transaction
+                    });
+                }
+
+                await giama_renting.query(
+                    `UPDATE multas
+                     SET se_proceso = 0, fecha_proceso = NULL, id_costo_ingreso = :id_costo_ingreso, nro_asiento = :nro_asiento
+                     WHERE id = :id`,
+                    {
+                        type: QueryTypes.UPDATE,
+                        replacements: { id_costo_ingreso: multa.id_costo_ingreso, nro_asiento: multa.nro_asiento, id: multa.id },
+                        transaction
+                    }
+                );
+
+                await transaction_asientos.commit();
+                await transaction.commit();
+                anuladas.push(multa.id);
+            } catch (errMulta) {
+                await transaction_asientos.rollback();
+                await transaction.rollback();
+                errores.push(`${etiqueta}: Error al anular: ${errMulta.message || errMulta}`);
+            }
+        }
+
+        if (anuladas.length === 0) {
+            return res.send({ status: false, message: "No se pudo anular ninguna multa.", errores });
+        }
+
+        return res.send({
+            status: true,
+            message: `Se anularon ${anuladas.length} multas y quedaron habilitadas para reprocesar.${errores.length > 0 ? ` ${errores.length} no se pudieron anular.` : ""}`,
+            anuladas,
+            errores
+        });
+    } catch (error) {
+        console.error("Error en anularMultasImportadas:", error);
+        return res.send({ status: false, message: "Ocurrió un error al anular las multas en el servidor." });
     }
 };
 

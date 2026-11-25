@@ -53,6 +53,14 @@ const confirmarImportacionMultas = async (data) => {
   return postFunction("costos/confirmarImportacionMultas", data);
 };
 
+const getUltimoLoteMultas = async () => {
+  return postFunction("costos/ultimoLoteMultas", {});
+};
+
+const anularMultasImportadas = async (data) => {
+  return postFunction("costos/anularMultas", data);
+};
+
 const preprocesarTelepases = async (form) => {
   return postFunction("costos/preprocesarTelepases", form, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -97,6 +105,8 @@ const costosService = {
   postImportacionesMultas,
   preprocesarMultas,
   confirmarImportacionMultas,
+  getUltimoLoteMultas,
+  anularMultasImportadas,
   preprocesarTelepases,
   confirmarImportacionTelepases,
   postImportacionesTelepases,
