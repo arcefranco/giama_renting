@@ -39,6 +39,16 @@ export const postDevolucionGarantia = createAsyncThunk(
     )
 );
 
+export const anulacionDevolucionGarantia = createAsyncThunk(
+  "anulacionDevolucionGarantia",
+  async (data, { rejectWithValue }) =>
+    handleAsyncThunk(
+      () => pagosClientesService.anulacionDevolucionGarantia(data),
+      responses.successObject,
+      rejectWithValue
+    )
+);
+
 export const ctacteCliente = createAsyncThunk(
   "ctacteCliente",
   async (data, { rejectWithValue }) =>
@@ -149,6 +159,21 @@ export const pagosClientesSlice = createSlice({
       state.isError = true;
       state.isSuccess = false;
       state.message = action.payload?.message || action.payload || "Error al devolver la garantía";
+    });
+    builder.addCase(anulacionDevolucionGarantia.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(anulacionDevolucionGarantia.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isError = false;
+      state.message = action.payload.message;
+    });
+    builder.addCase(anulacionDevolucionGarantia.rejected, (state, action) => {
+      state.isLoading = false;
+      state.isError = true;
+      state.isSuccess = false;
+      state.message = action.payload?.message || action.payload || "Error al anular la devolución de garantía";
     });
     builder.addCase(ctacteCliente.pending, (state) => {
       state.isLoading = true;

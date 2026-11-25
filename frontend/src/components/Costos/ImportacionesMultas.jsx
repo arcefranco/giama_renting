@@ -7,6 +7,7 @@ import { ClipLoader } from "react-spinners";
 import * as XLSX from 'xlsx';
 import downloadicon from "../../assets/downloadicon.svg";
 import styles from '../Vehiculos/VehiculosForm.module.css';
+import AnularImportacionMultas from './AnularImportacionMultas';
 
 const parseError = (err) => {
     if (typeof err !== 'string') return { message: String(err) };
@@ -76,6 +77,7 @@ const ImportacionesMultas = () => {
     const [showModal, setShowModal] = useState(false);
     const [multasPreprocesadas, setMultasPreprocesadas] = useState([]);
     const [listaClientes, setListaClientes] = useState([]);
+    const [showAnularModal, setShowAnularModal] = useState(false);
 
     const opcionesClientes = useMemo(() => {
         return listaClientes.map((c) => {
@@ -297,14 +299,27 @@ const ImportacionesMultas = () => {
             <div>
                 <div className={styles.sectionHeader} style={{ marginTop: "20px", marginLeft: "20px", marginRight: "20px" }}>
                     <h2>Importación masiva de multas</h2>
-                    <button
-                        className={styles.downloadBtn}
-                        onClick={handleDownloadTemplate}
-                    >
-                        <img src={downloadicon} alt="Descargar" className={styles.downloadIcon} />
-                        Descargar plantilla
-                    </button>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                        <button
+                            className={styles.downloadBtn}
+                            onClick={() => setShowAnularModal(true)}
+                            disabled={isPreprocessing || isConfirming}
+                        >
+                            Anular importación
+                        </button>
+                        <button
+                            className={styles.downloadBtn}
+                            onClick={handleDownloadTemplate}
+                        >
+                            <img src={downloadicon} alt="Descargar" className={styles.downloadIcon} />
+                            Descargar plantilla
+                        </button>
+                    </div>
                 </div>
+
+                {showAnularModal && (
+                    <AnularImportacionMultas onClose={() => setShowAnularModal(false)} />
+                )}
 
                 <div className={styles.container}>
                     <input

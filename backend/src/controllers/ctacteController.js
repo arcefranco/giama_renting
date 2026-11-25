@@ -19,6 +19,14 @@ import { padWithZeros } from "../../helpers/padWithZeros.js";
 import { getProveedorPA6 } from "../../helpers/getProveedorPA6.js";
 import { insertOdp } from "../../helpers/insertOdp.js";
 import { registrarAnulacion } from "../../helpers/registrarAnulacion.js";
+import {
+  asegurarEstructuraMultas,
+  liberarMultaDeCostoIngreso,
+} from "../../helpers/multasVinculo.js";
+import {
+  obtenerNumerosContraAsiento,
+  verificarAsientoNoCompartido,
+} from "../../helpers/asientosAnulacion.js";
 
 const contra_asiento_factura = async (
   id_factura,
@@ -551,7 +559,7 @@ export const ctaCteCliente = async (req, res) => {
     m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + CASE WHEN m.anulado = 1 THEN 0 ELSE IFNULL(m.debe, 0) - IFNULL(m.haber, 0) END AS saldo,
+    @saldo := @saldo + CASE WHEN m.anulado = 1 OR m.tipo = 5 THEN 0 ELSE IFNULL(m.debe, 0) - IFNULL(m.haber, 0) END AS saldo,
     m.tipo,
     m.id_registro,
     m.garantia_devuelta,
@@ -681,12 +689,34 @@ FROM (
     WHERE ha.tipo = 'recibo'
       AND r.id_cliente = ?
 
+    UNION ALL
+
+    /* DEVOLUCIONES DE GARANTÍA (SOLO VISUALIZACIÓN - NO AFECTA SALDO) */
+    SELECT
+        dg.fecha AS fecha,
+        CONCAT(
+            IF(dg.anulado = 1, _utf8mb4'Anulación - ', _utf8mb4''),
+            _utf8mb4'Devolución de Garantía (Informativo)',
+            IF(v.dominio IS NOT NULL AND v.dominio <> '', CONCAT(_utf8mb4' - Dominio: ', CONVERT(v.dominio USING utf8mb4)), _utf8mb4''),
+            IF(dg.observacion IS NOT NULL AND dg.observacion <> '', CONCAT(_utf8mb4' - ', CONVERT(dg.observacion USING utf8mb4)), _utf8mb4'')
+        ) AS concepto,
+        NULL AS nro_comprobante,
+        NULL AS debe,
+        NULL AS haber,
+        5 AS tipo,
+        dg.id AS id_registro,
+        dg.importe AS garantia_devuelta,
+        dg.anulado AS anulado
+    FROM devoluciones_garantia dg
+    LEFT JOIN vehiculos v ON v.id = dg.id_vehiculo
+    WHERE dg.id_cliente = ?
+
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
 ORDER BY m.fecha, m.tipo;`,
       {
         type: QueryTypes.SELECT,
-        replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
+        replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
       },
     );
 
@@ -1213,6 +1243,14 @@ export const anulacionFactura = async (req, res) => {
       message: "Error al determinar el tipo de deuda.",
     });
   }
+  if (tabla === "costos_ingresos") {
+    try {
+      await asegurarEstructuraMultas();
+    } catch (error) {
+      const { body } = handleError(error, "multas", acciones.get);
+      return res.send(body);
+    }
+  }
   let transaction_giama_renting = await giama_renting.transaction();
   let transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
   try {
@@ -1280,6 +1318,9 @@ export const anulacionFactura = async (req, res) => {
           transaction: transaction_giama_renting,
         },
       );
+      if (tabla === "costos_ingresos") {
+        await liberarMultaDeCostoIngreso(id_registro, transaction_giama_renting);
+      }
       await registrarAnulacion({
         tipo: "factura",
         id_registro,
@@ -1393,6 +1434,9 @@ export const anulacionFactura = async (req, res) => {
           transaction: transaction_giama_renting,
         },
       );
+      if (tabla === "costos_ingresos") {
+        await liberarMultaDeCostoIngreso(id_registro, transaction_giama_renting);
+      }
       await registrarAnulacion({
         tipo: "factura",
         id_registro,
@@ -1557,14 +1601,23 @@ export const anulacionDeuda = async (req, res) => {
     return res.send(body);
   }
   try {
-    NroAsiento_nuevo = await getNumeroAsiento();
-    NroAsientoSecundario_nuevo = await getNumeroAsientoSecundario();
+    // Frena antes de invertir un asiento compartido o de usar un número ya existente
+    if (nro_asiento_original) await verificarAsientoNoCompartido(nro_asiento_original);
+    ({ NroAsiento_nuevo, NroAsientoSecundario_nuevo } = await obtenerNumerosContraAsiento());
   } catch (error) {
     console.log(error);
     return res.send({
       status: false,
-      message: "Error al obtener número de asiento",
+      message: error.message || "Error al obtener número de asiento",
     });
+  }
+  if (tabla === "costos_ingresos") {
+    try {
+      await asegurarEstructuraMultas();
+    } catch (error) {
+      const { body } = handleError(error, "multas", acciones.get);
+      return res.send(body);
+    }
   }
   const fecha = getTodayDate();
 
@@ -1660,6 +1713,10 @@ export const anulacionDeuda = async (req, res) => {
         },
       );
     }
+    // Si la deuda era una multa importada, se habilita su reprocesamiento
+    if (tabla === "costos_ingresos") {
+      await liberarMultaDeCostoIngreso(id_registro);
+    }
     await registrarAnulacion({
       tipo: "deuda",
       id_registro,
@@ -1683,80 +1740,33 @@ export const anulacionDeuda = async (req, res) => {
 };
 
 export const postDevolucionGarantia = async (req, res) => {
-  console.log("=== INICIO DEVOLUCIÓN DE GARANTÍA ===");
-  console.log("REQ.BODY COMPLETO:", req.body);
   const {
     id_cliente,
     fecha,
-    id_forma_pago,
     importe,
     observacion,
     usuario_alta_registro,
     id_contrato,
   } = req.body;
 
-  console.log(`ID CONTRATO RECIBIDO: ${id_contrato}`);
-  console.log(`MONTO A DEVOLVER: ${importe}`);
-
   let transaction_giama_renting;
-  let transaction_pa7_giama_renting;
 
   try {
     const clienteResult = await giama_renting.query(
-      `SELECT nombre, apellido, razon_social FROM clientes WHERE id = ?`,
+      `SELECT id FROM clientes WHERE id = ?`,
       { replacements: [id_cliente], type: QueryTypes.SELECT }
     );
 
-    if (!clienteResult) {
+    if (!clienteResult || !clienteResult.length) {
       return res.send({
         status: false,
         message: `No se encontró el cliente en Renting. ID recibido: ${id_cliente}`,
       });
     }
 
-    // Omitimos validación de proveedor porque ya no generamos ODP
-
-    // 2. Iniciamos Transacciones
-    transaction_giama_renting = await giama_renting.transaction();
-    transaction_pa7_giama_renting = await pa7_giama_renting.transaction();
-
-    let NroAsiento_nuevo = await getNumeroAsiento();
-    const cuentaHaber = await getCuentaContableFormaCobro(id_forma_pago);
-    const cuentaDebe = "210103"; // Cuenta contable de Depósito en Garantía
-
-    // 3. Asientos Contables en PA6 (c_movimientos)
-    // DEBE: Disminuye la deuda de Garantía (Pasivo)
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento_nuevo,
-      cuentaDebe,
-      "D",
-      importe,
-      "Devolucion Garantia",
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      null,
-      1,
-    );
-    // HABER: Disminuye el Banco/Caja (Activo)
-    await asientoContable(
-      "c_movimientos",
-      NroAsiento_nuevo,
-      cuentaHaber,
-      "H",
-      importe,
-      "Devolucion Garantia",
-      transaction_pa7_giama_renting,
-      null,
-      getTodayDate(),
-      null,
-      1,
-    );
-
     const [contrato] = await giama_renting.query(
-      "SELECT id, deposito_garantia, garantia_devuelta, id_vehiculo FROM contratos_alquiler WHERE id = ?",
-      { replacements: [id_contrato], type: QueryTypes.SELECT },
+      "SELECT id, deposito_garantia, garantia_devuelta, id_vehiculo FROM contratos_alquiler WHERE id = ? AND id_cliente = ?",
+      { replacements: [id_contrato, id_cliente], type: QueryTypes.SELECT }
     );
 
     if (!contrato) {
@@ -1765,7 +1775,7 @@ export const postDevolucionGarantia = async (req, res) => {
         message: "No se encontró el contrato de la garantía original.",
       });
     }
-//COMENTARIO
+
     const depositoTotal = Number(contrato.deposito_garantia) || 0;
     const devueltoHastaAhora = Number(contrato.garantia_devuelta) || 0;
     const montoADevolver = Number(importe) || 0;
@@ -1777,122 +1787,147 @@ export const postDevolucionGarantia = async (req, res) => {
       });
     }
 
-    if (devueltoHastaAhora + montoADevolver > depositoTotal) {
+    if (devueltoHastaAhora + montoADevolver > depositoTotal + 0.001) {
       return res.send({
         status: false,
         message: `No puede devolver más del total de la garantía. Saldo restante: $${(depositoTotal - devueltoHastaAhora).toFixed(2)}`,
       });
     }
 
-    const id_vehiculo = contrato.id_vehiculo || 1;
+    const fechaRegistro = fecha || getTodayDate();
+    transaction_giama_renting = await giama_renting.transaction();
 
-    // obtener dominio del vehículo para concatenarlo en las observaciones
-    let dominio = "";
-    try {
-      const [veh] = await giama_renting.query(
-        "SELECT dominio FROM vehiculos WHERE id = ?",
-        { replacements: [id_vehiculo], type: QueryTypes.SELECT },
-      );
-      dominio = veh?.dominio ? veh.dominio : "";
-    } catch (err) {
-      console.log("No se pudo obtener dominio del vehículo", err);
-      dominio = "";
-    }
+    // Registro visual en devoluciones_garantia (sin OP, sin asiento en PA6 y sin impacto en saldo)
+    await giama_renting.query(
+      `INSERT INTO devoluciones_garantia (id_contrato, id_cliente, id_vehiculo, fecha, importe, observacion, usuario_alta)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      {
+        replacements: [
+          id_contrato,
+          id_cliente,
+          contrato.id_vehiculo || null,
+          fechaRegistro,
+          montoADevolver,
+          observacion ? observacion.trim() : "",
+          usuario_alta_registro || "Sistema",
+        ],
+        type: QueryTypes.INSERT,
+        transaction: transaction_giama_renting,
+      }
+    );
 
-    const sufijoDominio = dominio ? ` - Dominio: ${dominio}` : "";
-
-    // Actualizamos el acumulador de garantía devuelta en el contrato
     await giama_renting.query(
       "UPDATE contratos_alquiler SET garantia_devuelta = IFNULL(garantia_devuelta, 0) + ? WHERE id = ?",
       {
         replacements: [montoADevolver, id_contrato],
         type: QueryTypes.UPDATE,
         transaction: transaction_giama_renting,
-      },
-    );
-
-    // 5. Impacto en la Cuenta Corriente de Renting (Para la grilla visual)
-    // Intentamos buscar un concepto apropiado para "Devolución".
-    // Si no se encuentra, omitimos la inserción para evitar usar un concepto erróneo (ej. 'Km Extra').
-    let id_concepto_devolucion = null;
-    try {
-      const conceptos = await giama_renting.query(
-        "SELECT id FROM conceptos_costos WHERE nombre LIKE '%Devoluc%' OR nombre LIKE '%Devolución%' OR nombre LIKE '%Garantia%' LIMIT 1",
-        { type: QueryTypes.SELECT },
-      );
-      if (conceptos && conceptos.length) {
-        id_concepto_devolucion = conceptos[0].id;
       }
-    } catch (err) {
-      console.log("Error buscando concepto Devolución:", err);
-    }
-
-    if (id_concepto_devolucion) {
-      // Movimiento negativo en costos_ingresos para anular el Debe
-      await giama_renting.query(
-        `INSERT INTO costos_ingresos (id_cliente, id_vehiculo, fecha, id_concepto, importe_total, observacion, nro_asiento) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        {
-          replacements: [
-            id_cliente,
-            id_vehiculo,
-            getTodayDate(),
-            id_concepto_devolucion,
-            importe * -1,
-            "Devolución de Garantía" +
-            sufijoDominio +
-            " - " +
-            (observacion || ""),
-            NroAsiento_nuevo,
-          ],
-          type: QueryTypes.INSERT,
-          transaction: transaction_giama_renting,
-        },
-      );
-    } else {
-      console.log(
-        "No se encontró concepto específico para Devolución; se omite inserción en costos_ingresos para evitar concepto incorrecto.",
-      );
-    }
-
-    // Pago negativo en pagos_clientes para anular el Haber y mantener el saldo en 0
-    await giama_renting.query(
-      `INSERT INTO pagos_clientes (id_cliente, fecha, usuario_alta_registro, id_forma_cobro, importe_cobro, observacion, nro_asiento) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      {
-        replacements: [
-          id_cliente,
-          getTodayDate(),
-          usuario_alta_registro || "Sistema",
-          id_forma_pago,
-          importe * -1,
-          "Devolución de Garantía" +
-          sufijoDominio +
-          " - " +
-          (observacion || ""),
-          NroAsiento_nuevo,
-        ],
-        type: QueryTypes.INSERT,
-        transaction: transaction_giama_renting,
-      },
     );
 
-    // 6. Confirmamos las transacciones
-    await transaction_pa7_giama_renting.commit();
     await transaction_giama_renting.commit();
 
     return res.send({
       status: true,
-      message: `Devolución exitosa. Se registraron los asientos contables en PA7.`,
+      message: "Devolución de garantía registrada correctamente (solo informativo, sin impacto en saldo ni PA6).",
     });
   } catch (error) {
     console.log(error);
-    if (transaction_pa7_giama_renting)
-      await transaction_pa7_giama_renting.rollback();
     if (transaction_giama_renting) await transaction_giama_renting.rollback();
     return res.send({
       status: false,
-      message: `Error al devolver la garantía: ${error.message}`,
+      message: `Error al registrar la devolución de garantía: ${error.message}`,
+    });
+  }
+};
+
+export const anulacionDevolucionGarantia = async (req, res) => {
+  const { id_registro, motivo } = req.body;
+  if (!id_registro) {
+    return res.send({
+      status: false,
+      message: "Falta el identificador de la devolución",
+    });
+  }
+  if (!motivo || !motivo.trim()) {
+    return res.send({
+      status: false,
+      message: "Debe ingresar un motivo para la anulación",
+    });
+  }
+
+  let transaction_giama_renting;
+  try {
+    transaction_giama_renting = await giama_renting.transaction();
+
+    const [devolucion] = await giama_renting.query(
+      "SELECT id, id_contrato, importe, anulado, observacion FROM devoluciones_garantia WHERE id = ?",
+      {
+        replacements: [id_registro],
+        type: QueryTypes.SELECT,
+        transaction: transaction_giama_renting,
+      }
+    );
+
+    if (!devolucion) {
+      await transaction_giama_renting.rollback();
+      return res.send({
+        status: false,
+        message: "No se encontró el registro de devolución de garantía",
+      });
+    }
+
+    if (Number(devolucion.anulado) === 1) {
+      await transaction_giama_renting.rollback();
+      return res.send({
+        status: false,
+        message: "Esta devolución de garantía ya fue anulada",
+      });
+    }
+
+    const fechaHoy = getTodayDate();
+    const monto = Number(devolucion.importe) || 0;
+
+    await giama_renting.query(
+      "UPDATE devoluciones_garantia SET anulado = 1, fecha_anulacion = ?, motivo_anulacion = ? WHERE id = ?",
+      {
+        replacements: [fechaHoy, motivo.trim(), id_registro],
+        type: QueryTypes.UPDATE,
+        transaction: transaction_giama_renting,
+      }
+    );
+
+    await giama_renting.query(
+      "UPDATE contratos_alquiler SET garantia_devuelta = GREATEST(0, IFNULL(garantia_devuelta, 0) - ?) WHERE id = ?",
+      {
+        replacements: [monto, devolucion.id_contrato],
+        type: QueryTypes.UPDATE,
+        transaction: transaction_giama_renting,
+      }
+    );
+
+    await registrarAnulacion({
+      tipo: "devolucion_garantia",
+      id_registro,
+      nro_asiento_anulacion: null,
+      concepto: `Devolución de Garantía (Informativo) - $${monto.toFixed(2)}${devolucion.observacion ? " - " + devolucion.observacion : ""}`,
+      motivo: motivo.trim(),
+      req,
+      transaction: transaction_giama_renting,
+    });
+
+    await transaction_giama_renting.commit();
+
+    return res.send({
+      status: true,
+      message: "Devolución de garantía anulada correctamente",
+    });
+  } catch (error) {
+    console.log(error);
+    if (transaction_giama_renting) await transaction_giama_renting.rollback();
+    return res.send({
+      status: false,
+      message: `Error al anular la devolución de garantía: ${error.message}`,
     });
   }
 };
@@ -1917,7 +1952,7 @@ export const exportarCtacteCliente = async (req, res) => {
     m.nro_comprobante,
     m.debe,
     m.haber,
-    @saldo := @saldo + IFNULL(m.debe, 0) - IFNULL(m.haber, 0) AS saldo,
+    @saldo := @saldo + CASE WHEN m.tipo = 5 THEN 0 ELSE IFNULL(m.debe, 0) - IFNULL(m.haber, 0) END AS saldo,
     m.tipo,
     m.id_registro,
     m.garantia_devuelta
@@ -2022,11 +2057,31 @@ FROM (
     LEFT JOIN recibos ON ci.nro_recibo = recibos.id
     WHERE ci.id_cliente = ? AND IFNULL(recibos.anulado, 0) = 0 AND ci.anulado = 0
 
+    UNION ALL
+
+    /* DEVOLUCIONES DE GARANTÍA (SOLO VISUALIZACIÓN) */
+    SELECT
+        dg.fecha AS fecha,
+        CONCAT(
+            _utf8mb4'Devolución de Garantía (Informativo)',
+            IF(v.dominio IS NOT NULL AND v.dominio <> '', CONCAT(_utf8mb4' - Dominio: ', CONVERT(v.dominio USING utf8mb4)), _utf8mb4''),
+            IF(dg.observacion IS NOT NULL AND dg.observacion <> '', CONCAT(_utf8mb4' - ', CONVERT(dg.observacion USING utf8mb4)), _utf8mb4'')
+        ) AS concepto,
+        NULL AS nro_comprobante,
+        NULL AS debe,
+        NULL AS haber,
+        5 AS tipo,
+        dg.id AS id_registro,
+        dg.importe AS garantia_devuelta
+    FROM devoluciones_garantia dg
+    LEFT JOIN vehiculos v ON v.id = dg.id_vehiculo
+    WHERE dg.id_cliente = ? AND dg.anulado = 0
+
 ) m
 CROSS JOIN (SELECT @saldo := 0) vars
 ORDER BY m.fecha, m.tipo;`,
       {
-        replacements: [id_cliente, id_cliente, id_cliente, id_cliente],
+        replacements: [id_cliente, id_cliente, id_cliente, id_cliente, id_cliente],
         type: QueryTypes.SELECT,
       }
     );

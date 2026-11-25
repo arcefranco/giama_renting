@@ -1926,9 +1926,10 @@ export async function registrarIngresoIndividual({
     throw error;
   }
   //inserto en tabla costos_ingresos
+  let id_costo_ingreso;
   try {
-    await giama_renting.query(
-      `INSERT INTO costos_ingresos 
+    [id_costo_ingreso] = await giama_renting.query(
+      `INSERT INTO costos_ingresos
       (id_vehiculo, fecha, id_concepto, comprobante, importe_neto, importe_iva, importe_otros_impuestos,
       importe_total, observacion, nro_asiento, id_forma_cobro, id_cliente, nro_recibo, id_factura_pa6) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       {
@@ -2012,6 +2013,8 @@ export async function registrarIngresoIndividual({
   return {
     nro_recibo: nro_recibo ? nro_recibo : null,
     genera_factura: genera_factura_final,
+    id_costo_ingreso,
+    nro_asiento: NroAsiento_deuda,
   };
 }
 
