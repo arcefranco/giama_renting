@@ -1071,19 +1071,6 @@ export const PagosClientes = () => {
                             </button>
                         </div>
                         <form style={{ display: "flex", flexDirection: "column", gap: "0", padding: "24px" }}>
-                            <div style={{
-                                marginBottom: "16px",
-                                padding: "10px 12px",
-                                borderRadius: "6px",
-                                backgroundColor: "#e8f5e9",
-                                border: "1px solid #c8e6c9",
-                                color: "#2e7d32",
-                                fontSize: "12px",
-                                lineHeight: 1.4
-                            }}>
-                                <strong>Registro solo informativo:</strong> marca la garantía como devuelta y se visualiza en la cuenta corriente sin modificar el saldo ni generar OP o asiento contable en PA6.
-                            </div>
-
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                                 <div>
                                     <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#555", marginBottom: "6px", textTransform: "uppercase" }}>
